@@ -29,6 +29,13 @@
 			"style": {
 				"navigationBarTitleText": "my"
 			}
+		},
+		{
+			"path" : "pages/chat/chat",
+			"style" : 
+			{
+				"navigationBarTitleText" : ""
+			}
 		}
 	],
 	"globalStyle": {
