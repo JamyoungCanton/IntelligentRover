@@ -1,0 +1,71 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "uni-app"
+			}
+		},
+		{
+			"path": "pages/itinerary/itinerary",
+			"style": {
+				"navigationBarTitleText": "itinerary"
+			}
+		},
+		{
+			"path": "pages/oneCodePass/oneCodePass",
+			"style": {
+				"navigationBarTitleText": "oneCodePass"
+			}
+		},
+		{
+			"path": "pages/order/order",
+			"style": {
+				"navigationBarTitleText": "order"
+			}
+		},
+		{
+			"path": "pages/my/my",
+			"style": {
+				"navigationBarTitleText": "my"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#333333",
+		"selectedColor": "#007AFF",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconPath": "static/tabbar/home.png"
+				// "selectedIconPath": "static/tabbar/home_active.png"
+			},
+			{
+				"pagePath": "pages/itinerary/itinerary",
+				"text": "行程"
+				// "iconPath": "static/tabbar/itinerary.png"
+			},
+			{
+				"pagePath": "pages/oneCodePass/oneCodePass",
+				"text": "一码通"
+			},
+			{
+				"pagePath": "pages/order/order",
+				"text": "订单"
+			},
+			{
+				"pagePath": "pages/my/my",
+				"text": "我的"
+				// "iconPath": "static/tabbar/my.jpg"
+			}
+		]
+	}
+	// "uniIdRouter": {}
+}

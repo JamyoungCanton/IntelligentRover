@@ -1,0 +1,1 @@
+{"version":3,"file":"order.js","sources":["../devolope_tool/HBuilderX/plugins/uniapp-cli-vite/uniPage:/cGFnZXMvb3JkZXIvb3JkZXIudnVl"],"sourcesContent":["import MiniProgramPage from 'D:/travel-master/pages/order/order.vue'\nwx.createPage(MiniProgramPage)"],"names":[],"mappings":";;;;;;;AACA,GAAG,WAAW,eAAe;"}
