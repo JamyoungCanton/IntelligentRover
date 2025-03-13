@@ -8,16 +8,17 @@ if (!Math) {
   "./pages/order/order.js";
   "./pages/my/my.js";
   "./pages/foodRecommendation/foodRecommendation.js";
+  "./pages/chat/chat.js";
 }
 const _sfc_main = {
   onLaunch: function() {
-    common_vendor.index.__f__("log", "at App.vue:4", "App Launch");
+    console.log("App Launch");
   },
   onShow: function() {
-    common_vendor.index.__f__("log", "at App.vue:7", "App Show");
+    console.log("App Show");
   },
   onHide: function() {
-    common_vendor.index.__f__("log", "at App.vue:10", "App Hide");
+    console.log("App Hide");
   }
 };
 function createApp() {
@@ -28,4 +29,3 @@ function createApp() {
 }
 createApp().app.mount("#app");
 exports.createApp = createApp;
-//# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map

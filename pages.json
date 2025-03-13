@@ -38,9 +38,30 @@
 			}
 		},
 		{
+<<<<<<< HEAD
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
 				"navigationBarTitleText": "foodRecommendation"
+=======
+			"path" : "pages/chat/chat",
+			"style" : 
+			{
+				"navigationBarTitleText" : ""
+			}
+		},
+		{
+			"path" : "pages/itinerary/itineraryDetails",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryDetails"
+			}
+		},
+		{
+			"path" : "pages/itinerary/itineraryEvaluation",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryEvaluation"
+>>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
 			}
 		}
 	],

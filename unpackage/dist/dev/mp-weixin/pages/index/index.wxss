@@ -19,7 +19,6 @@ page {
   color: #FFFFFF;
   margin: 0 16rpx;
 }
-.main-content {
   flex: 1;
   overflow: auto;
 }
@@ -252,4 +251,51 @@ page {
 }
 .text-active {
   color: #4A88FF;
+.content.data-v-1cf27b2a {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+/* 可点击的盒子样式 */
+.clickable-box.data-v-1cf27b2a {
+	position: relative;
+	width: 300px;
+	height: 200px;
+	overflow: hidden;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	transition: transform 0.3s ease;
+}
+.clickable-box.data-v-1cf27b2a:hover {
+	transform: translateY(-5px);
+}
+
+/* 盒子内的图片 */
+.box-image.data-v-1cf27b2a {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* 盒子上的覆盖层和文字 */
+.box-overlay.data-v-1cf27b2a {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+	font-size: 18px;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.clickable-box:hover .box-overlay.data-v-1cf27b2a {
+	opacity: 1;
 }

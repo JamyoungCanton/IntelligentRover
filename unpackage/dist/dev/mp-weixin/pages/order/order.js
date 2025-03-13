@@ -4,6 +4,7 @@ if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
 }
+<<<<<<< HEAD
 const _easycom_uni_icons = () => "../../node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons.js";
 if (!Math) {
   _easycom_uni_icons();
@@ -41,3 +42,7 @@ const _sfc_main = {
 };
 wx.createPage(_sfc_main);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/order/order.js.map
+=======
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
+wx.createPage(MiniProgramPage);
+>>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50

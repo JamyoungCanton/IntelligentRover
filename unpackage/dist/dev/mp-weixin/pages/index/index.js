@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+<<<<<<< HEAD
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -65,10 +66,21 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const navigateTo = (path) => {
       common_vendor.index.navigateTo({
         url: path
+=======
+const common_assets = require("../../common/assets.js");
+const _sfc_main = {
+  __name: "index",
+  setup(__props) {
+    const goToChat = () => {
+      common_vendor.index.navigateTo({
+        // 使用 uni.navigateTo 进行页面跳转
+        url: "/pages/chat/chat"
+>>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
       });
     };
     return (_ctx, _cache) => {
       return {
+<<<<<<< HEAD
         a: common_vendor.p({
           type: "spinner-cycle",
           size: "24",
@@ -122,3 +134,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
 });
 wx.createPage(_sfc_main);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/index/index.js.map
+=======
+        a: common_assets._imports_0,
+        b: common_vendor.o(goToChat)
+      };
+    };
+  }
+};
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-1cf27b2a"]]);
+wx.createPage(MiniProgramPage);
+>>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
