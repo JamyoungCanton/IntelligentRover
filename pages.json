@@ -38,6 +38,7 @@
 			}
 		},
 		{
+<<<<<<< HEAD
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
 				"navigationBarTitleText": "foodRecommendation"
@@ -95,6 +96,31 @@
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
 				"navigationBarTitleText": "ticketPoints"
+=======
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/foodRecommendation/foodRecommendation",
+			"style": {
+				"navigationBarTitleText": "foodRecommendation"
+			}
+		},
+		{
+			"path" : "pages/itineraryDetails/itineraryDetails",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryDetails"
+			}
+		},
+		{
+			"path" : "pages/itineraryEvaluation/itineraryEvaluation",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryEvaluation"
+>>>>>>> 84dce7757642955dbe2d43974f1981e66820aa09
 			}
 		}
 	],

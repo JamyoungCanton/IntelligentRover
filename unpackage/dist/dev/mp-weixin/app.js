@@ -17,6 +17,8 @@ if (!Math) {
   "./pages/hotelBooking/hotelBooking.js";
   "./pages/navbar/navbar.js";
   "./pages/ticketPoints/ticketPoints.js";
+  "./pages/itineraryDetails/itineraryDetails.js";
+  "./pages/itineraryEvaluation/itineraryEvaluation.js";
 }
 const _sfc_main = {
   onLaunch: function() {

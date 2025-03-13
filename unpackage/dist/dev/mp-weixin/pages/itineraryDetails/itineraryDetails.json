@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "foodRecommendation",
+  "navigationBarTitleText": "itineraryDetails",
   "usingComponents": {
     "uni-icons": "../../node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons"
   }

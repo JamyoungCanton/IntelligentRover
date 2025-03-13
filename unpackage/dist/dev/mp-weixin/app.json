@@ -14,7 +14,9 @@
     "pages/attractionGuide/attractionGuide",
     "pages/hotelBooking/hotelBooking",
     "pages/navbar/navbar",
-    "pages/ticketPoints/ticketPoints"
+    "pages/ticketPoints/ticketPoints",
+    "pages/itineraryDetails/itineraryDetails",
+    "pages/itineraryEvaluation/itineraryEvaluation"
   ],
   "window": {
     "navigationBarTextStyle": "black",

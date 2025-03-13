@@ -1,6 +1,5 @@
-// pages/itinerary/itinerary.js
-
-export const itineraryData = [
+"use strict";
+const itineraryData = [
   {
     id: 1,
     title: "两天精选海岛行程",
@@ -9,7 +8,8 @@ export const itineraryData = [
     price: 1288,
     type: "海岛游",
     status: "未开始",
-    coverImage: "island.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "island.jpg",
+    // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐摆渡车前往海岛", location: "酒店门口", description: "" },
       { time: "09:00", title: "海岛游览", location: "海岛", description: "享受海滩美景" },
@@ -25,7 +25,8 @@ export const itineraryData = [
     price: 398,
     type: "海鲜美食",
     status: "未开始",
-    coverImage: "fish-pier.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "fish-pier.jpg",
+    // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐'万山号'摆渡车前往'碧海渔排'", location: "万山海景酒店门口", description: "" },
       { time: "09:00", title: "在'碧海渔排'进行海钓活动", location: "碧海渔排", description: "享受自助烹饪服务" },
@@ -36,10 +37,9 @@ export const itineraryData = [
     ]
   }
 ];
-
-
- 
- // 获取图片路径的函数
- export function getImagePath(imageName) {
-   return `/static/itinerary/${imageName}`;
- }
+function getImagePath(imageName) {
+  return `/static/itinerary/${imageName}`;
+}
+exports.getImagePath = getImagePath;
+exports.itineraryData = itineraryData;
+//# sourceMappingURL=../.sourcemap/mp-weixin/itinerary.js.map

@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const uniIcons = () => "../../node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons.js";
 const itineraryData = [
   {
     id: 1,
@@ -41,7 +42,6 @@ const itineraryData = [
 function getImagePath(imageName) {
   return `/static/itinerary/${imageName}`;
 }
-const uniIcons = () => "../../node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons.js";
 const _sfc_main = {
   components: {
     uniIcons
@@ -139,9 +139,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: $options.getImagePath(item.coverImage),
         b: common_vendor.t(item.status),
-        c: `/pages/itinerary/itineraryDetails?id=${item.id}`,
+        c: `/pages/itineraryDetails/itineraryDetails?id=${item.id}`,
         d: common_vendor.t(item.title),
-        e: `/pages/itinerary/itineraryDetails?id=${item.id}`,
+        e: `/pages/itineraryDetails/itineraryDetails?id=${item.id}`,
         f: common_vendor.t(item.date),
         g: "9bfb8cb3-1-" + i0,
         h: common_vendor.t(item.days),
