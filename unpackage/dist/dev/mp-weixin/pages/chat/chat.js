@@ -63,7 +63,7 @@ const _sfc_main = {
       }
     ]);
     const selectCategory = (categoryId) => {
-      console.log("Selected category:", categoryId);
+      common_vendor.index.__f__("log", "at pages/chat/chat.vue:216", "Selected category:", categoryId);
       chatMessages.push({
         type: "user",
         content: `我想了解${getCategoryName(categoryId)}的详细信息`
@@ -127,7 +127,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["清空聊天记录", "设置", "关于"],
         success: (res) => {
-          console.log("Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:286", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -135,7 +135,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["拍照", "从相册选择", "位置"],
         success: (res) => {
-          console.log("Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:295", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -163,7 +163,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: common_vendor.o((...args) => $setup.goBack && $setup.goBack(...args)),
     b: common_vendor.o((...args) => $setup.showMore && $setup.showMore(...args)),
-    c: common_assets._imports_0$1,
+    c: common_assets._imports_0,
     d: common_vendor.f($setup.categories, (item, index, i0) => {
       return {
         a: item.icon,
@@ -180,7 +180,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         c: common_vendor.t(msg.content),
         d: `msg-${index + 1}`
       } : common_vendor.e({
-        e: common_assets._imports_0$1,
+        e: common_assets._imports_0,
         f: msg.image
       }, msg.image ? {
         g: common_assets._imports_2
@@ -237,3 +237,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/chat/chat.js.map

@@ -1,6 +1,5 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
-<<<<<<< HEAD
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -9,21 +8,25 @@ const _easycom_uni_icons = () => "../../node-modules/@dcloudio/uni-ui/lib/uni-ic
 if (!Math) {
   _easycom_uni_icons();
 }
-const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
+const _sfc_main = {
   __name: "index",
   setup(__props) {
-    const aiPopup = common_vendor.ref();
+    common_vendor.ref();
     const showAiDialog = () => {
-      aiPopup.value.open();
+      common_vendor.index.navigateTo({
+        url: "/pages/chat/chat"
+      });
     };
     const gridItems = [
       {
         image: "https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg",
-        text: "景点攻略"
+        text: "景点攻略",
+        path: "/pages/attractionGuide/attractionGuide"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/67e82bbc342b0532a7d47d9a9495e4e6.jpg",
-        text: "船票预订"
+        text: "船票预订",
+        path: "/pages/ticketBooking/ticketBooking"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/a46f5a2748b96ebacfead5f2ce9a2d23.jpg",
@@ -32,23 +35,28 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/d4eaef4d2ae27ea58ef90ce8114cbbc0.jpg",
-        text: "住宿预订"
+        text: "住宿预订",
+        path: "/pages/hotelBooking/hotelBooking"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/6e3b763c2b9b0240282a50a27279cc92.jpg",
-        text: "停车收费"
+        text: "停车收费",
+        path: "/pages/parkingFees/parkingFees"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/868a88ac3f0c7165d1ff7e4edcd8c6de.jpg",
-        text: "小票积分"
+        text: "小票积分",
+        path: "/pages/ticketPoints/ticketPoints"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/ff98fe41d0920a84166f2cb230b71b03.jpg",
-        text: "交通指南"
+        text: "交通指南",
+        path: "/pages/transportationGuide/transportationGuide"
       },
       {
         image: "https://ai-public.mastergo.com/ai/img_res/a23f3a06a4a4106ad0a8dbe37d4ba3c8.jpg",
-        text: "更多服务"
+        text: "更多服务",
+        path: "/pages/moreServices/moreServices"
       }
     ];
     const activities = [
@@ -66,21 +74,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const navigateTo = (path) => {
       common_vendor.index.navigateTo({
         url: path
-=======
-const common_assets = require("../../common/assets.js");
-const _sfc_main = {
-  __name: "index",
-  setup(__props) {
-    const goToChat = () => {
-      common_vendor.index.navigateTo({
-        // 使用 uni.navigateTo 进行页面跳转
-        url: "/pages/chat/chat"
->>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
       });
     };
     return (_ctx, _cache) => {
       return {
-<<<<<<< HEAD
         a: common_vendor.p({
           type: "spinner-cycle",
           size: "24",
@@ -131,16 +128,6 @@ const _sfc_main = {
       };
     };
   }
-});
+};
 wx.createPage(_sfc_main);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/index/index.js.map
-=======
-        a: common_assets._imports_0,
-        b: common_vendor.o(goToChat)
-      };
-    };
-  }
-};
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-1cf27b2a"]]);
-wx.createPage(MiniProgramPage);
->>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50

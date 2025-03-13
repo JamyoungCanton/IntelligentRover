@@ -34,34 +34,67 @@
 		{
 			"path": "pages/my/my",
 			"style": {
-				"navigationBarTitleText": "my"
+				"navigationBarTitleText": "我的"
 			}
 		},
 		{
-<<<<<<< HEAD
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
 				"navigationBarTitleText": "foodRecommendation"
-=======
-			"path" : "pages/chat/chat",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
 			}
 		},
 		{
-			"path" : "pages/itinerary/itineraryDetails",
-			"style" : 
-			{
-				"navigationBarTitleText" : "itineraryDetails"
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "chat"
 			}
 		},
 		{
-			"path" : "pages/itinerary/itineraryEvaluation",
-			"style" : 
-			{
-				"navigationBarTitleText" : "itineraryEvaluation"
->>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
+			"path": "pages/moreServices/moreServices",
+			"style": {
+				"navigationBarTitleText": "moreServices"
+			}
+		},
+		{
+			"path": "pages/transportationGuide/transportationGuide",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/parkingFees/parkingFees",
+			"style": {
+				"navigationBarTitleText": "parkingFees"
+			}
+		},
+		{
+			"path": "pages/ticketBooking/ticketBooking",
+			"style": {
+				"navigationBarTitleText": "ticketBooking"
+			}
+		},
+		{
+			"path": "pages/attractionGuide/attractionGuide",
+			"style": {
+				"navigationBarTitleText": "attractionGuide"
+			}
+		},
+		{
+			"path": "pages/hotelBooking/hotelBooking",
+			"style": {
+				"navigationBarTitleText": "hotelBooking"
+			}
+		},
+		{
+			"path": "pages/navbar/navbar",
+			"style": {
+				"navigationBarTitleText": "navbar"
+			}
+		},
+		{
+			"path": "pages/ticketPoints/ticketPoints",
+			"style": {
+				"navigationBarTitleText": "ticketPoints"
 			}
 		}
 	],

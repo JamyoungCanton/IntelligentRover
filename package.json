@@ -9,16 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-<<<<<<< HEAD
   "devDependencies": {
     "@types/vue": "^2.0.0"
   },
   "dependencies": {
     "@dcloudio/types": "^3.4.14",
     "@dcloudio/uni-app": "2.0.2-4050520250307001",
-=======
-  "dependencies": {
->>>>>>> dc365678fe3177494b018fe3d2788f1c58f66a50
     "@dcloudio/uni-ui": "^1.5.7"
   }
 }

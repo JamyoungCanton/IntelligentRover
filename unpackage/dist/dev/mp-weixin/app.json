@@ -6,7 +6,15 @@
     "pages/order/order",
     "pages/my/my",
     "pages/foodRecommendation/foodRecommendation",
-    "pages/chat/chat"
+    "pages/chat/chat",
+    "pages/moreServices/moreServices",
+    "pages/transportationGuide/transportationGuide",
+    "pages/parkingFees/parkingFees",
+    "pages/ticketBooking/ticketBooking",
+    "pages/attractionGuide/attractionGuide",
+    "pages/hotelBooking/hotelBooking",
+    "pages/navbar/navbar",
+    "pages/ticketPoints/ticketPoints"
   ],
   "window": {
     "navigationBarTextStyle": "black",
