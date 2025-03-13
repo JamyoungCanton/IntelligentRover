@@ -36,6 +36,20 @@
 			{
 				"navigationBarTitleText" : ""
 			}
+		},
+		{
+			"path" : "pages/itinerary/itineraryDetails",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryDetails"
+			}
+		},
+		{
+			"path" : "pages/itinerary/itineraryEvaluation",
+			"style" : 
+			{
+				"navigationBarTitleText" : "itineraryEvaluation"
+			}
 		}
 	],
 	"globalStyle": {
