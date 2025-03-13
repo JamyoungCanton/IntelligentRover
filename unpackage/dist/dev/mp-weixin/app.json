@@ -5,8 +5,10 @@
     "pages/oneCodePass/oneCodePass",
     "pages/order/order",
     "pages/my/my",
+    "pages/chat/chat",
     "pages/foodRecommendation/foodRecommendation",
-    "pages/chat/chat"
+    "pages/itineraryDetails/itineraryDetails",
+    "pages/itineraryEvaluation/itineraryEvaluation"
   ],
   "window": {
     "navigationBarTextStyle": "black",

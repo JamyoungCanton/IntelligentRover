@@ -42,8 +42,12 @@
 </template>
 
 <script>
-import { getImagePath } from './itinerary.js';
+
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
+
+function getImagePath(imageName) {
+   return `/static/itinerary/${imageName}`;
+ }
 
 export default {
   components: {
