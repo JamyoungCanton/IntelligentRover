@@ -1,5 +1,5 @@
 import App from './App'
-
+// import * as uni from '@dcloudio/uni-ui';
 // #ifndef VUE3
 import Vue from 'vue'
 import './uni.promisify.adaptor'

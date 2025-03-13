@@ -1,14 +1,11 @@
 {
   "pages": [
-<<<<<<< HEAD
     "pages/index/index",
     "pages/itinerary/itinerary",
     "pages/oneCodePass/oneCodePass",
     "pages/order/order",
-    "pages/my/my"
-=======
-    "pages/index/index"
->>>>>>> 75be666fc0f80cc7da792b97a73255eb62592296
+    "pages/my/my",
+    "pages/foodRecommendation/foodRecommendation"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -16,7 +13,6 @@
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
   },
-<<<<<<< HEAD
   "tabBar": {
     "color": "#333333",
     "selectedColor": "#007AFF",
@@ -44,7 +40,5 @@
       }
     ]
   },
-=======
->>>>>>> 75be666fc0f80cc7da792b97a73255eb62592296
   "usingComponents": {}
 }

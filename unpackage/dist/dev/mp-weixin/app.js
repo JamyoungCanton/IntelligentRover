@@ -7,6 +7,7 @@ if (!Math) {
   "./pages/oneCodePass/oneCodePass.js";
   "./pages/order/order.js";
   "./pages/my/my.js";
+  "./pages/foodRecommendation/foodRecommendation.js";
 }
 const _sfc_main = {
   onLaunch: function() {

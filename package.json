@@ -8,5 +8,13 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/vue": "^2.0.0"
+  },
+  "dependencies": {
+    "@dcloudio/types": "^3.4.14",
+    "@dcloudio/uni-app": "2.0.2-4050520250307001",
+    "@dcloudio/uni-ui": "^1.5.7"
+  }
 }

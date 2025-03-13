@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "order",
-  "usingComponents": {}
+  "navigationBarTitleText": "订单",
+  "usingComponents": {
+    "uni-icons": "../../node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons"
+  }
 }
