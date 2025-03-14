@@ -11,6 +11,7 @@ if (!Math) {
   "./pages/foodRecommendation/foodRecommendation.js";
   "./pages/itineraryDetails/itineraryDetails.js";
   "./pages/itineraryEvaluation/itineraryEvaluation.js";
+  "./pages/payment/payment.js";
 }
 const _sfc_main = {
   onLaunch: function() {

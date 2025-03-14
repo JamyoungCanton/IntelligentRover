@@ -10,27 +10,27 @@ const _sfc_main = {
       {
         id: "fishing",
         name: "海钓体验",
-        icon: "/static/icons/fishing.png"
+        icon: "/static/chat/fishing.jpg"
       },
       {
         id: "snorkeling",
         name: "浮潜探索",
-        icon: "/static/icons/snorkeling.png"
+        icon: "/static/chat/snorkeling.jpg"
       },
       {
         id: "family",
         name: "亲子娱乐",
-        icon: "/static/icons/family.png"
+        icon: "/static/chat/family.jpg"
       },
       {
         id: "leisure",
         name: "休闲畅游",
-        icon: "/static/icons/leisure.png"
+        icon: "/static/chat/leisure.jpg"
       },
       {
         id: "island",
         name: "海岛介绍",
-        icon: "/static/icons/island.png"
+        icon: "/static/chat/island.jpg"
       }
     ]);
     const chatMessages = common_vendor.reactive([
@@ -63,7 +63,7 @@ const _sfc_main = {
       }
     ]);
     const selectCategory = (categoryId) => {
-      common_vendor.index.__f__("log", "at pages/chat/chat.vue:216", "Selected category:", categoryId);
+      common_vendor.index.__f__("log", "at pages/chat/chat.vue:218", "Selected category:", categoryId);
       chatMessages.push({
         type: "user",
         content: `我想了解${getCategoryName(categoryId)}的详细信息`
@@ -91,22 +91,9 @@ const _sfc_main = {
       }, 1e3);
       scrollToLatestMessage();
     };
-    const confirmItinerary = () => {
-      common_vendor.index.showModal({
-        title: "确认订单",
-        content: "您确定要购买此海钓体验行程吗？总价：¥988",
-        success: (res) => {
-          if (res.confirm) {
-            common_vendor.index.showLoading({ title: "处理中..." });
-            setTimeout(() => {
-              common_vendor.index.hideLoading();
-              common_vendor.index.showToast({
-                title: "订单已确认！",
-                icon: "success"
-              });
-            }, 1500);
-          }
-        }
+    const navigatortopaymoent = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/payment/payment"
       });
     };
     const scrollToLatestMessage = () => {
@@ -127,7 +114,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["清空聊天记录", "设置", "关于"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:286", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:275", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -135,7 +122,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["拍照", "从相册选择", "位置"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:295", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:284", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -151,7 +138,7 @@ const _sfc_main = {
       selectCategory,
       getCategoryName,
       sendMessage,
-      confirmItinerary,
+      navigatortopaymoent,
       formatItineraryText,
       goBack,
       showMore,
@@ -161,10 +148,12 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o((...args) => $setup.goBack && $setup.goBack(...args)),
-    b: common_vendor.o((...args) => $setup.showMore && $setup.showMore(...args)),
-    c: common_assets._imports_0,
-    d: common_vendor.f($setup.categories, (item, index, i0) => {
+    a: common_assets._imports_0,
+    b: common_vendor.o((...args) => $setup.goBack && $setup.goBack(...args)),
+    c: common_assets._imports_1,
+    d: common_vendor.o((...args) => $setup.showMore && $setup.showMore(...args)),
+    e: common_assets._imports_2,
+    f: common_vendor.f($setup.categories, (item, index, i0) => {
       return {
         a: item.icon,
         b: common_vendor.t(item.name),
@@ -172,18 +161,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(() => $setup.selectCategory(item.id), index)
       };
     }),
-    e: common_vendor.f($setup.chatMessages, (msg, index, i0) => {
+    g: common_vendor.f($setup.chatMessages, (msg, index, i0) => {
       return common_vendor.e({
         a: msg.type === "user"
       }, msg.type === "user" ? {
-        b: common_assets._imports_1,
+        b: common_assets._imports_3,
         c: common_vendor.t(msg.content),
         d: `msg-${index + 1}`
       } : common_vendor.e({
-        e: common_assets._imports_0,
+        e: common_assets._imports_2,
         f: msg.image
       }, msg.image ? {
-        g: common_assets._imports_2
+        g: common_assets._imports_4
       } : {}, {
         h: msg.content
       }, msg.content ? {
@@ -219,20 +208,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       } : {}) : {}, {
         t: msg.itinerary.price
       }, msg.itinerary.price ? {
-        v: common_vendor.o((...args) => $setup.confirmItinerary && $setup.confirmItinerary(...args), index)
+        v: common_vendor.o((...args) => $setup.navigatortopaymoent && $setup.navigatortopaymoent(...args), index)
       } : {}) : {}, {
         w: `msg-${index + 1}`
       }), {
         x: index
       });
     }),
-    f: $setup.scrollTop,
-    g: $setup.scrollIntoView,
-    h: common_vendor.o((...args) => $setup.showAddOptions && $setup.showAddOptions(...args)),
-    i: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args)),
-    j: $setup.inputMessage,
-    k: common_vendor.o(($event) => $setup.inputMessage = $event.detail.value),
-    l: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args))
+    h: $setup.scrollTop,
+    i: $setup.scrollIntoView,
+    j: common_vendor.o((...args) => $setup.showAddOptions && $setup.showAddOptions(...args)),
+    k: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args)),
+    l: $setup.inputMessage,
+    m: common_vendor.o(($event) => $setup.inputMessage = $event.detail.value),
+    n: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

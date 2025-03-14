@@ -67,6 +67,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         url: path
       });
     };
+    const navigateToChat = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/chat/chat"
+      });
+    };
     return (_ctx, _cache) => {
       return {
         a: common_vendor.p({
@@ -107,7 +112,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             a: activity.image,
             b: common_vendor.t(activity.title),
             c: common_vendor.t(activity.price),
-            d: index
+            d: index,
+            e: common_vendor.o(navigateToChat, index)
           };
         }),
         h: common_vendor.p({

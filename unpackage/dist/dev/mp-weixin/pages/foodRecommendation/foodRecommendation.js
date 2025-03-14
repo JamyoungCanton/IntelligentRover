@@ -100,7 +100,7 @@ const _sfc_main = {
             b: common_vendor.t(restaurant.tag),
             c: common_vendor.n(restaurant.tagType),
             d: common_vendor.t(restaurant.name),
-            e: "0bc455be-3-" + i0,
+            e: "2124561b-3-" + i0,
             f: common_vendor.t(restaurant.rating),
             g: common_vendor.t(restaurant.monthlySales),
             h: common_vendor.t(restaurant.averagePrice),
@@ -120,7 +120,7 @@ const _sfc_main = {
         }),
         j: common_vendor.f(tabItems, (item, index, i0) => {
           return {
-            a: "0bc455be-5-" + i0,
+            a: "2124561b-5-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "20",

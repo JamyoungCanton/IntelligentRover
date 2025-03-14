@@ -40,7 +40,7 @@
 		{
 			"path": "pages/chat/chat",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "AI旅游助手"
 			}
 		},
 		{
@@ -61,6 +61,13 @@
 			"style" : 
 			{
 				"navigationBarTitleText" : "itineraryEvaluation"
+			}
+		},
+		{
+			"path" : "pages/payment/payment",
+			"style" : 
+			{
+				"navigationBarTitleText" : "支付页面"
 			}
 		}
 	],
