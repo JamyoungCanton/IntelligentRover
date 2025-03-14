@@ -39,7 +39,7 @@
             v-for="(activity, index) in activities" 
             :key="index" 
             class="activity-card"
-            @click="navigateToChat"
+            @click="navigateToActivity"
           >
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
             <view class="activity-info">
@@ -52,7 +52,7 @@
 
       <view class="section">
         <text class="section-title">精选路线</text>
-        <view class="route-card">
+        <view class="route-card" @click="navigateToRoute">
           <image src="https://ai-public.mastergo.com/ai/img_res/29f6b0ecc3a2e6885a39cbde9d4a762e.jpg" mode="aspectFill" class="route-image" />
           <view class="route-info">
             <text class="route-title">浪漫双岛游</text>
@@ -203,6 +203,20 @@ const navigateTo = (path) => {
 const navigateToChat = () => {
   uni.navigateTo({
     url: '/pages/chat/chat'
+  });
+};
+
+// 跳转到 热门活动 页面
+const navigateToActivity = () => {
+  uni.navigateTo({
+    url: '/pages/activity/activity'
+  });
+};
+
+// 跳转到 精选路线 页面
+const navigateToRoute = () => {
+  uni.navigateTo({
+	url: '/pages/route/route'
   });
 };
 </script>
