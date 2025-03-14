@@ -2,7 +2,7 @@
   <view class="container">
     <!-- 头部导航栏 -->
     <view class="header">
-      <uni-icons type="back" size="24" color="#333" @click="goBack"/>
+      <!-- <uni-icons type="back" size="24" color="#333" @click="goBack"/> -->
       <text class="header-title">美食推荐</text>
       <uni-icons type="search" size="24" color="#333" @click="onSearch"/>
     </view>
@@ -61,18 +61,7 @@
       <uni-icons type="calendar" size="24" color="#FFFFFF"/>
     </view>
 
-    <!-- 底部导航栏 -->
-    <view class="tab-bar">
-      <view 
-        v-for="(item, index) in tabItems" 
-        :key="index" 
-        class="tab-item"
-        @click="switchTab(index)"
-      >
-        <uni-icons :type="item.icon" size="20" :color="currentTab === index ? '#0066FF' : '#999'"/>
-        <text :class="['tab-text', { active: currentTab === index }]">{{ item.text }}</text>
-      </view>
-    </view>
+    
   </view>
 </template>
 
@@ -89,13 +78,7 @@ const filterTags = ref([
   { name: '农家菜', active: false }
 ]);
 
-const tabItems = [
-  { icon: 'home', text: '首页' },
-  { icon: 'location', text: '行程' },
-  { icon: 'scan', text: '一码通' },
-  { icon: 'file', text: '订单' },
-  { icon: 'person', text: '我的' }
-];
+
 
 const restaurants = ref([
   {
@@ -321,29 +304,5 @@ page {
   box-shadow: 0 6rpx 20rpx rgba(0, 102, 255, 0.3);
 }
 
-.tab-bar {
-  height: 100rpx;
-  background: #FFFFFF;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  flex-shrink: 0;
-}
 
-.tab-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.tab-text {
-  font-size: 12px;
-  color: #999999;
-  margin-top: 8rpx;
-}
-
-.tab-text.active {
-  color: #0066FF;
-}
 </style>

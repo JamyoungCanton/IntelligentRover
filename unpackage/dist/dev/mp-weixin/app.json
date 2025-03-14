@@ -5,6 +5,14 @@
     "pages/oneCodePass/oneCodePass",
     "pages/order/order",
     "pages/my/my",
+    "pages/moreServices/moreServices",
+    "pages/transportationGuide/transportationGuide",
+    "pages/parkingFees/parkingFees",
+    "pages/ticketBooking/ticketBooking",
+    "pages/attractionGuide/attractionGuide",
+    "pages/hotelBooking/hotelBooking",
+    "pages/navbar/navbar",
+    "pages/ticketPoints/ticketPoints",
     "pages/chat/chat",
     "pages/foodRecommendation/foodRecommendation",
     "pages/itineraryDetails/itineraryDetails",
@@ -13,7 +21,8 @@
     "pages/activityRegistration/activityRegistration",
     "pages/route/route",
     "pages/routeRegistration/routeRegistration",
-    "pages/routeRegistrationSuccess/routeRegistrationSuccess"
+    "pages/routeRegistrationSuccess/routeRegistrationSuccess",
+    "pages/payment/payment"
   ],
   "window": {
     "navigationBarTextStyle": "black",

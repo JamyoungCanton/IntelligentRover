@@ -7,6 +7,14 @@ if (!Math) {
   "./pages/oneCodePass/oneCodePass.js";
   "./pages/order/order.js";
   "./pages/my/my.js";
+  "./pages/moreServices/moreServices.js";
+  "./pages/transportationGuide/transportationGuide.js";
+  "./pages/parkingFees/parkingFees.js";
+  "./pages/ticketBooking/ticketBooking.js";
+  "./pages/attractionGuide/attractionGuide.js";
+  "./pages/hotelBooking/hotelBooking.js";
+  "./pages/navbar/navbar.js";
+  "./pages/ticketPoints/ticketPoints.js";
   "./pages/chat/chat.js";
   "./pages/foodRecommendation/foodRecommendation.js";
   "./pages/itineraryDetails/itineraryDetails.js";
@@ -16,6 +24,7 @@ if (!Math) {
   "./pages/route/route.js";
   "./pages/routeRegistration/routeRegistration.js";
   "./pages/routeRegistrationSuccess/routeRegistrationSuccess.js";
+  "./pages/payment/payment.js";
 }
 const _sfc_main = {
   onLaunch: function() {

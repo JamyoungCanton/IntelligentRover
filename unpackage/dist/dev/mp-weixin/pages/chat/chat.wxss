@@ -14,7 +14,7 @@
   justify-content: center;
 }
 .title {
-  font-size: 18px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -74,7 +74,7 @@
   margin-top: 12px;
 }
 .itinerary-title {
-  font-size: 18px;
+  font-size: 12px;
   font-weight: bold;
   margin-bottom: 16px;
   color: #333333;
@@ -189,6 +189,7 @@
 /* Font icons */
 @font-face {
   font-family: "iconfont";
+   font-display: swap;
   src: url('data:application/x-font-woff2;charset=utf-8;base64,d09GMgABAAAAAAk...') format('woff2');
 }
 .iconfont {
@@ -253,29 +254,43 @@
 /* Category styles */
 .category-container {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-top: 16px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin-top: 16px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 5px;
+    width: 100%;
+    overflow-x: auto;
 }
 .category-item {
   width: 18%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 12px;
+    max-width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 2px;
+    margin-bottom: 8px;
+    border: 1px solid #eeeeee;
+    border-radius: 8px;
+    padding: 5px;
+    background-color: #f9f9f9;
+    font-size: 12px;
+}
+.category-item:active {
+  transform: scale(0.98);
 }
 .category-item image {
   width: 40px;
-  height: 40px;
-  margin-bottom: 6px;
+    height: 40px;
+    margin-bottom: 8px;
 }
 .category-item text {
-  font-size: 12px;
-  text-align: center;
-  color: #333333;
+  font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    line-height: 1.4;
 }
 
 /* Header styles update */

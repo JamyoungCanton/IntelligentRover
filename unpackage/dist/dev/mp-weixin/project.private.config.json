@@ -8,8 +8,15 @@
     "miniprogram": {
       "list": [
         {
-          "name": "pages/route/route",
-          "pathName": "pages/route/route",
+          "name": "pages/payment/payment",
+          "pathName": "pages/payment/payment",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/oneCodePass/oneCodePass",
+          "pathName": "pages/oneCodePass/oneCodePass",
           "query": "",
           "launchMode": "default",
           "scene": null
