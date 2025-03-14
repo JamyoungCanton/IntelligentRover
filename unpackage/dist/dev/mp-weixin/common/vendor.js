@@ -6986,9 +6986,12 @@ function initOnError() {
   };
 }
 function initRuntimeSocketService() {
-  const hosts = "26.11.185.80,192.168.56.1,192.168.1.133,127.0.0.1";
+  const hosts = "10.63.11.234,127.0.0.1,26.11.185.80,192.168.56.1,192.168.1.133";
   const port = "8090";
-  const id = "mp-weixin_op71JA";
+  const id = "mp-weixin_Cgxcge"; // 或者根据条件选择 id
+  const lazy = typeof swan !== "undefined";
+  // 其他逻辑...
+}
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -8590,4 +8593,5 @@ exports.ref = ref;
 exports.resolveComponent = resolveComponent;
 exports.s = s;
 exports.t = t;
+exports.unref = unref;
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map

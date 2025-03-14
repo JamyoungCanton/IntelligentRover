@@ -7,8 +7,16 @@ if (!Math) {
   "./pages/oneCodePass/oneCodePass.js";
   "./pages/order/order.js";
   "./pages/my/my.js";
-  "./pages/chat/chat.js";
   "./pages/foodRecommendation/foodRecommendation.js";
+  "./pages/chat/chat.js";
+  "./pages/moreServices/moreServices.js";
+  "./pages/transportationGuide/transportationGuide.js";
+  "./pages/parkingFees/parkingFees.js";
+  "./pages/ticketBooking/ticketBooking.js";
+  "./pages/attractionGuide/attractionGuide.js";
+  "./pages/hotelBooking/hotelBooking.js";
+  "./pages/navbar/navbar.js";
+  "./pages/ticketPoints/ticketPoints.js";
   "./pages/itineraryDetails/itineraryDetails.js";
   "./pages/itineraryEvaluation/itineraryEvaluation.js";
   "./pages/payment/payment.js";

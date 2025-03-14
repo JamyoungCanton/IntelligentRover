@@ -34,10 +34,69 @@
 		{
 			"path": "pages/my/my",
 			"style": {
-				"navigationBarTitleText": "my"
+				"navigationBarTitleText": "我的"
 			}
 		},
 		{
+<<<<<<< HEAD
+			"path": "pages/foodRecommendation/foodRecommendation",
+			"style": {
+				"navigationBarTitleText": "foodRecommendation"
+			}
+		},
+		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "chat"
+			}
+		},
+		{
+			"path": "pages/moreServices/moreServices",
+			"style": {
+				"navigationBarTitleText": "moreServices"
+			}
+		},
+		{
+			"path": "pages/transportationGuide/transportationGuide",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/parkingFees/parkingFees",
+			"style": {
+				"navigationBarTitleText": "parkingFees"
+			}
+		},
+		{
+			"path": "pages/ticketBooking/ticketBooking",
+			"style": {
+				"navigationBarTitleText": "ticketBooking"
+			}
+		},
+		{
+			"path": "pages/attractionGuide/attractionGuide",
+			"style": {
+				"navigationBarTitleText": "attractionGuide"
+			}
+		},
+		{
+			"path": "pages/hotelBooking/hotelBooking",
+			"style": {
+				"navigationBarTitleText": "hotelBooking"
+			}
+		},
+		{
+			"path": "pages/navbar/navbar",
+			"style": {
+				"navigationBarTitleText": "navbar"
+			}
+		},
+		{
+			"path": "pages/ticketPoints/ticketPoints",
+			"style": {
+				"navigationBarTitleText": "ticketPoints"
+=======
 			"path": "pages/chat/chat",
 			"style": {
 				"navigationBarTitleText": "AI旅游助手"
@@ -61,6 +120,7 @@
 			"style" : 
 			{
 				"navigationBarTitleText" : "itineraryEvaluation"
+>>>>>>> 84dce7757642955dbe2d43974f1981e66820aa09
 			}
 		},
 		{
