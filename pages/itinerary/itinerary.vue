@@ -1,13 +1,13 @@
 <template>
   <view class="container">
     <view class="header">
-      <text class="title">我的行程</text>
+      <text class="title">{{ texts.title }}</text>
       <view class="actions">
         <view class="search-icon">
-          <uni-icons type="search" size="24" color="#666"></uni-icons>
+          <uni-icons :type="icons.search" :size="iconsSize" :color="iconsColor"></uni-icons>
         </view>
         <view class="add-btn" @click="addNewItinerary">
-          <text class="plus">+</text>
+          <text class="plus">{{ icons.plus }}</text>
         </view>
       </view>
     </view>
@@ -51,15 +51,15 @@
           
           <view class="card-info">
             <view class="info-item">
-              <uni-icons type="calendar" size="16" color="#666"></uni-icons>
+              <uni-icons :type="icons.calendar" :size="iconsSizeSmall" :color="iconsColor"></uni-icons>
               <text>{{ item.days }}天</text>
             </view>
             <view class="info-item">
-              <uni-icons type="contact" size="16" color="#666"></uni-icons>
+              <uni-icons :type="icons.contact" :size="iconsSizeSmall" :color="iconsColor"></uni-icons>
               <text>{{ item.price }}元</text>
             </view>
             <view class="info-item">
-              <uni-icons type="location" size="16" color="#666"></uni-icons>
+              <uni-icons :type="icons.location" :size="iconsSizeSmall" :color="iconsColor"></uni-icons>
               <text>{{ item.type }}</text>
             </view>
           </view>
@@ -68,16 +68,16 @@
         <view class="card-actions">
           <view class="action-btn-group">
             <view class="action-btn" @click.stop="editItinerary(item.id)">
-              <uni-icons type="edit" size="18" color="#333"></uni-icons>
+              <uni-icons :type="icons.edit" :size="iconsSizeMedium" :color="iconsColorDark"></uni-icons>
               <text>编辑</text>
             </view>
             <view class="action-btn" @click.stop="shareItinerary(item.id)">
-              <uni-icons type="share" size="18" color="#333"></uni-icons>
+              <uni-icons :type="icons.share" :size="iconsSizeMedium" :color="iconsColorDark"></uni-icons>
               <text>分享</text>
             </view>
           </view>
           <view class="action-btn delete" @click.stop="deleteItinerary(item.id)">
-            <uni-icons type="trash" size="18" color="#333"></uni-icons>
+            <uni-icons :type="icons.trash" :size="iconsSizeMedium" :color="iconsColorDark"></uni-icons>
             <text>删除</text>
           </view>
         </view>
@@ -87,7 +87,6 @@
 </template>
 
 <script>
-
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 
 const itineraryData = [
@@ -126,9 +125,10 @@ const itineraryData = [
     ]
   }
 ];
+
 function getImagePath(imageName) {
-   return `/static/itinerary/${imageName}`;
- }
+  return `/static/itinerary/${imageName}`;
+}
 
 export default {
   components: {
@@ -136,6 +136,28 @@ export default {
   },
   data() {
     return {
+      // 文本内容
+      texts: {
+        title: '我的行程'
+      },
+      // 图标类型和样式
+      icons: {
+        search: 'search',
+        plus: '+',
+        calendar: 'calendar',
+        contact: 'contact',
+        location: 'location',
+        edit: 'edit',
+        share: 'share',
+        trash: 'trash'
+      },
+      // 图标大小和颜色
+      iconsSize: 24,
+      iconsSizeSmall: 16,
+      iconsSizeMedium: 18,
+      iconsColor: '#666',
+      iconsColorDark: '#333',
+      // 标签页配置
       tabs: [
         { label: '全部', value: 'all' },
         { label: '进行中', value: 'ongoing' },
@@ -143,6 +165,7 @@ export default {
         { label: '已完成', value: 'completed' }
       ],
       activeTab: 'all',
+      // 行程数据
       itineraries: itineraryData
     };
   },
