@@ -62,6 +62,41 @@
 			{
 				"navigationBarTitleText" : "itineraryEvaluation"
 			}
+		},
+		{
+			"path" : "pages/activity/activity",
+			"style" : 
+			{
+				"navigationBarTitleText" : "activity"
+			}
+		},
+		{
+			"path" : "pages/activityRegistration/activityRegistration",
+			"style" : 
+			{
+				"navigationBarTitleText" : "activityRegistration"
+			}
+		},
+		{
+			"path" : "pages/route/route",
+			"style" : 
+			{
+				"navigationBarTitleText" : "route"
+			}
+		},
+		{
+			"path" : "pages/routeRegistration/routeRegistration",
+			"style" : 
+			{
+				"navigationBarTitleText" : "routeRegistration"
+			}
+		},
+		{
+			"path" : "pages/routeRegistrationSuccess/routeRegistrationSuccess",
+			"style" : 
+			{
+				"navigationBarTitleText" : "routeRegistrationSuccess"
+			}
 		}
 	],
 	"globalStyle": {

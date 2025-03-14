@@ -8,7 +8,12 @@
     "pages/chat/chat",
     "pages/foodRecommendation/foodRecommendation",
     "pages/itineraryDetails/itineraryDetails",
-    "pages/itineraryEvaluation/itineraryEvaluation"
+    "pages/itineraryEvaluation/itineraryEvaluation",
+    "pages/activity/activity",
+    "pages/activityRegistration/activityRegistration",
+    "pages/route/route",
+    "pages/routeRegistration/routeRegistration",
+    "pages/routeRegistrationSuccess/routeRegistrationSuccess"
   ],
   "window": {
     "navigationBarTextStyle": "black",
