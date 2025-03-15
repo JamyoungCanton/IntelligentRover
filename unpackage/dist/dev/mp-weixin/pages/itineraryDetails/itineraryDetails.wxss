@@ -3,6 +3,7 @@
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: var(--05102462);
 }
 .header.data-v-d4a78779 {
   display: flex;

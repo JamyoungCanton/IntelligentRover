@@ -48,6 +48,28 @@ const _sfc_main = {
   },
   data() {
     return {
+      // 文本内容
+      texts: {
+        title: "我的行程"
+      },
+      // 图标类型和样式
+      icons: {
+        search: "search",
+        plus: "+",
+        calendar: "calendar",
+        contact: "contact",
+        location: "location",
+        edit: "edit",
+        share: "share",
+        trash: "trash"
+      },
+      // 图标大小和颜色
+      iconsSize: 24,
+      iconsSizeSmall: 16,
+      iconsSizeMedium: 18,
+      iconsColor: "#666",
+      iconsColorDark: "#333",
+      // 标签页配置
       tabs: [
         { label: "全部", value: "all" },
         { label: "进行中", value: "ongoing" },
@@ -55,7 +77,13 @@ const _sfc_main = {
         { label: "已完成", value: "completed" }
       ],
       activeTab: "all",
-      itineraries: itineraryData
+      // 行程数据
+      itineraries: itineraryData,
+      // 安全区域信息
+      safeArea: {
+        top: 0,
+        bottom: 0
+      }
     };
   },
   computed: {
@@ -69,9 +97,16 @@ const _sfc_main = {
       });
     }
   },
+  onLoad() {
+    this.getSafeAreaInfo();
+  },
   methods: {
     getImagePath(imageName) {
       return getImagePath(imageName);
+    },
+    getSafeAreaInfo() {
+      const systemInfo = common_vendor.index.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     },
     changeTab(value) {
       this.activeTab = value;
@@ -111,6 +146,16 @@ const _sfc_main = {
     }
   }
 };
+const __injectCSSVars__ = () => {
+  common_vendor.useCssVars((_ctx) => ({
+    "69fdd735": _ctx.safeArea.top + "px"
+  }));
+};
+const __setup__ = _sfc_main.setup;
+_sfc_main.setup = __setup__ ? (props, ctx) => {
+  __injectCSSVars__();
+  return __setup__(props, ctx);
+} : __injectCSSVars__;
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -121,13 +166,15 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.p({
-      type: "search",
-      size: "24",
-      color: "#666"
+    a: common_vendor.t($data.texts.title),
+    b: common_vendor.p({
+      type: $data.icons.search,
+      size: $data.iconsSize,
+      color: $data.iconsColor
     }),
-    b: common_vendor.o((...args) => $options.addNewItinerary && $options.addNewItinerary(...args)),
-    c: common_vendor.f($data.tabs, (tab, k0, i0) => {
+    c: common_vendor.t($data.icons.plus),
+    d: common_vendor.o((...args) => $options.addNewItinerary && $options.addNewItinerary(...args)),
+    e: common_vendor.f($data.tabs, (tab, k0, i0) => {
       return {
         a: common_vendor.t(tab.label),
         b: $data.activeTab === tab.value ? 1 : "",
@@ -135,7 +182,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.changeTab(tab.value), tab.value)
       };
     }),
-    d: common_vendor.f($options.filteredItineraries, (item, k0, i0) => {
+    f: common_vendor.f($options.filteredItineraries, (item, k0, i0) => {
       return {
         a: $options.getImagePath(item.coverImage),
         b: common_vendor.t(item.status),
@@ -158,36 +205,37 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         s: item.id
       };
     }),
-    e: common_vendor.p({
-      type: "calendar",
-      size: "16",
-      color: "#666"
-    }),
-    f: common_vendor.p({
-      type: "contact",
-      size: "16",
-      color: "#666"
-    }),
     g: common_vendor.p({
-      type: "location",
-      size: "16",
-      color: "#666"
+      type: $data.icons.calendar,
+      size: $data.iconsSizeSmall,
+      color: $data.iconsColor
     }),
     h: common_vendor.p({
-      type: "edit",
-      size: "18",
-      color: "#333"
+      type: $data.icons.contact,
+      size: $data.iconsSizeSmall,
+      color: $data.iconsColor
     }),
     i: common_vendor.p({
-      type: "share",
-      size: "18",
-      color: "#333"
+      type: $data.icons.location,
+      size: $data.iconsSizeSmall,
+      color: $data.iconsColor
     }),
     j: common_vendor.p({
-      type: "trash",
-      size: "18",
-      color: "#333"
-    })
+      type: $data.icons.edit,
+      size: $data.iconsSizeMedium,
+      color: $data.iconsColorDark
+    }),
+    k: common_vendor.p({
+      type: $data.icons.share,
+      size: $data.iconsSizeMedium,
+      color: $data.iconsColorDark
+    }),
+    l: common_vendor.p({
+      type: $data.icons.trash,
+      size: $data.iconsSizeMedium,
+      color: $data.iconsColorDark
+    }),
+    m: common_vendor.s(_ctx.__cssVars())
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-9bfb8cb3"]]);

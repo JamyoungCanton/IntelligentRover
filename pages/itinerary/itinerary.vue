@@ -30,7 +30,6 @@
         v-for="item in filteredItineraries" 
         :key="item.id"
       >
-        <!-- 使用 navigator 包裹图片，实现点击图片跳转 -->
         <navigator 
           :url="`/pages/itineraryDetails/itineraryDetails?id=${item.id}`" 
           class="card-image"
@@ -40,7 +39,6 @@
         </navigator>
         
         <view class="card-content">
-          <!-- 使用 navigator 包裹标题，实现点击标题跳转 -->
           <navigator 
             :url="`/pages/itineraryDetails/itineraryDetails?id=${item.id}`" 
             class="card-title"
@@ -166,7 +164,12 @@ export default {
       ],
       activeTab: 'all',
       // 行程数据
-      itineraries: itineraryData
+      itineraries: itineraryData,
+      // 安全区域信息
+      safeArea: {
+        top: 0,
+        bottom: 0
+      }
     };
   },
   computed: {
@@ -179,9 +182,16 @@ export default {
       });
     }
   },
+  onLoad() {
+    this.getSafeAreaInfo();
+  },
   methods: {
     getImagePath(imageName) {
       return getImagePath(imageName);
+    },
+    getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     },
     changeTab(value) {
       this.activeTab = value;
@@ -228,6 +238,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

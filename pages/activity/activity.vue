@@ -94,6 +94,7 @@
 export default {
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
       isFavorite: false,
       data: {
         // 图标和图片路径
@@ -172,6 +173,9 @@ export default {
       }
     };
   },
+  onLoad(){
+	  this.getSafeAreaInfo();
+  },
   methods: {
     goBack() {
       uni.navigateBack();
@@ -183,6 +187,10 @@ export default {
     },
     toggleFavorite() {
       this.isFavorite = !this.isFavorite;
+    }, 
+	getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
@@ -192,6 +200,7 @@ export default {
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

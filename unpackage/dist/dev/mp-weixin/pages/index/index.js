@@ -76,9 +76,14 @@ const _sfc_main = {
         url: path
       });
     };
-    const navigateToChat = () => {
+    const navigateToActivity = () => {
       common_vendor.index.navigateTo({
-        url: "/pages/chat/chat"
+        url: "/pages/activity/activity"
+      });
+    };
+    const navigateToRoute = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/route/route"
       });
     };
     return (_ctx, _cache) => {
@@ -122,15 +127,16 @@ const _sfc_main = {
             b: common_vendor.t(activity.title),
             c: common_vendor.t(activity.price),
             d: index,
-            e: common_vendor.o(navigateToChat, index)
+            e: common_vendor.o(navigateToActivity, index)
           };
         }),
-        h: common_vendor.p({
+        h: common_vendor.o(navigateToRoute),
+        i: common_vendor.p({
           type: "spinner-cycle",
           size: "24",
           color: "#FFFFFF"
         }),
-        i: common_vendor.o(showAiDialog)
+        j: common_vendor.o(showAiDialog)
       };
     };
   }

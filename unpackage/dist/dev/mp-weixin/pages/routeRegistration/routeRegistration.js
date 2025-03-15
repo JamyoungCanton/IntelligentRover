@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   data() {
     return {
+      safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
         banner: "/static/route/beach2.jpg",
@@ -36,6 +37,9 @@ const _sfc_main = {
       }
     };
   },
+  onLoad() {
+    this.getSafeAreaInfo();
+  },
   computed: {
     totalAmount() {
       return 3999 * this.formData.people;
@@ -44,6 +48,10 @@ const _sfc_main = {
   methods: {
     goBack() {
       common_vendor.index.navigateBack();
+    },
+    getSafeAreaInfo() {
+      const systemInfo = common_vendor.index.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     },
     sendCode() {
       common_vendor.index.showToast({
@@ -83,6 +91,16 @@ const _sfc_main = {
     }
   }
 };
+const __injectCSSVars__ = () => {
+  common_vendor.useCssVars((_ctx) => ({
+    "a800ebb6": _ctx.safeArea.top + "px"
+  }));
+};
+const __setup__ = _sfc_main.setup;
+_sfc_main.setup = __setup__ ? (props, ctx) => {
+  __injectCSSVars__();
+  return __setup__(props, ctx);
+} : __injectCSSVars__;
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -136,7 +154,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     K: common_vendor.t($data.texts.total),
     L: common_vendor.t($options.totalAmount),
     M: common_vendor.t($data.texts.payNowBtn),
-    N: common_vendor.o((...args) => $options.submitForm && $options.submitForm(...args))
+    N: common_vendor.o((...args) => $options.submitForm && $options.submitForm(...args)),
+    O: common_vendor.s(_ctx.__cssVars())
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-5c4ed5bc"]]);

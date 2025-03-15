@@ -2,6 +2,7 @@
 .container.data-v-4178867a {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: var(--2f918130);
 }
 .header.data-v-4178867a {
   display: flex;

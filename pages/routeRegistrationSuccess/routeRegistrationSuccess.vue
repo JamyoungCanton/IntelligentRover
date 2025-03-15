@@ -49,6 +49,7 @@
 export default {
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
         successIcon: '/static/route/success.png',
@@ -83,6 +84,9 @@ export default {
       }
     };
   },
+  onLoad() {
+  	this.getSafeAreaInfo();
+  },
   methods: {
     goBack() {
       uni.navigateBack();
@@ -97,6 +101,10 @@ export default {
       uni.switchTab({
         url: '/pages/index/index'
       });
+    },
+	getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
@@ -106,6 +114,7 @@ export default {
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

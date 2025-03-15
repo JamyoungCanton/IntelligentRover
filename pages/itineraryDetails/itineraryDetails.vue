@@ -42,7 +42,9 @@
 </template>
 
 <script>
+
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
+
 
 function getImagePath(imageName) {
   return `/static/itinerary/${imageName}`;
@@ -85,6 +87,7 @@ export default {
   onLoad(options) {
     const id = parseInt(options.id);
     this.loadItineraryById(id);
+	this.getSafeAreaInfo();
   },
   methods: {
     loadItineraryById(id) {
@@ -108,6 +111,10 @@ export default {
     },
     goBack() {
       uni.navigateBack();
+    },
+    getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
@@ -118,6 +125,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

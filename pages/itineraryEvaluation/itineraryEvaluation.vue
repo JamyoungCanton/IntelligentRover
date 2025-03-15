@@ -1,5 +1,5 @@
 <template>
-  <view class="container">
+  <view class="container" >
     <view class="header">
       <view class="back-btn" @click="goBack">
         <uni-icons :type="icons.back" :size="iconsSize"></uni-icons>
@@ -94,12 +94,14 @@ function getImagePath(imageName) {
   return `/static/itinerary/${imageName}`;
 }
 
+
 export default {
   components: {
     uniIcons
   },
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
       // 文本内容
       texts: {
         title: '行程满意度评价',
@@ -145,6 +147,9 @@ export default {
       isVoiceInputActive: false,
       selectedSatisfaction: null
     };
+  },
+  onLoad() {
+	this.getSafeAreaInfo();
   },
   methods: {
     getImagePath(imageName) {
@@ -212,7 +217,11 @@ export default {
     },
     goBack() {
       uni.navigateBack();
-    }
+    },
+	getSafeAreaInfo() {
+	    const systemInfo = uni.getSystemInfoSync();
+	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+	}
   }
 };
 </script>
@@ -222,6 +231,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {
