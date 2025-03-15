@@ -1,0 +1,1 @@
+{"version":3,"file":"pay_success.js","sources":["../../HBuilderX/plugins/uniapp-cli-vite/uniPage:/cGFnZXMvcGF5X3N1Y2Nlc3MvcGF5X3N1Y2Nlc3MudnVl"],"sourcesContent":["import MiniProgramPage from 'D:/travel_main/travel/pages/pay_success/pay_success.vue'\nwx.createPage(MiniProgramPage)"],"names":["MiniProgramPage"],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AACA,GAAG,WAAWA,SAAe;"}

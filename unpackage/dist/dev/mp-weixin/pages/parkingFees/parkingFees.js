@@ -58,7 +58,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         i: common_vendor.f(paymentMethods.value, (item, index, i0) => {
           return {
-            a: "0ee252ea-2-" + i0,
+            a: "a758ebf2-2-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "24",

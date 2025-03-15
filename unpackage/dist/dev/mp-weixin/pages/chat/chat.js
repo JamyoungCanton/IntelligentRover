@@ -114,7 +114,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["清空聊天记录", "设置", "关于"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:275", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:274", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -122,7 +122,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["拍照", "从相册选择", "位置"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:284", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:283", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -217,11 +217,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     h: $setup.scrollTop,
     i: $setup.scrollIntoView,
-    j: common_vendor.o((...args) => $setup.showAddOptions && $setup.showAddOptions(...args)),
-    k: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args)),
-    l: $setup.inputMessage,
-    m: common_vendor.o(($event) => $setup.inputMessage = $event.detail.value),
-    n: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args))
+    j: common_assets._imports_5,
+    k: common_vendor.o((...args) => $setup.showAddOptions && $setup.showAddOptions(...args)),
+    l: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args)),
+    m: $setup.inputMessage,
+    n: common_vendor.o(($event) => $setup.inputMessage = $event.detail.value),
+    o: common_assets._imports_6,
+    p: common_vendor.o((...args) => $setup.sendMessage && $setup.sendMessage(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

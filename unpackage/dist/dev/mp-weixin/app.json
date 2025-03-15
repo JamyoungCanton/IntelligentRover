@@ -22,7 +22,9 @@
     "pages/route/route",
     "pages/routeRegistration/routeRegistration",
     "pages/routeRegistrationSuccess/routeRegistrationSuccess",
-    "pages/payment/payment"
+    "pages/payment/payment",
+    "pages/pay_success/pay_success",
+    "pages/Orders/Orders"
   ],
   "window": {
     "navigationBarTextStyle": "black",

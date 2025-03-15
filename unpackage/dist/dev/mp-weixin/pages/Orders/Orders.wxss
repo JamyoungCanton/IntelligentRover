@@ -1,0 +1,164 @@
+
+.page.data-v-b43921d6 {
+  background-color: #f5f5f5;
+  min-height: 125vh;
+}
+
+/* 顶部标题栏 */
+.header.data-v-b43921d6 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background-color: #fff;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+.back-btn.data-v-b43921d6, .favorite-btn.data-v-b43921d6 {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.title.data-v-b43921d6 {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 主视觉图 */
+.main-image.data-v-b43921d6 {
+  width: 100%;
+  height: 500rpx;
+  overflow: hidden;
+}
+.main-image image.data-v-b43921d6 {
+  width: 100%;
+  height: 100%;
+}
+
+/* 评分和月售信息 */
+.rating-section.data-v-b43921d6 {
+  padding: 30rpx;
+  background-color: #fff;
+  margin-bottom: 20rpx;
+}
+.rating-stars.data-v-b43921d6 {
+  display: flex;
+  margin-bottom: 10rpx;
+}
+.rating-score.data-v-b43921d6 {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+.monthly-sales.data-v-b43921d6 {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 活动信息卡片 */
+.promotion-card.data-v-b43921d6 {
+  background-color: #e6f2ff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin: 0 30rpx 30rpx;
+}
+.promotion-title.data-v-b43921d6 {
+  color: #007AFF;
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+}
+.promotion-date.data-v-b43921d6, .promotion-price.data-v-b43921d6, .promotion-details.data-v-b43921d6 {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+/* 联系方式 */
+.contact-section.data-v-b43921d6 {
+  background-color: #fff;
+  padding: 30rpx;
+  margin: 0 30rpx 30rpx;
+}
+.contact-item.data-v-b43921d6 {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+.contact-item.data-v-b43921d6:last-child {
+  margin-bottom: 0;
+}
+.icon-container.data-v-b43921d6 {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+}
+.icon.data-v-b43921d6 {
+  width: 30rpx;
+  height: 30rpx;
+}
+.contact-text.data-v-b43921d6 {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+.call-btn.data-v-b43921d6 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+}
+/* 地图展示 */
+.map-section.data-v-b43921d6 {
+  margin: 0 30rpx 30rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  height: 300rpx;
+}
+.map-section image.data-v-b43921d6 {
+  width: 100%;
+  height: 100%;
+}
+
+/* 底部价格和预订按钮 */
+.bottom-bar.data-v-b43921d6 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  background-color: #fff;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+.price-info.data-v-b43921d6 {
+  display: flex;
+  align-items: center;
+}
+.current-price.data-v-b43921d6 {
+  font-size: 40rpx;
+  color: #FF5A5F;
+  font-weight: bold;
+}
+.original-price.data-v-b43921d6 {
+  font-size: 28rpx;
+  color: #999;
+  text-decoration: line-through;
+  margin-left: 10rpx;
+}
+.book-btn.data-v-b43921d6 {
+  background-color: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 10rpx;
+  padding: 5rpx 50rpx;
+  font-size: 32rpx;
+  margin-left: 290rpx;
+}

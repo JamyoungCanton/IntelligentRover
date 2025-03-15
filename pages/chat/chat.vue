@@ -6,7 +6,7 @@
         <image src="/static/chat/left.png" ></image>
       </view>
       <view class="title">AI旅游助手</view>
-      <view class="more-icon" @tap="showMore">
+      <view class="more-icon avatar ai-avatar" @tap="showMore">
         <image src="/static/chat/more.png" ></image>
       </view>
     </view>
@@ -126,8 +126,8 @@
 
     <!-- Input Area -->
     <view class="input-container">
-      <view class="add-icon" @tap="showAddOptions">
-        <text class="iconfont">&#xe61f;</text>
+      <view class="add-icon avatar ai-avatar" @tap="showAddOptions" style="background-color: #f5f5f5;">
+        <image src="/static/chat/add.png"></image>
       </view>
       <input 
         class="message-input" 
@@ -136,8 +136,8 @@
         placeholder="输入您的需求"
         @confirm="sendMessage"
       />
-      <view class="send-icon" @tap="sendMessage">
-        <text class="iconfont">&#xe616;</text>
+      <view class="send-icon avatar ai-avatar" @tap="sendMessage">
+        <image src="/static/chat/send.png"></image>
       </view>
     </view>
   </view>
@@ -250,7 +250,6 @@ export default {
 		    url: '/pages/payment/payment'
 		  });
 		};
-
     const scrollToLatestMessage = () => {
       nextTick(() => {
         const lastIndex = chatMessages.length;
@@ -358,6 +357,7 @@ export default {
   width: 22px;
   height: 22px;
   object-fit: contain;
+  padding-left: 1px;
 }
 
 .user-avatar {
@@ -370,9 +370,6 @@ export default {
   object-fit: contain;
 }
 
-
-
-
 .category-item {
   width: 18%;
   display: flex;
@@ -380,8 +377,6 @@ export default {
   align-items: center;
   margin-bottom: 12px;
 }
-
-
 
 /* Response image */
 .response-image {
@@ -520,6 +515,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #4285f4;
+  border-radius: 50px;
 }
 
 .add-icon .iconfont, .send-icon .iconfont {

@@ -69,7 +69,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         g: common_vendor.f(commonServices.value, (item, index, i0) => {
           return {
-            a: "170c4fbe-6-" + i0,
+            a: "1d0c339b-6-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "24",
@@ -81,7 +81,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         h: common_vendor.f(otherServices.value, (item, index, i0) => {
           return {
-            a: "170c4fbe-7-" + i0,
+            a: "1d0c339b-7-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "24",
@@ -93,7 +93,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         i: common_vendor.f(tabBarList.value, (item, index, i0) => {
           return {
-            a: "170c4fbe-8-" + i0,
+            a: "1d0c339b-8-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "20",

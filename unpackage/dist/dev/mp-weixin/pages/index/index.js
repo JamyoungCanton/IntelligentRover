@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const common_assets = require("../../common/assets.js");
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -125,11 +126,7 @@ const _sfc_main = {
             e: common_vendor.o(navigateToChat, index)
           };
         }),
-        h: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#FFFFFF"
-        }),
+        h: common_assets._imports_2,
         i: common_vendor.o(showAiDialog)
       };
     };
