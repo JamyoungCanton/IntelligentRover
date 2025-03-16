@@ -152,12 +152,6 @@
 			"style": {
 				"navigationBarTitleText": "支付页面"
 			}
-		},
-		{
-			"path": "pages/itineraryEvaluation/itineraryEvaluation",
-			"style": {
-				"navigationBarTitleText": "itineraryEvaluation"
-			}
 		}
 	],
 	"globalStyle": {

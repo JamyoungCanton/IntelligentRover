@@ -16,13 +16,13 @@
     "pages/chat/chat",
     "pages/foodRecommendation/foodRecommendation",
     "pages/itineraryDetails/itineraryDetails",
+    "pages/itineraryEvaluation/itineraryEvaluation",
     "pages/activity/activity",
     "pages/activityRegistration/activityRegistration",
     "pages/route/route",
     "pages/routeRegistration/routeRegistration",
     "pages/routeRegistrationSuccess/routeRegistrationSuccess",
-    "pages/payment/payment",
-    "pages/itineraryEvaluation/itineraryEvaluation"
+    "pages/payment/payment"
   ],
   "window": {
     "navigationBarTextStyle": "black",

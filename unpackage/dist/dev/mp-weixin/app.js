@@ -18,13 +18,13 @@ if (!Math) {
   "./pages/chat/chat.js";
   "./pages/foodRecommendation/foodRecommendation.js";
   "./pages/itineraryDetails/itineraryDetails.js";
+  "./pages/itineraryEvaluation/itineraryEvaluation.js";
   "./pages/activity/activity.js";
   "./pages/activityRegistration/activityRegistration.js";
   "./pages/route/route.js";
   "./pages/routeRegistration/routeRegistration.js";
   "./pages/routeRegistrationSuccess/routeRegistrationSuccess.js";
   "./pages/payment/payment.js";
-  "./pages/itineraryEvaluation/itineraryEvaluation.js";
 }
 const _sfc_main = {
   onLaunch: function() {
