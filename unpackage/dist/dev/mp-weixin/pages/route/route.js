@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   data() {
     return {
+      safeArea: { top: 0, bottom: 0 },
       // 文本内容
       texts: {
         title: "浪漫双岛游",
@@ -56,6 +57,9 @@ const _sfc_main = {
       }
     };
   },
+  onLoad() {
+    this.getSafeAreaInfo();
+  },
   methods: {
     goBack() {
       common_vendor.index.navigateBack();
@@ -64,9 +68,23 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url: "/pages/routeRegistration/routeRegistration"
       });
+    },
+    getSafeAreaInfo() {
+      const systemInfo = common_vendor.index.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
+const __injectCSSVars__ = () => {
+  common_vendor.useCssVars((_ctx) => ({
+    "0529dfd8": _ctx.safeArea.top + "px"
+  }));
+};
+const __setup__ = _sfc_main.setup;
+_sfc_main.setup = __setup__ ? (props, ctx) => {
+  __injectCSSVars__();
+  return __setup__(props, ctx);
+} : __injectCSSVars__;
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -132,7 +150,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     s: common_vendor.t($data.priceInfo.totalLabel),
     t: common_vendor.t($data.priceInfo.totalValue),
     v: common_vendor.t($data.texts.registerText),
-    w: common_vendor.o((...args) => $options.goToRegistration && $options.goToRegistration(...args))
+    w: common_vendor.o((...args) => $options.goToRegistration && $options.goToRegistration(...args)),
+    x: common_vendor.s(_ctx.__cssVars())
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-9b6e348a"]]);

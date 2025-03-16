@@ -3,5 +3,18 @@
   "projectname": "travel-master",
   "setting": {
     "compileHotReLoad": true
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "pages/itineraryEvaluation/itineraryEvaluation",
+          "pathName": "pages/itineraryEvaluation/itineraryEvaluation",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        }
+      ]
+    }
   }
 }

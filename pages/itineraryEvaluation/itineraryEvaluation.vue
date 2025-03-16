@@ -1,14 +1,14 @@
 <template>
-  <view class="container">
+  <view class="container" >
     <view class="header">
       <view class="back-btn" @click="goBack">
-        <uni-icons type="back" size="24"></uni-icons>
+        <uni-icons :type="icons.back" :size="iconsSize"></uni-icons>
       </view>
-      <text class="title">行程满意度评价</text>
+      <text class="title">{{ texts.title }}</text>
     </view>
     
     <view class="evaluation-section">
-      <text class="section-title">整体满意度</text>
+      <text class="section-title">{{ texts.overallSatisfaction }}</text>
       <view class="satisfaction-options-container">
         <view 
           class="option-item" 
@@ -27,7 +27,7 @@
     </view>
     
     <view class="evaluation-section">
-      <text class="section-title">行程评分</text>
+      <text class="section-title">{{ texts.itineraryRating }}</text>
       <view class="rating-items-container">
         <view class="rating-item" v-for="item in ratingItems" :key="item.name">
           <text class="rating-label">{{ item.name }}</text>
@@ -38,7 +38,7 @@
               :key="n"
               @click="rate(item.name, n)"
             >
-              <image :src="getImagePath(item.ratings >= n ? 'star.png' : 'no-star.png')"></image>
+              <image :src="getImagePath(item.ratings >= n ? icons.starFilled : icons.starEmpty)"></image>
             </view>
           </view>
         </view>
@@ -46,18 +46,18 @@
     </view>
     
     <view class="evaluation-section">
-      <text class="section-title">详细反馈</text>
+      <text class="section-title">{{ texts.detailedFeedback }}</text>
       <view class="feedback-container">
         <textarea 
           class="feedback-textarea" 
-          placeholder="请详细描述您的行程体验，帮助我们提供更好的服务..."
+          :placeholder="texts.feedbackPlaceholder"
           v-model="feedbackText"
           maxlength="500"
         />
         <view class="voice-input">
           <image 
             class="voice-icon" 
-            :src="getImagePath(isVoiceInputActive ? 'voice-active.png' : 'voice-inactive.png')" 
+            :src="getImagePath(isVoiceInputActive ? icons.voiceActive : icons.voiceInactive)" 
             @click="toggleVoiceInput"
           ></image>
         </view>
@@ -66,15 +66,15 @@
       <view class="photo-upload">
         <view class="upload-area">
           <view class="upload-btn" @click="openPhotoLibrary">
-            <image :src="getImagePath('camera.png')"></image>
+            <image :src="getImagePath(icons.camera)"></image>
           </view>
-          <text class="photo-limit">最多上传9张图片，支持 jpg、png 格式</text>
+          <text class="photo-limit">{{ texts.photoLimit }}</text>
         </view>
         <view class="photo-preview-container">
           <view class="photo-preview" v-for="(photo, index) in uploadedPhotos" :key="index">
             <image :src="photo.url"></image>
             <view class="delete-photo" @click="deletePhoto(index)">
-              <image :src="getImagePath('close.png')"></image>
+              <image :src="getImagePath(icons.close)"></image>
             </view>
           </view>
         </view>
@@ -82,38 +82,74 @@
     </view>
     
     <view class="submit-button">
-      <button class="submit-btn" @click="submitFeedback">提交反馈</button>
+      <button class="submit-btn" @click="submitFeedback">{{ texts.submitButton }}</button>
     </view>
   </view>
 </template>
 
 <script>
-
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 
 function getImagePath(imageName) {
-   return `/static/itinerary/${imageName}`;
- }
+  return `/static/itinerary/${imageName}`;
+}
+
 
 export default {
+  components: {
+    uniIcons
+  },
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
+      // 文本内容
+      texts: {
+        title: '行程满意度评价',
+        overallSatisfaction: '整体满意度',
+        itineraryRating: '行程评分',
+        detailedFeedback: '详细反馈',
+        feedbackPlaceholder: '请详细描述您的行程体验，帮助我们提供更好的服务...',
+        photoLimit: '最多上传9张图片，支持 jpg、png 格式',
+        submitButton: '提交反馈'
+      },
+      // 图标和图片资源
+      icons: {
+        back: 'back',
+        notification: 'notification',
+        location: 'location',
+        starFilled: 'star.png',
+        starEmpty: 'no-star.png',
+        voiceActive: 'voice-active.png',
+        voiceInactive: 'voice-inactive.png',
+        camera: 'camera.png',
+        close: 'close.png'
+      },
+      // 图标大小和颜色
+      iconsSize: 24,
+      iconsSizeSmall: 16,
+      iconsColor: '#666',
+      // 满意度选项
       satisfactionOptions: [
         { value: 4, label: '非常满意', icon: 'very-satisfied.png' },
         { value: 3, label: '满意', icon: 'satisfied.png' },
         { value: 2, label: '一般', icon: 'general.png' },
         { value: 1, label: '不满意', icon: 'dissatisfied.png' }
       ],
+      // 评分项目
       ratingItems: [
         { name: '行程安排', ratings: 4 },
         { name: '导游服务', ratings: 5 },
         { name: '餐饮体验', ratings: 3 }
       ],
+      // 反馈内容
       feedbackText: '',
       uploadedPhotos: [],
       isVoiceInputActive: false,
       selectedSatisfaction: null
     };
+  },
+  onLoad() {
+	this.getSafeAreaInfo();
   },
   methods: {
     getImagePath(imageName) {
@@ -181,7 +217,11 @@ export default {
     },
     goBack() {
       uni.navigateBack();
-    }
+    },
+	getSafeAreaInfo() {
+	    const systemInfo = uni.getSystemInfoSync();
+	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+	}
   }
 };
 </script>
@@ -191,6 +231,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

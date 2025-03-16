@@ -3,6 +3,7 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   data() {
     return {
+      safeArea: { top: 0, bottom: 0 },
       // 图标和图片路径
       icons: {
         back: "back",
@@ -60,6 +61,9 @@ const _sfc_main = {
       }
     };
   },
+  onLoad() {
+    this.getSafeAreaInfo();
+  },
   computed: {
     // 活动费用
     activityCost() {
@@ -78,6 +82,10 @@ const _sfc_main = {
       if (this.form.participants > 1) {
         this.form.participants--;
       }
+    },
+    getSafeAreaInfo() {
+      const systemInfo = common_vendor.index.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     },
     increaseParticipants() {
       this.form.participants++;
@@ -111,10 +119,20 @@ const _sfc_main = {
         title: "报名成功",
         icon: "success"
       });
-      common_vendor.index.__f__("log", "at pages/activityRegistration/activityRegistration.vue:202", "报名信息:", this.form);
+      common_vendor.index.__f__("log", "at pages/activityRegistration/activityRegistration.vue:210", "报名信息:", this.form);
     }
   }
 };
+const __injectCSSVars__ = () => {
+  common_vendor.useCssVars((_ctx) => ({
+    "f81af104": _ctx.safeArea.top + "px"
+  }));
+};
+const __setup__ = _sfc_main.setup;
+_sfc_main.setup = __setup__ ? (props, ctx) => {
+  __injectCSSVars__();
+  return __setup__(props, ctx);
+} : __injectCSSVars__;
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -176,7 +194,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     M: common_vendor.t($data.agreements.text),
     N: common_vendor.t($data.buttons.submit),
     O: common_vendor.o((...args) => $options.submitRegistration && $options.submitRegistration(...args)),
-    P: !$data.agreed
+    P: !$data.agreed,
+    Q: common_vendor.s(_ctx.__cssVars())
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-600b90d9"]]);

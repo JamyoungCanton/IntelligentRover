@@ -7,7 +7,23 @@ const _sfc_main = {
   },
   data() {
     return {
-      currentItinerary: {},
+      // 文本内容
+      texts: {
+        title: "行程详情"
+      },
+      // 图标类型和样式
+      icons: {
+        back: "back",
+        notification: "notification",
+        location: "location"
+      },
+      // 图标大小和颜色
+      iconsSize: 24,
+      iconsSizeSmall: 16,
+      iconsColor: "#666",
+      iconsNotificationSize: 20,
+      iconsNotificationColor: "#1989fa",
+      // 日期标签
       dates: [
         { name: "周一", date: "12/11" },
         { name: "周二", date: "12/12" },
@@ -15,13 +31,16 @@ const _sfc_main = {
         { name: "周四", date: "12/14" },
         { name: "周五", date: "12/15" }
       ],
-      currentStep: 1
+      currentStep: 1,
       // 当前进行到哪一步
+      currentItinerary: {}
+      // 当前行程详情
     };
   },
   onLoad(options) {
     const id = parseInt(options.id);
     this.loadItineraryById(id);
+    this.getSafeAreaInfo();
   },
   methods: {
     loadItineraryById(id) {
@@ -42,9 +61,23 @@ const _sfc_main = {
     },
     goBack() {
       common_vendor.index.navigateBack();
+    },
+    getSafeAreaInfo() {
+      const systemInfo = common_vendor.index.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
+const __injectCSSVars__ = () => {
+  common_vendor.useCssVars((_ctx) => ({
+    "05102462": _ctx.safeArea.top + "px"
+  }));
+};
+const __setup__ = _sfc_main.setup;
+_sfc_main.setup = __setup__ ? (props, ctx) => {
+  __injectCSSVars__();
+  return __setup__(props, ctx);
+} : __injectCSSVars__;
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -56,22 +89,23 @@ if (!Math) {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: common_vendor.p({
-      type: "back",
-      size: "24"
+      type: $data.icons.back,
+      size: $data.iconsSize
     }),
     b: common_vendor.o((...args) => $options.goBack && $options.goBack(...args)),
-    c: common_vendor.p({
-      type: "notification",
-      size: "24"
+    c: common_vendor.t($data.texts.title),
+    d: common_vendor.p({
+      type: $data.icons.notification,
+      size: $data.iconsSize
     }),
-    d: common_vendor.f($data.dates, (date, index, i0) => {
+    e: common_vendor.f($data.dates, (date, index, i0) => {
       return {
         a: common_vendor.t(date.name),
         b: common_vendor.t(date.date),
         c: index
       };
     }),
-    e: common_vendor.f($data.currentItinerary.details, (item, index, i0) => {
+    f: common_vendor.f($data.currentItinerary.details, (item, index, i0) => {
       return common_vendor.e({
         a: index < $data.currentStep ? 1 : "",
         b: common_vendor.t(item.time),
@@ -86,16 +120,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         i: index
       });
     }),
-    f: common_vendor.p({
-      type: "location",
-      size: "16",
-      color: "#666"
-    }),
     g: common_vendor.p({
-      type: "notification",
-      size: "20",
-      color: "#1989fa"
-    })
+      type: $data.icons.location,
+      size: $data.iconsSizeSmall,
+      color: $data.iconsColor
+    }),
+    h: common_vendor.p({
+      type: $data.icons.notification,
+      size: $data.iconsNotificationSize,
+      color: $data.iconsNotificationColor
+    }),
+    i: common_vendor.s(_ctx.__cssVars())
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-d4a78779"]]);

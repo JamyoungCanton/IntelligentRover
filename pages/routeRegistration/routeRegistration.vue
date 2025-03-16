@@ -72,6 +72,7 @@
 export default {
   data() {
     return {
+      safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
         banner: '/static/route/beach2.jpg',
@@ -105,6 +106,9 @@ export default {
       }
     };
   },
+  onLoad(){
+	  this.getSafeAreaInfo();
+  },
   computed: {
     totalAmount() {
       return 3999 * this.formData.people;
@@ -114,6 +118,10 @@ export default {
     goBack() {
       uni.navigateBack();
     },
+	getSafeAreaInfo() {
+	    const systemInfo = uni.getSystemInfoSync();
+	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+	},
     sendCode() {
       uni.showToast({
         title: '验证码已发送',
@@ -160,6 +168,7 @@ export default {
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

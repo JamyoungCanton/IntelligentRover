@@ -77,6 +77,7 @@
 export default {
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
       // 文本内容
       texts: {
         title: '浪漫双岛游',
@@ -130,6 +131,9 @@ export default {
       }
     };
   },
+  onLoad(){
+	  this.getSafeAreaInfo();
+  },
   methods: {
     goBack() {
       uni.navigateBack();
@@ -138,6 +142,10 @@ export default {
       uni.navigateTo({
         url: '/pages/routeRegistration/routeRegistration'
       });
+    },
+	getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
@@ -147,6 +155,7 @@ export default {
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

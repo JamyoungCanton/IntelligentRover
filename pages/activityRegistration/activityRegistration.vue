@@ -86,6 +86,7 @@
 export default {
   data() {
     return {
+	  safeArea: { top: 0, bottom: 0 },
       // 图标和图片路径
       icons: {
         back: 'back',
@@ -143,6 +144,9 @@ export default {
       }
     };
   },
+  onLoad(){
+	  this.getSafeAreaInfo();
+  },
   computed: {
     // 活动费用
     activityCost() {
@@ -162,6 +166,10 @@ export default {
         this.form.participants--;
       }
     },
+	getSafeAreaInfo() {
+	    const systemInfo = uni.getSystemInfoSync();
+	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+	},
     increaseParticipants() {
       this.form.participants++;
     },
@@ -209,6 +217,7 @@ export default {
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

@@ -2,11 +2,11 @@
   <view class="container">
     <view class="header">
       <view class="back-btn" @click="goBack">
-        <uni-icons type="back" size="24"></uni-icons>
+        <uni-icons :type="icons.back" :size="iconsSize"></uni-icons>
       </view>
-      <text class="title">行程详情</text>
+      <text class="title">{{ texts.title }}</text>
       <view class="notification">
-        <uni-icons type="notification" size="24"></uni-icons>
+        <uni-icons :type="icons.notification" :size="iconsSize"></uni-icons>
       </view>
     </view>
     
@@ -26,14 +26,14 @@
         <view class="schedule-content">
           <view class="schedule-title">{{ item.title }}</view>
           <view class="schedule-location">
-            <uni-icons type="location" size="16" color="#666"></uni-icons>
+            <uni-icons :type="icons.location" :size="iconsSizeSmall" :color="iconsColor"></uni-icons>
             <text>{{ item.location }}</text>
           </view>
           <view class="schedule-description" v-if="item.description">
             {{ item.description }}
           </view>
           <view class="notification-icon">
-            <uni-icons type="notification" size="20" color="#1989fa"></uni-icons>
+            <uni-icons :type="icons.notification" :size="iconsNotificationSize" :color="iconsNotificationColor"></uni-icons>
           </view>
         </view>
       </view>
@@ -45,9 +45,10 @@
 
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 
+
 function getImagePath(imageName) {
-   return `/static/itinerary/${imageName}`;
- }
+  return `/static/itinerary/${imageName}`;
+}
 
 export default {
   components: {
@@ -55,7 +56,23 @@ export default {
   },
   data() {
     return {
-      currentItinerary: {},
+      // 文本内容
+      texts: {
+        title: '行程详情'
+      },
+      // 图标类型和样式
+      icons: {
+        back: 'back',
+        notification: 'notification',
+        location: 'location'
+      },
+      // 图标大小和颜色
+      iconsSize: 24,
+      iconsSizeSmall: 16,
+      iconsColor: '#666',
+      iconsNotificationSize: 20,
+      iconsNotificationColor: '#1989fa',
+      // 日期标签
       dates: [
         { name: '周一', date: '12/11' },
         { name: '周二', date: '12/12' },
@@ -63,12 +80,14 @@ export default {
         { name: '周四', date: '12/14' },
         { name: '周五', date: '12/15' }
       ],
-      currentStep: 1 // 当前进行到哪一步
+      currentStep: 1, // 当前进行到哪一步
+      currentItinerary: {} // 当前行程详情
     };
   },
   onLoad(options) {
     const id = parseInt(options.id);
     this.loadItineraryById(id);
+	this.getSafeAreaInfo();
   },
   methods: {
     loadItineraryById(id) {
@@ -92,6 +111,10 @@ export default {
     },
     goBack() {
       uni.navigateBack();
+    },
+    getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
   }
 };
@@ -102,6 +125,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
+  padding-top: v-bind(safeArea.top + 'px');
 }
 
 .header {

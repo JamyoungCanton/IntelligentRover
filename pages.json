@@ -16,7 +16,8 @@
 		{
 			"path": "pages/itinerary/itinerary",
 			"style": {
-				"navigationBarTitleText": "itinerary"
+				"navigationBarTitleText": "itinerary",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -100,37 +101,50 @@
 		{
 			"path": "pages/itineraryDetails/itineraryDetails",
 			"style": {
-				"navigationBarTitleText": "itineraryDetails"
+				"navigationBarTitleText": "itineraryDetails",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/itineraryEvaluation/itineraryEvaluation",
+			"style": {
+				"navigationBarTitleText": "itineraryEvaluation",
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/activity/activity",
 			"style": {
-				"navigationBarTitleText": "activity"
+				"navigationBarTitleText": "activity",
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/activityRegistration/activityRegistration",
 			"style": {
-				"navigationBarTitleText": "activityRegistration"
+				"navigationBarTitleText": "activityRegistration",
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/route/route",
 			"style": {
-				"navigationBarTitleText": "route"
+				"navigationBarTitleText": "route",
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/routeRegistration/routeRegistration",
 			"style": {
-				"navigationBarTitleText": "routeRegistration"
+				"navigationBarTitleText": "routeRegistration",
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/routeRegistrationSuccess/routeRegistrationSuccess",
 			"style": {
-				"navigationBarTitleText": "routeRegistrationSuccess"
+				"navigationBarTitleText": "routeRegistrationSuccess",
+				"navigationStyle": "custom"
 			}
 		},
 		{
