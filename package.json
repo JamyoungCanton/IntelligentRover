@@ -15,12 +15,6 @@
   "dependencies": {
     "@dcloudio/types": "^3.4.14",
     "@dcloudio/uni-app": "2.0.2-4050520250307001",
-<<<<<<< HEAD
     "@dcloudio/uni-ui": "^1.5.7"
-=======
-    "dependencies": {
-      "@dcloudio/uni-ui": "^1.5.7"
-    }
->>>>>>> 84dce7757642955dbe2d43974f1981e66820aa09
   }
 }

@@ -1,0 +1,61 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/itinerary/itinerary",
+    "pages/oneCodePass/oneCodePass",
+    "pages/order/order",
+    "pages/my/my",
+    "pages/moreServices/moreServices",
+    "pages/transportationGuide/transportationGuide",
+    "pages/parkingFees/parkingFees",
+    "pages/ticketBooking/ticketBooking",
+    "pages/attractionGuide/attractionGuide",
+    "pages/hotelBooking/hotelBooking",
+    "pages/navbar/navbar",
+    "pages/ticketPoints/ticketPoints",
+    "pages/chat/chat",
+    "pages/foodRecommendation/foodRecommendation",
+    "pages/itineraryDetails/itineraryDetails",
+    "pages/activity/activity",
+    "pages/activityRegistration/activityRegistration",
+    "pages/route/route",
+    "pages/routeRegistration/routeRegistration",
+    "pages/routeRegistrationSuccess/routeRegistrationSuccess",
+    "pages/payment/payment",
+    "pages/itineraryEvaluation/itineraryEvaluation"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#333333",
+    "selectedColor": "#007AFF",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png"
+      },
+      {
+        "pagePath": "pages/itinerary/itinerary",
+        "text": "行程"
+      },
+      {
+        "pagePath": "pages/oneCodePass/oneCodePass",
+        "text": "一码通"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

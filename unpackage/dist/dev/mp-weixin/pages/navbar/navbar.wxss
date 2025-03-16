@@ -1,0 +1,19 @@
+
+.tab-bar.data-v-7464d045 {
+  display: flex;
+  height: 120rpx;
+  background-color: #FFFFFF;
+  border-top: 2rpx solid #EEEEEE;
+}
+.tab-bar-item.data-v-7464d045 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.tab-bar-text.data-v-7464d045 {
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 8rpx;
+}

@@ -35,7 +35,12 @@
       <view class="section">
         <text class="section-title">热门活动</text>
         <view class="activity-container">
-          <view v-for="(activity, index) in activities" :key="index" class="activity-card">
+          <view 
+            v-for="(activity, index) in activities" 
+            :key="index" 
+            class="activity-card"
+            @click="navigateToChat"
+          >
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
             <view class="activity-info">
               <text class="activity-title">{{ activity.title }}</text>
@@ -194,8 +199,12 @@ const navigateTo = (path) => {
   });
 };
 
-
-
+// 跳转到 chat 页面
+const navigateToChat = () => {
+  uni.navigateTo({
+    url: '/pages/chat/chat'
+  });
+};
 </script>
 
 <style>

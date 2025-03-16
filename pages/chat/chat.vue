@@ -2,12 +2,12 @@
   <view class="container">
     <!-- Header -->
     <view class="header">
-      <view class="back-icon" @tap="goBack">
-        <text class="iconfont">&#xe60e;</text>
+      <view class="back-icon avatar ai-avatar" @tap="goBack">
+        <image src="/static/chat/left.png" ></image>
       </view>
       <view class="title">AI旅游助手</view>
       <view class="more-icon" @tap="showMore">
-        <text class="iconfont">&#xe612;</text>
+        <image src="/static/chat/more.png" ></image>
       </view>
     </view>
 
@@ -20,9 +20,10 @@
       :scroll-into-view="scrollIntoView"
     >
       <!-- AI Welcome Message -->
+      <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
         <view class="avatar ai-avatar">
-          <image src="/static/robot-avatar.png" mode="aspectFill"></image>
+          <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
         </view>
         <view class="message-content">
           <text>欢迎使用AI旅游助手！我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</text>
@@ -39,6 +40,7 @@
               <text>{{ item.name }}</text>
             </view>
           </view>
+          
         </view>
       </view>
 
@@ -47,7 +49,7 @@
         <!-- User Message -->
         <view v-if="msg.type === 'user'" class="message user-message" :id="`msg-${index+1}`">
           <view class="avatar user-avatar">
-            <image src="/static/logo.png" mode="aspectFill"></image>
+            <image src="/static/chat/user.png"></image>
           </view>
           <view class="message-content">
             <text>{{ msg.content }}</text>
@@ -57,14 +59,14 @@
         <!-- AI Response -->
         <view v-else class="message ai-message" :id="`msg-${index+1}`">
           <view class="avatar ai-avatar">
-            <image src="/static/robot-avatar.png" mode="aspectFill"></image>
+            <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
           </view>
           <view class="message-content">
             <!-- If message has an image -->
             <image 
               v-if="msg.image" 
               class="response-image" 
-              src="/static/fishing-boat.jpg" 
+              src="/static/chat/fashboat.png" 
               mode="widthFix"
             ></image>
             
@@ -114,7 +116,7 @@
               <button 
                 v-if="msg.itinerary.price" 
                 class="confirm-button" 
-                @tap="confirmItinerary"
+                @tap="navigatortopaymoent"
               >确认行程并购买</button>
             </view>
           </view>
@@ -156,28 +158,28 @@ export default {
       { 
         id: 'fishing', 
         name: '海钓体验', 
-        icon: '/static/icons/fishing.png'
+        icon: '/static/chat/fishing.jpg'
       },
       { 
         id: 'snorkeling', 
         name: '浮潜探索', 
-        icon: '/static/icons/snorkeling.png'
+        icon: '/static/chat/snorkeling.jpg'
       },
       { 
         id: 'family', 
         name: '亲子娱乐', 
-        icon: '/static/icons/family.png'
+        icon: '/static/chat/family.jpg'
       },
       { 
         id: 'leisure', 
         name: '休闲畅游', 
-        icon: '/static/icons/leisure.png'
+        icon: '/static/chat/leisure.jpg'
       },
       { 
         id: 'island', 
         name: '海岛介绍', 
-        icon: '/static/icons/island.png'
-      }
+        icon: '/static/chat/island.jpg'
+      },
     ]);
     
     // Chat messages
@@ -243,24 +245,11 @@ export default {
       scrollToLatestMessage();
     };
 
-    const confirmItinerary = () => {
-      uni.showModal({
-        title: '确认订单',
-        content: '您确定要购买此海钓体验行程吗？总价：¥988',
-        success: (res) => {
-          if (res.confirm) {
-            uni.showLoading({ title: '处理中...' });
-            setTimeout(() => {
-              uni.hideLoading();
-              uni.showToast({
-                title: '订单已确认！',
-                icon: 'success'
-              });
-            }, 1500);
-          }
-        }
-      });
-    };
+    const navigatortopaymoent = () => {
+		  uni.navigateTo({
+		    url: '/pages/payment/payment'
+		  });
+		};
 
     const scrollToLatestMessage = () => {
       nextTick(() => {
@@ -310,7 +299,7 @@ export default {
       selectCategory,
       getCategoryName,
       sendMessage,
-      confirmItinerary,
+      navigatortopaymoent,
       formatItineraryText,
       goBack,
       showMore,
@@ -339,7 +328,7 @@ export default {
 }
 
 .title {
-  font-size: 18px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -410,7 +399,7 @@ export default {
 }
 
 .itinerary-title {
-  font-size: 18px;
+  font-size: 12px;
   font-weight: bold;
   margin-bottom: 16px;
   color: #333333;
@@ -541,6 +530,7 @@ export default {
 /* Font icons */
 @font-face {
   font-family: "iconfont";
+   font-display: swap;
   src: url('data:application/x-font-woff2;charset=utf-8;base64,d09GMgABAAAAAAk...') format('woff2');
 }
 
@@ -612,32 +602,46 @@ export default {
 /* Category styles */
 .category-container {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-top: 16px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin-top: 16px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 5px;
+    width: 100%;
+    overflow-x: auto;
 }
 
 .category-item {
   width: 18%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 12px;
+    max-width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 2px;
+    margin-bottom: 8px;
+    border: 1px solid #eeeeee;
+    border-radius: 8px;
+    padding: 5px;
+    background-color: #f9f9f9;
+    font-size: 12px;
+}
+.category-item:active {
+  transform: scale(0.98);
 }
 
 .category-item image {
   width: 40px;
-  height: 40px;
-  margin-bottom: 6px;
+    height: 40px;
+    margin-bottom: 8px;
 }
 
 .category-item text {
-  font-size: 12px;
-  text-align: center;
-  color: #333333;
+  font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    line-height: 1.4;
 }
 
 /* Header styles update */

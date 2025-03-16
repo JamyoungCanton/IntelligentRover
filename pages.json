@@ -6,7 +6,7 @@
 			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
 		}
 	},
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [ // pages数组中第一项表示应用启动页
 		{
 			"path": "pages/index/index",
 			"style": {
@@ -35,12 +35,6 @@
 			"path": "pages/my/my",
 			"style": {
 				"navigationBarTitleText": "我的"
-			}
-		},
-		{
-			"path": "pages/chat/chat",
-			"style": {
-				"navigationBarTitleText": "chat"
 			}
 		},
 		{
@@ -92,23 +86,63 @@
 			}
 		},
 		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "AI旅游助手"
+			}
+		},
+		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
 				"navigationBarTitleText": "foodRecommendation"
 			}
 		},
 		{
-			"path" : "pages/itineraryDetails/itineraryDetails",
-			"style" : 
-			{
-				"navigationBarTitleText" : "itineraryDetails"
+			"path": "pages/itineraryDetails/itineraryDetails",
+			"style": {
+				"navigationBarTitleText": "itineraryDetails"
 			}
 		},
 		{
-			"path" : "pages/itineraryEvaluation/itineraryEvaluation",
-			"style" : 
-			{
-				"navigationBarTitleText" : "itineraryEvaluation"
+			"path": "pages/activity/activity",
+			"style": {
+				"navigationBarTitleText": "activity"
+			}
+		},
+		{
+			"path": "pages/activityRegistration/activityRegistration",
+			"style": {
+				"navigationBarTitleText": "activityRegistration"
+			}
+		},
+		{
+			"path": "pages/route/route",
+			"style": {
+				"navigationBarTitleText": "route"
+			}
+		},
+		{
+			"path": "pages/routeRegistration/routeRegistration",
+			"style": {
+				"navigationBarTitleText": "routeRegistration"
+			}
+		},
+		{
+			"path": "pages/routeRegistrationSuccess/routeRegistrationSuccess",
+			"style": {
+				"navigationBarTitleText": "routeRegistrationSuccess"
+			}
+		},
+		{
+			"path": "pages/payment/payment",
+			"style": {
+				"navigationBarTitleText": "支付页面"
+			}
+		},
+		{
+			"path": "pages/itineraryEvaluation/itineraryEvaluation",
+			"style": {
+				"navigationBarTitleText": "itineraryEvaluation"
 			}
 		}
 	],
@@ -148,5 +182,5 @@
 			}
 		]
 	}
-	// "uniIdRouter": {}
+	// "uniIdRouter": {},
 }
