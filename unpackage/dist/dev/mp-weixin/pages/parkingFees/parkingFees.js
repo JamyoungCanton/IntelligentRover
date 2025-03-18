@@ -19,35 +19,39 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       { text: "粤 B67890", active: false }
     ]);
     const paymentMethods = common_vendor.ref([
-      { name: "微信支付", icon: "wallet", color: "#07C160", value: "wechat" },
-      { name: "支付宝", icon: "wallet", color: "#1677FF", value: "alipay" }
+      { name: "微信支付", icon: "/static/parkingFees/weixin.png", color: "#07C160", value: "wechat" },
+      { name: "支付宝", icon: "/static/parkingFees/zhifubao.png", color: "#1677FF", value: "alipay" }
     ]);
-    const onHistoryClick = () => {
-    };
-    const onHelpClick = () => {
-    };
-    const onServiceClick = () => {
+    const safeAreaInsets = common_vendor.index.getSystemInfoSync().safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
+    const goBack = () => {
+      common_vendor.index.navigateBack();
     };
     const onPayClick = () => {
     };
     return (_ctx, _cache) => {
       return {
-        a: common_vendor.o(onHistoryClick),
+        a: common_vendor.o(goBack),
         b: common_vendor.p({
-          type: "clock",
+          type: "back",
           size: "24",
-          color: "#ffffff"
+          color: "#333333"
         }),
-        c: plateProvince.value,
-        d: common_vendor.o(($event) => plateProvince.value = $event.detail.value),
-        e: plateNumber.value,
-        f: common_vendor.o(($event) => plateNumber.value = $event.detail.value),
-        g: common_vendor.p({
+        c: common_vendor.p({
+          type: "search",
+          size: "24",
+          color: "#333333"
+        }),
+        d: common_vendor.unref(safeAreaInsets).top ? common_vendor.unref(safeAreaInsets).top + "px" : "0px",
+        e: plateProvince.value,
+        f: common_vendor.o(($event) => plateProvince.value = $event.detail.value),
+        g: plateNumber.value,
+        h: common_vendor.o(($event) => plateNumber.value = $event.detail.value),
+        i: common_vendor.p({
           type: "loop",
           size: "24",
           color: "#666666"
         }),
-        h: common_vendor.f(historyPlates.value, (plate, index, i0) => {
+        j: common_vendor.f(historyPlates.value, (plate, index, i0) => {
           return {
             a: common_vendor.t(plate.text),
             b: index,
@@ -56,34 +60,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             })
           };
         }),
-        i: common_vendor.f(paymentMethods.value, (item, index, i0) => {
+        k: common_vendor.f(paymentMethods.value, (item, index, i0) => {
           return {
-            a: "740cbdea-2-" + i0,
-            b: common_vendor.p({
-              type: item.icon,
-              size: "24",
-              color: item.color
-            }),
-            c: common_vendor.t(item.name),
-            d: item.value,
-            e: selectedPayment.value === item.value,
-            f: common_vendor.o(($event) => selectedPayment.value = item.value, index),
-            g: index
+            a: item.icon,
+            b: common_vendor.t(item.name),
+            c: item.value,
+            d: selectedPayment.value === item.value,
+            e: common_vendor.o(($event) => selectedPayment.value = item.value, index),
+            f: index
           };
         }),
-        j: common_vendor.p({
-          type: "help",
-          size: "20",
-          color: "#666666"
-        }),
-        k: common_vendor.o(onHelpClick),
-        l: common_vendor.p({
-          type: "phone",
-          size: "20",
-          color: "#666666"
-        }),
-        m: common_vendor.o(onServiceClick),
-        n: common_vendor.o(onPayClick)
+        l: common_vendor.o(onPayClick)
       };
     };
   }

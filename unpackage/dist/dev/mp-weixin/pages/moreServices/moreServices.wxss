@@ -84,9 +84,9 @@ page {
   color: #666666;
 }
 .forecast-icon {
-  width: 80rpx;
-  height: 80rpx;
-  margin: 16rpx 0;
+  width: 60rpx;
+  height: 60rpx;
+  margin: 18rpx 0;
 }
 .temp {
   font-size: 28rpx;
@@ -122,6 +122,7 @@ page {
 }
 .emergency-btn {
   display: flex;
+  margin-top: 20rpx;
   align-items: center;
   justify-content: center;
   height: 88rpx;
@@ -162,11 +163,13 @@ page {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 32rpx;
+  margin-top: 22rpx;
 }
 .other-service-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32rpx;
+  margin-top: 22rpx;
 }
 .service-item {
   display: flex;
@@ -188,22 +191,5 @@ page {
   font-size: 24rpx;
   color: #333333;
 }
-.tab-bar {
-  display: flex;
-  height: 120rpx;
-  background-color: #FFFFFF;
-  border-top: 1px solid #EEEEEE;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.tab-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.tab-text {
-  margin-top: 8rpx;
-  font-size: 20rpx;
-  color: #999999;
-}
+
+

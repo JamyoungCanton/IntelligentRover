@@ -82,7 +82,7 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_assets._imports_0$1,
+    a: common_assets._imports_0$2,
     b: common_vendor.f($setup.item.schedule, (scheduleItem, index, i0) => {
       return {
         a: common_vendor.t(scheduleItem.time),
@@ -90,7 +90,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         c: index
       };
     }),
-    c: common_assets._imports_1$1,
+    c: common_assets._imports_1$2,
     d: common_vendor.f($setup.item.costDetails, (costItem, index, i0) => {
       return {
         a: common_vendor.t(costItem.name),
@@ -101,13 +101,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($setup.item.originalPrice),
     f: common_vendor.t($setup.item.discount),
     g: common_vendor.t($setup.item.finalPrice),
-    h: common_assets._imports_2$1,
+    h: common_assets._imports_2$2,
     i: $setup.userPhone,
     j: common_vendor.o(($event) => $setup.userPhone = $event.detail.value),
-    k: common_assets._imports_3$1,
+    k: common_assets._imports_3$2,
     l: $setup.notes,
     m: common_vendor.o(($event) => $setup.notes = $event.detail.value),
-    n: common_assets._imports_4$1,
+    n: common_assets._imports_4$2,
     o: common_assets._imports_5,
     p: $setup.selectedPayment === "wechat"
   }, $setup.selectedPayment === "wechat" ? {

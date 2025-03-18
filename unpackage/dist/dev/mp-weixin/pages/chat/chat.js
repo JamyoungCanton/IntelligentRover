@@ -148,9 +148,9 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_assets._imports_0,
+    a: common_assets._imports_0$1,
     b: common_vendor.o((...args) => $setup.goBack && $setup.goBack(...args)),
-    c: common_assets._imports_1,
+    c: common_assets._imports_1$1,
     d: common_vendor.o((...args) => $setup.showMore && $setup.showMore(...args)),
     e: common_assets._imports_2,
     f: common_vendor.f($setup.categories, (item, index, i0) => {
@@ -165,14 +165,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return common_vendor.e({
         a: msg.type === "user"
       }, msg.type === "user" ? {
-        b: common_assets._imports_3,
+        b: common_assets._imports_3$1,
         c: common_vendor.t(msg.content),
         d: `msg-${index + 1}`
       } : common_vendor.e({
         e: common_assets._imports_2,
         f: msg.image
       }, msg.image ? {
-        g: common_assets._imports_4
+        g: common_assets._imports_4$1
       } : {}, {
         h: msg.content
       }, msg.content ? {

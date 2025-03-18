@@ -1,7 +1,7 @@
 
 <template>
   <view class="page">
-    <view class="nav-bar fixed-top flex-row items-center px-32">
+    <!-- <view class="nav-bar fixed-top flex-row items-center px-32">
       <view class="flex-row items-center text-white">
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
         <uni-icons type="spinner-cycle" size="24" color="#FFD700" />
@@ -9,7 +9,7 @@
         <uni-icons type="spinner-cycle" size="24" color="#FFD700" />
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
       </view>
-    </view>
+    </view> -->
 
     <scroll-view class="main-content" scroll-y>
       <view class="search-container">
@@ -65,7 +65,7 @@
 
     <view class="ai-float-btn" @click="showAiDialog">
       <view class="ai-btn">
-        <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
+        <img src="/static/chat/robot-avatar.png" alt="">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -235,7 +235,7 @@ page {
 
 .nav-bar {
   width: 100%;
-  height: 88rpx;
+  height: 68rpx;
   background-color: #4A88FF;
   z-index: 100;
 }
@@ -322,6 +322,7 @@ page {
 .section {
   margin-top: 16rpx;
   padding: 48rpx 32rpx;
+  /* margin-bottom: ; */
   background-color: #FFFFFF;
 }
 
@@ -329,13 +330,15 @@ page {
   font-size: 32rpx;
   font-weight: 500;
   color: #333333;
-  margin-bottom: 32rpx;
+  margin-bottom: 132rpx;
+  
 }
 
 .activity-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 32rpx;
+  margin-top: 22rpx;
 }
 
 .activity-card {
@@ -369,6 +372,7 @@ page {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  margin-top: 25rpx;
 }
 
 .route-image {
@@ -418,6 +422,12 @@ page {
   align-items: center;
   justify-content: center;
   box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
+}
+.ai-btn image{
+  width: 44rpx;
+  height: 44rpx;
+  align-items: center;
+  justify-content: center;
 }
 
 .ai-text {

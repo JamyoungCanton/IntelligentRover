@@ -10,17 +10,17 @@ page {
 }
 .nav-bar {
   height: 88rpx;
-  background-color: #1E88E5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32rpx;
-  flex-shrink: 0;
+  background-color: #FFFFFF;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 .nav-title {
-  font-size: 32rpx;
-  color: #ffffff;
+  font-size: 34rpx;
   font-weight: 500;
+  color: #333333;
 }
 .main-content {
   flex: 1;
@@ -31,7 +31,9 @@ page {
   background-color: #ffffff;
   border-radius: 16rpx;
   padding: 32rpx;
+  /* margin-righrt: 32rpx; */
   margin-bottom: 32rpx;
+  width: 83%;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 .label {
@@ -121,12 +123,16 @@ page {
   flex-direction: column;
   gap: 32rpx;
 }
+.payment-info image{
+  width: 38rpx;
+  height: 38rpx;
+}
 .payment-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16rpx;
-  border: 2rpx solid #e0e0e0;
+  /* border: 2rpx solid #e0e0e0; */
   border-radius: 8rpx;
 }
 .payment-info {
@@ -134,17 +140,25 @@ page {
   align-items: center;
   gap: 24rpx;
 }
-.help-section {
-  display: flex;
-  justify-content: space-between;
+.standard{
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
   margin-bottom: 32rpx;
+  width: 83%;
 }
-.help-btn {
+.payStandingContent{
   display: flex;
-  align-items: center;
-  gap: 8rpx;
-  font-size: 28rpx;
-  color: #666666;
+  flex-direction: column;
+}
+.PayStandingTitle{
+  font-size: 32rpx;
+  font-weight: 500;
+}
+.payStandingContent{
+  margin-top: 22rpx;
+  font-size: 26rpx;
+  font-weight: 300;
 }
 .bottom-bar {
   height: 120rpx;
@@ -152,13 +166,10 @@ page {
   padding: 0rpx 32rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  align-content: center;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
-}
-.total-price {
-  font-size: 28rpx;
-  color: #666666;
 }
 .pay-btn {
   background-color: #1E88E5;
@@ -166,6 +177,7 @@ page {
   padding: 0rpx 64rpx;
   border-radius: 8rpx;
   font-size: 32rpx;
+  width: 500rpx;
 }
 
 
