@@ -65,7 +65,11 @@
 
     <view class="ai-float-btn" @click="showAiDialog">
       <view class="ai-btn">
+<<<<<<< HEAD
         <img src="/static/chat/robot-avatar.png" alt="">
+=======
+        <image class="ai-icon" src="/static/chat/robot-avatar.png"></image>
+>>>>>>> paymont
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -413,15 +417,31 @@ page {
   z-index: 99;
 }
 
+.ai-btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
 .ai-btn {
   width: 96rpx;
   height: 96rpx;
   background-color: #4A88FF;
   border-radius: 999rpx;
   display: flex;
+  box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
+  object-fit: contain;
+  overflow: hidden;
+}
+
+.ai-icon {
+  width: 50rpx;
+  height: 50rpx;
 }
 .ai-btn image{
   width: 44rpx;

@@ -1,324 +1,347 @@
 <template>
-  <view class="itinerary-confirmation">
-    <!-- 页面标题 -->
-    <view class="page-title">行程确认</view>
-
-    <!-- 行程安排 -->
-    <view class="section">
-      <view class="section-header">
-        <image src="/static/icons/itinerary.png" mode="aspectFit"></image>
-        <text>行程安排</text>
-      </view>
-      <view class="schedule-item" v-for="(scheduleItem, index) in item.schedule" :key="index">
-        <text class="time">{{ scheduleItem.time }}</text>
-        <text class="description">{{ scheduleItem.detail }}</text>
+  <view class="page">
+    <view class="sticky-header">
+      <view class="header">
+        行程确认
       </view>
     </view>
 
-    <!-- 费用明细 -->
-    <view class="section">
-      <view class="section-header">
-        <image src="/static/icons/cost.png" mode="aspectFit"></image>
-        <text>费用明细</text>
-      </view>
-      <view class="cost-item" v-for="(costItem, index) in item.costDetails" :key="index">
-        <text class="cost-name">{{ costItem.name }}</text>
-        <text style="color: black;">{{ costItem.price }}</text>
-      </view>
-      <view class="cost-summary">
-        <view class="summary-item">
-          <text>原价</text>
-          <text>{{ item.originalPrice }}</text>
+    <view class="content">
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="calendar" size="20" color="#3B82F6"/>
+          <text class="card-title">行程安排</text>
         </view>
-        <view class="summary-item">
-          <text>优惠金额</text>
-          <text style="color: black;">{{ item.discount }}</text>
-        </view>
-        <view class="summary-item total">
-          <text>实付金额</text>
-          <text style="color: cornflowerblue; border: 30px;">{{ item.finalPrice }}</text>
+        <view class="schedule-list">
+          <view class="schedule-item">
+            <text class="time">上午</text>
+            <text class="desc">前往"珊瑚海滩"，享受浮潜服务</text>
+          </view>
+          <view class="schedule-item">
+            <text class="time">中午</text>
+            <text class="desc">在"海滩餐厅"享用午餐</text>
+          </view>
+          <view class="schedule-item">
+            <text class="time">下午</text>
+            <text class="desc">参观"海岛文化博物馆"</text>
+          </view>
+          <view class="schedule-item">
+            <text class="time">晚上</text>
+            <text class="desc">返回"海景酒店B"休息</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 游客信息 -->
-    <view class="section">
-      <view class="section-header">
-        <image src="/static/icons/user.png" mode="aspectFit"></image>
-        <text>游客信息</text>
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="list" size="20" color="#3B82F6"/>
+          <text class="card-title">费用明细</text>
+        </view>
+        <view class="fee-list">
+          <view class="fee-item">
+            <text class="fee-name">浮潜服务</text>
+            <text class="fee-value">¥200/人</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">午餐套餐</text>
+            <text class="fee-value">¥150/人</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">海景酒店住宿</text>
+            <text class="fee-value">¥500/晚</text>
+          </view>
+          <view class="fee-summary">
+            <view class="fee-line">
+              <text class="fee-name">原价</text>
+              <text class="fee-original">¥850</text>
+            </view>
+            <view class="fee-line">
+              <text class="fee-name">优惠金额</text>
+              <text class="fee-discount">-¥100</text>
+            </view>
+            <view class="fee-line">
+              <text class="fee-name-highlight">实付金额</text>
+              <text class="fee-final">¥750</text>
+            </view>
+          </view>
+        </view>
       </view>
-      <input class="user-input" v-model="userPhone" placeholder="请输入手机号码" />
-    </view>
 
-    <!-- 备注信息 -->
-    <view class="section">
-      <view class="section-header">
-        <image src="/static/icons/notes.png" mode="aspectFit"></image>
-        <text>备注信息</text>
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="person" size="20" color="#3B82F6"/>
+          <text class="card-title">游客信息</text>
+        </view>
+        <view class="input-wrapper">
+          <input type="number" v-model="phone" class="phone-input" placeholder="请输入手机号码"/>
+          <view class="clear-icon" @click="clearPhone" v-if="phone">
+            <uni-icons type="clear" size="20" color="#999"/>
+          </view>
+        </view>
       </view>
-      <textarea class="notes-input" v-model="notes" placeholder="请输入特殊需求或注意事项" />
+
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="chatboxes" size="20" color="#3B82F6"/>
+          <text class="card-title">备注信息</text>
+        </view>
+        <textarea v-model="remark" class="remark-input" placeholder="请输入特殊需求或注意事项"/>
+      </view>
+
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="wallet" size="20" color="#3B82F6"/>
+          <text class="card-title">支付方式</text>
+        </view>
+        <view class="payment-list">
+          <view class="payment-item" :class="{'selected': selectedPayment === 'wechat'}" @click="selectPayment('wechat')">
+            <view class="payment-info">
+              <uni-icons type="weixin" size="24" color="#07C160"/>
+              <text class="payment-name">微信支付</text>
+            </view>
+            <uni-icons v-if="selectedPayment === 'wechat'" type="checkbox-filled" size="20" color="#3B82F6"/>
+          </view>
+          <view class="payment-item" :class="{'selected': selectedPayment === 'alipay'}" @click="selectPayment('alipay')">
+            <view class="payment-info">
+              <uni-icons type="wallet" size="24" color="#1677FF"/>
+              <text class="payment-name">支付宝</text>
+            </view>
+            <uni-icons v-if="selectedPayment === 'alipay'" type="checkbox-filled" size="20" color="#3B82F6"/>
+          </view>
+        </view>
+      </view>
     </view>
 
-    <!-- 支付方式 -->
-    <!-- 支付方式 -->
-<view class="section">
-  <view class="section-header">
-    <image src="/static/icons/payment.png" mode="aspectFit"></image>
-    <text>支付方式</text>
-  </view>
-  <view class="payment-method" @tap="selectPaymentMethod('wechat')">
-    <view class="payment-content">
-      <image src="/static/icons/wechat.png" mode="aspectFit"></image>
-      <text>微信支付</text>
+    <view class="bottom-bar">
+      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥750</button>
     </view>
-    <image v-if="selectedPayment === 'wechat'" src="/static/icons/checked.png" mode="aspectFit"></image>
-  </view>
-  <view class="payment-method" @tap="selectPaymentMethod('alipay')">
-    <view class="payment-content">
-      <image src="/static/icons/alipay.png" mode="aspectFit"></image>
-      <text>支付宝</text>
-    </view>
-    <image v-if="selectedPayment === 'alipay'" src="/static/icons/checked.png" mode="aspectFit"></image>
-  </view>
-</view>
-
-    <!-- 确认支付按钮 -->
-    <button class="confirm-payment" @tap="confirmPayment">
-      确认支付 {{ item.finalPrice }}
-    </button>
   </view>
 </template>
 
-<script>
-import { reactive, ref } from 'vue';
+<script lang="ts" setup>
+import { ref } from 'vue';
 
-export default {
-  setup() {
-    // 行程数据
-    const item = reactive({
-      title: '海钓体验行程安排',
-      schedule: [
-        { time: '上午', detail: '前往"珊瑚海滩"，享受浮潜服务' },
-        { time: '中午', detail: '在"海滩餐厅"享用午餐' },
-        { time: '下午', detail: '参观"海岛文化博物馆"' },
-        { time: '晚上', detail: '返回"海景酒店B"休息' }
-      ],
-      costDetails: [
-        { name: '浮潜服务', price: '¥200/人' },
-        { name: '午餐套餐', price: '¥150/人' },
-        { name: '海景酒店住宿', price: '¥500/晚' }
-      ],
-      originalPrice: '¥850',
-      discount: '-¥100',
-      finalPrice: '¥750'
-    });
+const phone = ref('13800138000');
+const remark = ref('');
+const selectedPayment = ref('wechat');
 
-    // 游客手机号
-    const userPhone = ref('');
+const clearPhone = () => {
+  phone.value = '';
+};
 
-    // 备注信息
-    const notes = ref('');
+const selectPayment = (payment: string) => {
+  selectedPayment.value = payment;
+};
 
-    // 支付方式
-    const selectedPayment = ref('wechat');
-
-    // 验证手机号格式
-    const validatePhone = (phone) => {
-      const phoneRegex = /^1[3-9]\d{9}$/; // 简单的中国大陆手机号正则
-      return phoneRegex.test(phone);
-    };
-
-    // 选择支付方式
-    const selectPaymentMethod = (method) => {
-      selectedPayment.value = method;
-    };
-
-    // 显示提示框（封装 uni.showToast）
-    const showToast = (options) => {
-      try {
-        uni.showToast(options);
-      } catch (error) {
-        console.error('显示提示框失败:', error);
-      }
-    };
-
-    // 显示模态框（封装 uni.showModal）
-    const showModal = (options, callback) => {
-      try {
-        uni.showModal({
-          ...options,
-          success: (res) => {
-            if (res.confirm && typeof callback === 'function') {
-              callback();
-            }
-          }
-        });
-      } catch (error) {
-        console.error('显示模态框失败:', error);
-      }
-    };
-
-    // 确认支付
-    const confirmPayment = () => {
-      if (!userPhone.value) {
-        showToast({ title: '请输入手机号码', icon: 'none' });
-        return;
-      }
-
-      if (!validatePhone(userPhone.value)) {
-        showToast({ title: '请输入有效的手机号码', icon: 'none' });
-        return;
-      }
-
-      showModal(
-        {
-          title: '确认支付',
-          content: `您确认支付 ${item.finalPrice} 吗？`
-        },
-        () => {
-          showToast({ title: '支付成功！', icon: 'success' });
-          // 这里可以添加支付成功的逻辑，比如跳转到支付结果页面
-        }
-      );
-    };
-
-    return {
-      item,
-      userPhone,
-      notes,
-      selectedPayment,
-      selectPaymentMethod,
-      confirmPayment
-    };
-  }
+const handleConfirmPayment = () => {
+  uni.navigateTo({
+    url: '/pages/pay_success/pay_success'
+  });
 };
 </script>
 
 <style>
-.itinerary-confirmation {
-  padding: 20px;
+page {
+  height: 100%;
   background-color: #f5f5f5;
 }
 
-.page-title {
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.section {
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background-color: #ffffff;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
 }
 
-.section-header {
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.header {
+  height: 88rpx;
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 500;
 }
 
-.section-header image {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
+.content {
+  flex: 1;
+  padding: 32rpx;
+  overflow-y: auto;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  margin-left: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
 }
 
 .schedule-item {
   display: flex;
-  margin-bottom: 10px;
 }
 
-.schedule-item .time {
-  width: 80px;
-  font-weight: bold;
-  color: darkgrey;
+.time {
+  width: 120rpx;
+  font-size: 26rpx;
+  color: #666666;
 }
 
-.schedule-item .description {
+.desc {
   flex: 1;
+  font-size: 26rpx;
 }
 
-.cost-item {
+.fee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.fee-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  color: darkgrey;
-}
-.cost-summary {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #eeeeee;
+  font-size: 26rpx;
 }
 
-.summary-item {
+.fee-name {
+  color: #666666;
+}
+
+.fee-summary {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1px solid #f0f0f0;
+}
+
+.fee-line {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  color: darkgrey;
+  align-items: center;
+  margin-top: 16rpx;
 }
 
-.summary-item.total {
-  font-weight: bold;
+.fee-original {
+  font-size: 26rpx;
+  color: #999999;
+  text-decoration: line-through;
 }
 
-.user-input {
-  border: 1px solid #eeeeee;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 10px;
+.fee-discount {
+  font-size: 26rpx;
+  color: #ff4d4f;
 }
 
-.notes-input {
-  border: 1px solid #eeeeee;
-  border-radius: 8px;
-  padding: 10px;
-  height: 120px;
-  margin-top: 10px;
+.fee-name-highlight {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.fee-final {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #3B82F6;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.phone-input {
   width: 100%;
+  height: 88rpx;
+  padding: 0 32rpx;
+  border: 1px solid #e5e5e5;
+  border-radius: 16rpx;
+  font-size: 28rpx;
 }
 
-.payment-method {
+.clear-icon {
+  position: absolute;
+  right: 32rpx;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.remark-input {
+  width: 100%;
+  height: 180rpx;
+  padding: 24rpx;
+  border: 1px solid #e5e5e5;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+}
+
+.payment-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.payment-item {
+  display: flex;
   justify-content: space-between;
-  padding: 15px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #f0f0f0;
+  align-items: center;
+  padding: 24rpx;
+  border: 1px solid #e5e5e5;
+  border-radius: 16rpx;
 }
 
-.payment-content {
+.payment-item.selected {
+  border-color: #3B82F6;
+}
+
+.payment-info {
   display: flex;
   align-items: center;
+  gap: 24rpx;
 }
 
-.payment-content image {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
+.payment-name {
+  font-size: 28rpx;
 }
 
-.payment-content text {
-  font-size: 16px;
-  color: #333333;
+.bottom-bar {
+  padding: 32rpx;
+  background-color: #ffffff;
+  border-top: 1px solid #f0f0f0;
 }
 
-.payment-method image:last-child {
-  width: 24px;
-  height: 24px;
-}
-
-.confirm-payment {
-  background-color: #4285f4;
+.confirm-btn {
+  width: 100%;
+  height: 88rpx;
+  background-color: #3B82F6;
   color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 15px;
-  font-size: 16px;
-  margin-top: 20px;
+  font-size: 32rpx;
+  font-weight: 500;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
