@@ -1,1 +1,0 @@
-<view class="tab-bar data-v-7464d045"><view wx:for="{{a}}" wx:for-item="item" wx:key="d" class="tab-bar-item data-v-7464d045"><uni-icons wx:if="{{item.b}}" class="data-v-7464d045" u-i="{{item.a}}" bind:__l="__l" u-p="{{item.b}}"></uni-icons><text class="tab-bar-text data-v-7464d045">{{item.c}}</text></view></view>
