@@ -28,22 +28,22 @@
           <view class="forecast-items">
             <view class="forecast-item">
               <text class="time">现在</text>
-              <image class="forecast-icon" src="https://mastergo.com/ai/api/search-image?query=weather icon, sunny day, minimalist design, centered composition&width=40&height=40&orientation=squarish" mode="aspectFit"></image>
+              <image class="forecast-icon" src="/static/moreService/now.png"></image>
               <text class="temp">28°</text>
             </view>
             <view class="forecast-item">
               <text class="time">14:00</text>
-              <image class="forecast-icon" src="https://ai-public.mastergo.com/ai/img_res/846d79f866ea78db9636b6690d260166.jpg" mode="aspectFit"></image>
+              <image class="forecast-icon" src="/static/moreService/dayu.png" mode="aspectFit"></image>
               <text class="temp">29°</text>
             </view>
             <view class="forecast-item">
               <text class="time">15:00</text>
-              <image class="forecast-icon" src="https://ai-public.mastergo.com/ai/img_res/58c8b03f8f17e504d5cd6c4af84141f3.jpg" mode="aspectFit"></image>
+              <image class="forecast-icon" src="/static/moreService/leizhengyu.png" mode="aspectFit"></image>
               <text class="temp">27°</text>
             </view>
             <view class="forecast-item">
               <text class="time">16:00</text>
-              <image class="forecast-icon" src="https://mastergo.com/ai/api/search-image?query=weather icon, sunny day, minimalist design, centered composition&width=40&height=40&orientation=squarish" mode="aspectFit"></image>
+              <image class="forecast-icon" src="/static/moreService/after.png" mode="aspectFit"></image>
               <text class="temp">26°</text>
             </view>
           </view>
@@ -69,13 +69,17 @@
       <!-- 紧急服务 -->
       <view class="section">
         <text class="section-title">紧急服务</text>
-        <button class="emergency-btn" type="warn">
+        <button class="emergency-btn warn" >
           <uni-icons type="phone-filled" size="20" color="#FFFFFF"></uni-icons>
           <text class="emergency-text">紧急求助 120</text>
         </button>
         <view class="emergency-grid">
           <view class="emergency-item">
-            <uni-icons type="car" size="24" color="#0066FF"></uni-icons>
+            <image
+              src="/static/moreService/save.png"
+              mode="scaleToFill"
+              style="height: 35rpx; width: 35rpx;"
+            />
             <text class="item-title">医疗救助</text>
             <text class="item-desc">0759-120</text>
           </view>
@@ -125,12 +129,7 @@
     </view>
 
     <!-- 底部导航栏 -->
-    <view class="tab-bar">
-      <view class="tab-item" v-for="(item, index) in tabBarList" :key="index">
-        <uni-icons :type="item.icon" size="20" color="#999999"></uni-icons>
-        <text class="tab-text">{{ item.text }}</text>
-      </view>
-    </view>
+  
   </view>
 </template>
 
@@ -139,7 +138,7 @@ import { ref } from 'vue';
 
 const commonServices = ref([
   { icon: 'location', name: '景点攻略' },
-  { icon: 'ticket', name: '船票预定' },
+  { icon: 'location', name: '船票预定' },
   { icon: 'shop', name: '美食推荐' },
   { icon: 'home', name: '住宿预定' },
   { icon: 'flag', name: '停车收费' },
@@ -156,13 +155,7 @@ const otherServices = ref([
   { icon: 'help', name: '医疗援助' }
 ]);
 
-const tabBarList = ref([
-  { icon: 'home', text: '首页' },
-  { icon: 'calendar', text: '行程' },
-  { icon: 'scan', text: '一码通' },
-  { icon: 'file', text: '订单' },
-  { icon: 'person', text: '我的' }
-]);
+
 </script>
 
 <style>
@@ -268,9 +261,9 @@ page {
 }
 
 .forecast-icon {
-  width: 80rpx;
-  height: 80rpx;
-  margin: 16rpx 0;
+  width: 60rpx;
+  height: 60rpx;
+  margin: 18rpx 0;
 }
 
 .temp {
@@ -314,6 +307,7 @@ page {
 
 .emergency-btn {
   display: flex;
+  margin-top: 20rpx;
   align-items: center;
   justify-content: center;
   height: 88rpx;
@@ -360,12 +354,14 @@ page {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 32rpx;
+  margin-top: 22rpx;
 }
 
 .other-service-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32rpx;
+  margin-top: 22rpx;
 }
 
 .service-item {
@@ -391,26 +387,6 @@ page {
   color: #333333;
 }
 
-.tab-bar {
-  display: flex;
-  height: 120rpx;
-  background-color: #FFFFFF;
-  border-top: 1px solid #EEEEEE;
-  padding-bottom: env(safe-area-inset-bottom);
-}
 
-.tab-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.tab-text {
-  margin-top: 8rpx;
-  font-size: 20rpx;
-  color: #999999;
-}
 </style>
 

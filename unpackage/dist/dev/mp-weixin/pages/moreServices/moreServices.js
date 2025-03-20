@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const common_assets = require("../../common/assets.js");
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -13,7 +14,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   setup(__props) {
     const commonServices = common_vendor.ref([
       { icon: "location", name: "景点攻略" },
-      { icon: "ticket", name: "船票预定" },
+      { icon: "location", name: "船票预定" },
       { icon: "shop", name: "美食推荐" },
       { icon: "home", name: "住宿预定" },
       { icon: "flag", name: "停车收费" },
@@ -28,13 +29,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       { icon: "gift", name: "快递服务" },
       { icon: "help", name: "医疗援助" }
     ]);
-    const tabBarList = common_vendor.ref([
-      { icon: "home", text: "首页" },
-      { icon: "calendar", text: "行程" },
-      { icon: "scan", text: "一码通" },
-      { icon: "file", text: "订单" },
-      { icon: "person", text: "我的" }
-    ]);
     return (_ctx, _cache) => {
       return {
         a: common_vendor.p({
@@ -42,32 +36,44 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           size: "22",
           color: "#666666"
         }),
-        b: common_vendor.p({
+        b: common_assets._imports_0,
+        c: common_assets._imports_1,
+        d: common_assets._imports_2$1,
+        e: common_assets._imports_3,
+        f: common_vendor.p({
           type: "phone-filled",
           size: "20",
           color: "#FFFFFF"
         }),
-        c: common_vendor.p({
-          type: "car",
-          size: "24",
-          color: "#0066FF"
-        }),
-        d: common_vendor.p({
+        g: common_assets._imports_4,
+        h: common_vendor.p({
           type: "refreshempty",
           size: "24",
           color: "#0066FF"
         }),
-        e: common_vendor.p({
+        i: common_vendor.p({
           type: "notification",
           size: "24",
           color: "#0066FF"
         }),
-        f: common_vendor.p({
+        j: common_vendor.p({
           type: "help",
           size: "24",
           color: "#0066FF"
         }),
-        g: common_vendor.f(commonServices.value, (item, index, i0) => {
+        k: common_vendor.f(commonServices.value, (item, index, i0) => {
+          return {
+            a: "170c4fbe-5-" + i0,
+            b: common_vendor.p({
+              type: item.icon,
+              size: "24",
+              color: "#0066FF"
+            }),
+            c: common_vendor.t(item.name),
+            d: index
+          };
+        }),
+        l: common_vendor.f(otherServices.value, (item, index, i0) => {
           return {
             a: "170c4fbe-6-" + i0,
             b: common_vendor.p({
@@ -76,30 +82,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
               color: "#0066FF"
             }),
             c: common_vendor.t(item.name),
-            d: index
-          };
-        }),
-        h: common_vendor.f(otherServices.value, (item, index, i0) => {
-          return {
-            a: "170c4fbe-7-" + i0,
-            b: common_vendor.p({
-              type: item.icon,
-              size: "24",
-              color: "#0066FF"
-            }),
-            c: common_vendor.t(item.name),
-            d: index
-          };
-        }),
-        i: common_vendor.f(tabBarList.value, (item, index, i0) => {
-          return {
-            a: "170c4fbe-8-" + i0,
-            b: common_vendor.p({
-              type: item.icon,
-              size: "20",
-              color: "#999999"
-            }),
-            c: common_vendor.t(item.text),
             d: index
           };
         })

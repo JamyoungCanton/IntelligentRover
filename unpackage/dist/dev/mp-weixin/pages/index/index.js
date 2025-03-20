@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const common_assets = require("../../common/assets.js");
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   _easycom_uni_icons2();
@@ -89,31 +90,11 @@ const _sfc_main = {
     return (_ctx, _cache) => {
       return {
         a: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#4CAF50"
-        }),
-        b: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#FFD700"
-        }),
-        c: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#FFD700"
-        }),
-        d: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#4CAF50"
-        }),
-        e: common_vendor.p({
           type: "search",
           size: "16",
           color: "#999"
         }),
-        f: common_vendor.f(gridItems, (item, index, i0) => {
+        b: common_vendor.f(gridItems, (item, index, i0) => {
           return {
             a: item.image,
             b: common_vendor.t(item.text),
@@ -121,7 +102,7 @@ const _sfc_main = {
             d: common_vendor.o(($event) => navigateTo(item.path), index)
           };
         }),
-        g: common_vendor.f(activities, (activity, index, i0) => {
+        c: common_vendor.f(activities, (activity, index, i0) => {
           return {
             a: activity.image,
             b: common_vendor.t(activity.title),
@@ -130,13 +111,9 @@ const _sfc_main = {
             e: common_vendor.o(navigateToActivity, index)
           };
         }),
-        h: common_vendor.o(navigateToRoute),
-        i: common_vendor.p({
-          type: "spinner-cycle",
-          size: "24",
-          color: "#FFFFFF"
-        }),
-        j: common_vendor.o(showAiDialog)
+        d: common_vendor.o(navigateToRoute),
+        e: common_assets._imports_2,
+        f: common_vendor.o(showAiDialog)
       };
     };
   }

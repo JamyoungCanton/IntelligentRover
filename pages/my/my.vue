@@ -78,24 +78,24 @@
   </view>
 </template>
 
-<script lang="ts" setup>
+<script  setup>
 import { ref } from 'vue';
 
 const gridItems = ref([
   {
-    icon: 'https://ai-public.mastergo.com/ai/img_res/4192a970e1156a95833445f64fb4c1ba.jpg',
+    icon: '/static/my/collectItinerary.png',
     text: '收藏行程'
   },
   {
-    icon: 'https://ai-public.mastergo.com/ai/img_res/76778fc2a8a40ed9c6e1b9e5fc87f4e5.jpg',
+    icon: '/static/my/historyOrder.png',
     text: '历史订单'
   },
   {
-    icon: 'https://ai-public.mastergo.com/ai/img_res/dab4ae9b672cb2e2be0c9e1ff722477b.jpg',
+    icon: '/static/my/pendingTravelOrders.png',
     text: '待出行'
   },
   {
-    icon: 'https://ai-public.mastergo.com/ai/img_res/c2d8fdc4258102ea814c9a54ec7e97f3.jpg',
+    icon: '/static/my/customerService.png',
     text: '客服中心'
   }
 ]);
@@ -178,8 +178,8 @@ page {
 }
 
 .grid-icon {
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   margin-bottom: 16rpx;
 }
 
