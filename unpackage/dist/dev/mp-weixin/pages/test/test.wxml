@@ -1,0 +1,1 @@
+<view class="container"><view class="input-area"><input class="input-box" type="text" placeholder="请输入测试内容" value="{{a}}" bindinput="{{b}}"/><button class="send-button" bindtap="{{c}}">发送</button></view><view class="result-area"><text class="result-text">结果：</text><text class="result-content">{{d}}</text></view></view>

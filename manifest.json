@@ -5,6 +5,8 @@
     "versionName" : "1.0.0",
     "versionCode" : "100",
     "transformPx" : false,
+    "requestDomain" : [ "http://47.106.243.134" ],
+    // "http://47.106.243.134:7181/island/front/ai/chat/chatMessage"
     /* 5+App特有相关 */
     "app-plus" : {
         "usingComponents" : true,
@@ -54,7 +56,11 @@
         "setting" : {
             "urlCheck" : false
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "permission" : {},
+        "secureNetwork" : {
+            "enable" : false
+        }
     },
     "mp-alipay" : {
         "usingComponents" : true
@@ -68,5 +74,11 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "vueVersion" : "3"
+    "vueVersion" : "3",
+    "h5" : {
+        "devServer" : {
+            "https" : true,
+            "port" : ""
+        }
+    }
 }
