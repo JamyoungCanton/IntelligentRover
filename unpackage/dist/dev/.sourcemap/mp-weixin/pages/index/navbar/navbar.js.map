@@ -1,1 +1,0 @@
-{"version":3,"file":"navbar.js","sources":["../devolope_tool/HBuilderX/plugins/uniapp-cli-vite/uniPage:/cGFnZXMvaW5kZXgvbmF2YmFyL25hdmJhci52dWU"],"sourcesContent":["import MiniProgramPage from 'D:/travel-master/pages/index/navbar/navbar.vue'\nwx.createPage(MiniProgramPage)"],"names":[],"mappings":";;;;;;;AACA,GAAG,WAAW,eAAe;"}
