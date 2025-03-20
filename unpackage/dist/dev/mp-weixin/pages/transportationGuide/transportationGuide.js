@@ -74,7 +74,7 @@ const _sfc_main = {
           return {
             a: common_vendor.t(station.name),
             b: common_vendor.t(station.distance),
-            c: "b637293e-3-" + i0,
+            c: "57790180-3-" + i0,
             d: common_vendor.f(station.lines, (line, lineIndex, i1) => {
               return {
                 a: common_vendor.t(line),

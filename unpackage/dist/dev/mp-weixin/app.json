@@ -22,7 +22,8 @@
     "pages/route/route",
     "pages/routeRegistration/routeRegistration",
     "pages/routeRegistrationSuccess/routeRegistrationSuccess",
-    "pages/payment/payment"
+    "pages/payment/payment",
+    "pages/test/test"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -61,5 +62,6 @@
       }
     ]
   },
+  "permission": {},
   "usingComponents": {}
 }

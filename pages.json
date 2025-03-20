@@ -152,6 +152,13 @@
 			"style": {
 				"navigationBarTitleText": "支付页面"
 			}
+		},
+		{
+			"path" : "pages/test/test",
+			"style" : 
+			{
+				"navigationBarTitleText" : "test"
+			}
 		}
 	],
 	"globalStyle": {

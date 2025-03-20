@@ -7,6 +7,7 @@ const _sfc_main = {
   },
   data() {
     return {
+      safeArea: { top: 0, bottom: 0 },
       // 文本内容
       texts: {
         title: "行程详情"

@@ -63,7 +63,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         k: common_vendor.f(commonServices.value, (item, index, i0) => {
           return {
-            a: "6588999f-5-" + i0,
+            a: "170c4fbe-5-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "24",
@@ -75,7 +75,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         l: common_vendor.f(otherServices.value, (item, index, i0) => {
           return {
-            a: "6588999f-6-" + i0,
+            a: "170c4fbe-6-" + i0,
             b: common_vendor.p({
               type: item.icon,
               size: "24",

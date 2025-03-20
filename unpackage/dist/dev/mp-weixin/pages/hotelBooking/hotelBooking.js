@@ -64,10 +64,10 @@ const _sfc_main = {
             d: common_vendor.f(5, (n, k1, i1) => {
               return {
                 a: n,
-                b: "6f18fadf-4-" + i0 + "-" + i1
+                b: "209cb0fe-4-" + i0 + "-" + i1
               };
             }),
-            e: "6f18fadf-5-" + i0,
+            e: "209cb0fe-5-" + i0,
             f: common_vendor.t(hotel.location),
             g: common_vendor.t(hotel.price),
             h: index

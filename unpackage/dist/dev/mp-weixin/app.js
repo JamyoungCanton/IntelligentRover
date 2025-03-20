@@ -25,6 +25,7 @@ if (!Math) {
   "./pages/routeRegistration/routeRegistration.js";
   "./pages/routeRegistrationSuccess/routeRegistrationSuccess.js";
   "./pages/payment/payment.js";
+  "./pages/test/test.js";
 }
 const _sfc_main = {
   onLaunch: function() {

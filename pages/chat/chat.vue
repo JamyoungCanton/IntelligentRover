@@ -3,11 +3,11 @@
     <!-- Header -->
     <view class="header">
       <view class="back-icon avatar ai-avatar" @tap="goBack">
-        <image src="/static/chat/left.png" ></image>
+        <image src="/static/chat/left.png"></image>
       </view>
       <view class="title">AI旅游助手</view>
       <view class="more-icon" @tap="showMore">
-        <image src="/static/chat/more.png" ></image>
+        <image src="/static/chat/more.png"></image>
       </view>
     </view>
 
@@ -19,7 +19,6 @@
       scroll-with-animation
       :scroll-into-view="scrollIntoView"
     >
-      <!-- AI Welcome Message -->
       <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
         <view class="avatar ai-avatar">
@@ -40,7 +39,6 @@
               <text>{{ item.name }}</text>
             </view>
           </view>
-          
         </view>
       </view>
 
@@ -71,7 +69,7 @@
             ></image>
             
             <!-- Text content -->
-            <text v-if="msg.content">{{ msg.content }}</text>
+            <rich-text v-if="msg.content" class="message-content" :nodes="msg.content"></rich-text>
             
             <!-- Itinerary details -->
             <view v-if="msg.itinerary" class="itinerary-container">
@@ -213,7 +211,7 @@ export default {
       }
     ]);
 
-    // Methods remain the same
+    // Methods
     const selectCategory = (categoryId) => {
       console.log('Selected category:', categoryId);
       chatMessages.push({
@@ -235,21 +233,77 @@ export default {
         content: inputMessage.value
       });
       inputMessage.value = '';
-      setTimeout(() => {
-        chatMessages.push({
-          type: 'ai',
-          content: '我已收到您的需求，正在为您准备相关信息，请稍候。'
-        });
-        scrollToLatestMessage();
-      }, 1000);
       scrollToLatestMessage();
+      
+      // 调用智能对话接口
+      callAIInterface(chatMessages[chatMessages.length - 1].content);
+    };
+
+    const callAIInterface = (userQuery) => {
+      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage';
+      const data = {
+        conversation_id: '',
+        inputs: {
+          original_intention: 'unknown',
+          recommended_plan: 'unknown'
+        },
+        query: userQuery,
+        user: 'abc-123'
+      };
+
+      uni.request({
+        url: url,
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(data),
+        success: (res) => {
+          if (res.data.success) {
+            const aiResponse = res.data.result.answer;
+            // 格式化返回的数据
+            const formattedResponse = formatResponse(aiResponse);
+            chatMessages.push({
+              type: 'ai',
+              content: formattedResponse
+            });
+            scrollToLatestMessage();
+          } else {
+            console.error('接口调用失败:', res);
+            chatMessages.push({
+              type: 'ai',
+              content: '接口调用失败:很抱歉，我暂时无法回答您的问题，请稍后再试。'
+            });
+            scrollToLatestMessage();
+          }
+        },
+        fail: (err) => {
+          console.error('请求失败:', err);
+          chatMessages.push({
+            type: 'ai',
+            content: '请求失败:很抱歉，我暂时无法回答您的问题，请稍后再试。'
+          });
+          scrollToLatestMessage();
+        }
+      });
+    };
+
+    const formatResponse = (responseText) => {
+      // 在这里对接口返回的文本进行格式化处理
+      // 例如，可以将文本中的换行符替换为<br>标签，以便在页面上正确显示
+      let formattedText = responseText.replace(/\n/g, '<br>');
+      
+      // 进一步的格式化逻辑可以根据实际需求添加
+      // 例如，添加HTML标签来美化文本，或者处理特定的关键词
+      
+      return formattedText;
     };
 
     const navigatortopaymoent = () => {
-		  uni.navigateTo({
-		    url: '/pages/payment/payment'
-		  });
-		};
+      uni.navigateTo({
+        url: '/pages/payment/payment'
+      });
+    };
 
     const scrollToLatestMessage = () => {
       nextTick(() => {
@@ -300,6 +354,7 @@ export default {
       getCategoryName,
       sendMessage,
       navigatortopaymoent,
+      formatResponse,
       formatItineraryText,
       goBack,
       showMore,
@@ -318,6 +373,16 @@ export default {
   padding: 0 10px;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  height: 44px;
+  background-color: #4285f4;
+  color: #ffffff;
+  position: relative;
+}
 
 .back-icon, .more-icon {
   width: 24px;
@@ -328,21 +393,19 @@ export default {
 }
 
 .title {
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 500;
 }
 
-/* Chat container styles */
 .chat-container {
   flex: 1;
   overflow-y: auto;
 }
 
-
 .avatar {
-  width: 40px; /* Increased from 32px */
-  height: 40px; /* Increased from 32px */
-  border-radius: 4px; /* Changed from 50% to make it square */
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -361,7 +424,7 @@ export default {
 }
 
 .user-avatar {
-  background-color: #4CAF50; /* Green color for logo background */
+  background-color: #4CAF50;
 }
 
 .user-avatar image {
@@ -369,9 +432,6 @@ export default {
   height: 100%;
   object-fit: contain;
 }
-
-
-
 
 .category-item {
   width: 18%;
@@ -381,16 +441,12 @@ export default {
   margin-bottom: 12px;
 }
 
-
-
-/* Response image */
 .response-image {
   width: 100%;
   border-radius: 8px;
   margin-bottom: 12px;
 }
 
-/* Itinerary styles */
 .itinerary-container {
   background-color: #ffffff;
   border-radius: 8px;
@@ -438,7 +494,6 @@ export default {
   color: #4285f4;
 }
 
-/* Recommendations styles */
 .recommendations {
   margin-bottom: 16px;
 }
@@ -458,7 +513,6 @@ export default {
   display: block;
 }
 
-/* Price styles */
 .price-container {
   margin-top: 16px;
   margin-bottom: 16px;
@@ -489,7 +543,6 @@ export default {
   margin-top: 6px;
 }
 
-/* Button styles */
 .confirm-button {
   background-color: #4285f4;
   color: #ffffff;
@@ -505,7 +558,6 @@ export default {
   opacity: 0.9;
 }
 
-/* Input area styles */
 .input-container {
   display: flex;
   align-items: center;
@@ -527,39 +579,6 @@ export default {
   color: #4285f4;
 }
 
-/* Font icons */
-@font-face {
-  font-family: "iconfont";
-   font-display: swap;
-  src: url('data:application/x-font-woff2;charset=utf-8;base64,d09GMgABAAAAAAk...') format('woff2');
-}
-
-.iconfont {
-  font-family: "iconfont" !important;
-  font-size: 16px;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Add these styles to your existing CSS */
-
-/* Avatar base64 images */
-.user-avatar {
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC/klEQVRYR+2WTUhUURTH/+e+N6ZmamVqRR+GhFSWRBQtJnUxRR8LF5G0qE0QSQVR0CJoEUwQBEEFtQiCaB0V0aooKoI+oE1QUaGVqKWNjR8zOuP7uHHnzfNNM3nfyI3mwqzevfec87v/c+69h7DKF61y/1gD+N8KrK1AqDxsB8kwiPwA+QhkHiQZYGQA5AIYB1QnGHYwO0DkAMlxgNLAyL0on88EwZEgGQWRBFAKjNFrEX/yfQAIVoR9gHoIUBDAEsB6EHkBHAXoDoBbAH0FcwYgN0BugK8A/BjgFEg4QOQEcwpQQyAEAfEBmALzN4B/AuIHcwGgHwC/A9RHEFkAcgEwQJwB8yUwPwbEBaJtYL4NUApQGkAJMEcBfgXwOBh7ALEBPArmZyDKB8QBUAGg3gB4AOYNAH0D82swXwVoAEQOgIIgioHIB2Y/iC6DOQtQDIQ4mN+CyA6iAkDtBtRukDgAEQBzGsxvALUVzM8BtQvEHpDwgTkBUBcgPCDKB/MIQJUg0QDmHhDtBfgioCYB6gQoD8xZgBIgqgLzGEDlALWAxAUwPwJRPzjbCxYHQRQBcwpEHSB2AhwBqBGgKjC/A9FVMJUDFAYoF8xZQI0C4gHEDfA4QI0AdYH5KYjOgbkYEDsgHgBJEDUDHAKoBcwDILoE5jIQOUDiAXgYoHaA2sD8HETnwVwCCBsgXoDHAGoHqB3Mb0DUDeYSEOUAUgDwIEAdAHWC+S2ILoC5GEQukHgAHgKoE6BuML8DUQ+YiwDKAUk+wAMAdQHUDeb3IOoFcyEgTpB4AB4EqAugHjB/BNFFMB8AkQskHoDvA3QcoB4wfwJRH5gLAHGAxA3wXYBOANQL5s8g6gdzPiAOQNwA3wHoJEAnwfwFRANgzgfEDogb4NsAnQLoFJi/gmgQzPsAsQPiBvgWQKcBOg3mbyAaAnMeIDaQuAG+CdAZgM6C+TuIhsG8FxAbIG6AbwB0DqBzYP4BojtgzgXEBogL4OsAnQfoApgzIBoB816AbCDx/AYnOl1BcQIXEwAAAABJRU5ErkJggg==');
-  background-size: cover;
-  background-position: center;
-}
-
-.ai-avatar {
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC30lEQVRYR+2WS0hUURjH/+fMnTt3xsrUysyHkT2oKKmHFUVR0aooaVGLFlFBtChaVLRpEdGiKGjTokWUVItWQREFQdQiCgqiInoQGfYwK8fxzsy9c+89J+6dO3Pvg5Fq0YVz4Nxzvv/v+/7n8R3CKhe5yv1jA+B/K7ChQNhXsQsgJ0A2gEQAEgAjDaAYQDaA4wDVgOAAswUkVpDYQBwHKAXmBECRq+F8JghOBMkQiASgZDDGr4b9ifcBEPCVewB1H6AggEWA9SDyADgK0G2AegD6AmYHQC6AXAB/BPgjwEmQsIPICeYkoIZBCALiAzAJ5q8A/wDED+Y8gL4D/A5QH0BkAcgFwABxBsyXwPwIEBeItoH5FkApQGkAJcAcBfgVwGNg7AHEBvAomJ+BKB8QB0AFgHoD4D6YNwD0DcyvwXwVoAEQOQAKgigGIh+Y/SC6DOYsQDEQ4mB+CyI7iAoAtRtQu0HiAEQAzGkwvwHUVjA/B9QukNhB4gNzAlAXIDwgygfzCECVINEA5h4Q7QX4IqAmAeoEKA/MWYASIKoCcwygcoBaQOICmB+B6Ac42wsWB0EUAXMKRHUgdgIcAagRoCoAvwPRVTCVAxQGKBfMWUCNAuIBxA3wOECNAHWB+SmIzoG5GBA7IB4ASRA1AxwCqAXMAyC6BOYyENlB4gF4GKB2gNrA/BxE58FcAggbIF6AxwBqB6gdzG9A1A3mEhA5QOIB+CFA2wHqBPNbEF0AczGIXCDxADwEUCdA3WB+B6IeMBcBlAPmfIAHAOoCqBvM70HUC+ZCQJwg8QA8CFAXQPfA/BFEF8F8AEQukHgAvg/QcYB6wPwJRH1gLgDEARIPwHcBOgHQfTB/BlE/mPMBcQDiBvgOQCcBug/mLyAaAHM+IHZA3ADfBugUQA/A/BVEQ2DOA8QGEjfAtwA6DdBDMH8D0TCY9wJiA8QN8E2AzgD0CMzfQTQC5r2A2ABxAXwdoPMAPQZzBkQjYN4LkA0knj8BJ0hdQbF7rgAAAABJRU5ErkJggg==');
-  background-size: 22px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #4285f4;
-}
-
-/* Message alignment fixes */
 .message {
   display: flex;
   margin-bottom: 16px;
@@ -599,85 +618,49 @@ export default {
   color: #ffffff;
 }
 
-/* Category styles */
 .category-container {
   display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    margin-top: 16px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    padding: 5px;
-    width: 100%;
-    overflow-x: auto;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  margin-top: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 5px;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .category-item {
   width: 18%;
-    max-width: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-right: 2px;
-    margin-bottom: 8px;
-    border: 1px solid #eeeeee;
-    border-radius: 8px;
-    padding: 5px;
-    background-color: #f9f9f9;
-    font-size: 12px;
+  max-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 2px;
+  margin-bottom: 8px;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  padding: 5px;
+  background-color: #f9f9f9;
+  font-size: 12px;
 }
+
 .category-item:active {
   transform: scale(0.98);
 }
 
 .category-item image {
   width: 40px;
-    height: 40px;
-    margin-bottom: 8px;
+  height: 40px;
+  margin-bottom: 8px;
 }
 
 .category-item text {
   font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    text-align: center;
-    line-height: 1.4;
-}
-
-/* Header styles update */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-  height: 44px;
-  background-color: #4285f4;
-  color: #ffffff;
-  position: relative;
-}
-
-.back-icon, .more-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-}
-
-.title {
-  font-size: 18px;
   font-weight: 500;
-  color: #ffffff;
-}
-
-/* Input area update */
-.input-container {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #ffffff;
-  border-top: 1px solid #eeeeee;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .message-input {
@@ -690,12 +673,56 @@ export default {
   font-size: 14px;
 }
 
-.add-icon, .send-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 海钓指南样式 */
+.fishing-guide {
+  margin-top: 20px;
+  padding: 0 10px;
+}
+
+.guide-intro {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.divider {
+  height: 2px;
+  background-color: #4285f4;
+  margin: 20px 0;
+}
+
+.section-title {
+  font-size: 20px;
   color: #4285f4;
+  margin-bottom: 15px;
+}
+
+.guide-section {
+  margin-bottom: 20px;
+}
+
+.guide-item {
+  margin-bottom: 15px;
+}
+
+.item-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 5px;
+}
+
+.item-content {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.guide-conclusion {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-top: 20px;
+  font-weight: bold;
 }
 </style>
