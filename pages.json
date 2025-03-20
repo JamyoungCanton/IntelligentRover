@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
 	"easycom": {
 		"autoscan": true,
 		"custom": {
@@ -200,4 +201,199 @@
 		]
 	}
 	// "uniIdRouter": {},
+=======
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/itinerary/itinerary",
+      "style": {
+        "navigationBarTitleText": "itinerary"
+      }
+    },
+    {
+      "path": "pages/oneCodePass/oneCodePass",
+      "style": {
+        "navigationBarTitleText": "oneCodePass"
+      }
+    },
+    {
+      "path": "pages/order/order",
+      "style": {
+        "navigationBarTitleText": "订单"
+      }
+    },
+    {
+      "path": "pages/my/my",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/moreServices/moreServices",
+      "style": {
+        "navigationBarTitleText": "moreServices"
+      }
+    },
+    {
+      "path": "pages/transportationGuide/transportationGuide",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/parkingFees/parkingFees",
+      "style": {
+        "navigationBarTitleText": "parkingFees"
+      }
+    },
+    {
+      "path": "pages/ticketBooking/ticketBooking",
+      "style": {
+        "navigationBarTitleText": "ticketBooking"
+      }
+    },
+    {
+      "path": "pages/attractionGuide/attractionGuide",
+      "style": {
+        "navigationBarTitleText": "attractionGuide"
+      }
+    },
+    {
+      "path": "pages/hotelBooking/hotelBooking",
+      "style": {
+        "navigationBarTitleText": "hotelBooking"
+      }
+    },
+    {
+      "path": "pages/navbar/navbar",
+      "style": {
+        "navigationBarTitleText": "navbar"
+      }
+    },
+    {
+      "path": "pages/ticketPoints/ticketPoints",
+      "style": {
+        "navigationBarTitleText": "ticketPoints"
+      }
+    },
+    {
+      "path": "pages/chat/chat",
+      "style": {
+        "navigationBarTitleText": "AI旅游助手"
+      }
+    },
+    {
+      "path": "pages/foodRecommendation/foodRecommendation",
+      "style": {
+        "navigationBarTitleText": "foodRecommendation"
+      }
+    },
+    {
+      "path": "pages/itineraryDetails/itineraryDetails",
+      "style": {
+        "navigationBarTitleText": "itineraryDetails"
+      }
+    },
+    {
+      "path": "pages/itineraryEvaluation/itineraryEvaluation",
+      "style": {
+        "navigationBarTitleText": "itineraryEvaluation"
+      }
+    },
+    {
+      "path": "pages/activity/activity",
+      "style": {
+        "navigationBarTitleText": "activity"
+      }
+    },
+    {
+      "path": "pages/activityRegistration/activityRegistration",
+      "style": {
+        "navigationBarTitleText": "activityRegistration"
+      }
+    },
+    {
+      "path": "pages/route/route",
+      "style": {
+        "navigationBarTitleText": "route"
+      }
+    },
+    {
+      "path": "pages/routeRegistration/routeRegistration",
+      "style": {
+        "navigationBarTitleText": "routeRegistration"
+      }
+    },
+    {
+      "path": "pages/routeRegistrationSuccess/routeRegistrationSuccess",
+      "style": {
+        "navigationBarTitleText": "routeRegistrationSuccess"
+      }
+    },
+    {
+      "path": "pages/payment/payment",
+      "style": {
+        "navigationBarTitleText": "支付页面"
+      }
+    },
+    {
+    	"path" : "pages/pay_success/pay_success",
+    	"style" : 
+    	{
+    		"navigationBarTitleText" : ""
+    	}
+    },
+    {
+    	"path" : "pages/Orders/Orders",
+    	"style" : 
+    	{
+    		"navigationBarTitleText" : ""
+    	}
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#333333",
+    "selectedColor": "#007AFF",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png"
+      },
+      {
+        "pagePath": "pages/itinerary/itinerary",
+        "text": "行程"
+      },
+      {
+        "pagePath": "pages/oneCodePass/oneCodePass",
+        "text": "一码通"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "我的"
+      }
+    ]
+  }
+>>>>>>> paymont
 }
