@@ -141,6 +141,7 @@
   </view>
 </template>
 
+
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue';
 
@@ -211,6 +212,9 @@ export default {
       }
     ]);
 
+    // 用于累积分块数据
+    const chunkBuffer = ref('');
+
     // Methods
     const selectCategory = (categoryId) => {
       console.log('Selected category:', categoryId);
@@ -240,7 +244,7 @@ export default {
     };
 
     const callAIInterface = (userQuery) => {
-      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage';
+      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
@@ -251,31 +255,18 @@ export default {
         user: 'abc-123'
       };
 
-      uni.request({
+      // 创建请求任务
+      const requestTask = uni.request({
         url: url,
         method: 'POST',
         header: {
           'Content-Type': 'application/json'
         },
         data: JSON.stringify(data),
+        responseType: 'text', // 设置响应类型为文本
+        enableChunked: true, // 启用分块传输模式
         success: (res) => {
-          if (res.data.success) {
-            const aiResponse = res.data.result.answer;
-            // 格式化返回的数据
-            const formattedResponse = formatResponse(aiResponse);
-            chatMessages.push({
-              type: 'ai',
-              content: formattedResponse
-            });
-            scrollToLatestMessage();
-          } else {
-            console.error('接口调用失败:', res);
-            chatMessages.push({
-              type: 'ai',
-              content: '接口调用失败:很抱歉，我暂时无法回答您的问题，请稍后再试。'
-            });
-            scrollToLatestMessage();
-          }
+          console.log('请求成功:', res);
         },
         fail: (err) => {
           console.error('请求失败:', err);
@@ -286,6 +277,88 @@ export default {
           scrollToLatestMessage();
         }
       });
+
+      // 监听分块数据到达事件
+      requestTask.onChunkReceived((res) => {
+        try {
+          // 将ArrayBuffer转换为文本
+          const uint8Array = new Uint8Array(res.data);
+          const decoder = new TextDecoder('utf-8');
+          const text = decoder.decode(uint8Array);
+          
+          // 处理SSE格式数据
+          if (text.startsWith('data:')) {
+            // 提取data:后面的JSON字符串
+            const jsonStr = text.substring(5).trim();
+            
+            try {
+              // 解析JSON数据
+              const jsonData = JSON.parse(jsonStr);
+              console.log('解析到的JSON数据:', jsonData);
+              
+              // 处理消息事件
+              if (jsonData.event === 'message' && jsonData.answer !== undefined) {
+                // 解码Unicode编码的answer
+                const decodedAnswer = decodeUnicode(jsonData.answer);
+                console.log('解码后的答案:', decodedAnswer);
+                
+                // 获取当前AI消息
+                const aiMessage = chatMessages[chatMessages.length - 1];
+                
+                // 打字机效果：累加新内容
+                aiMessage.content = (aiMessage.content || '') + decodedAnswer;
+                
+                // 滚动到最新消息
+                scrollToLatestMessage();
+              }
+              // 处理消息结束事件
+              else if (jsonData.event === 'node_finished') {
+                messageComplete.value = true;
+                console.log('对话完成');
+              }
+            } catch (jsonError) {
+              console.warn('JSON解析错误:', jsonError);
+            }
+          }
+        } catch (e) {
+          console.error('数据处理失败:', e);
+        }
+      });
+    };
+
+    // 解码分块数据
+    const decodeChunkData = (data) => {
+      let text = '';
+      try {
+        // 将ArrayBuffer转换为Uint8Array
+        const uint8Array = new Uint8Array(data);
+        // 将二进制数据转换为字符串
+        text = String.fromCharCode.apply(null, uint8Array);
+        // 处理特殊字符编码
+        text = decodeURIComponent(escape(text));
+      } catch (e) {
+        console.error('数据解码失败:', e);
+      }
+      return text;
+    };
+
+    // 解码 Unicode 编码
+    const decodeUnicode = (str) => {
+      if (!str) return '';
+      
+      try {
+        // 处理直接的Unicode编码
+        if (typeof str === 'string') {
+          // 使用正则表达式替换所有Unicode转义序列
+          return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => 
+            String.fromCharCode(parseInt(hex, 16))
+          );
+        }
+        return str;
+      } catch (e) {
+        console.error('Unicode 解码失败:', e);
+        return str;
+      }
     };
 
     const formatResponse = (responseText) => {
@@ -340,6 +413,26 @@ export default {
       });
     };
 
+    // 打字机效果
+    const showTypingEffect = (content) => {
+      const aiMessage = {
+        type: 'ai',
+        content: ''
+      };
+      chatMessages.push(aiMessage);
+      
+      let charIndex = 0;
+      const interval = setInterval(() => {
+        if (charIndex < content.length) {
+          aiMessage.content += content[charIndex];
+          charIndex++;
+          scrollToLatestMessage();
+        } else {
+          clearInterval(interval);
+        }
+      }, 100); // 每100毫秒显示一个字符
+    };
+
     onMounted(() => {
       scrollToLatestMessage();
     });
@@ -363,6 +456,8 @@ export default {
   }
 };
 </script>
+
+
 
 <style>
 .container {

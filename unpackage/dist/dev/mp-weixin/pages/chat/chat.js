@@ -62,8 +62,9 @@ const _sfc_main = {
         }
       }
     ]);
+    common_vendor.ref("");
     const selectCategory = (categoryId) => {
-      common_vendor.index.__f__("log", "at pages/chat/chat.vue:216", "Selected category:", categoryId);
+      common_vendor.index.__f__("log", "at pages/chat/chat.vue:220", "Selected category:", categoryId);
       chatMessages.push({
         type: "user",
         content: `我想了解${getCategoryName(categoryId)}的详细信息`
@@ -86,7 +87,7 @@ const _sfc_main = {
       callAIInterface(chatMessages[chatMessages.length - 1].content);
     };
     const callAIInterface = (userQuery) => {
-      const url = "http://47.106.243.134:7181/island/front/ai/chat/chatMessage";
+      const url = "http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream";
       const data = {
         conversation_id: "",
         inputs: {
@@ -96,33 +97,22 @@ const _sfc_main = {
         query: userQuery,
         user: "abc-123"
       };
-      common_vendor.index.request({
+      const requestTask = common_vendor.index.request({
         url,
         method: "POST",
         header: {
           "Content-Type": "application/json"
         },
         data: JSON.stringify(data),
+        responseType: "text",
+        // 设置响应类型为文本
+        enableChunked: true,
+        // 启用分块传输模式
         success: (res) => {
-          if (res.data.success) {
-            const aiResponse = res.data.result.answer;
-            const formattedResponse = formatResponse(aiResponse);
-            chatMessages.push({
-              type: "ai",
-              content: formattedResponse
-            });
-            scrollToLatestMessage();
-          } else {
-            common_vendor.index.__f__("error", "at pages/chat/chat.vue:272", "接口调用失败:", res);
-            chatMessages.push({
-              type: "ai",
-              content: "接口调用失败:很抱歉，我暂时无法回答您的问题，请稍后再试。"
-            });
-            scrollToLatestMessage();
-          }
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:269", "请求成功:", res);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/chat/chat.vue:281", "请求失败:", err);
+          common_vendor.index.__f__("error", "at pages/chat/chat.vue:272", "请求失败:", err);
           chatMessages.push({
             type: "ai",
             content: "请求失败:很抱歉，我暂时无法回答您的问题，请稍后再试。"
@@ -130,6 +120,50 @@ const _sfc_main = {
           scrollToLatestMessage();
         }
       });
+      requestTask.onChunkReceived((res) => {
+        try {
+          const uint8Array = new Uint8Array(res.data);
+          const decoder = new TextDecoder("utf-8");
+          const text = decoder.decode(uint8Array);
+          if (text.startsWith("data:")) {
+            const jsonStr = text.substring(5).trim();
+            try {
+              const jsonData = JSON.parse(jsonStr);
+              common_vendor.index.__f__("log", "at pages/chat/chat.vue:297", "解析到的JSON数据:", jsonData);
+              if (jsonData.event === "message" && jsonData.answer !== void 0) {
+                const decodedAnswer = decodeUnicode(jsonData.answer);
+                common_vendor.index.__f__("log", "at pages/chat/chat.vue:303", "解码后的答案:", decodedAnswer);
+                const aiMessage = chatMessages[chatMessages.length - 1];
+                aiMessage.content = (aiMessage.content || "") + decodedAnswer;
+                scrollToLatestMessage();
+              } else if (jsonData.event === "node_finished") {
+                messageComplete.value = true;
+                common_vendor.index.__f__("log", "at pages/chat/chat.vue:317", "对话完成");
+              }
+            } catch (jsonError) {
+              common_vendor.index.__f__("warn", "at pages/chat/chat.vue:320", "JSON解析错误:", jsonError);
+            }
+          }
+        } catch (e) {
+          common_vendor.index.__f__("error", "at pages/chat/chat.vue:324", "数据处理失败:", e);
+        }
+      });
+    };
+    const decodeUnicode = (str) => {
+      if (!str)
+        return "";
+      try {
+        if (typeof str === "string") {
+          return str.replace(
+            /\\u([0-9a-fA-F]{4})/g,
+            (_, hex) => String.fromCharCode(parseInt(hex, 16))
+          );
+        }
+        return str;
+      } catch (e) {
+        common_vendor.index.__f__("error", "at pages/chat/chat.vue:359", "Unicode 解码失败:", e);
+        return str;
+      }
     };
     const formatResponse = (responseText) => {
       let formattedText = responseText.replace(/\n/g, "<br>");
@@ -158,7 +192,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["清空聊天记录", "设置", "关于"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:329", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:402", "Selected option:", res.tapIndex);
         }
       });
     };
@@ -166,7 +200,7 @@ const _sfc_main = {
       common_vendor.index.showActionSheet({
         itemList: ["拍照", "从相册选择", "位置"],
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/chat/chat.vue:338", "Selected option:", res.tapIndex);
+          common_vendor.index.__f__("log", "at pages/chat/chat.vue:411", "Selected option:", res.tapIndex);
         }
       });
     };
