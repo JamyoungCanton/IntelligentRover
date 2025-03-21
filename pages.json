@@ -160,10 +160,21 @@
 			}
 		},
 		{
-			"path" : "pages/test/test",
-			"style" : 
-			{
-				"navigationBarTitleText" : "test"
+			"path": "pages/Orders/Orders",
+			"style": {
+				"navigationBarTitleText": "Orders"
+			}
+		},
+		{
+			"path": "pages/test/test",
+			"style": {
+				"navigationBarTitleText": "test"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "login"
 			}
 		}
 	],

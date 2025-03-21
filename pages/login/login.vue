@@ -2,7 +2,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <image class="logo" src="https://ai-public.mastergo.com/ai/img_res/8cb3d57d75c735011999dc6c4dd775d5.jpg" mode="aspectFit"/>
+      <image class="logo" src="/static/login/logo.jpg" mode="aspectFit"/>
       <text class="title">AI旅游行程管家</text>
     </view>
 
@@ -18,8 +18,12 @@
 
       <view class="phone-login">
         <view class="input-group">
-          <uni-icons type="phone" size="24" color="#999999"/>
-          <input type="number" placeholder="请输入手机号" maxlength="11" v-model="phone"/>
+          <uni-icons type="username" size="24" color="#999999"/>
+          <input type="string" placeholder="请输入用户名" maxlength="11" v-model="username"/>
+        </view>
+        <view class="input-group">
+          <uni-icons type="password" size="24" color="#999999"/>
+          <input type="string" placeholder="请输入密码" maxlength="11" v-model="password"/>
         </view>
 
         <view class="verify-code">
@@ -28,9 +32,14 @@
               <uni-icons type="locked" size="24" color="#999999"/>
               <input type="number" placeholder="请输入验证码" maxlength="6" v-model="verifyCode"/>
             </view>
-            <button class="code-btn" @tap="handleGetCode">
+            <!-- <button class="code-btn" @tap="handleGetCode">
               <text>获取验证码</text>
-            </button>
+            </button> -->
+            <image
+              :src="codeImg"
+              mode="scaleToFill"
+              style="width: 170rpx;height: 80rpx; border-radius: 12rpx;"
+            />
           </view>
         </view>
 
@@ -54,25 +63,64 @@
 
 <script setup>
 import { ref } from 'vue'
-
-const phone = ref('')
+import { onMounted } from 'vue'
+//时间戳
+const key = ref(null)
+//验证码图片
+const codeImg = ref(null)
+// 用户名
+const username = ref('')
+const password = ref('')
 const verifyCode = ref('')
 
-const handleWechatLogin = () => {
-  // 微信登录逻辑
-}
 
-const handleGetCode = () => {
-  // 获取验证码逻辑
-}
 
-const handleLogin = () => {
+onMounted(() => {
+  handleCode()
+})
+
+// 获取验证码
+const handleCode = async () => {
+  key.value = new Date().getTime();
+  uni.request({
+    url: `http://47.106.243.134:7181/island/sys/randomImage/${key.value}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    success: (res) => {
+      // 处理返回的数据
+      codeImg.value = res.data.result;
+      
+    },
+    fail: (err) => {
+      console.error('获取验证码失败:', err);
+    }
+  });
+};
+
+
+const handleLogin = async () => {
   // 登录逻辑
+  uni.request({
+    url:'http://47.106.243.134:7181/island/sys/login',
+    method:'POST',
+    data:{
+      username:username.value,
+      password:password.value,
+      captcha:verifyCode.value,
+      checkKey:key.value
+    },
+    header:{'Content-Type':'application/json'},
+    success: (res) => {
+      console.log(res.data);
+    },
+    fail:(fail)=>{
+      console.error('获取验证码失败:', err);
+    },
+  })
 }
 
-const handleRegister = () => {
-  // 注册逻辑
-}
 
 const handleForgetPassword = () => {
   // 忘记密码逻辑
@@ -86,7 +134,7 @@ const handleGuestLogin = () => {
 <style>
 page {
   height: 100%;
-  background-color: #f8f8f8;
+  background-color: #f9f9f9;
 }
 
 .container {
@@ -105,13 +153,13 @@ page {
 }
 
 .logo {
-  width: 160rpx;
-  height: 160rpx;
+  width: 140rpx;
+  height: 130rpx;
   margin-bottom: 30rpx;
 }
 
 .title {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: bold;
   color: #333333;
 }
@@ -186,6 +234,7 @@ button {
 .wechat-btn {
   background-color: #07c160;
   color: #ffffff;
+  width: 100%;
 }
 
 .code-btn {

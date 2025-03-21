@@ -34,8 +34,7 @@
   </view>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue';
+<script  setup>
 import Navbar from '../navbar/navbar.vue';
 const navigatortoOrders = () => {
 		uni.navigateTo({
