@@ -1,231 +1,234 @@
 
 <template>
-  <view class="container">
-    <view class="header">
-      <image class="logo" src="https://ai-public.mastergo.com/ai/img_res/8cb3d57d75c735011999dc6c4dd775d5.jpg" mode="aspectFit"/>
-      <text class="title">AI旅游行程管家</text>
-    </view>
-
-    <view class="login-form">
-      <button class="wechat-btn" @tap="handleWechatLogin">
-        <uni-icons type="weixin" size="24" color="#ffffff"/>
-        <text class="btn-text">微信一键登录</text>
-      </button>
-
-      <view class="divider">
-        <text class="divider-text">或</text>
+  <view class="page">
+    <scroll-view class="content" scroll-y>
+      <view class="user-info">
+        <view class="avatar-container">
+          <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/508713f1b448125ce860a6554331770f.jpg" />
+        </view>
+        <view class="user-detail" @tap="goLogin()">
+          <text class="username">陈美玲</text>
+          <text class="phone">138****5678</text>
+        </view>
+        <uni-icons type="right" size="14" color="#999" />
       </view>
 
-      <view class="phone-login">
-        <view class="input-group">
-          <uni-icons type="phone" size="24" color="#999999"/>
-          <input type="number" placeholder="请输入手机号" maxlength="11" v-model="phone"/>
-        </view>
-
-        <view class="verify-code">
-          <view class="code-input-wrap">
-            <view class="input-group">
-              <uni-icons type="locked" size="24" color="#999999"/>
-              <input type="number" placeholder="请输入验证码" maxlength="6" v-model="verifyCode"/>
-            </view>
-            <button class="code-btn" @tap="handleGetCode">
-              <text>获取验证码</text>
-            </button>
+      <view class="grid-container">
+        <view class="grid-item" v-for="(item, index) in gridItems" :key="index">
+          <view class="grid-icon">
+            <image :src="item.icon" mode="aspectFit" />
           </view>
+          <text class="grid-text">{{ item.text }}</text>
         </view>
-
-        <button class="login-btn" @tap="handleLogin">登录</button>
       </view>
 
-      <view class="actions">
-        <text class="action-link" @tap="handleRegister">注册账号</text>
-        <text class="action-link" @tap="handleForgetPassword">忘记密码</text>
+      <view class="menu-card">
+        <view class="menu-item">
+          <view class="menu-left">
+            <uni-icons type="list" size="18" color="#3B82F6" />
+            <text class="menu-text">全部订单</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
       </view>
 
-      <view class="guest-login">
-        <button class="guest-btn" @tap="handleGuestLogin">
-          <uni-icons type="person" size="20" color="#666666"/>
-          <text class="btn-text">游客模式</text>
-        </button>
+      <view class="menu-card">
+        <view class="menu-item border-bottom">
+          <view class="menu-left">
+            <uni-icons type="gear" size="18" color="#3B82F6" />
+            <text class="menu-text">账号设置</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
+        <view class="menu-item border-bottom">
+          <view class="menu-left">
+            <uni-icons type="notification" size="18" color="#3B82F6" />
+            <text class="menu-text">通知设置</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
+        <view class="menu-item">
+          <view class="menu-left">
+            <uni-icons type="spinner-cycle" size="18" color="#3B82F6" />
+            <text class="menu-text">语言切换</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
       </view>
-    </view>
+
+      <view class="menu-card">
+        <view class="menu-item border-bottom">
+          <view class="menu-left">
+            <uni-icons type="chatboxes" size="18" color="#3B82F6" />
+            <text class="menu-text">意见反馈</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
+        <view class="menu-item">
+          <view class="menu-left">
+            <uni-icons type="info" size="18" color="#3B82F6" />
+            <text class="menu-text">关于我们</text>
+          </view>
+          <uni-icons type="right" size="14" color="#999" />
+        </view>
+      </view>
+    </scroll-view>
+
+    
   </view>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script  setup>
+import { ref } from 'vue';
 
-const phone = ref('')
-const verifyCode = ref('')
+const gridItems = ref([
+  {
+    icon: '/static/my/collectItinerary.png',
+    text: '收藏行程'
+  },
+  {
+    icon: '/static/my/historyOrder.png',
+    text: '历史订单'
+  },
+  {
+    icon: '/static/my/pendingTravelOrders.png',
+    text: '待出行'
+  },
+  {
+    icon: '/static/my/customerService.png',
+    text: '客服中心'
+  }
+]);
 
-const handleWechatLogin = () => {
-  // 微信登录逻辑
-}
-
-const handleGetCode = () => {
-  // 获取验证码逻辑
-}
-
-const handleLogin = () => {
-  // 登录逻辑
-}
-
-const handleRegister = () => {
-  // 注册逻辑
-}
-
-const handleForgetPassword = () => {
-  // 忘记密码逻辑
-}
-
-const handleGuestLogin = () => {
-  // 游客登录逻辑
+// 跳转登录页
+const goLogin = () => {
+  uni.navigateTo({
+    url:'/pages/login/login',
+  })
 }
 </script>
 
 <style>
 page {
   height: 100%;
-  background-color: #f8f8f8;
+  background-color: #F8F8F8;
 }
 
-.container {
-  min-height: 100%;
-  padding: 60rpx 40rpx;
-  box-sizing: border-box;
+.page {
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.header {
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 20rpx 0;
+}
+
+.user-info {
+  margin: 0 30rpx;
+  padding: 30rpx;
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 80rpx;
-}
-
-.logo {
-  width: 160rpx;
-  height: 160rpx;
   margin-bottom: 30rpx;
 }
 
-.title {
-  font-size: 36px;
-  font-weight: bold;
+.avatar-container {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  overflow: hidden;
+  background-color: #F5F5F5;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.user-detail {
+  flex: 1;
+  margin-left: 30rpx;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 500;
   color: #333333;
 }
 
-.login-form {
-  flex: 1;
+.phone {
+  font-size: 12px;
+  color: #999999;
+  margin-top: 8rpx;
+  display: block;
+}
+
+.grid-container {
+  margin: 0 30rpx;
+  padding: 30rpx;
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.grid-item {
   display: flex;
   flex-direction: column;
-}
-
-.divider {
-  position: relative;
-  text-align: center;
-  margin: 60rpx 0;
-}
-
-.divider-text {
-  background-color: #f8f8f8;
-  padding: 0 30rpx;
-  color: #999999;
-  position: relative;
-  z-index: 1;
-  font-size: 14px;
-}
-
-.divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: #e5e5e5;
-  z-index: 0;
-}
-
-.input-group {
-  display: flex;
   align-items: center;
-  background-color: #ffffff;
-  padding: 20rpx 30rpx;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
 }
 
-.input-group input {
-  flex: 1;
-  margin-left: 20rpx;
-  font-size: 14px;
+.grid-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16rpx;
 }
 
-.verify-code .code-input-wrap {
-  display: flex;
-  gap: 20rpx;
+.grid-icon image {
+  width: 100%;
+  height: 100%;
 }
 
-.verify-code .input-group {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-button {
-  border: none;
-  font-size: 14px;
-  border-radius: 8rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 104rpx;
-}
-
-.wechat-btn {
-  background-color: #07c160;
-  color: #ffffff;
-}
-
-.code-btn {
-  flex-shrink: 0;
-  background-color: #f5f5f5;
+.grid-text {
+  font-size: 12px;
   color: #333333;
-  padding: 0 30rpx;
-  white-space: nowrap;
 }
 
-.login-btn {
-  background-color: #07c160;
-  color: #ffffff;
-  margin-top: 40rpx;
+.menu-card {
+  margin: 0 30rpx;
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
 }
 
-.btn-text {
-  margin-left: 10rpx;
-}
-
-.actions {
+.menu-item {
+  padding: 30rpx;
   display: flex;
   justify-content: space-between;
-  margin-top: 30rpx;
-  padding: 0 20rpx;
+  align-items: center;
 }
 
-.action-link {
-  color: #666666;
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-text {
   font-size: 14px;
+  color: #333333;
+  margin-left: 20rpx;
 }
 
-.guest-login {
-  margin-top: 80rpx;
+.border-bottom {
+  border-bottom: 1px solid #F5F5F5;
 }
 
-.guest-btn {
-  background-color: #f5f5f5;
-  border: 1px solid #dddddd;
-  color: #666666;
-}
+
 </style>
 

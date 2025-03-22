@@ -1,4 +1,21 @@
+如果你想通过 Vue 3 的特性来实现表单校验，可以使用 Vue 3 的组合式 API 和响应式系统来实现更优雅的校验逻辑。以下是一个示例，展示如何使用 Vue 3 的 `ref` 和 `reactive` 来实现表单校验。
 
+### 使用 Vue 3 的组合式 API 实现表单校验
+
+1. **定义校验规则和错误信息**
+   使用 `ref` 或 `reactive` 来定义校验规则和错误信息。
+
+2. **在表单提交时进行校验**
+   在 `handleLogin` 方法中，对表单字段进行校验，并更新错误信息。
+
+3. **在模板中显示错误信息**
+   使用 `v-if` 或 `v-show` 来显示校验错误信息。
+
+以下是完整的代码示例：
+
+### 代码示例
+
+```vue
 <template>
   <view class="container">
     <view class="header">
@@ -19,22 +36,23 @@
       <view class="phone-login">
         <view class="input-group">
           <uni-icons type="username" size="24" color="#999999"/>
-          <input type="string" placeholder="请输入用户名" maxlength="11" v-model="username"/>
+          <input type="string" placeholder="请输入用户名" maxlength="11" v-model="formData.username"/>
+          
         </view>
+        <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
         <view class="input-group">
           <uni-icons type="password" size="24" color="#999999"/>
-          <input type="string" placeholder="请输入密码" maxlength="11" v-model="password"/>
+          <input type="string" placeholder="请输入密码" maxlength="11" v-model="formData.password"/>
         </view>
+        <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
+
 
         <view class="verify-code">
           <view class="code-input-wrap">
             <view class="input-group">
               <uni-icons type="locked" size="24" color="#999999"/>
-              <input type="number" placeholder="请输入验证码" maxlength="6" v-model="verifyCode"/>
+              <input type="number" placeholder="请输入验证码" maxlength="6" v-model="formData.verifyCode"/>
             </view>
-            <!-- <button class="code-btn" @tap="handleGetCode">
-              <text>获取验证码</text>
-            </button> -->
             <image
               :src="codeImg"
               mode="scaleToFill"
@@ -42,6 +60,8 @@
             />
           </view>
         </view>
+        <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
+
 
         <button class="login-btn" @tap="handleLogin">登录</button>
       </view>
@@ -62,22 +82,29 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { onMounted } from 'vue'
-//时间戳
-const key = ref(null)
-//验证码图片
-const codeImg = ref(null)
-// 用户名
-const username = ref('')
-const password = ref('')
-const verifyCode = ref('')
+import { ref, reactive } from 'vue';
+import { onMounted } from 'vue';
 
-
+// 时间戳
+const key = ref(null);
+// 验证码图片
+const codeImg = ref(null);
+// 表单数据
+const formData = reactive({
+  username: '',
+  password: '',
+  verifyCode: ''
+});
+// 错误信息
+const errors = reactive({
+  username: '',
+  password: '',
+  verifyCode: ''
+});
 
 onMounted(() => {
-  handleCode()
-})
+  handleCode();
+});
 
 // 获取验证码
 const handleCode = async () => {
@@ -91,7 +118,6 @@ const handleCode = async () => {
     success: (res) => {
       // 处理返回的数据
       codeImg.value = res.data.result;
-      
     },
     fail: (err) => {
       console.error('获取验证码失败:', err);
@@ -99,36 +125,105 @@ const handleCode = async () => {
   });
 };
 
+// 校验表单
+const validateForm = () => {
+  let isValid = true;
 
+  // 校验用户名
+  if (!formData.username) {
+    errors.username = '用户名不能为空';
+    isValid = false;
+  } else if (formData.username.length < 5 || formData.username.length > 11) {
+    errors.username = '用户名长度必须在5到11位之间';
+    isValid = false;
+  } else {
+    errors.username = '';
+  }
+
+  // 校验密码
+  if (!formData.password) {
+    errors.password = '密码不能为空';
+    isValid = false;
+  } else if (formData.password.length < 6 || formData.password.length > 11) {
+    errors.password = '密码长度必须在6到11位之间';
+    isValid = false;
+  } else {
+    errors.password = '';
+  }
+
+  // 校验验证码
+  if (!formData.verifyCode) {
+    errors.verifyCode = '验证码不能为空';
+    isValid = false;
+  } else if (formData.verifyCode.length !== 4) {
+    errors.verifyCode = '验证码必须为4位';
+    isValid = false;
+  } else {
+    errors.verifyCode = '';
+  }
+
+  return isValid;
+};
+
+// 登录逻辑
 const handleLogin = async () => {
-  // 登录逻辑
-  uni.request({
-    url:'http://47.106.243.134:7181/island/sys/login',
-    method:'POST',
-    data:{
-      username:username.value,
-      password:password.value,
-      captcha:verifyCode.value,
-      checkKey:key.value
-    },
-    header:{'Content-Type':'application/json'},
-    success: (res) => {
-      console.log(res.data);
-    },
-    fail:(fail)=>{
-      console.error('获取验证码失败:', err);
-    },
-  })
-}
+  // 校验表单
+  if (!validateForm()) {
+    return; // 如果校验不通过，直接返回
+  }
 
+  // 发起登录请求
+  uni.request({
+    url: 'http://47.106.243.134:7181/island/sys/login',
+    method: 'POST',
+    data: {
+      username: formData.username,
+      password: formData.password,
+      captcha: formData.verifyCode,
+      checkKey: key.value
+    },
+    header: { 'Content-Type': 'application/json' },
+    success: (res) => {
+      if (res.data.success === false) {
+        // 提示错误信息
+        uni.showToast({
+          title: res.data.message || '登录失败',
+          icon: 'none',
+          duration: 1500
+        });
+        handleCode(); // 重新获取验证码
+      } else {
+        // 提示成功消息
+        uni.showToast({
+          title: '登录成功',
+          icon: 'success',
+          duration: 1500
+        });
+        setTimeout(() => {
+          uni.switchTab ({
+            url: '/pages/my/my' 
+          });
+        }, 1000);
+      }
+    },
+    fail: (err) => {
+      // 网络请求失败的处理
+      uni.showToast({
+        title: '网络请求失败，请稍后再试',
+        icon: 'none'
+      });
+      console.error('请求失败:', err);
+    }
+  });
+};
 
 const handleForgetPassword = () => {
   // 忘记密码逻辑
-}
+};
 
 const handleGuestLogin = () => {
   // 游客登录逻辑
-}
+};
 </script>
 
 <style>
@@ -203,6 +298,7 @@ page {
   padding: 20rpx 30rpx;
   border-radius: 16rpx;
   margin-bottom: 20rpx;
+  margin-top: 10rpx;
 }
 
 .input-group input {
@@ -275,6 +371,13 @@ button {
   background-color: #f5f5f5;
   border: 1px solid #dddddd;
   color: #666666;
+}
+
+/* 校验错误 */
+.error-message{
+  color: red;
+  font-size: 22rpx;
+  margin-left: 50rpx;
 }
 </style>
 

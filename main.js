@@ -12,6 +12,7 @@ app.$mount()
 // #endif
 
 // #ifdef VUE3
+//设置pinia
 import { createSSRApp } from 'vue'
 export function createApp() {
   const app = createSSRApp(App)
@@ -20,3 +21,5 @@ export function createApp() {
   }
 }
 // #endif
+
+//设置pinia
