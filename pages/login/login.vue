@@ -84,6 +84,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { onMounted } from 'vue';
+import { useUserStore } from '/store/modules/user.js';
 
 // 时间戳
 const key = ref(null);
@@ -204,6 +205,8 @@ const handleLogin = async () => {
             url: '/pages/my/my' 
           });
         }, 1000);
+
+        
       }
     },
     fail: (err) => {
@@ -224,6 +227,14 @@ const handleForgetPassword = () => {
 const handleGuestLogin = () => {
   // 游客登录逻辑
 };
+
+//测试pinia
+
+const userStore = useUserStore();
+onMounted(() => {
+  userStore.updateUserInfo({ name: '李四', age: 25 });
+  console.log('User Info from Store:'); // 确保在组件挂载后访问
+});
 </script>
 
 <style>
