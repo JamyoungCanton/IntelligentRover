@@ -28,25 +28,35 @@
         </view>
       </view>
       <button class="btn primary" @tap="navigatortoOrders">查看订单详情</button>
-      <button class="btn default">返回首页</button>
+	  <button class="btn default" @tap="ToitineraryEvaluation">评价一下</button>
+      <button class="btn default" @tap="Toindex">返回首页</button>
     </view>
     <view class="navbar"><navbar></navbar></view>
   </view>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue';
+<script  setup>
 import Navbar from '../navbar/navbar.vue';
 const navigatortoOrders = () => {
-		uni.navigateTo({
-			url: '/pages/Orders/Orders'
-		});
-	};
-
+	uni.navigateTo({
+	url: '/pages/Orders/Orders'
+   });
+};
+const ToitineraryEvaluation = () => {
+  uni.navigateTo({
+    url: '/pages/itineraryEvaluation/itineraryEvaluation'
+  });
+};
+const Toindex = () => {
+  uni.switchTab({
+    url: '/pages/index/index'
+  });
+};
 // 注册组件
 const components = {
   Navbar
 };
+
 </script>
 
 <style>

@@ -118,7 +118,7 @@
   </view>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import { ref } from 'vue';
 
 const phone = ref('13800138000');
@@ -129,7 +129,7 @@ const clearPhone = () => {
   phone.value = '';
 };
 
-const selectPayment = (payment: string) => {
+const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 

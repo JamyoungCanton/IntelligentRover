@@ -6,7 +6,7 @@
         <view class="avatar-container">
           <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/508713f1b448125ce860a6554331770f.jpg" />
         </view>
-        <view class="user-detail">
+        <view class="user-detail" @tap="goLogin()">
           <text class="username">陈美玲</text>
           <text class="phone">138****5678</text>
         </view>
@@ -99,6 +99,13 @@ const gridItems = ref([
     text: '客服中心'
   }
 ]);
+
+// 跳转登录页
+const goLogin = () => {
+  uni.navigateTo({
+    url:'/pages/login/login',
+  })
+}
 </script>
 
 <style>
