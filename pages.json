@@ -89,7 +89,7 @@
 		{
 			"path": "pages/chat/chat",
 			"style": {
-				"navigationBarTitleText": "chat"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -150,13 +150,13 @@
 		{
 			"path": "pages/payment/payment",
 			"style": {
-				"navigationBarTitleText": "支付页面"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/pay_success/pay_success",
 			"style": {
-				"navigationBarTitleText": "支付成功页面"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
