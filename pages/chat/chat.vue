@@ -1,5 +1,5 @@
 <template>
-  <view class="container">
+  <view class="container" :key="globalUpdateKey">
     <!-- Header -->
     <view class="header">
       <view class="back-icon avatar ai-avatar" @tap="goBack">
@@ -18,6 +18,11 @@
       :scroll-top="scrollTop"
       scroll-with-animation
       :scroll-into-view="scrollIntoView"
+      :scroll-anchoring="true"
+      enhanced
+      :show-scrollbar="false"
+      @scrolltoupper="onScrollToUpper"
+      @scroll="onScroll"
     >
       <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
@@ -55,7 +60,12 @@
         </view>
 
         <!-- AI Response -->
-        <view v-else class="message ai-message" :id="`msg-${index+1}`">
+        <view 
+          v-else 
+          class="message ai-message" 
+          :id="`msg-${index+1}`" 
+          :key="`${msg.id || index}-${updateCounter}`"
+        >
           <view class="avatar ai-avatar">
             <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
           </view>
@@ -68,8 +78,8 @@
               mode="widthFix"
             ></image>
             
-            <!-- Text content -->
-            <rich-text v-if="msg.content" class="message-content" :nodes="msg.content"></rich-text>
+            <!-- Text content - 使用rich-text来正确渲染HTML内容 -->
+            <rich-text v-if="msg.content" class="message-text" :nodes="msg.content"></rich-text>
             
             <!-- Itinerary details -->
             <view v-if="msg.itinerary" class="itinerary-container">
@@ -147,10 +157,71 @@ import { ref, reactive, onMounted, nextTick } from 'vue';
 
 export default {
   setup() {
+    // 全局强制更新键
+    const globalUpdateKey = ref(0);
+    // 强制更新计数器
+    const updateCounter = ref(0);
     // Reactive data
     const inputMessage = ref('');
     const scrollTop = ref(0);
     const scrollIntoView = ref('');
+    // 是否允许自动滚动（当用户向上滚动查看历史消息时禁用）
+    const enableAutoScroll = ref(true);
+    // 记录最后一次的滚动位置
+    const lastScrollTop = ref(0);
+    // 记录内容的总高度
+    const contentHeight = ref(0);
+    // 记录可视区域的高度
+    const viewportHeight = ref(0);
+
+    // 处理HTML标签，转换为对应的样式效果
+    const processHtmlTags = (content) => {
+      if (!content) return '';
+      
+      try {
+        let processedContent = content;
+        
+        // 处理常见HTML标签，将它们转换为适当的样式类
+        
+        // 处理标题标签
+        processedContent = processedContent.replace(/<h1>(.*?)<\/h1>/g, '<view class="heading-1">$1</view>');
+        processedContent = processedContent.replace(/<h2>(.*?)<\/h2>/g, '<view class="heading-2">$1</view>');
+        processedContent = processedContent.replace(/<h3>(.*?)<\/h3>/g, '<view class="heading-3">$1</view>');
+        
+        // 处理段落和换行
+        processedContent = processedContent.replace(/<p>(.*?)<\/p>/g, '<view class="paragraph">$1</view>');
+        processedContent = processedContent.replace(/<br\s*\/?>/g, '<view class="line-break"></view>');
+        
+        // 处理列表
+        processedContent = processedContent.replace(/<ul>([\s\S]*?)<\/ul>/g, '<view class="unordered-list">$1</view>');
+        processedContent = processedContent.replace(/<ol>([\s\S]*?)<\/ol>/g, '<view class="ordered-list">$1</view>');
+        processedContent = processedContent.replace(/<li>(.*?)<\/li>/g, '<view class="list-item">• $1</view>');
+        
+        // 处理强调和重点
+        processedContent = processedContent.replace(/<strong>(.*?)<\/strong>/g, '<text class="bold">$1</text>');
+        processedContent = processedContent.replace(/<b>(.*?)<\/b>/g, '<text class="bold">$1</text>');
+        processedContent = processedContent.replace(/<em>(.*?)<\/em>/g, '<text class="italic">$1</text>');
+        processedContent = processedContent.replace(/<i>(.*?)<\/i>/g, '<text class="italic">$1</text>');
+        
+        // 处理代码块和行内代码
+        processedContent = processedContent.replace(/<pre>([\s\S]*?)<\/pre>/g, '<view class="code-block">$1</view>');
+        processedContent = processedContent.replace(/<code>(.*?)<\/code>/g, '<text class="inline-code">$1</text>');
+        
+        // 处理引用
+        processedContent = processedContent.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, '<view class="blockquote">$1</view>');
+        
+        // 处理表格 (简化处理)
+        processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
+        
+        // 移除可能剩余的HTML标签
+        processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
+        
+        return processedContent;
+      } catch (e) {
+        console.error('HTML标签处理失败:', e);
+        return content;
+      }
+    };
     
     // Category data with updated icons
     const categories = reactive([
@@ -214,6 +285,8 @@ export default {
 
     // 用于累积分块数据
     const chunkBuffer = ref('');
+    // 用于标记消息是否完成
+    const messageComplete = ref(false);
 
     // Methods
     const selectCategory = (categoryId) => {
@@ -232,10 +305,14 @@ export default {
 
     const sendMessage = () => {
       if (!inputMessage.value.trim()) return;
+      
+      // 添加用户消息
       chatMessages.push({
         type: 'user',
         content: inputMessage.value
       });
+      
+      // 清空输入框并滚动到最新消息
       inputMessage.value = '';
       scrollToLatestMessage();
       
@@ -255,6 +332,8 @@ export default {
         user: 'abc-123'
       };
 
+      // 不预先添加AI消息，等收到实际响应再添加
+
       // 创建请求任务
       const requestTask = uni.request({
         url: url,
@@ -270,14 +349,32 @@ export default {
         },
         fail: (err) => {
           console.error('请求失败:', err);
-          chatMessages.push({
-            type: 'ai',
-            content: '请求失败:很抱歉，我暂时无法回答您的问题，请稍后再试。'
-          });
+          // 更新最后添加的AI消息，显示错误信息
+          const lastMessage = chatMessages[chatMessages.length - 1];
+          if (lastMessage.type === 'ai') {
+            lastMessage.content = '请求失败1:很抱歉，我暂时无法回答您的问题，请稍后再试。';
+          } else {
+            chatMessages.push({
+              type: 'ai',
+              content: '请求失败2:很抱歉，我暂时无法回答您的问题，请稍后再试。'
+            });
+          }
           scrollToLatestMessage();
         }
       });
 
+      // 在发送请求前先添加一个空的AI消息框
+      const aiMessageIndex = chatMessages.length;
+      const initialMessage = {
+        type: 'ai',
+        content: '', // 初始为空内容
+        id: Date.now() // 添加唯一ID
+      };
+      chatMessages.push(initialMessage);
+      
+      // 初始化时增加更新计数
+      updateCounter.value++;
+      
       // 监听分块数据到达事件
       requestTask.onChunkReceived((res) => {
         try {
@@ -285,11 +382,13 @@ export default {
           const uint8Array = new Uint8Array(res.data);
           const decoder = new TextDecoder('utf-8');
           const text = decoder.decode(uint8Array);
+          console.log('收到的原始数据:', text); // 调试日志
           
           // 处理SSE格式数据
           if (text.startsWith('data:')) {
             // 提取data:后面的JSON字符串
             const jsonStr = text.substring(5).trim();
+            console.log('提取的JSON字符串:', jsonStr); // 调试日志
             
             try {
               // 解析JSON数据
@@ -302,19 +401,38 @@ export default {
                 const decodedAnswer = decodeUnicode(jsonData.answer);
                 console.log('解码后的答案:', decodedAnswer);
                 
-                // 获取当前AI消息
-                const aiMessage = chatMessages[chatMessages.length - 1];
-                
-                // 打字机效果：累加新内容
-                aiMessage.content = (aiMessage.content || '') + decodedAnswer;
-                
-                // 滚动到最新消息
-                scrollToLatestMessage();
+                // 使用最简单直接的方式更新内容
+                if (aiMessageIndex < chatMessages.length) {
+                  // 获取当前消息引用
+                  const currentMessage = chatMessages[aiMessageIndex];
+                  
+                  // 处理HTML标签，转换为对应的样式
+                  const processedAnswer = processHtmlTags(decodedAnswer);
+                  
+                  // 直接赋值 - Vue 3的响应式系统会检测到这个变化
+                  if (!currentMessage.content) {
+                    currentMessage.content = processedAnswer;
+                  } else {
+                    // 完全替换内容以触发响应式更新
+                    const newContent = currentMessage.content + processedAnswer;
+                    currentMessage.content = newContent;
+                  }
+                  
+                  // 强制视图立即更新
+                  globalUpdateKey.value = Date.now();
+                  
+                  // 使用setTimeout确保在下一个事件循环中执行滚动
+                  setTimeout(() => {
+                    scrollToBottom();
+                  }, 0);
+                }
               }
               // 处理消息结束事件
               else if (jsonData.event === 'node_finished') {
                 messageComplete.value = true;
                 console.log('对话完成');
+                // 再次强制更新
+                updateCounter.value++;
               }
             } catch (jsonError) {
               console.warn('JSON解析错误:', jsonError);
@@ -324,10 +442,6 @@ export default {
           console.error('数据处理失败:', e);
         }
       });
-    };
-
-    // 解码分块数据
-    const decodeChunkData = (data) => {
       let text = '';
       try {
         // 将ArrayBuffer转换为Uint8Array
@@ -379,10 +493,54 @@ export default {
     };
 
     const scrollToLatestMessage = () => {
-      nextTick(() => {
-        const lastIndex = chatMessages.length;
-        scrollIntoView.value = `msg-${lastIndex}`;
-      });
+      // 立即更新滚动位置，不等待nextTick
+      const lastIndex = chatMessages.length;
+      scrollIntoView.value = `msg-${lastIndex}`;
+    };
+    
+    // 新增滚动到底部的函数
+    const scrollToBottom = () => {
+      // 如果用户禁用了自动滚动，则不执行滚动操作
+      if (!enableAutoScroll.value) {
+        console.log('用户正在查看历史消息，暂停自动滚动');
+        // 添加一个提示，让用户知道有新消息（可选）
+        // uni.showToast({
+        //   title: '收到新消息，滑动到底部查看',
+        //   icon: 'none',
+        //   duration: 2000
+        // });
+        return;
+      }
+      
+      // 使用uni-app的选择器API获取scroll-view组件信息
+      const query = uni.createSelectorQuery();
+      query.select('.chat-container').boundingClientRect(data => {
+        if (data) {
+          // 获取scroll-view的高度
+          const containerHeight = data.height;
+          viewportHeight.value = containerHeight;
+          
+          // 再次使用选择器获取所有消息内容的总高度
+          const messageQuery = uni.createSelectorQuery();
+          messageQuery.selectAll('.message').boundingClientRect(messages => {
+            if (messages && messages.length > 0) {
+              // 计算所有消息的总高度
+              const totalHeight = messages.reduce((sum, msg) => sum + msg.height, 0);
+              contentHeight.value = totalHeight;
+              
+              // 设置scrollTop为消息总高度，确保滚动到底部
+              scrollTop.value = totalHeight;
+              
+              // 同时更新scrollIntoView以确保最新消息可见
+              const lastIndex = chatMessages.length;
+              scrollIntoView.value = `msg-${lastIndex}`;
+              
+              // 更新最后的滚动位置
+              lastScrollTop.value = totalHeight;
+            }
+          }).exec();
+        }
+      }).exec();
     };
     
     const formatItineraryText = (text) => {
@@ -434,24 +592,85 @@ export default {
     };
 
     onMounted(() => {
-      scrollToLatestMessage();
+      // 在组件挂载后，使用setTimeout确保视图已经渲染
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100); // 给一个小延时确保内容已渲染
     });
+
+    // 滚动相关的处理函数
+    const onScrollToUpper = () => {
+      console.log('到达顶部');
+      // 这里可以添加加载历史消息的逻辑
+    };
+    
+    // 检查是否滚动到底部的阈值（像素）(距离页面底部的距离，超过SCROLL_BOTTOM_THRESHOLD px则表示禁用自动滚落)
+    const SCROLL_BOTTOM_THRESHOLD = 10;
+
+    const onScroll = (e) => {
+      const currentScrollTop = e.detail.scrollTop;
+      
+      // 获取当前滚动位置、内容高度和可视区域高度
+      const query = uni.createSelectorQuery();
+      query.select('.chat-container').boundingClientRect(data => {
+        if (data) {
+          viewportHeight.value = data.height;
+          
+          // 获取内容总高度
+          const messageQuery = uni.createSelectorQuery();
+          messageQuery.selectAll('.message').boundingClientRect(messages => {
+            if (messages && messages.length > 0) {
+              contentHeight.value = messages.reduce((sum, msg) => sum + msg.height, 0);
+              
+              // 计算是否接近底部
+              const distanceFromBottom = contentHeight.value - (currentScrollTop + viewportHeight.value);
+              console.log('距离底部：', distanceFromBottom, '像素');
+              
+              // 如果用户滚动到接近底部，启用自动滚动
+              if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
+                enableAutoScroll.value = true;
+                console.log('用户已滚动到底部，启用自动滚动');
+              } 
+              // 如果用户正在查看历史消息（即不在底部），禁用自动滚动
+              else {
+                // 判断用户是否主动向上滚动（查看历史消息）
+                // 注意：scrollTop增加表示用户在查看更早的消息（即上滑或鼠标滚轮向上）
+                if (currentScrollTop > lastScrollTop.value) {
+                  enableAutoScroll.value = false;
+                  console.log('用户正在查看历史消息，禁用自动滚动');
+                }
+              }
+            }
+          }).exec();
+        }
+      }).exec();
+      
+      // 更新最后的滚动位置
+      lastScrollTop.value = currentScrollTop;
+    };
 
     return {
       inputMessage,
       scrollTop,
       scrollIntoView,
+      enableAutoScroll,
       categories,
       chatMessages,
+      updateCounter, // 导出更新计数器
+      globalUpdateKey, // 导出全局更新键
       selectCategory,
       getCategoryName,
       sendMessage,
       navigatortopaymoent,
       formatResponse,
       formatItineraryText,
+      processHtmlTags, // 导出HTML标签处理函数
       goBack,
       showMore,
-      showAddOptions
+      showAddOptions,
+      scrollToBottom, // 导出滚动到底部的函数
+      onScrollToUpper, // 滚动到顶部的处理函数
+      onScroll // 滚动事件处理函数
     };
   }
 };
@@ -460,6 +679,87 @@ export default {
 
 
 <style>
+/* 添加消息文本样式 */
+.message-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* HTML标签转换后的样式 */
+.heading-1 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 16px 0 8px 0;
+}
+
+.heading-2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 14px 0 7px 0;
+}
+
+.heading-3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 12px 0 6px 0;
+}
+
+.paragraph {
+  margin-bottom: 8px;
+}
+
+.line-break {
+  height: 8px;
+}
+
+.unordered-list, .ordered-list {
+  margin: 8px 0;
+  padding-left: 16px;
+}
+
+.list-item {
+  margin-bottom: 4px;
+  display: flex;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.code-block {
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  margin: 8px 0;
+  overflow-x: auto;
+}
+
+.inline-code {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 12px;
+  color: #666;
+  margin: 8px 0;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
 .container {
   display: flex;
   flex-direction: column;
