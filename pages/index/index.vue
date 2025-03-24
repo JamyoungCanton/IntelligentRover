@@ -1,15 +1,18 @@
 
 <template>
   <view class="page">
-    <!-- <view class="nav-bar fixed-top flex-row items-center px-32">
+    <view class="nav-bar fixed-top flex-row items-center px-32" :style="{paddingTop:safeAreaInsets.top + 'px'}">
       <view class="flex-row items-center text-white">
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
         <uni-icons type="spinner-cycle" size="24" color="#FFD700" />
-        <text class="nav-title">万山群岛</text>
+        <text class="nav-title">海岛智游侠</text>
         <uni-icons type="spinner-cycle" size="24" color="#FFD700" />
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
       </view>
-    </view> -->
+    </view>
+
+    
+
 
     <scroll-view class="main-content" scroll-y>
       <view class="search-container">
@@ -219,6 +222,10 @@ const navigateToRoute = () => {
 	url: '/pages/route/route'
   });
 };
+
+// 获取屏幕安全距离
+const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets;
+console.log(safeAreaInsets);
 </script>
 
 <style>
@@ -234,16 +241,19 @@ page {
 }
 
 .nav-bar {
+  display: flex;
+  align-items: center;
   width: 100%;
-  height: 68rpx;
+  height: 78rpx;
   background-color: #4A88FF;
   z-index: 100;
 }
 
 .nav-title {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #FFFFFF;
   margin: 0 16rpx;
+  font-family: 'Cursive', cursive;
 }
 
 .main-content {

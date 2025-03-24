@@ -2,15 +2,27 @@
 <template>
   <view class="page">
     <scroll-view class="content" scroll-y>
-      <view class="user-info">
+      <!-- 已登录 -->
+      <view class="user-info" v-if="token">
         <view class="avatar-container">
-          <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/508713f1b448125ce860a6554331770f.jpg" />
+          <image class="avatar" :src="userInfo.avatar" />
         </view>
-        <view class="user-detail" @tap="goLogin()">
-          <text class="username">陈美玲</text>
-          <text class="phone">138****5678</text>
+        <view class="user-detail" >
+          <text class="username">{{ userInfo.username }}</text>
+          <text class="phone">{{ userInfo.phone }}</text>
         </view>
         <uni-icons type="right" size="14" color="#999" />
+      </view>
+      <!-- 未登录 -->
+      <view class="user-info" v-if="!token">
+        <view class="avatar-container">
+          <image class="avatar" src="/static/my/noLogin.png" />
+        </view>
+        <view class="user-detail" @tap="goLogin()">
+          <text class="username" 
+          style="font-size: 38rpx; color: #354972; margin-left: 40rpx; ">
+          去登录</text>
+        </view>
       </view>
 
       <view class="grid-container">
@@ -80,6 +92,9 @@
 
 <script  setup>
 import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useUserStore } from '@/store/modules/user.js';
+const userStore = useUserStore();
 
 const gridItems = ref([
   {
@@ -106,6 +121,26 @@ const goLogin = () => {
     url:'/pages/login/login',
   })
 }
+
+// 判断是否登录
+
+// 获取store当中的userInfo
+const userInfo = ref(null);
+onMounted(() => {
+  userInfo.value = userStore.userInfo;
+  // console.log(userInfo.value);
+  
+});
+
+
+// 获取store当中的token
+const token = ref(null);
+onMounted(() => {
+  token.value = userStore.token;
+  // console.log(token.value);
+  
+});
+
 </script>
 
 <style>

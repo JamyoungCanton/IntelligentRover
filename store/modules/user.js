@@ -1,23 +1,25 @@
-console.log('user.js');
+
 import { ref } from 'vue';
 
 import { defineStore } from 'pinia';
 export const useUserStore = defineStore('user', () => {
-  const userInfo = ref({
-    name: '张三',
-    age: 18,
-  });
+  const userInfo = ref('');
 
   function updateUserInfo(newUserInfo) {
     userInfo.value = newUserInfo;
-    console.log('userInfo', userInfo.value);
     
   }
 
-  // 在 Store 初始化时手动存储初始值
-  uni.setStorageSync('userInfo', JSON.stringify(userInfo.value));
+  // 获取token
+  const token = ref('');
+  function setToken(newToken){
+    token.value = newToken;
+  }
 
-  return { userInfo, updateUserInfo };
+
+
+
+  return { userInfo, updateUserInfo,token ,setToken };
 }, {
   persist: {
     storage: {

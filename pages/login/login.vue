@@ -1,21 +1,3 @@
-如果你想通过 Vue 3 的特性来实现表单校验，可以使用 Vue 3 的组合式 API 和响应式系统来实现更优雅的校验逻辑。以下是一个示例，展示如何使用 Vue 3 的 `ref` 和 `reactive` 来实现表单校验。
-
-### 使用 Vue 3 的组合式 API 实现表单校验
-
-1. **定义校验规则和错误信息**
-   使用 `ref` 或 `reactive` 来定义校验规则和错误信息。
-
-2. **在表单提交时进行校验**
-   在 `handleLogin` 方法中，对表单字段进行校验，并更新错误信息。
-
-3. **在模板中显示错误信息**
-   使用 `v-if` 或 `v-show` 来显示校验错误信息。
-
-以下是完整的代码示例：
-
-### 代码示例
-
-```vue
 <template>
   <view class="container">
     <view class="header">
@@ -85,6 +67,7 @@
 import { ref, reactive } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '/store/modules/user.js';
+const userStore = useUserStore();
 
 // 时间戳
 const key = ref(null);
@@ -194,6 +177,10 @@ const handleLogin = async () => {
         });
         handleCode(); // 重新获取验证码
       } else {
+        // 把信息存储到pinia中
+       
+        userStore.updateUserInfo(res.data.result.userInfo)
+        userStore.setToken(res.data.result.token)
         // 提示成功消息
         uni.showToast({
           title: '登录成功',
@@ -201,7 +188,7 @@ const handleLogin = async () => {
           duration: 1500
         });
         setTimeout(() => {
-          uni.switchTab ({
+          uni.reLaunch ({
             url: '/pages/my/my' 
           });
         }, 1000);
@@ -220,6 +207,7 @@ const handleLogin = async () => {
   });
 };
 
+
 const handleForgetPassword = () => {
   // 忘记密码逻辑
 };
@@ -228,13 +216,6 @@ const handleGuestLogin = () => {
   // 游客登录逻辑
 };
 
-//测试pinia
-
-const userStore = useUserStore();
-onMounted(() => {
-  userStore.updateUserInfo({ name: '李四', age: 25 });
-  console.log('User Info from Store:'); // 确保在组件挂载后访问
-});
 </script>
 
 <style>
