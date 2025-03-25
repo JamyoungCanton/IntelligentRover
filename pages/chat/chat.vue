@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <!-- Header -->
-    <view class="header">
+    <view class="header" :style="{ paddingTop: safeAreaTop, paddingBottom: safeAreaBottom }">
       <view class="back-icon avatar ai-avatar" @tap="goBack">
         
       </view>
@@ -144,13 +144,72 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue';
+import axios from 'axios';
 
 export default {
   setup() {
+    // 创建 Axios 实例
+    const instance = axios.create({
+      baseURL: 'http://47.106.243.134:7181/island',
+      timeout: 5000,
+    });
+
+    // 请求拦截器
+    instance.interceptors.request.use(
+      (config) => {
+        // 在请求发送之前可以修改配置
+        const token = uni.getStorageSync('userToken'); // 假设 Token 存储在本地存储中
+        if (token) {
+          config.headers['X-Access-Token'] = token;
+        }
+        return config;
+      },
+      (error) => {
+        // 处理请求错误
+        return Promise.reject(error);
+      }
+    );
+
+    // 响应拦截器
+    instance.interceptors.response.use(
+      (response) => {
+        // 处理响应数据
+        if (response.data.code === 401) {
+          // 未登录，跳转到登录页面
+          uni.showToast({
+            title: '登录已过期，请重新登录',
+            icon: 'none'
+          });
+          setTimeout(() => {
+            uni.navigateTo({
+              url: '/pages/login/login'
+            });
+          }, 1500);
+          return Promise.reject(response);
+        }
+        return response.data;
+      },
+      (error) => {
+        // 处理响应错误
+        return Promise.reject(error);
+      }
+    );
+
     // Reactive data
     const inputMessage = ref('');
     const scrollTop = ref(0);
     const scrollIntoView = ref('');
+    const safeAreaTop = ref('0');
+    const safeAreaBottom = ref('0');
+    
+    // 获取安全区域信息
+    const getSafeAreaInsets = () => {
+        const systemInfo = uni.getSystemInfoSync();
+        if (systemInfo.safeArea) {
+            safeAreaTop.value = `${systemInfo.safeArea.top}px`;
+            safeAreaBottom.value = `${systemInfo.safeArea.bottom}px`;
+        }
+    }
     
     // Category data with updated icons
     const categories = reactive([
@@ -244,7 +303,6 @@ export default {
     };
 
     const callAIInterface = (userQuery) => {
-      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
@@ -255,75 +313,22 @@ export default {
         user: 'abc-123'
       };
 
-      // 创建请求任务
-      const requestTask = uni.request({
-        url: url,
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(data),
-        responseType: 'text', // 设置响应类型为文本
-        enableChunked: true, // 启用分块传输模式
-        success: (res) => {
-          console.log('请求成功:', res);
-        },
-        fail: (err) => {
-          console.error('请求失败:', err);
+      instance
+        .post('/front/ai/chat/chatMessage-stream', data, {
+          responseType: 'text', // 设置响应类型为文本
+          enableChunked: true // 启用分块传输模式
+        })
+        .then((response) => {
+          console.log('请求成功:', response);
+        })
+        .catch((error) => {
+          console.error('请求失败:', error);
           chatMessages.push({
             type: 'ai',
-            content: '请求失败:很抱歉，我暂时无法回答您的问题，请稍后再试。'
+            content: '很抱歉，我暂时无法回答您的问题。'
           });
           scrollToLatestMessage();
-        }
-      });
-
-      // 监听分块数据到达事件
-      requestTask.onChunkReceived((res) => {
-        try {
-          // 将ArrayBuffer转换为文本
-          const uint8Array = new Uint8Array(res.data);
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(uint8Array);
-          
-          // 处理SSE格式数据
-          if (text.startsWith('data:')) {
-            // 提取data:后面的JSON字符串
-            const jsonStr = text.substring(5).trim();
-            
-            try {
-              // 解析JSON数据
-              const jsonData = JSON.parse(jsonStr);
-              console.log('解析到的JSON数据:', jsonData);
-              
-              // 处理消息事件
-              if (jsonData.event === 'message' && jsonData.answer !== undefined) {
-                // 解码Unicode编码的answer
-                const decodedAnswer = decodeUnicode(jsonData.answer);
-                console.log('解码后的答案:', decodedAnswer);
-                
-                // 获取当前AI消息
-                const aiMessage = chatMessages[chatMessages.length - 1];
-                
-                // 打字机效果：累加新内容
-                aiMessage.content = (aiMessage.content || '') + decodedAnswer;
-                
-                // 滚动到最新消息
-                scrollToLatestMessage();
-              }
-              // 处理消息结束事件
-              else if (jsonData.event === 'node_finished') {
-                messageComplete.value = true;
-                console.log('对话完成');
-              }
-            } catch (jsonError) {
-              console.warn('JSON解析错误:', jsonError);
-            }
-          }
-        } catch (e) {
-          console.error('数据处理失败:', e);
-        }
-      });
+        });
     };
 
     // 解码分块数据
@@ -451,7 +456,9 @@ export default {
       formatItineraryText,
       goBack,
       showMore,
-      showAddOptions
+      showAddOptions,
+      safeAreaTop,
+      safeAreaBottom
     };
   }
 };
@@ -739,7 +746,7 @@ export default {
   background-color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 2;
 }
 
 .user-message .message-content {
