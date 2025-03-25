@@ -162,7 +162,7 @@
 		{
 			"path": "pages/Orders/Orders",
 			"style": {
-				"navigationBarTitleText": "Orders"
+				"navigationBarTitleText": ""
 			}
 		},
 		{

@@ -3,7 +3,7 @@
     <!-- 顶部标题栏 -->
     <view class="header">
       <view class="back-btn">
-        <uni-icons type="back" size="24" color="#333" @click="goBack"></uni-icons>
+        
       </view>
       <text class="title">碧海渔排</text>
       <view class="favorite-btn">
@@ -86,6 +86,13 @@ import { ref } from 'vue';
 const goBack = () => {
   uni.navigateBack();
 };
+const getSafeAreaInsets = () => {
+        const systemInfo = uni.getSystemInfoSync();
+        if (systemInfo.safeArea) {
+			safeAreaTop.value = `${systemInfo.safeArea.top}px`;
+            safeAreaBottom.value = `${systemInfo.safeArea.bottom}px`;
+        }
+	}
 </script>
 
 <style scoped>
