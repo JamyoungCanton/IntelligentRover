@@ -154,9 +154,57 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue';
+import axios from 'axios';
 
 export default {
   setup() {
+    // 创建 Axios 实例
+    const instance = axios.create({
+      baseURL: 'http://47.106.243.134:7181/island',
+      timeout: 5000,
+    });
+
+    // 请求拦截器
+    instance.interceptors.request.use(
+      (config) => {
+        // 在请求发送之前可以修改配置
+        const token = uni.getStorageSync('userToken'); // 假设 Token 存储在本地存储中
+        if (token) {
+          config.headers['X-Access-Token'] = token;
+        }
+        return config;
+      },
+      (error) => {
+        // 处理请求错误
+        return Promise.reject(error);
+      }
+    );
+
+    // 响应拦截器
+    instance.interceptors.response.use(
+      (response) => {
+        // 处理响应数据
+        if (response.data.code === 401) {
+          // 未登录，跳转到登录页面
+          uni.showToast({
+            title: '登录已过期，请重新登录',
+            icon: 'none'
+          });
+          setTimeout(() => {
+            uni.navigateTo({
+              url: '/pages/login/login'
+            });
+          }, 1500);
+          return Promise.reject(response);
+        }
+        return response.data;
+      },
+      (error) => {
+        // 处理响应错误
+        return Promise.reject(error);
+      }
+    );
+
     // 全局强制更新键
     const globalUpdateKey = ref(0);
     // 强制更新计数器
@@ -1081,7 +1129,7 @@ export default {
   background-color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 2;
 }
 
 .user-message .message-content {
