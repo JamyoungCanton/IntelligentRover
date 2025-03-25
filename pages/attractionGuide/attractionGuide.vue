@@ -172,11 +172,11 @@ page {
 
 .search-wrap {
   position: relative;
-  margin-top: 20rpx;
+  margin-top: 10rpx;
 }
 
 .search-input {
-  width: 100%;
+  width: 77%;
   height: 72rpx;
   background: #FFFFFF;
   border-radius: 8rpx;
@@ -208,11 +208,11 @@ page {
 
 .category-scroll {
   display: inline-flex;
-  gap: 20rpx;
+  gap: 15rpx;
 }
 
 .category-item {
-  padding: 12rpx 30rpx;
+  /* padding: 12rpx 30rpx; */
   background: #F5F5F5;
   border-radius: 8rpx;
   color: #666666;

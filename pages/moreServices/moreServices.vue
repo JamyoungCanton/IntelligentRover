@@ -133,7 +133,7 @@
   </view>
 </template>
 
-<script lang="ts" setup>
+<script  setup>
 import { ref } from 'vue';
 
 const commonServices = ref([

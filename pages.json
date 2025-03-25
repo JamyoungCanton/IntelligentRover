@@ -41,7 +41,7 @@
 		{
 			"path": "pages/moreServices/moreServices",
 			"style": {
-				"navigationBarTitleText": "moreServices"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -59,13 +59,13 @@
 		{
 			"path": "pages/ticketBooking/ticketBooking",
 			"style": {
-				"navigationBarTitleText": "ticketBooking"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/attractionGuide/attractionGuide",
 			"style": {
-				"navigationBarTitleText": "attractionGuide"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -83,7 +83,7 @@
 		{
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
-				"navigationBarTitleText": "ticketPoints"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -95,7 +95,7 @@
 		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
-				"navigationBarTitleText": "foodRecommendation"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
