@@ -38,7 +38,8 @@
             <image
               :src="codeImg"
               mode="scaleToFill"
-              style="width: 170rpx;height: 80rpx; border-radius: 12rpx;"
+              @tap="handleChangeCode"
+              style="width: 170rpx;height: 80rpx; margin-top: 20rpx; border-radius: 12rpx;"
             />
           </view>
         </view>
@@ -107,6 +108,11 @@ const handleCode = async () => {
       console.error('获取验证码失败:', err);
     }
   });
+};
+
+// 切换图形验证码
+const handleChangeCode = () => {
+  handleCode();
 };
 
 // 校验表单
@@ -207,6 +213,13 @@ const handleLogin = async () => {
   });
 };
 
+//注册页面逻辑
+const handleRegister = () => {
+  // 调整注册页面
+  uni.navigateTo({
+    url: '/pages/register/register'
+  });
+};
 
 const handleForgetPassword = () => {
   // 忘记密码逻辑

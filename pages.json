@@ -176,6 +176,12 @@
 			"style": {
 				"navigationBarTitleText": "login"
 			}
+		},
+		{
+			"path": "pages/register/register",
+			"style": {
+				"navigationBarTitleText": "注册"
+			}
 		}
 	],
 	"globalStyle": {
@@ -193,26 +199,26 @@
 			{
 				"pagePath": "pages/index/index",
 				"text": "首页",
-				"iconPath": "static/tabbar/home.png",
-				"selectedIconPath": "static/tabbar/home1.png"
+				"iconPath": "/static/tabbar/home.png",
+				"selectedIconPath": "/static/tabbar/home1.png"
 			},
 			{
 				"pagePath": "pages/itinerary/itinerary",
 				"text": "行程",
-				"iconPath": "static/tabbar/itinerary.png",
-				"selectedIconPath": "static/tabbar/itinerary1.png"
+				"iconPath": "/static/tabbar/itinerary.png",
+				"selectedIconPath": "/static/tabbar/itinerary1.png"
 			},
 			{
 				"pagePath": "pages/order/order",
 				"text": "订单",
-				"iconPath": "static/tabbar/order.png",
-				"selectedIconPath": "static/tabbar/order1.png"
+				"iconPath": "/static/tabbar/order.png",
+				"selectedIconPath": "/static/tabbar/order1.png"
 			},
 			{
 				"pagePath": "pages/my/my",
 				"text": "我的",
-				"iconPath": "static/tabbar/my.png",
-				"selectedIconPath": "static/tabbar/my1.png"
+				"iconPath": "/static/tabbar/my.png",
+				"selectedIconPath": "/static/tabbar/my1.png"
 			}
 		]
 	}

@@ -225,7 +225,6 @@ const navigateToRoute = () => {
 
 // 获取屏幕安全距离
 const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets;
-console.log(safeAreaInsets);
 </script>
 
 <style>

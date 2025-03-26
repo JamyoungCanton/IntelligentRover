@@ -28,7 +28,7 @@
       <view class="grid-container">
         <view class="grid-item" v-for="(item, index) in gridItems" :key="index">
           <view class="grid-icon">
-            <image :src="item.icon" mode="aspectFit" />
+            <image :src="item.img" mode="aspectFit" />
           </view>
           <text class="grid-text">{{ item.text }}</text>
         </view>
@@ -44,7 +44,7 @@
         </view>
       </view>
 
-      <view class="menu-card">
+      <view class="menu-card" @tap="goLoginOut">
         <view class="menu-item border-bottom">
           <view class="menu-left">
             <uni-icons type="gear" size="18" color="#3B82F6" />
@@ -76,7 +76,7 @@
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
-        <view class="menu-item">
+        <view class="menu-item"  >
           <view class="menu-left">
             <uni-icons type="info" size="18" color="#3B82F6" />
             <text class="menu-text">关于我们</text>
@@ -98,19 +98,19 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    icon: '/static/my/collectItinerary.png',
+    img: '../../static/my/collectItinerary.png',
     text: '收藏行程'
   },
   {
-    icon: '/static/my/historyOrder.png',
+    img: '../../static/my/historyOrder.png',
     text: '历史订单'
   },
   {
-    icon: '/static/my/pendingTravelOrders.png',
+    img: '../../static/my/pendingTravelOrders.png',
     text: '待出行'
   },
   {
-    icon: '/static/my/customerService.png',
+    img: '../../static/my/customerService.png',
     text: '客服中心'
   }
 ]);
@@ -140,6 +140,17 @@ onMounted(() => {
   // console.log(token.value);
   
 });
+
+
+
+
+// 退出登录页
+const goLoginOut = () => {
+    // 清除token
+    userStore.setToken('');
+    // 清除用户信息
+    userStore.updateUserInfo('');
+  }
 
 </script>
 
