@@ -317,6 +317,22 @@ export default {
     const sendMessage = () => {
       if (!inputMessage.value.trim()) return;
 
+      // 检查用户是否已登录（有token）
+      if (!token.value) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none',
+          duration: 2000
+        });
+        // 延迟跳转到登录页面，给用户一些时间看到提示
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          });
+        }, 2000);
+        return;
+      }
+
       // 添加用户消息
       chatMessages.push({
         type: 'user',
