@@ -110,7 +110,6 @@
   </view>
 </template>
 
-
 <script>
 import { ref, reactive, onMounted, nextTick, computed } from 'vue';
 import axios from 'axios';
@@ -146,9 +145,9 @@ export default {
     // 响应拦截器
     instance.interceptors.response.use(
       (response) => {
-        // 处理响应数据
         if (response.data.code === 401) {
-          // 未登录，跳转到登录页面
+          // 未登录，存储目标页面路径
+          uni.setStorageSync('redirectUrl', window.location.href);
           uni.showToast({
             title: '登录已过期，请重新登录',
             icon: 'none'
@@ -163,7 +162,6 @@ export default {
         return response.data;
       },
       (error) => {
-        // 处理响应错误
         return Promise.reject(error);
       }
     );
@@ -191,6 +189,9 @@ export default {
 
       try {
         let processedContent = content;
+
+        // 处理关键字"酒店"，添加样式和跳转功能
+        processedContent = processedContent.replace(/酒店/g, '<text class="hotel-link" @tap="navigateToHotel">酒店</text>');
 
         // 处理常见HTML标签，将它们转换为适当的样式类
 
@@ -223,6 +224,11 @@ export default {
 
         // 处理表格 (简化处理)
         processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
+
+        // 处理span标签，添加点击事件
+        processedContent = processedContent.replace(/<span\s+@click="func\('(\d+)',\s*'([^']*)'\)">(.*?)<\/span>/g, (match, id, type, content) => {
+          return `<text class="clickable-span" @tap="handleSpanClick('${id}', '${type}')">${content}</text>`;
+        });
 
         // 移除可能剩余的HTML标签
         processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
@@ -403,6 +409,9 @@ export default {
       // 初始化时增加更新计数
       updateCounter.value++;
 
+      // 存储所有原始answer值
+      const rawAnswers = [];
+
       // 监听分块数据到达事件
       requestTask.onChunkReceived((res) => {
         try {
@@ -410,24 +419,27 @@ export default {
           const uint8Array = new Uint8Array(res.data);
           const decoder = new TextDecoder('utf-8');
           const text = decoder.decode(uint8Array);
-          console.log('收到的原始数据:', text); // 调试日志
+          // console.log('收到的原始数据:', text); // 调试日志
 
           // 处理SSE格式数据
           if (text.startsWith('data:')) {
             // 提取data:后面的JSON字符串
             const jsonStr = text.substring(5).trim();
-            console.log('提取的JSON字符串:', jsonStr); // 调试日志
+            // console.log('提取的JSON字符串:', jsonStr); // 调试日志
 
             try {
               // 解析JSON数据
               const jsonData = JSON.parse(jsonStr);
-              console.log('解析到的JSON数据:', jsonData);
+              // console.log('解析到的JSON数据:', jsonData);
 
               // 处理消息事件
               if (jsonData.event === 'message' && jsonData.answer !== undefined) {
+                // 保存原始answer值
+                rawAnswers.push(jsonData.answer);
+
                 // 解码Unicode编码的answer
                 const decodedAnswer = decodeUnicode(jsonData.answer);
-                console.log('解码后的答案:', decodedAnswer);
+                // console.log('解码后的答案:', decodedAnswer);
 
                 // 使用最简单直接的方式更新内容
                 if (aiMessageIndex < chatMessages.length) {
@@ -459,15 +471,20 @@ export default {
               else if (jsonData.event === 'node_finished') {
                 messageComplete.value = true;
                 console.log('对话完成');
+
+                // 打印所有原始answer值
+                console.log('所有原始answer值:', rawAnswers);
+                console.log('所有原始answer值拼接:', rawAnswers.join(' '));
+
                 // 再次强制更新
                 updateCounter.value++;
               }
             } catch (jsonError) {
-              console.warn('JSON解析错误:', jsonError);
+              // console.warn('JSON解析错误:', jsonError);
             }
           }
         } catch (e) {
-          console.error('数据处理失败:', e);
+          // console.error('数据处理失败:', e);
         }
       });
       let text = '';
@@ -479,7 +496,7 @@ export default {
         // 处理特殊字符编码
         text = decodeURIComponent(escape(text));
       } catch (e) {
-        console.error('数据解码失败:', e);
+        // console.error('数据解码失败:', e);
       }
       return text;
     };
@@ -498,7 +515,7 @@ export default {
         }
         return str;
       } catch (e) {
-        console.error('Unicode 解码失败:', e);
+        // console.error('Unicode 解码失败:', e);
         return str;
       }
     };
@@ -530,7 +547,7 @@ export default {
     const scrollToBottom = () => {
       // 如果用户禁用了自动滚动，则不执行滚动操作
       if (!enableAutoScroll.value) {
-        console.log('用户正在查看历史消息，暂停自动滚动');
+        // console.log('用户正在查看历史消息，暂停自动滚动');
         // 添加一个提示，让用户知道有新消息（可选）
         // uni.showToast({
         //   title: '收到新消息，滑动到底部查看',
@@ -652,12 +669,12 @@ export default {
 
               // 计算是否接近底部
               const distanceFromBottom = contentHeight.value - (currentScrollTop + viewportHeight.value);
-              console.log('距离底部：', distanceFromBottom, '像素');
+              // console.log('距离底部：', distanceFromBottom, '像素');
 
               // 如果用户滚动到接近底部，启用自动滚动
               if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
                 enableAutoScroll.value = true;
-                console.log('用户已滚动到底部，启用自动滚动');
+                // console.log('用户已滚动到底部，启用自动滚动');
               }
               // 如果用户正在查看历史消息（即不在底部），禁用自动滚动
               else {
@@ -665,7 +682,7 @@ export default {
                 // 注意：scrollTop增加表示用户在查看更早的消息（即上滑或鼠标滚轮向上）
                 if (currentScrollTop > lastScrollTop.value) {
                   enableAutoScroll.value = false;
-                  console.log('用户正在查看历史消息，禁用自动滚动');
+                  // console.log('用户正在查看历史消息，禁用自动滚动');
                 }
               }
             }
@@ -675,6 +692,46 @@ export default {
 
       // 更新最后的滚动位置
       lastScrollTop.value = currentScrollTop;
+    };
+
+    const handleSpanClick = (id, type) => {
+      console.log(`Clicked span with id: ${id}, type: ${type}`);
+      // 在这里添加您想要执行的操作
+      // 例如，可以根据type来决定执行不同的操作
+      switch (type) {
+        case 'Transport':
+          // 处理交通相关的点击
+          uni.showToast({
+            title: `查看交通信息: ${id}`,
+            icon: 'none'
+          });
+          break;
+        case 'Accommodation':
+          // 处理住宿相关的点击
+          uni.showToast({
+            title: `查看住宿信息: ${id}`,
+            icon: 'none'
+          });
+          break;
+        case 'Restaurant':
+          // 处理餐厅相关的点击
+          uni.showToast({
+            title: `查看餐厅信息: ${id}`,
+            icon: 'none'
+          });
+          break;
+        default:
+          uni.showToast({
+            title: `查看详情: ${id}`,
+            icon: 'none'
+          });
+      }
+    };
+
+    const navigateToHotel = () => {
+      uni.navigateTo({
+        url: '/pages/hotelBooking/hotelBooking'
+      });
     };
 
     return {
@@ -698,13 +755,13 @@ export default {
       showAddOptions,
       scrollToBottom, // 导出滚动到底部的函数
       onScrollToUpper, // 滚动到顶部的处理函数
-      onScroll // 滚动事件处理函数
+      onScroll, // 滚动事件处理函数
+      handleSpanClick, // 处理span点击的函数
+      navigateToHotel // 导出酒店页面跳转函数
     };
   }
 };
 </script>
-
-
 
 <style>
 /* 添加消息文本样式 */
@@ -713,6 +770,28 @@ export default {
   word-break: break-word;
   font-size: 14px;
   line-height: 1.5;
+}
+
+/* 添加可点击span的样式 */
+.clickable-span {
+  color: #4285f4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.clickable-span:active {
+  opacity: 0.7;
+}
+
+/* 酒店链接样式 */
+.hotel-link {
+  color: #4285f4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hotel-link:active {
+  opacity: 0.7;
 }
 
 /* HTML标签转换后的样式 */
@@ -1058,7 +1137,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
 }
 
 .title {
@@ -1116,331 +1194,6 @@ export default {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   line-height: 2;
-}
-
-.user-message .message-content {
-  background-color: #4285f4;
-  color: #ffffff;
-}
-
-/* Category styles */
-.category-container {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  margin-top: 16px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 5px;
-  width: 100%;
-  overflow-x: auto;
-}
-
-.category-item {
-  width: 18%;
-  max-width: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 2px;
-  margin-bottom: 8px;
-  border: 1px solid #eeeeee;
-  border-radius: 8px;
-  padding: 5px;
-  background-color: #f9f9f9;
-  font-size: 12px;
-}
-
-.category-item:active {
-  transform: scale(0.98);
-}
-
-.category-item image {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 8px;
-}
-
-.category-item text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  text-align: center;
-  line-height: 1.4;
-}
-
-/* Input area styles */
-.input-container {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #ffffff;
-  border-top: 1px solid #eeeeee;
-}
-
-.message-input {
-  flex: 1;
-  height: 36px;
-  background-color: #f5f5f5;
-  border-radius: 18px;
-  padding: 0 16px;
-  margin: 0 10px;
-  font-size: 14px;
-}
-
-.add-icon,
-.send-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4285f4;
-}
-
-/* Itinerary styles */
-.itinerary-container {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 12px;
-}
-
-.itinerary-title {
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  color: #333333;
-}
-
-.itinerary-section {
-  margin-bottom: 16px;
-}
-
-.itinerary-item {
-  margin-bottom: 10px;
-  display: flex;
-}
-
-.time {
-  font-weight: bold;
-  margin-right: 8px;
-  width: 45px;
-  flex-shrink: 0;
-  color: #333333;
-}
-
-.detail {
-  flex: 1;
-  color: #666666;
-}
-
-.highlight {
-  color: #4285f4;
-}
-
-/* Guide styles */
-.fishing-guide {
-  margin-top: 20px;
-  padding: 0 10px;
-}
-
-.guide-intro {
-  font-size: 16px;
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-.divider {
-  height: 2px;
-  background-color: #4285f4;
-  margin: 20px 0;
-}
-
-.section-title {
-  font-size: 20px;
-  color: #4285f4;
-  margin-bottom: 15px;
-}
-
-.guide-section {
-  margin-bottom: 20px;
-}
-
-.guide-item {
-  margin-bottom: 15px;
-}
-
-.item-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #000;
-  margin-bottom: 5px;
-}
-
-.item-content {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 8px;
-}
-
-.guide-conclusion {
-  font-size: 16px;
-  line-height: 1.5;
-  margin-top: 20px;
-  font-weight: bold;
-}
-
-/* Recommendations styles */
-.recommendations {
-  margin-bottom: 16px;
-}
-
-.recommendation-item {
-  margin-bottom: 10px;
-}
-
-.place {
-  font-weight: bold;
-  color: #333333;
-}
-
-.description {
-  color: #666666;
-  margin-top: 4px;
-  display: block;
-}
-
-/* Price styles */
-.price-container {
-  margin-top: 16px;
-  margin-bottom: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #eeeeee;
-}
-
-.price-info {
-  display: flex;
-  align-items: baseline;
-}
-
-.price {
-  font-size: 24px;
-  font-weight: bold;
-  color: #4285f4;
-}
-
-.price-details {
-  font-size: 12px;
-  color: #999999;
-  margin-left: 8px;
-}
-
-.discount {
-  color: #ff6b6b;
-  font-size: 14px;
-  margin-top: 6px;
-}
-
-/* Button styles */
-.confirm-button {
-  background-color: #4285f4;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 16px;
-  width: 100%;
-  margin-top: 12px;
-}
-
-.confirm-button:active {
-  opacity: 0.9;
-}
-
-.add-icon,
-.send-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #4285f4;
-  border-radius: 50px;
-}
-
-.add-icon .iconfont,
-.send-icon .iconfont {
-  font-size: 24px;
-  color: #4285f4;
-}
-
-/* Font icons */
-@font-face {
-  font-family: "iconfont";
-  font-display: swap;
-  src: url('data:application/x-font-woff2;charset=utf-8;base64,d09GMgABAAAAAAk...') format('woff2');
-}
-
-.iconfont {
-  font-family: "iconfont" !important;
-  font-size: 16px;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Add these styles to your existing CSS */
-
-/* Avatar base64 images */
-.user-avatar {
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC/klEQVRYR+2WTUhUURTH/+e+N6ZmamVqRR+GhFSWRBQtJnUxRR8LF5G0qE0QSQVR0CJoEUwQBEEFtQiCaB0V0aooKoI+oE1QUaGVqKWNjR8zOuP7uHHnzfNNM3nfyI3mwqzevfec87v/c+69h7DKF61y/1gD+N8KrK1AqDxsB8kwiPwA+QhkHiQZYGQA5AIYB1QnGHYwO0DkAMlxgNLAyL0on88EwZEgGQWRBFAKjNFrEX/yfQAIVoR9gHoIUBDAEsB6EHkBHAXoDoBbAH0FcwYgN0BugK8A/BjgFEg4QOQEcwpQQyAEAfEBmALzN4B/AuIHcwGgHwC/A9RHEFkAcgEwQJwB8yUwPwbEBaJtYL4NUApQGkAJMEcBfgXwOBh7ALEBPArmZyDKB8QBUAGg3gB4AOYNAH0D82swXwVoAEQOgIIgioHIB2Y/iC6DOQtQDIQ4mN+CyA6iAkDtBtRukDgAEQBzGsxvALUVzM8BtQvEHpDwgTkBUBcgPCDKB/MIQJUg0QDmHhDtBfgioCYB6gQoD8xZgBIgqgLzGEDlALWAxAUwPwJRPzjbCxYHQRQBcwpEHSB2AhwBqBGgKjC/A9FVMJUDFAYoF8xZQI0C4gHEDfA4QI0AdYH5KYjOgbkYEDsgHgBJEDUDHAKoBcwDILoE5jIQOUDiAXgYoHaA2sD8HETnwVwCCBsgXoDHAGoHqB3Mb0DUDeYSEOUAUgDwIEAdAHWC+S2ILoC5GEQukHgAHgKoE6BuML8DUQ+YiwDKAUk+wAMAdQHUDeb3IOoFcyEgTpB4AB4EqAugHjB/BNFFMB8AkQskHoDvA3QcoB4wfwJRH5gLAHGAxA3wXYBOANQL5s8g6gdzPiAOQNwA3wHoJEAnwfwFRANgzgfEDogb4NsAnQLoFJi/gmgQzPsAsQPiBvgWQKcBOg3mbyAaAnMeIDaQuAG+CdAZgM6C+TuIhsG8FxAbIG6AbwB0DqBzYP4BojtgzgXEBogL4OsAnQfoApgzIBoB816AbCDx/AYnOl1BcQIXEwAAAABJRU5ErkJggg==');
-  background-size: cover;
-  background-position: center;
-}
-
-.ai-avatar {
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC30lEQVRYR+2WS0hUURjH/+fMnTt3xsrUysyHkT2oKKmHFUVR0aooaVGLFlFBtChaVLRpEdGiKGjTokWUVItWQREFQdQiCgqiInoQGfYwK8fxzsy9c+89J+6dO3Pvg5Fq0YVz4Nxzvv/v+/7n8R3CKhe5yv1jA+B/K7ChQNhXsQsgJ0A2gEQAEgAjDaAYQDaA4wDVgOAAswUkVpDYQBwHKAXmBECRq+F8JghOBMkQiASgZDDGr4b9ifcBEPCVewB1H6AggEWA9SDyADgK0G2AegD6AmYHQC6AXAB/BPgjwEmQsIPICeYkoIZBCALiAzAJ5q8A/wDED+Y8gL4D/A5QH0BkAcgFwABxBsyXwPwIEBeItoH5FkApQGkAJcAcBfgVwGNg7AHEBvAomJ+BKB8QB0AFgHoD4D6YNwD0DcyvwXwVoAEQOQAKgigGIh+Y/SC6DOYsQDEQ4mB+CyI7iAoAtRtQu0HiAEQAzGkwvwHUVjA/B9QukNhB4gNzAlAXIDwgygfzCECVINEA5h4Q7QX4IqAmAeoEKA/MWYASIKoCcwygcoBaQOICmB+B6Ac42wsWB0EUAXMKRHUgdgIcAagRoCoAvwPRVTCVAxQGKBfMWUCNAuIBxA3wOECNAHWB+SmIzoG5GBA7IB4ASRA1AxwCqAXMAyC6BOYyENlB4gF4GKB2gNrA/BxE58FcAggbIF6AxwBqB6gdzG9A1A3mEhA5QOIB+CFA2wHqBPNbEF0AczGIXCDxADwEUCdA3WB+B6IeMBcBlAPmfIAHAOoCqBvM70HUC+ZCQJwg8QA8CFAXQPfA/BFEF8F8AEQukHgAvg/QcYB6wPwJRH1gLgDEARIPwHcBOgHQfTB/BlE/mPMBcQDiBvgOQCcBug/mLyAaAHM+IHZA3ADfBugUQA/A/BVEQ2DOA8QGEjfAtwA6DdBDMH8D0TCY9wJiA8QN8E2AzgD0CMzfQTQC5r2A2ABxAXwdoPMAPQZzBkQjYN4LkA0knj8BJ0hdQbF7rgAAAABJRU5ErkJggg==');
-  background-size: 22px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #4285f4;
-}
-
-/* Message alignment fixes */
-.message {
-  display: flex;
-  margin-bottom: 16px;
-  align-items: flex-start;
-}
-
-.ai-message {
-  align-self: flex-start;
-}
-
-.user-message {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.message-content {
-  max-width: 70%;
-  margin: 0 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .user-message .message-content {
