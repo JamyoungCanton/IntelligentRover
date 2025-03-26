@@ -31,7 +31,6 @@
 	  <button class="btn default" @tap="ToitineraryEvaluation">评价一下</button>
       <button class="btn default" @tap="Toindex">返回首页</button>
     </view>
-    <view class="navbar"><navbar></navbar></view>
   </view>
 </template>
 

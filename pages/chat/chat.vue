@@ -3,7 +3,7 @@
     <!-- Header -->
     <view class="header">
       <view class="back-icon avatar ai-avatar" @tap="goBack">
-        
+
       </view>
       <view class="title">AI旅游助手</view>
       <view class="more-icon avatar ai-avatar" @tap="showMore">
@@ -12,18 +12,9 @@
     </view>
 
     <!-- Chat Container -->
-    <scroll-view 
-      scroll-y 
-      class="chat-container" 
-      :scroll-top="scrollTop"
-      scroll-with-animation
-      :scroll-into-view="scrollIntoView"
-      :scroll-anchoring="true"
-      enhanced
-      :show-scrollbar="false"
-      @scrolltoupper="onScrollToUpper"
-      @scroll="onScroll"
-    >
+    <scroll-view scroll-y class="chat-container" :scroll-top="scrollTop" scroll-with-animation
+      :scroll-into-view="scrollIntoView" :scroll-anchoring="true" enhanced :show-scrollbar="false"
+      @scrolltoupper="onScrollToUpper" @scroll="onScroll">
       <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
         <view class="avatar ai-avatar">
@@ -31,15 +22,11 @@
         </view>
         <view class="message-content">
           <text>欢迎使用AI旅游助手！我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</text>
-          
+
           <!-- Category Options -->
           <view class="category-container">
-            <view 
-              v-for="(item, index) in categories" 
-              :key="index" 
-              class="category-item"
-              @tap="() => selectCategory(item.id)"
-            >
+            <view v-for="(item, index) in categories" :key="index" class="category-item"
+              @tap="() => selectCategory(item.id)">
               <image :src="item.icon" mode="aspectFit"></image>
               <text>{{ item.name }}</text>
             </view>
@@ -50,7 +37,7 @@
       <!-- Chat Messages -->
       <block v-for="(msg, index) in chatMessages" :key="index">
         <!-- User Message -->
-        <view v-if="msg.type === 'user'" class="message user-message" :id="`msg-${index+1}`">
+        <view v-if="msg.type === 'user'" class="message user-message" :id="`msg-${index + 1}`">
           <view class="avatar user-avatar">
             <image src="/static/chat/user.png"></image>
           </view>
@@ -60,57 +47,39 @@
         </view>
 
         <!-- AI Response -->
-        <view 
-          v-else 
-          class="message ai-message" 
-          :id="`msg-${index+1}`" 
-          :key="`${msg.id || index}-${updateCounter}`"
-        >
+        <view v-else class="message ai-message" :id="`msg-${index + 1}`" :key="`${msg.id || index}-${updateCounter}`">
           <view class="avatar ai-avatar">
             <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
           </view>
           <view class="message-content">
             <!-- If message has an image -->
-            <image 
-              v-if="msg.image" 
-              class="response-image" 
-              src="/static/chat/fashboat.png" 
-              mode="widthFix"
-            ></image>
-            
+            <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
+
             <!-- Text content - 使用rich-text来正确渲染HTML内容 -->
             <rich-text v-if="msg.content" class="message-text" :nodes="msg.content"></rich-text>
-            
+
             <!-- Itinerary details -->
             <view v-if="msg.itinerary" class="itinerary-container">
               <view class="itinerary-title">{{ msg.itinerary.title }}</view>
-              
+
               <view class="itinerary-section">
                 <text class="section-title">行程安排:</text>
-                
-                <view 
-                  v-for="(item, idx) in msg.itinerary.schedule" 
-                  :key="idx" 
-                  class="itinerary-item"
-                >
+
+                <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
                   <text class="time">{{ item.time }}:</text>
                   <rich-text class="detail" :nodes="formatItineraryText(item.detail)"></rich-text>
                 </view>
               </view>
-              
+
               <view v-if="msg.itinerary.recommendations" class="recommendations">
                 <text class="section-title">推荐商家:</text>
-                
-                <view 
-                  v-for="(rec, idx) in msg.itinerary.recommendations" 
-                  :key="idx" 
-                  class="recommendation-item"
-                >
+
+                <view v-for="(rec, idx) in msg.itinerary.recommendations" :key="idx" class="recommendation-item">
                   <text class="place">{{ rec.place }}:</text>
                   <text class="description">{{ rec.description }}</text>
                 </view>
               </view>
-              
+
               <view v-if="msg.itinerary.price" class="price-container">
                 <view class="price-info">
                   <text class="price">¥ {{ msg.itinerary.price.amount }}</text>
@@ -120,12 +89,8 @@
                   优惠·¥{{ msg.itinerary.price.discount }}元
                 </view>
               </view>
-              
-              <button 
-                v-if="msg.itinerary.price" 
-                class="confirm-button" 
-                @tap="navigatortopaymoent"
-              >确认行程并购买</button>
+
+              <button v-if="msg.itinerary.price" class="confirm-button" @tap="navigatortopaymoent">确认行程并购买</button>
             </view>
           </view>
         </view>
@@ -137,13 +102,7 @@
       <view class="add-icon avatar ai-avatar" @tap="showAddOptions" style="background-color: #f5f5f5;">
         <image src="/static/chat/add.png"></image>
       </view>
-      <input 
-        class="message-input" 
-        type="text" 
-        v-model="inputMessage" 
-        placeholder="输入您的需求"
-        @confirm="sendMessage"
-      />
+      <input class="message-input" type="text" v-model="inputMessage" placeholder="输入您的需求" @confirm="sendMessage" />
       <view class="send-icon avatar ai-avatar" @tap="sendMessage">
         <image src="/static/chat/send.png"></image>
       </view>
@@ -153,10 +112,62 @@
 
 
 <script>
-import { ref, reactive, onMounted, nextTick } from 'vue';
+import { ref, reactive, onMounted, nextTick, computed } from 'vue';
+import axios from 'axios';
+import { useUserStore } from '@/store';
 
 export default {
   setup() {
+    // 引入 store
+    const userStore = useUserStore();
+    const token = computed(() => userStore.token);
+
+    // 创建 Axios 实例
+    const instance = axios.create({
+      baseURL: 'http://47.106.243.134:7181/island',
+      timeout: 5000,
+    });
+
+    // 请求拦截器
+    instance.interceptors.request.use(
+      (config) => {
+        // 在请求发送之前可以修改配置
+        if (token.value) {
+          config.headers['X-Access-Token'] = token.value;
+        }
+        return config;
+      },
+      (error) => {
+        // 处理请求错误
+        return Promise.reject(error);
+      }
+    );
+
+    // 响应拦截器
+    instance.interceptors.response.use(
+      (response) => {
+        // 处理响应数据
+        if (response.data.code === 401) {
+          // 未登录，跳转到登录页面
+          uni.showToast({
+            title: '登录已过期，请重新登录',
+            icon: 'none'
+          });
+          setTimeout(() => {
+            uni.navigateTo({
+              url: '/pages/login/login'
+            });
+          }, 1500);
+          return Promise.reject(response);
+        }
+        return response.data;
+      },
+      (error) => {
+        // 处理响应错误
+        return Promise.reject(error);
+      }
+    );
+
     // 全局强制更新键
     const globalUpdateKey = ref(0);
     // 强制更新计数器
@@ -177,81 +188,81 @@ export default {
     // 处理HTML标签，转换为对应的样式效果
     const processHtmlTags = (content) => {
       if (!content) return '';
-      
+
       try {
         let processedContent = content;
-        
+
         // 处理常见HTML标签，将它们转换为适当的样式类
-        
+
         // 处理标题标签
         processedContent = processedContent.replace(/<h1>(.*?)<\/h1>/g, '<view class="heading-1">$1</view>');
         processedContent = processedContent.replace(/<h2>(.*?)<\/h2>/g, '<view class="heading-2">$1</view>');
         processedContent = processedContent.replace(/<h3>(.*?)<\/h3>/g, '<view class="heading-3">$1</view>');
-        
+
         // 处理段落和换行
         processedContent = processedContent.replace(/<p>(.*?)<\/p>/g, '<view class="paragraph">$1</view>');
         processedContent = processedContent.replace(/<br\s*\/?>/g, '<view class="line-break"></view>');
-        
+
         // 处理列表
         processedContent = processedContent.replace(/<ul>([\s\S]*?)<\/ul>/g, '<view class="unordered-list">$1</view>');
         processedContent = processedContent.replace(/<ol>([\s\S]*?)<\/ol>/g, '<view class="ordered-list">$1</view>');
         processedContent = processedContent.replace(/<li>(.*?)<\/li>/g, '<view class="list-item">• $1</view>');
-        
+
         // 处理强调和重点
         processedContent = processedContent.replace(/<strong>(.*?)<\/strong>/g, '<text class="bold">$1</text>');
         processedContent = processedContent.replace(/<b>(.*?)<\/b>/g, '<text class="bold">$1</text>');
         processedContent = processedContent.replace(/<em>(.*?)<\/em>/g, '<text class="italic">$1</text>');
         processedContent = processedContent.replace(/<i>(.*?)<\/i>/g, '<text class="italic">$1</text>');
-        
+
         // 处理代码块和行内代码
         processedContent = processedContent.replace(/<pre>([\s\S]*?)<\/pre>/g, '<view class="code-block">$1</view>');
         processedContent = processedContent.replace(/<code>(.*?)<\/code>/g, '<text class="inline-code">$1</text>');
-        
+
         // 处理引用
         processedContent = processedContent.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, '<view class="blockquote">$1</view>');
-        
+
         // 处理表格 (简化处理)
         processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
-        
+
         // 移除可能剩余的HTML标签
         processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
-        
+
         return processedContent;
       } catch (e) {
         console.error('HTML标签处理失败:', e);
         return content;
       }
     };
-    
+
     // Category data with updated icons
     const categories = reactive([
-      { 
-        id: 'fishing', 
-        name: '海钓体验', 
+      {
+        id: 'fishing',
+        name: '海钓体验',
         icon: '/static/chat/fishing.jpg'
       },
-      { 
-        id: 'snorkeling', 
-        name: '浮潜探索', 
+      {
+        id: 'snorkeling',
+        name: '浮潜探索',
         icon: '/static/chat/snorkeling.jpg'
       },
-      { 
-        id: 'family', 
-        name: '亲子娱乐', 
+      {
+        id: 'family',
+        name: '亲子娱乐',
         icon: '/static/chat/family.jpg'
       },
-      { 
-        id: 'leisure', 
-        name: '休闲畅游', 
+      {
+        id: 'leisure',
+        name: '休闲畅游',
         icon: '/static/chat/leisure.jpg'
       },
-      { 
-        id: 'island', 
-        name: '海岛介绍', 
+      {
+        id: 'island',
+        name: '海岛介绍',
         icon: '/static/chat/island.jpg'
       },
     ]);
-    
+
     // Chat messages
     const chatMessages = reactive([
       {
@@ -305,17 +316,17 @@ export default {
 
     const sendMessage = () => {
       if (!inputMessage.value.trim()) return;
-      
+
       // 添加用户消息
       chatMessages.push({
         type: 'user',
         content: inputMessage.value
       });
-      
+
       // 清空输入框并滚动到最新消息
       inputMessage.value = '';
       scrollToLatestMessage();
-      
+
       // 调用智能对话接口
       callAIInterface(chatMessages[chatMessages.length - 1].content);
     };
@@ -339,7 +350,8 @@ export default {
         url: url,
         method: 'POST',
         header: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Access-Token': token.value
         },
         data: JSON.stringify(data),
         responseType: 'text', // 设置响应类型为文本
@@ -371,10 +383,10 @@ export default {
         id: Date.now() // 添加唯一ID
       };
       chatMessages.push(initialMessage);
-      
+
       // 初始化时增加更新计数
       updateCounter.value++;
-      
+
       // 监听分块数据到达事件
       requestTask.onChunkReceived((res) => {
         try {
@@ -383,32 +395,32 @@ export default {
           const decoder = new TextDecoder('utf-8');
           const text = decoder.decode(uint8Array);
           console.log('收到的原始数据:', text); // 调试日志
-          
+
           // 处理SSE格式数据
           if (text.startsWith('data:')) {
             // 提取data:后面的JSON字符串
             const jsonStr = text.substring(5).trim();
             console.log('提取的JSON字符串:', jsonStr); // 调试日志
-            
+
             try {
               // 解析JSON数据
               const jsonData = JSON.parse(jsonStr);
               console.log('解析到的JSON数据:', jsonData);
-              
+
               // 处理消息事件
               if (jsonData.event === 'message' && jsonData.answer !== undefined) {
                 // 解码Unicode编码的answer
                 const decodedAnswer = decodeUnicode(jsonData.answer);
                 console.log('解码后的答案:', decodedAnswer);
-                
+
                 // 使用最简单直接的方式更新内容
                 if (aiMessageIndex < chatMessages.length) {
                   // 获取当前消息引用
                   const currentMessage = chatMessages[aiMessageIndex];
-                  
+
                   // 处理HTML标签，转换为对应的样式
                   const processedAnswer = processHtmlTags(decodedAnswer);
-                  
+
                   // 直接赋值 - Vue 3的响应式系统会检测到这个变化
                   if (!currentMessage.content) {
                     currentMessage.content = processedAnswer;
@@ -417,10 +429,10 @@ export default {
                     const newContent = currentMessage.content + processedAnswer;
                     currentMessage.content = newContent;
                   }
-                  
+
                   // 强制视图立即更新
                   globalUpdateKey.value = Date.now();
-                  
+
                   // 使用setTimeout确保在下一个事件循环中执行滚动
                   setTimeout(() => {
                     scrollToBottom();
@@ -459,12 +471,12 @@ export default {
     // 解码 Unicode 编码
     const decodeUnicode = (str) => {
       if (!str) return '';
-      
+
       try {
         // 处理直接的Unicode编码
         if (typeof str === 'string') {
           // 使用正则表达式替换所有Unicode转义序列
-          return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => 
+          return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
             String.fromCharCode(parseInt(hex, 16))
           );
         }
@@ -479,10 +491,10 @@ export default {
       // 在这里对接口返回的文本进行格式化处理
       // 例如，可以将文本中的换行符替换为<br>标签，以便在页面上正确显示
       let formattedText = responseText.replace(/\n/g, '<br>');
-      
+
       // 进一步的格式化逻辑可以根据实际需求添加
       // 例如，添加HTML标签来美化文本，或者处理特定的关键词
-      
+
       return formattedText;
     };
 
@@ -497,7 +509,7 @@ export default {
       const lastIndex = chatMessages.length;
       scrollIntoView.value = `msg-${lastIndex}`;
     };
-    
+
     // 新增滚动到底部的函数
     const scrollToBottom = () => {
       // 如果用户禁用了自动滚动，则不执行滚动操作
@@ -511,7 +523,7 @@ export default {
         // });
         return;
       }
-      
+
       // 使用uni-app的选择器API获取scroll-view组件信息
       const query = uni.createSelectorQuery();
       query.select('.chat-container').boundingClientRect(data => {
@@ -519,7 +531,7 @@ export default {
           // 获取scroll-view的高度
           const containerHeight = data.height;
           viewportHeight.value = containerHeight;
-          
+
           // 再次使用选择器获取所有消息内容的总高度
           const messageQuery = uni.createSelectorQuery();
           messageQuery.selectAll('.message').boundingClientRect(messages => {
@@ -527,14 +539,14 @@ export default {
               // 计算所有消息的总高度
               const totalHeight = messages.reduce((sum, msg) => sum + msg.height, 0);
               contentHeight.value = totalHeight;
-              
+
               // 设置scrollTop为消息总高度，确保滚动到底部
               scrollTop.value = totalHeight;
-              
+
               // 同时更新scrollIntoView以确保最新消息可见
               const lastIndex = chatMessages.length;
               scrollIntoView.value = `msg-${lastIndex}`;
-              
+
               // 更新最后的滚动位置
               lastScrollTop.value = totalHeight;
             }
@@ -542,17 +554,17 @@ export default {
         }
       }).exec();
     };
-    
+
     const formatItineraryText = (text) => {
       return text;
     };
-    
+
     const goBack = () => {
       uni.navigateBack({
         delta: 1
       });
     };
-    
+
     const showMore = () => {
       uni.showActionSheet({
         itemList: ['清空聊天记录', '设置', '关于'],
@@ -561,7 +573,7 @@ export default {
         }
       });
     };
-    
+
     const showAddOptions = () => {
       uni.showActionSheet({
         itemList: ['拍照', '从相册选择', '位置'],
@@ -578,7 +590,7 @@ export default {
         content: ''
       };
       chatMessages.push(aiMessage);
-      
+
       let charIndex = 0;
       const interval = setInterval(() => {
         if (charIndex < content.length) {
@@ -603,34 +615,34 @@ export default {
       console.log('到达顶部');
       // 这里可以添加加载历史消息的逻辑
     };
-    
+
     // 检查是否滚动到底部的阈值（像素）(距离页面底部的距离，超过SCROLL_BOTTOM_THRESHOLD px则表示禁用自动滚落)
     const SCROLL_BOTTOM_THRESHOLD = 10;
 
     const onScroll = (e) => {
       const currentScrollTop = e.detail.scrollTop;
-      
+
       // 获取当前滚动位置、内容高度和可视区域高度
       const query = uni.createSelectorQuery();
       query.select('.chat-container').boundingClientRect(data => {
         if (data) {
           viewportHeight.value = data.height;
-          
+
           // 获取内容总高度
           const messageQuery = uni.createSelectorQuery();
           messageQuery.selectAll('.message').boundingClientRect(messages => {
             if (messages && messages.length > 0) {
               contentHeight.value = messages.reduce((sum, msg) => sum + msg.height, 0);
-              
+
               // 计算是否接近底部
               const distanceFromBottom = contentHeight.value - (currentScrollTop + viewportHeight.value);
               console.log('距离底部：', distanceFromBottom, '像素');
-              
+
               // 如果用户滚动到接近底部，启用自动滚动
               if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
                 enableAutoScroll.value = true;
                 console.log('用户已滚动到底部，启用自动滚动');
-              } 
+              }
               // 如果用户正在查看历史消息（即不在底部），禁用自动滚动
               else {
                 // 判断用户是否主动向上滚动（查看历史消息）
@@ -644,7 +656,7 @@ export default {
           }).exec();
         }
       }).exec();
-      
+
       // 更新最后的滚动位置
       lastScrollTop.value = currentScrollTop;
     };
@@ -714,7 +726,8 @@ export default {
   height: 8px;
 }
 
-.unordered-list, .ordered-list {
+.unordered-list,
+.ordered-list {
   margin: 8px 0;
   padding-left: 16px;
 }
@@ -760,6 +773,7 @@ export default {
   width: 100%;
   margin: 8px 0;
 }
+
 .container {
   display: flex;
   flex-direction: column;
@@ -779,7 +793,8 @@ export default {
   position: relative;
 }
 
-.back-icon, .more-icon {
+.back-icon,
+.more-icon {
   width: 24px;
   height: 24px;
   display: flex;
@@ -961,7 +976,8 @@ export default {
   border-top: 1px solid #eeeeee;
 }
 
-.add-icon, .send-icon {
+.add-icon,
+.send-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -969,7 +985,8 @@ export default {
   justify-content: center;
 }
 
-.add-icon .iconfont, .send-icon .iconfont {
+.add-icon .iconfont,
+.send-icon .iconfont {
   font-size: 24px;
   color: #4285f4;
 }
@@ -1018,7 +1035,8 @@ export default {
   position: relative;
 }
 
-.back-icon, .more-icon {
+.back-icon,
+.more-icon {
   width: 24px;
   height: 24px;
   display: flex;
@@ -1081,7 +1099,7 @@ export default {
   background-color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 2;
 }
 
 .user-message .message-content {
@@ -1154,7 +1172,8 @@ export default {
   font-size: 14px;
 }
 
-.add-icon, .send-icon {
+.add-icon,
+.send-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -1324,7 +1343,8 @@ export default {
   opacity: 0.9;
 }
 
-.add-icon, .send-icon {
+.add-icon,
+.send-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -1334,7 +1354,8 @@ export default {
   border-radius: 50px;
 }
 
-.add-icon .iconfont, .send-icon .iconfont {
+.add-icon .iconfont,
+.send-icon .iconfont {
   font-size: 24px;
   color: #4285f4;
 }
@@ -1342,7 +1363,7 @@ export default {
 /* Font icons */
 @font-face {
   font-family: "iconfont";
-   font-display: swap;
+  font-display: swap;
   src: url('data:application/x-font-woff2;charset=utf-8;base64,d09GMgABAAAAAAk...') format('woff2');
 }
 
@@ -1414,46 +1435,47 @@ export default {
 /* Category styles */
 .category-container {
   display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    margin-top: 16px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    padding: 5px;
-    width: 100%;
-    overflow-x: auto;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  margin-top: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 5px;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .category-item {
   width: 18%;
-    max-width: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-right: 2px;
-    margin-bottom: 8px;
-    border: 1px solid #eeeeee;
-    border-radius: 8px;
-    padding: 5px;
-    background-color: #f9f9f9;
-    font-size: 12px;
+  max-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 2px;
+  margin-bottom: 8px;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  padding: 5px;
+  background-color: #f9f9f9;
+  font-size: 12px;
 }
+
 .category-item:active {
   transform: scale(0.98);
 }
 
 .category-item image {
   width: 40px;
-    height: 40px;
-    margin-bottom: 8px;
+  height: 40px;
+  margin-bottom: 8px;
 }
 
 .category-item text {
   font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    text-align: center;
-    line-height: 1.4;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  line-height: 1.4;
 }
 
 /* Header styles update */
@@ -1468,7 +1490,8 @@ export default {
   position: relative;
 }
 
-.back-icon, .more-icon {
+.back-icon,
+.more-icon {
   width: 24px;
   height: 24px;
   display: flex;
@@ -1502,7 +1525,8 @@ export default {
   font-size: 14px;
 }
 
-.add-icon, .send-icon {
+.add-icon,
+.send-icon {
   width: 36px;
   height: 36px;
   display: flex;
