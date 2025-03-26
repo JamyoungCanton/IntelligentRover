@@ -18,22 +18,36 @@
       <view class="phone-login">
         <view class="input-group">
           <uni-icons type="username" size="24" color="#999999"/>
-          <input type="string" placeholder="请输入用户名" maxlength="11" v-model="formData.username"/>
-          
+          <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username"/>
         </view>
         <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
+
         <view class="input-group">
           <uni-icons type="password" size="24" color="#999999"/>
-          <input type="string" placeholder="请输入密码" maxlength="11" v-model="formData.password"/>
+          
+          <input
+            :type="passwordVisible ? 'text' : 'password'"
+            placeholder="请输入密码"
+            maxlength="11"
+            v-model="formData.password"
+            :class="{ 'password-input': !passwordVisible && formData.password }"
+          />
+          <uni-icons
+            :type="passwordVisible ? 'eye' : 'eye-slash'"
+            size="24"
+            color="#999999"
+            @tap="togglePasswordVisibility"
+            class="toggle-password-icon"
+          />
         </view>
-        <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
 
+        <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
 
         <view class="verify-code">
           <view class="code-input-wrap">
             <view class="input-group">
               <uni-icons type="locked" size="24" color="#999999"/>
-              <input type="number" placeholder="请输入验证码" maxlength="6" v-model="formData.verifyCode"/>
+              <input type="text" placeholder="请输入验证码" maxlength="6" v-model="formData.verifyCode"/>
             </view>
             <image
               :src="codeImg"
@@ -44,7 +58,6 @@
           </view>
         </view>
         <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
-
 
         <button class="login-btn" @tap="handleLogin">登录</button>
       </view>
@@ -65,8 +78,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useUserStore } from '/store/modules/user.js';
 const userStore = useUserStore();
 
@@ -86,6 +98,8 @@ const errors = reactive({
   password: '',
   verifyCode: ''
 });
+// 密码可见性
+const passwordVisible = ref(false);
 
 onMounted(() => {
   handleCode();
@@ -101,7 +115,6 @@ const handleCode = async () => {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     success: (res) => {
-      // 处理返回的数据
       codeImg.value = res.data.result;
     },
     fail: (err) => {
@@ -113,6 +126,11 @@ const handleCode = async () => {
 // 切换图形验证码
 const handleChangeCode = () => {
   handleCode();
+};
+
+// 切换密码可见性
+const togglePasswordVisibility = () => {
+  passwordVisible.value = !passwordVisible.value;
 };
 
 // 校验表单
@@ -157,65 +175,71 @@ const validateForm = () => {
 
 // 登录逻辑
 const handleLogin = async () => {
-  // 校验表单
   if (!validateForm()) {
-    return; // 如果校验不通过，直接返回
+    return;
   }
 
-  // 发起登录请求
   uni.request({
-    url: 'http://47.106.243.134:7181/island/sys/login',
-    method: 'POST',
-    data: {
-      username: formData.username,
-      password: formData.password,
-      captcha: formData.verifyCode,
-      checkKey: key.value
-    },
-    header: { 'Content-Type': 'application/json' },
-    success: (res) => {
-      if (res.data.success === false) {
-        // 提示错误信息
-        uni.showToast({
-          title: res.data.message || '登录失败',
-          icon: 'none',
-          duration: 1500
-        });
-        handleCode(); // 重新获取验证码
-      } else {
-        // 把信息存储到pinia中
-       
-        userStore.updateUserInfo(res.data.result.userInfo)
-        userStore.setToken(res.data.result.token)
-        // 提示成功消息
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 1500
-        });
-        setTimeout(() => {
-          uni.reLaunch ({
-            url: '/pages/my/my' 
-          });
-        }, 1000);
-
-        
-      }
-    },
-    fail: (err) => {
-      // 网络请求失败的处理
+  url: 'http://47.106.243.134:7181/island/sys/login',
+  method: 'POST',
+  data: {
+    username: formData.username,
+    password: formData.password,
+    captcha: formData.verifyCode,
+    checkKey: key.value
+  },
+  header: { 'Content-Type': 'application/json' },
+  success: (res) => {
+    if (res.data.success === false) {
       uni.showToast({
-        title: '网络请求失败，请稍后再试',
-        icon: 'none'
+        title: res.data.message || '登录失败',
+        icon: 'none',
+        duration: 1500
       });
-      console.error('请求失败:', err);
+      handleCode();
+    } else {
+      userStore.updateUserInfo(res.data.result.userInfo);
+      userStore.setToken(res.data.result.token);
+      uni.showToast({
+        title: '登录成功',
+        icon: 'success',
+        duration: 1500
+      });
+      // 获取存储的目标页面路径
+      uni.getStorage({
+        key: 'loginRedirectUrl',
+        success: (res) => {
+          const redirectUrl = res.data;
+          if (redirectUrl) {
+            // 修正参数名
+            uni.reLaunch({
+              url: redirectUrl 
+            });
+            uni.removeStorage({ key: 'loginRedirectUrl' });
+          } else {
+            // 没有需要跳转的 URL，跳转到首页或其他默认页面 
+            uni.reLaunch({ url: '/pages/index/index' });
+          } 
+        },
+        fail: (err) => {
+          console.error('获取存储的目标页面路径失败:', err);
+          // 发生错误时跳转到首页或其他默认页面
+          uni.reLaunch({ url: '/pages/index/index' });
+        }
+      });
     }
-  });
+  },
+  fail: (err) => {
+    uni.showToast({
+      title: '网络请求失败，请稍后再试',
+      icon: 'none'
+    });
+    console.error('请求失败:', err);
+  }
+});
 };
 
-//注册页面逻辑
 const handleRegister = () => {
-  // 调整注册页面
   uni.navigateTo({
     url: '/pages/register/register'
   });
@@ -228,7 +252,6 @@ const handleForgetPassword = () => {
 const handleGuestLogin = () => {
   // 游客登录逻辑
 };
-
 </script>
 
 <style>
@@ -288,6 +311,7 @@ page {
 .divider::after {
   content: '';
   position: absolute;
+ 
   top: 50%;
   left: 0;
   right: 0;
@@ -383,6 +407,10 @@ button {
   color: red;
   font-size: 22rpx;
   margin-left: 50rpx;
+}
+
+.password-input {
+  -webkit-text-security: disc !important;
 }
 </style>
 

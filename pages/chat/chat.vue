@@ -144,10 +144,12 @@ export default {
 
     // 响应拦截器
     instance.interceptors.response.use(
+    
       (response) => {
+        uni.setStorageSync('redirectUrl', window.location.href);
+        console.log('响应拦截器', response);
         if (response.data.code === 401) {
           // 未登录，存储目标页面路径
-          uni.setStorageSync('redirectUrl', window.location.href);
           uni.showToast({
             title: '登录已过期，请重新登录',
             icon: 'none'
@@ -331,6 +333,27 @@ export default {
           duration: 2000
         });
         // 延迟跳转到登录页面，给用户一些时间看到提示
+          // 获取当前页面栈
+            const pages = getCurrentPages();
+        
+            // 获取当前页面的实例
+            const currentPage = pages[pages.length - 1];
+			
+			const getQueryString = (params) =>{
+			  return Object.keys(params)
+			    .map(key => key + '=' + params[key])
+			    .join('&');
+			};
+        
+            // 获取完整的 URL (包含查询参数)
+            const currentUrl = '/' + currentPage.route + '?' + getQueryString(currentPage.options);
+				console.log("currentUrl",currentUrl)
+            // 保存到本地存储	
+            uni.setStorage({
+              key: 'loginRedirectUrl',
+              data: currentUrl
+            });
+			
         setTimeout(() => {
           uni.navigateTo({
             url: '/pages/login/login'
@@ -338,6 +361,7 @@ export default {
         }, 2000);
         return;
       }
+	  
 
       // 添加用户消息
       chatMessages.push({
@@ -352,7 +376,7 @@ export default {
       // 调用智能对话接口
       callAIInterface(chatMessages[chatMessages.length - 1].content);
     };
-
+ 
     const callAIInterface = (userQuery) => {
       const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
       const data = {
