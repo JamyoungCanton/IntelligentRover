@@ -126,7 +126,7 @@ export default {
   padding: 0 20px;
   background-color: #f7f7f7;
   min-height: 100vh;
-  padding-top: v-bind(safeArea.top + 'px');
+  padding-top: v-bind('safeArea.top + "px"');
 }
 
 .header {
