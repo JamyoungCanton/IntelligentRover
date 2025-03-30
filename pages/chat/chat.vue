@@ -55,8 +55,8 @@
             <!-- If message has an image -->
             <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
 
-            <!-- 使用v-html渲染HTML内容 -->
-            <view v-if="msg.content" class="message-text custom-rich-text" v-html="msg.content"
+            <!-- 使用v-html渲染markdown内容 -->
+            <view v-if="msg.content" class="message-text custom-rich-text markdown-content" v-html="msg.content"
               @tap="handleClickableSpan">
             </view>
 
@@ -113,9 +113,20 @@
 <script>
 import { ref, reactive, onMounted, nextTick, computed } from 'vue';
 import { useUserStore } from '@/store';
+import { marked } from 'marked';
 
 export default {
   setup() {
+    // 配置marked选项
+    marked.setOptions({
+      renderer: new marked.Renderer(),
+      gfm: true, // 启用GitHub风格Markdown
+      breaks: true, // 启用换行符转换
+      pedantic: false,
+      sanitize: false, // 不进行HTML标签转义
+      smartLists: true,
+      smartypants: true
+    });
     // 引入 store
     const userStore = useUserStore();
     const token = computed(() => userStore.token);
@@ -139,12 +150,14 @@ export default {
     const viewportHeight = ref(0);
 
 
-    // 处理rawAnswers中的内容，查找并处理特定标签
+    // 处理markdown内容并转换为适合小程序的格式
     const processRawAnswers = (rawAnswers) => {
       if (!rawAnswers) return '';
 
       try {
-        let processedContent = rawAnswers;
+        // 首先使用marked解析markdown
+        let htmlContent = marked(rawAnswers);
+        let processedContent = htmlContent;
 
         // 处理其他常见HTML标签，将它们转换为适当的样式类
 
@@ -184,7 +197,7 @@ export default {
         return processedContent;
       } catch (e) {
         console.error('HTML标签处理失败:', e);
-        return content;
+        return rawAnswers; // 返回原始内容而不是未定义的content变量
       }
     };
 
@@ -248,8 +261,6 @@ export default {
       }
     ]);
 
-    // 用于累积分块数据
-    const chunkBuffer = ref('');
     // 用于标记消息是否完成
     const messageComplete = ref(false);
 
@@ -322,8 +333,9 @@ export default {
       callAIInterface(chatMessages[chatMessages.length - 1].content);
     };
 
-    const callAIInterface = (userQuery) => {
-      // const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+    // 负责处理用户消息并获取AI回复。它实现了与AI聊天服务器的通信，并处理流式响应数据。
+    const callAIInterface = (userQuery, retryCount = 0) => {
+      const MAX_RETRIES = 3; // 最大重试次数
       const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
@@ -334,10 +346,17 @@ export default {
         query: userQuery
       };
 
+      // 如果是重试请求，显示重试提示
+      if (retryCount > 0) {
+        uni.showToast({
+          title: `第${retryCount}次重试连接...`,
+          icon: 'none',
+          duration: 2000
+        });
+      }
+
       // 打印token值进行调试
       console.log('Current token:', token.value);
-
-      // 不预先添加AI消息，等收到实际响应再添加
 
       // 创建请求任务
       const requestTask = uni.request({
@@ -359,6 +378,9 @@ export default {
           // 打印完整的错误信息
           console.error('错误详情:', JSON.stringify(err));
 
+          // 定义最大重试次数
+          const MAX_RETRIES = 2;
+
           // 更新最后添加的AI消息，显示错误信息
           const lastMessage = chatMessages[chatMessages.length - 1];
           let errorMessage = '';
@@ -372,12 +394,37 @@ export default {
             errorMessage = `请求失败: ${err.errMsg}. 请检查网络连接或重新登录。`;
           }
 
+          // 如果是网络错误并且未超过最大重试次数，尝试重新连接
+          if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
+            err.errMsg && err.errMsg.includes('network error') ||
+            err.errMsg && err.errMsg.includes('timeout')) &&
+            retryCount < MAX_RETRIES) {
+
+            const retryDelay = 1000 * (retryCount + 1); // 递增重试延迟
+
+            uni.showToast({
+              title: `连接中断，${retryCount + 1}秒后自动重试...`,
+              icon: 'none',
+              duration: retryDelay
+            });
+
+            setTimeout(() => {
+              console.log(`第${retryCount + 1}次重试连接...`);
+              callAIInterface(userQuery, retryCount + 1);
+            }, retryDelay);
+
+            return; // 不更新消息，等待重试
+          }
+
+          // 如果重试失败或其他错误，更新消息
           if (lastMessage.type === 'ai') {
+            lastMessage.thinking = false; // 停止思考动画
             lastMessage.content = errorMessage;
           } else {
             chatMessages.push({
               type: 'ai',
-              content: errorMessage
+              content: errorMessage,
+              thinking: false
             });
           }
 
@@ -387,6 +434,10 @@ export default {
             icon: 'none',
             duration: 3000
           });
+
+          // 更新UI
+          globalUpdateKey.value = Date.now();
+          updateCounter.value++;
 
           // 如果是网络错误并且未超过最大重试次数，尝试重新连接
           if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
@@ -430,10 +481,42 @@ export default {
       // 创建一个空的AI消息
       const aiMessage = {
         type: 'ai',
-        content: '正在思考中...',  // 添加初始提示文字
-        id: Date.now()
+        content: '正在思考中',  // 初始文本，不带点
+        id: Date.now(),
+        thinking: true,  // 标记是否为思考状态
+        startTime: Date.now() // 记录开始时间
       };
       chatMessages.push(aiMessage);
+
+      // 创建思考动画定时器
+      let dotCount = 0;
+      const THINKING_TIMEOUT = 30000; // 30秒超时
+      const thinkingInterval = setInterval(() => {
+        if (aiMessage.thinking) {  // 只在thinking为true时更新点
+          // 检查是否超时
+          if (Date.now() - aiMessage.startTime > THINKING_TIMEOUT) {
+            clearInterval(thinkingInterval);  // 停止动画
+            aiMessage.thinking = false;
+            aiMessage.content = '抱歉，响应超时。请重新发送消息。';
+            updateCounter.value++;
+
+            // 显示超时提示
+            uni.showToast({
+              title: '响应超时，请重试',
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
+
+          dotCount = (dotCount + 1) % 4;  // 0到3循环
+          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+          // 触发视图更新
+          updateCounter.value++;
+        } else {
+          clearInterval(thinkingInterval);  // 停止动画
+        }
+      }, 500);  // 每500毫秒更新一次
 
       // 立即触发视图更新
       globalUpdateKey.value = Date.now();
@@ -449,7 +532,7 @@ export default {
 
       // 监听分块数据到达事件
       let lastChunkTime = Date.now();
-      const CHUNK_TIMEOUT = 10000; // 10秒超时
+      const CHUNK_TIMEOUT = 30000; // 30秒超时
 
       const chunkTimeoutCheck = setInterval(() => {
         if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
@@ -461,6 +544,7 @@ export default {
 
       requestTask.onChunkReceived((res) => {
         lastChunkTime = Date.now(); // 更新最后接收数据块的时间
+        aiMessage.lastDataTime = Date.now(); // 更新最后数据接收时间
         try {
           // 将ArrayBuffer转换为文本
           const uint8Array = new Uint8Array(res.data);
@@ -472,7 +556,7 @@ export default {
           if (text.startsWith('data:')) {
             // 提取data:后面的JSON字符串
             const jsonStr = text.substring(5).trim();
-            // console.log('提取的JSON字符串:', jsonStr); // 调试日志
+            console.log('提取的JSON字符串:', jsonStr); // 调试日志
 
             try {
               // 解析JSON数据
@@ -506,13 +590,21 @@ export default {
                     const decodedAnswer = decodeUnicode(answer);
                     console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
-                    // 将解码后的内容添加到完整响应中
-                    fullResponse += decodedAnswer;
+                    // 如果是workflow_finished事件，则直接使用这个答案
+                    if (jsonData.event === 'workflow_finished') {
+                      fullResponse = `事件[workflow_finished] 解码后的答案: ${decodedAnswer}`;
+                    } else {
+                      // 其他事件正常累加到完整响应中
+                      fullResponse += decodedAnswer;
+                    }
 
                     // 更新AI消息内容
                     const lastMessage = chatMessages[chatMessages.length - 1];
                     if (lastMessage && lastMessage.type === 'ai') {
-                      lastMessage.content = fullResponse;
+                      // 收到实际回答时，停止思考动画
+                      lastMessage.thinking = false;
+                      // 直接使用解码后的答案
+                      lastMessage.content = decodedAnswer;
 
                       // 立即强制视图更新
                       globalUpdateKey.value = Date.now();
@@ -525,6 +617,14 @@ export default {
                     }
                   } else {
                     console.log(`接收到事件 [${jsonData.event}]，但没有answer数据`);
+                    // 如果收到事件但没有answer数据，至少更新AI消息，表明服务器有响应
+                    const lastMessage = chatMessages[chatMessages.length - 1];
+                    if (lastMessage && lastMessage.type === 'ai' && lastMessage.thinking) {
+                      lastMessage.content = '正在处理您的请求...';
+                      // 立即强制视图更新
+                      globalUpdateKey.value = Date.now();
+                      updateCounter.value++;
+                    }
                   }
 
                   break;
@@ -538,9 +638,9 @@ export default {
                   console.log('所有原始answer值:', rawAnswers);
                   console.log('所有原始answer值拼接:', rawAnswers.join(' '));
 
-                  // 立即处理并显示完整内容
-                  const processedContent = processRawAnswers(fullResponse);
-                  aiMessage.content = processedContent;
+                  // 直接使用完整响应，不进行额外处理
+                  aiMessage.thinking = false;  // 确保停止思考动画
+                  aiMessage.content = fullResponse;
 
                   // 立即强制视图更新
                   globalUpdateKey.value = Date.now();
@@ -562,7 +662,18 @@ export default {
             }
           }
         } catch (e) {
-          // console.error('数据处理失败:', e);
+          console.error('数据处理失败:', e);
+          // 即使解析失败，也尝试显示一些原始数据，避免一直显示"正在思考中"
+          const lastMessage = chatMessages[chatMessages.length - 1];
+          if (lastMessage && lastMessage.type === 'ai' && lastMessage.thinking) {
+            // 如果已经思考了超过10秒，显示错误提示
+            if (Date.now() - lastMessage.startTime > 10000) {
+              lastMessage.thinking = false;
+              lastMessage.content = '抱歉，数据处理出现问题，请重试。';
+              globalUpdateKey.value = Date.now();
+              updateCounter.value++;
+            }
+          }
         }
       });
       let text = '';
@@ -710,8 +821,6 @@ export default {
         scrollToBottom();
       }, 100); // 给一个小延时确保内容已渲染
 
-      // 注意：在uni-app中，我们已经通过v-html和@tap="onCustomRichTextTap"处理了点击事件
-      // 不需要手动绑定事件监听器
     });
 
     // 滚动相关的处理函数
@@ -844,7 +953,6 @@ export default {
       }
     };
 
-    // 已移除酒店点击处理函数
 
     return {
       inputMessage,
@@ -871,13 +979,127 @@ export default {
       handleSpanClick, // 处理span点击的函数
       onCustomRichTextTap, // 自定义富文本点击处理函数
       decodeUnicode, // 导出Unicode解码函数
-      // 已移除酒店点击处理函数
     };
   }
 };
 </script>
 
 <style>
+/* Markdown样式 */
+.markdown-content {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+}
+
+/* 标题样式 */
+.markdown-content .heading-1 {
+  font-size: 40rpx;
+  font-weight: bold;
+  margin: 30rpx 0 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 2rpx solid #eee;
+}
+
+.markdown-content .heading-2 {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin: 25rpx 0 15rpx;
+}
+
+.markdown-content .heading-3 {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin: 20rpx 0 10rpx;
+}
+
+/* 段落样式 */
+.markdown-content .paragraph {
+  margin: 16rpx 0;
+}
+
+/* 列表样式 */
+.markdown-content .unordered-list,
+.markdown-content .ordered-list {
+  margin: 16rpx 0;
+  padding-left: 40rpx;
+}
+
+.markdown-content .list-item {
+  margin: 8rpx 0;
+}
+
+/* 代码样式 */
+.markdown-content .code-block {
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin: 16rpx 0;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 24rpx;
+}
+
+.markdown-content .inline-code {
+  background-color: #f5f5f5;
+  padding: 4rpx 8rpx;
+  border-radius: 4rpx;
+  font-family: monospace;
+  font-size: 24rpx;
+}
+
+/* 引用样式 */
+.markdown-content .blockquote {
+  border-left: 8rpx solid #ddd;
+  padding: 16rpx 32rpx;
+  margin: 16rpx 0;
+  color: #666;
+  background-color: #f9f9f9;
+}
+
+/* 表格样式 */
+.markdown-content .table {
+  width: 100%;
+  margin: 16rpx 0;
+  border-collapse: collapse;
+}
+
+.markdown-content .table view {
+  border: 2rpx solid #ddd;
+  padding: 16rpx;
+}
+
+/* 链接样式 */
+.markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+/* 图片样式 */
+.markdown-content image {
+  max-width: 100%;
+  margin: 16rpx 0;
+  border-radius: 8rpx;
+}
+
+/* 分割线样式 */
+.markdown-content .line-break {
+  height: 2rpx;
+  background-color: #eee;
+  margin: 24rpx 0;
+}
+
+/* 强调样式 */
+.markdown-content .bold {
+  font-weight: bold;
+}
+
+.markdown-content .italic {
+  font-style: italic;
+}
+
 /* 添加消息文本样式 */
 .message-text {
   white-space: pre-wrap;
