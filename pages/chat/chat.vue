@@ -55,20 +55,20 @@
             <!-- If message has an image -->
             <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
 
-            <!-- Text content - 使用rich-text来正确渲染HTML内容 -->
-            <rich-text v-if="msg.content" class="message-text" :nodes="msg.content"></rich-text>
+            <!-- 使用v-html渲染markdown内容 -->
+            <view v-if="msg.content" class="message-text custom-rich-text markdown-content" v-html="msg.content"
+              @tap="handleClickableSpan">
+            </view>
+
 
             <!-- Itinerary details -->
             <view v-if="msg.itinerary" class="itinerary-container">
               <view class="itinerary-title">{{ msg.itinerary.title }}</view>
 
-              <view class="itinerary-section">
-                <text class="section-title">行程安排:</text>
-
-                <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
-                  <text class="time">{{ item.time }}:</text>
-                  <rich-text class="detail" :nodes="formatItineraryText(item.detail)"></rich-text>
-                </view>
+              <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
+                <text class="time">{{ item.time }}:</text>
+                <rich-text class="detail custom-rich-text" :nodes="formatItineraryText(item.detail)"
+                  @tap="onCustomRichTextTap"></rich-text>
               </view>
 
               <view v-if="msg.itinerary.recommendations" class="recommendations">
@@ -112,61 +112,25 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick, computed } from 'vue';
-import axios from 'axios';
 import { useUserStore } from '@/store';
+import { marked } from 'marked';
 
 export default {
   setup() {
+    // 配置marked选项
+    marked.setOptions({
+      renderer: new marked.Renderer(),
+      gfm: true, // 启用GitHub风格Markdown
+      breaks: true, // 启用换行符转换
+      pedantic: false,
+      sanitize: false, // 不进行HTML标签转义
+      smartLists: true,
+      smartypants: true
+    });
     // 引入 store
     const userStore = useUserStore();
     const token = computed(() => userStore.token);
 
-    // 创建 Axios 实例
-    const instance = axios.create({
-      baseURL: 'http://47.106.243.134:7181/island',
-      timeout: 5000,
-    });
-
-    // 请求拦截器
-    instance.interceptors.request.use(
-      (config) => {
-        // 在请求发送之前可以修改配置
-        if (token.value) {
-          config.headers['X-Access-Token'] = token.value;
-        }
-        return config;
-      },
-      (error) => {
-        // 处理请求错误
-        return Promise.reject(error);
-      }
-    );
-
-    // 响应拦截器
-    instance.interceptors.response.use(
-    
-      (response) => {
-        uni.setStorageSync('redirectUrl', window.location.href);
-        console.log('响应拦截器', response);
-        if (response.data.code === 401) {
-          // 未登录，存储目标页面路径
-          uni.showToast({
-            title: '登录已过期，请重新登录',
-            icon: 'none'
-          });
-          setTimeout(() => {
-            uni.navigateTo({
-              url: '/pages/login/login'
-            });
-          }, 1500);
-          return Promise.reject(response);
-        }
-        return response.data;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
 
     // 全局强制更新键
     const globalUpdateKey = ref(0);
@@ -185,17 +149,17 @@ export default {
     // 记录可视区域的高度
     const viewportHeight = ref(0);
 
-    // 处理HTML标签，转换为对应的样式效果
-    const processHtmlTags = (content) => {
-      if (!content) return '';
+
+    // 处理markdown内容并转换为适合小程序的格式
+    const processRawAnswers = (rawAnswers) => {
+      if (!rawAnswers) return '';
 
       try {
-        let processedContent = content;
+        // 首先使用marked解析markdown
+        let htmlContent = marked(rawAnswers);
+        let processedContent = htmlContent;
 
-        // 处理关键字"酒店"，添加样式和跳转功能
-        processedContent = processedContent.replace(/酒店/g, '<text class="hotel-link" @tap="navigateToHotel">酒店</text>');
-
-        // 处理常见HTML标签，将它们转换为适当的样式类
+        // 处理其他常见HTML标签，将它们转换为适当的样式类
 
         // 处理标题标签
         processedContent = processedContent.replace(/<h1>(.*?)<\/h1>/g, '<view class="heading-1">$1</view>');
@@ -227,18 +191,13 @@ export default {
         // 处理表格 (简化处理)
         processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
 
-        // 处理span标签，添加点击事件
-        processedContent = processedContent.replace(/<span\s+@click="func\('(\d+)',\s*'([^']*)'\)">(.*?)<\/span>/g, (match, id, type, content) => {
-          return `<text class="clickable-span" @tap="handleSpanClick('${id}', '${type}')">${content}</text>`;
-        });
-
         // 移除可能剩余的HTML标签
-        processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
+        // processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
 
         return processedContent;
       } catch (e) {
         console.error('HTML标签处理失败:', e);
-        return content;
+        return rawAnswers; // 返回原始内容而不是未定义的content变量
       }
     };
 
@@ -302,8 +261,6 @@ export default {
       }
     ]);
 
-    // 用于累积分块数据
-    const chunkBuffer = ref('');
     // 用于标记消息是否完成
     const messageComplete = ref(false);
 
@@ -333,27 +290,27 @@ export default {
           duration: 2000
         });
         // 延迟跳转到登录页面，给用户一些时间看到提示
-          // 获取当前页面栈
+        // 获取当前页面栈
         const pages = getCurrentPages();
-    
+
         // 获取当前页面的实例
         const currentPage = pages[pages.length - 1];
-  
-        const getQueryString = (params) =>{
+
+        const getQueryString = (params) => {
           return Object.keys(params)
             .map(key => key + '=' + params[key])
             .join('&');
         };
-          
-          // 获取完整的 URL (包含查询参数)
+
+        // 获取完整的 URL (包含查询参数)
         const currentUrl = '/' + currentPage.route + '?' + getQueryString(currentPage.options);
-        console.log("currentUrl",currentUrl)
-        // 保存到本地存储	
+        console.log("currentUrl", currentUrl)
+        // 保存到本地存储
         uni.setStorage({
           key: 'loginRedirectUrl',
           data: currentUrl
         });
-			
+
         setTimeout(() => {
           uni.navigateTo({
             url: '/pages/login/login'
@@ -361,7 +318,6 @@ export default {
         }, 2000);
         return;
       }
-	  
 
       // 添加用户消息
       chatMessages.push({
@@ -376,8 +332,10 @@ export default {
       // 调用智能对话接口
       callAIInterface(chatMessages[chatMessages.length - 1].content);
     };
- 
-    const callAIInterface = (userQuery) => {
+
+    // 负责处理用户消息并获取AI回复。它实现了与AI聊天服务器的通信，并处理流式响应数据。
+    const callAIInterface = (userQuery, retryCount = 0) => {
+      const MAX_RETRIES = 3; // 最大重试次数
       const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
@@ -385,11 +343,20 @@ export default {
           original_intention: 'unknown',
           recommended_plan: 'unknown'
         },
-        query: userQuery,
-        user: 'abc-123'
+        query: userQuery
       };
 
-      // 不预先添加AI消息，等收到实际响应再添加
+      // 如果是重试请求，显示重试提示
+      if (retryCount > 0) {
+        uni.showToast({
+          title: `第${retryCount}次重试连接...`,
+          icon: 'none',
+          duration: 2000
+        });
+      }
+
+      // 打印token值进行调试
+      console.log('Current token:', token.value);
 
       // 创建请求任务
       const requestTask = uni.request({
@@ -397,118 +364,316 @@ export default {
         method: 'POST',
         header: {
           'Content-Type': 'application/json',
-          'X-Access-Token': token.value
+          'X-Access-Token': token.value // 确保token已经被添加到请求头中
         },
         data: JSON.stringify(data),
         responseType: 'text', // 设置响应类型为文本
         enableChunked: true, // 启用分块传输模式
+        timeout: 30000, // 设置30秒超时
         success: (res) => {
           console.log('请求成功:', res);
         },
         fail: (err) => {
           console.error('请求失败:', err);
+          // 打印完整的错误信息
+          console.error('错误详情:', JSON.stringify(err));
+
+          // 定义最大重试次数
+          const MAX_RETRIES = 2;
+
           // 更新最后添加的AI消息，显示错误信息
           const lastMessage = chatMessages[chatMessages.length - 1];
+          let errorMessage = '';
+
+          // 根据错误类型显示不同的提示
+          if (err.errMsg && err.errMsg.includes('timeout')) {
+            errorMessage = '请求超时，请重试';
+          } else if (err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING')) {
+            errorMessage = '网络连接中断，请重新发送消息';
+          } else {
+            errorMessage = `请求失败: ${err.errMsg}. 请检查网络连接或重新登录。`;
+          }
+
+          // 如果是网络错误并且未超过最大重试次数，尝试重新连接
+          if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
+            err.errMsg && err.errMsg.includes('network error') ||
+            err.errMsg && err.errMsg.includes('timeout')) &&
+            retryCount < MAX_RETRIES) {
+
+            const retryDelay = 1000 * (retryCount + 1); // 递增重试延迟
+
+            uni.showToast({
+              title: `连接中断，${retryCount + 1}秒后自动重试...`,
+              icon: 'none',
+              duration: retryDelay
+            });
+
+            setTimeout(() => {
+              console.log(`第${retryCount + 1}次重试连接...`);
+              callAIInterface(userQuery, retryCount + 1);
+            }, retryDelay);
+
+            return; // 不更新消息，等待重试
+          }
+
+          // 如果重试失败或其他错误，更新消息
           if (lastMessage.type === 'ai') {
-            lastMessage.content = '请求失败1:很抱歉，我暂时无法回答您的问题，请稍后再试。';
+            lastMessage.thinking = false; // 停止思考动画
+            lastMessage.content = errorMessage;
           } else {
             chatMessages.push({
               type: 'ai',
-              content: '请求失败2:很抱歉，我暂时无法回答您的问题，请稍后再试。'
+              content: errorMessage,
+              thinking: false
             });
+          }
+
+          // 显示错误提示
+          uni.showToast({
+            title: errorMessage,
+            icon: 'none',
+            duration: 3000
+          });
+
+          // 更新UI
+          globalUpdateKey.value = Date.now();
+          updateCounter.value++;
+
+          // 如果是网络错误并且未超过最大重试次数，尝试重新连接
+          if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
+            err.errMsg && err.errMsg.includes('network error')) &&
+            retryCount < MAX_RETRIES) {
+
+            const retryDelay = 1000 * (retryCount + 1); // 递增重试延迟
+
+            uni.showToast({
+              title: `连接中断，${retryCount + 1}秒后自动重试...`,
+              icon: 'none',
+              duration: retryDelay
+            });
+
+            setTimeout(() => {
+              console.log(`第${retryCount + 1}次重试连接...`);
+              callAIInterface(userMessage, retryCount + 1);
+            }, retryDelay);
+          } else {
+            scrollToLatestMessage();
+          }
+        }
+      });
+
+      // 添加请求完成的处理
+      requestTask.onComplete && requestTask.onComplete((res) => {
+        console.log('请求完成:', res);
+        // 如果消息未完成，添加提示
+        if (!messageComplete.value) {
+          const lastMessage = chatMessages[chatMessages.length - 1];
+          if (lastMessage.type === 'ai') {
+            lastMessage.content += '\n\n[消息可能未完整接收，请重新发送]';
           }
           scrollToLatestMessage();
         }
       });
 
-      // 在发送请求前先添加一个空的AI消息框
-      const aiMessageIndex = chatMessages.length;
-      const initialMessage = {
-        type: 'ai',
-        content: '', // 初始为空内容
-        id: Date.now() // 添加唯一ID
-      };
-      chatMessages.push(initialMessage);
-
-      // 初始化时增加更新计数
-      updateCounter.value++;
-
       // 存储所有原始answer值
       const rawAnswers = [];
 
+      // 创建一个空的AI消息
+      const aiMessage = {
+        type: 'ai',
+        content: '正在思考中',  // 初始文本，不带点
+        id: Date.now(),
+        thinking: true,  // 标记是否为思考状态
+        startTime: Date.now() // 记录开始时间
+      };
+      chatMessages.push(aiMessage);
+
+      // 创建思考动画定时器
+      let dotCount = 0;
+      const THINKING_TIMEOUT = 30000; // 30秒超时
+      const thinkingInterval = setInterval(() => {
+        if (aiMessage.thinking) {  // 只在thinking为true时更新点
+          // 检查是否超时
+          if (Date.now() - aiMessage.startTime > THINKING_TIMEOUT) {
+            clearInterval(thinkingInterval);  // 停止动画
+            aiMessage.thinking = false;
+            aiMessage.content = '抱歉，响应超时。请重新发送消息。';
+            updateCounter.value++;
+
+            // 显示超时提示
+            uni.showToast({
+              title: '响应超时，请重试',
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
+
+          dotCount = (dotCount + 1) % 4;  // 0到3循环
+          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+          // 触发视图更新
+          updateCounter.value++;
+        } else {
+          clearInterval(thinkingInterval);  // 停止动画
+        }
+      }, 500);  // 每500毫秒更新一次
+
+      // 立即触发视图更新
+      globalUpdateKey.value = Date.now();
+      updateCounter.value++;
+
+      // 确保消息框立即可见
+      nextTick(() => {
+        scrollToBottom();
+      });
+
+      // 用于存储完整的响应内容
+      let fullResponse = '';
+
       // 监听分块数据到达事件
+      let lastChunkTime = Date.now();
+      const CHUNK_TIMEOUT = 30000; // 30秒超时
+
+      const chunkTimeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > CHUNK_TIMEOUT) {
+          console.log('数据块接收超时');
+          clearInterval(chunkTimeoutCheck);
+          requestTask.abort(); // 中断请求
+        }
+      }, 1000);
+
       requestTask.onChunkReceived((res) => {
+        lastChunkTime = Date.now(); // 更新最后接收数据块的时间
+        aiMessage.lastDataTime = Date.now(); // 更新最后数据接收时间
         try {
           // 将ArrayBuffer转换为文本
           const uint8Array = new Uint8Array(res.data);
           const decoder = new TextDecoder('utf-8');
           const text = decoder.decode(uint8Array);
-          // console.log('收到的原始数据:', text); // 调试日志
+          console.log('收到的原始数据:', text); // 调试日志
 
           // 处理SSE格式数据
           if (text.startsWith('data:')) {
             // 提取data:后面的JSON字符串
             const jsonStr = text.substring(5).trim();
-            // console.log('提取的JSON字符串:', jsonStr); // 调试日志
+            console.log('提取的JSON字符串:', jsonStr); // 调试日志
 
             try {
               // 解析JSON数据
               const jsonData = JSON.parse(jsonStr);
-              // console.log('解析到的JSON数据:', jsonData);
+              console.log('解析到的JSON数据:', jsonData);
 
-              // 处理消息事件
-              if (jsonData.event === 'message' && jsonData.answer !== undefined) {
-                // 保存原始answer值
-                rawAnswers.push(jsonData.answer);
+              // 根据不同的event类型处理数据
+              // 清除超时检查
+              if (jsonData.event === 'workflow_finished' || jsonData.event === 'message_end') {
+                clearInterval(chunkTimeoutCheck);
+              }
 
-                // 解码Unicode编码的answer
-                const decodedAnswer = decodeUnicode(jsonData.answer);
-                // console.log('解码后的答案:', decodedAnswer);
-
-                // 使用最简单直接的方式更新内容
-                if (aiMessageIndex < chatMessages.length) {
-                  // 获取当前消息引用
-                  const currentMessage = chatMessages[aiMessageIndex];
-
-                  // 处理HTML标签，转换为对应的样式
-                  const processedAnswer = processHtmlTags(decodedAnswer);
-
-                  // 直接赋值 - Vue 3的响应式系统会检测到这个变化
-                  if (!currentMessage.content) {
-                    currentMessage.content = processedAnswer;
-                  } else {
-                    // 完全替换内容以触发响应式更新
-                    const newContent = currentMessage.content + processedAnswer;
-                    currentMessage.content = newContent;
+              switch (jsonData.event) {
+                case 'workflow_started':
+                case 'node_started':
+                case 'message':
+                case 'node_finished':
+                case 'workflow_finished':
+                  // 所有这些事件类型都使用相同的处理流程
+                  let answer = '';
+                  if (jsonData.data && jsonData.data.outputs && jsonData.data.outputs.answer) {
+                    // 从新的数据结构中获取answer
+                    answer = jsonData.data.outputs.answer;
+                  } else if (jsonData.answer !== undefined) {
+                    // 保持原有的answer获取方式作为备选
+                    answer = jsonData.answer;
                   }
 
-                  // 强制视图立即更新
+                  if (answer) {
+                    // 解码Unicode编码的answer并立即显示
+                    const decodedAnswer = decodeUnicode(answer);
+                    console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
+
+                    // 如果是workflow_finished事件，则直接使用这个答案
+                    if (jsonData.event === 'workflow_finished') {
+                      fullResponse = `事件[workflow_finished] 解码后的答案: ${decodedAnswer}`;
+                    } else {
+                      // 其他事件正常累加到完整响应中
+                      fullResponse += decodedAnswer;
+                    }
+
+                    // 更新AI消息内容
+                    const lastMessage = chatMessages[chatMessages.length - 1];
+                    if (lastMessage && lastMessage.type === 'ai') {
+                      // 收到实际回答时，停止思考动画
+                      lastMessage.thinking = false;
+                      // 直接使用解码后的答案
+                      lastMessage.content = decodedAnswer;
+
+                      // 立即强制视图更新
+                      globalUpdateKey.value = Date.now();
+                      updateCounter.value++;
+
+                      // 使用nextTick确保DOM更新后再滚动
+                      nextTick(() => {
+                        scrollToBottom();
+                      });
+                    }
+                  } else {
+                    console.log(`接收到事件 [${jsonData.event}]，但没有answer数据`);
+                    // 如果收到事件但没有answer数据，至少更新AI消息，表明服务器有响应
+                    const lastMessage = chatMessages[chatMessages.length - 1];
+                    if (lastMessage && lastMessage.type === 'ai' && lastMessage.thinking) {
+                      lastMessage.content = '正在处理您的请求...';
+                      // 立即强制视图更新
+                      globalUpdateKey.value = Date.now();
+                      updateCounter.value++;
+                    }
+                  }
+
+                  break;
+
+                case 'message_end':
+                  // 处理消息结束事件
+                  messageComplete.value = true;
+                  console.log('对话完成');
+
+                  // 打印所有原始answer值
+                  console.log('所有原始answer值:', rawAnswers);
+                  console.log('所有原始answer值拼接:', rawAnswers.join(' '));
+
+                  // 直接使用完整响应，不进行额外处理
+                  aiMessage.thinking = false;  // 确保停止思考动画
+                  aiMessage.content = fullResponse;
+
+                  // 立即强制视图更新
                   globalUpdateKey.value = Date.now();
+                  updateCounter.value++;
 
-                  // 使用setTimeout确保在下一个事件循环中执行滚动
-                  setTimeout(() => {
+                  // 确保DOM更新后再滚动
+                  nextTick(() => {
                     scrollToBottom();
-                  }, 0);
-                }
-              }
-              // 处理消息结束事件
-              else if (jsonData.event === 'node_finished') {
-                messageComplete.value = true;
-                console.log('对话完成');
+                  });
+                  break;
 
-                // 打印所有原始answer值
-                console.log('所有原始answer值:', rawAnswers);
-                console.log('所有原始answer值拼接:', rawAnswers.join(' '));
-
-                // 再次强制更新
-                updateCounter.value++;
+                default:
+                  // 处理其他可能的event类型
+                  console.log(`收到未处理的事件类型: ${jsonData.event}`, jsonData);
+                  break;
               }
             } catch (jsonError) {
               // console.warn('JSON解析错误:', jsonError);
             }
           }
         } catch (e) {
-          // console.error('数据处理失败:', e);
+          console.error('数据处理失败:', e);
+          // 即使解析失败，也尝试显示一些原始数据，避免一直显示"正在思考中"
+          const lastMessage = chatMessages[chatMessages.length - 1];
+          if (lastMessage && lastMessage.type === 'ai' && lastMessage.thinking) {
+            // 如果已经思考了超过10秒，显示错误提示
+            if (Date.now() - lastMessage.startTime > 10000) {
+              lastMessage.thinking = false;
+              lastMessage.content = '抱歉，数据处理出现问题，请重试。';
+              globalUpdateKey.value = Date.now();
+              updateCounter.value++;
+            }
+          }
         }
       });
       let text = '';
@@ -539,7 +704,7 @@ export default {
         }
         return str;
       } catch (e) {
-        // console.error('Unicode 解码失败:', e);
+        console.error('Unicode 解码失败:', e);
         return str;
       }
     };
@@ -640,24 +805,14 @@ export default {
       });
     };
 
-    // 打字机效果
-    const showTypingEffect = (content) => {
-      const aiMessage = {
-        type: 'ai',
-        content: ''
-      };
-      chatMessages.push(aiMessage);
-
-      let charIndex = 0;
-      const interval = setInterval(() => {
-        if (charIndex < content.length) {
-          aiMessage.content += content[charIndex];
-          charIndex++;
-          scrollToLatestMessage();
-        } else {
-          clearInterval(interval);
-        }
-      }, 100); // 每100毫秒显示一个字符
+    // 实时更新消息内容
+    const showTypingEffect = (content, aiMessage) => {
+      // 处理并立即更新消息内容
+      aiMessage.content = processRawAnswers(content);
+      // 立即更新视图
+      globalUpdateKey.value = Date.now();
+      // 手动触发更新
+      updateCounter.value++;
     };
 
     onMounted(() => {
@@ -665,6 +820,7 @@ export default {
       setTimeout(() => {
         scrollToBottom();
       }, 100); // 给一个小延时确保内容已渲染
+
     });
 
     // 滚动相关的处理函数
@@ -752,11 +908,51 @@ export default {
       }
     };
 
-    const navigateToHotel = () => {
-      uni.navigateTo({
-        url: '/pages/hotelBooking/hotelBooking'
-      });
+    // 处理自定义富文本点击事件
+    const onCustomRichTextTap = (event) => {
+      // 获取点击的目标元素
+      const target = event.target;
+
+      // 检查是否点击了带有特定属性的元素
+      if (target && target.dataset && target.dataset.action) {
+        console.log('检测到可点击元素:', {
+          action: target.dataset.action,
+          id: target.dataset.id,
+          type: target.dataset.type
+        });
+
+        // 阻止事件冒泡
+        event.stopPropagation();
+
+        // 根据不同的action执行相应的操作
+        switch (target.dataset.action) {
+          case 'hotel':
+            uni.navigateTo({
+              url: '/pages/hotelBooking/hotelBooking',
+              success: () => {
+                console.log('成功跳转到酒店预订页面');
+                uni.showToast({
+                  title: '正在前往酒店预订页面',
+                  icon: 'none',
+                  duration: 1500
+                });
+              },
+              fail: (err) => {
+                console.error('跳转失败:', err);
+                uni.showToast({
+                  title: '跳转失败，请重试',
+                  icon: 'none'
+                });
+              }
+            });
+            break;
+          // 可以在这里添加其他类型的action处理
+          default:
+            console.log('未知的action类型:', target.dataset.action);
+        }
+      }
     };
+
 
     return {
       inputMessage,
@@ -773,7 +969,7 @@ export default {
       navigatortopaymoent,
       formatResponse,
       formatItineraryText,
-      processHtmlTags, // 导出HTML标签处理函数
+      processRawAnswers, // 导出处理原始答案的函数
       goBack,
       showMore,
       showAddOptions,
@@ -781,13 +977,129 @@ export default {
       onScrollToUpper, // 滚动到顶部的处理函数
       onScroll, // 滚动事件处理函数
       handleSpanClick, // 处理span点击的函数
-      navigateToHotel // 导出酒店页面跳转函数
+      onCustomRichTextTap, // 自定义富文本点击处理函数
+      decodeUnicode, // 导出Unicode解码函数
     };
   }
 };
 </script>
 
 <style>
+/* Markdown样式 */
+.markdown-content {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+}
+
+/* 标题样式 */
+.markdown-content .heading-1 {
+  font-size: 40rpx;
+  font-weight: bold;
+  margin: 30rpx 0 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 2rpx solid #eee;
+}
+
+.markdown-content .heading-2 {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin: 25rpx 0 15rpx;
+}
+
+.markdown-content .heading-3 {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin: 20rpx 0 10rpx;
+}
+
+/* 段落样式 */
+.markdown-content .paragraph {
+  margin: 16rpx 0;
+}
+
+/* 列表样式 */
+.markdown-content .unordered-list,
+.markdown-content .ordered-list {
+  margin: 16rpx 0;
+  padding-left: 40rpx;
+}
+
+.markdown-content .list-item {
+  margin: 8rpx 0;
+}
+
+/* 代码样式 */
+.markdown-content .code-block {
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin: 16rpx 0;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 24rpx;
+}
+
+.markdown-content .inline-code {
+  background-color: #f5f5f5;
+  padding: 4rpx 8rpx;
+  border-radius: 4rpx;
+  font-family: monospace;
+  font-size: 24rpx;
+}
+
+/* 引用样式 */
+.markdown-content .blockquote {
+  border-left: 8rpx solid #ddd;
+  padding: 16rpx 32rpx;
+  margin: 16rpx 0;
+  color: #666;
+  background-color: #f9f9f9;
+}
+
+/* 表格样式 */
+.markdown-content .table {
+  width: 100%;
+  margin: 16rpx 0;
+  border-collapse: collapse;
+}
+
+.markdown-content .table view {
+  border: 2rpx solid #ddd;
+  padding: 16rpx;
+}
+
+/* 链接样式 */
+.markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+/* 图片样式 */
+.markdown-content image {
+  max-width: 100%;
+  margin: 16rpx 0;
+  border-radius: 8rpx;
+}
+
+/* 分割线样式 */
+.markdown-content .line-break {
+  height: 2rpx;
+  background-color: #eee;
+  margin: 24rpx 0;
+}
+
+/* 强调样式 */
+.markdown-content .bold {
+  font-weight: bold;
+}
+
+.markdown-content .italic {
+  font-style: italic;
+}
+
 /* 添加消息文本样式 */
 .message-text {
   white-space: pre-wrap;
@@ -796,27 +1108,32 @@ export default {
   line-height: 1.5;
 }
 
+/* 自定义富文本容器样式 */
+.custom-rich-text {
+  position: relative;
+  width: 100%;
+}
+
 /* 添加可点击span的样式 */
 .clickable-span {
+  display: inline-block;
   color: #4285f4;
   text-decoration: underline;
   cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background-color: rgba(66, 133, 244, 0.1);
+  margin: 0 2px;
 }
 
 .clickable-span:active {
   opacity: 0.7;
+  background-color: rgba(66, 133, 244, 0.2);
+  transform: translateY(1px);
 }
 
-/* 酒店链接样式 */
-.hotel-link {
-  color: #4285f4;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.hotel-link:active {
-  opacity: 0.7;
-}
+/* 已移除酒店相关样式 */
 
 /* HTML标签转换后的样式 */
 .heading-1 {
