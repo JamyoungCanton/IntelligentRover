@@ -4,26 +4,42 @@
       <image class="logo" src="/static/login/logo.jpg" mode="aspectFit"></image>
       <text class="title">AI旅游行程管家</text>
     </view>
-    
+
     <view class="register-form">
       <!-- 用户名 -->
       <view class="input-group">
         <uni-icons type="username" size="24" color="#999999"></uni-icons>
-        <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username"/>
+        <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @input="validateUsername" />
       </view>
+      <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
 
-      <!-- 密码 -->
       <view class="input-group">
-        <uni-icons type="password" size="24" color="#999999"></uni-icons>
-        <input type="password" placeholder="请输入密码" maxlength="11" v-model="formData.password"/>
+        <uni-icons type="password" size="24" color="#999999" />
+
+        <input
+          :type="passwordVisible ? 'text' : 'password'"
+          placeholder="请输入密码"
+          maxlength="12"
+          v-model="formData.password"
+          :class="{ 'password-input': !passwordVisible && formData.password }"
+          @input="validatePassword"
+        />
+        <uni-icons
+          :type="passwordVisible ? 'eye' : 'eye-slash'"
+          size="24"
+          color="#999999"
+          @tap="togglePasswordVisibility"
+          class="toggle-password-icon"
+        />
       </view>
+      <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
 
       <!-- 图形验证码 -->
       <view class="verify-code">
         <view class="code-input-wrap">
           <view class="input-group">
             <uni-icons type="locked" size="24" color="#999999"></uni-icons>
-            <input type="number" placeholder="请输入图形验证码" maxlength="4" v-model="formData.verifyCode"/>
+            <input type="number" placeholder="请输入图形验证码" maxlength="4" v-model="formData.verifyCode" @input="validateVerifyCode" />
           </view>
           <image
             :src="codeImg"
@@ -33,23 +49,26 @@
           ></image>
         </view>
       </view>
+      <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
 
       <!-- 手机号 -->
       <view class="input-group">
         <uni-icons type="phone" size="24" color="#999999"></uni-icons>
-        <input type="number" placeholder="请输入手机号" maxlength="11" v-model="formData.phone"/>
+        <input type="number" placeholder="请输入手机号" maxlength="11" v-model="formData.phone" @input="validatePhone" />
       </view>
+      <text v-if="errors.phone" class="error-message">{{ errors.phone }}</text>
 
       <!-- 手机验证码 -->
       <view class="verify-code">
         <view class="code-input-wrap">
           <view class="input-group">
             <uni-icons type="locked" size="24" color="#999999"></uni-icons>
-            <input type="number" placeholder="请输入手机验证码" maxlength="6" v-model="formData.phoneCode"/>
+            <input type="text" placeholder="请输入手机验证码" maxlength="6" v-model="formData.phoneCode" @input="validatePhoneCode" />
           </view>
           <button class="code-btn" @tap="handleSendPhoneCode">{{ phoneCodeBtnText }}</button>
         </view>
       </view>
+      <text v-if="errors.phoneCode" class="error-message">{{ errors.phoneCode }}</text>
 
       <button class="register-btn" @tap="handleRegister">注册</button>
     </view>
@@ -76,6 +95,14 @@ const formData = reactive({
   verifyCode: '',
   phoneCode: ''
 });
+// 错误信息
+const errors = reactive({
+  username: '',
+  password: '',
+  verifyCode: '',
+  phone: '',
+  phoneCode: ''
+});
 // 是否显示手机验证码输入框
 const isShowPhoneCode = ref(false);
 // 手机验证码按钮文本
@@ -83,7 +110,9 @@ const phoneCodeBtnText = ref('发送验证码');
 // 倒计时标识数
 const timer = ref(null);
 // 倒计时秒数
-const countdown = ref(60);
+const countdown = ref(7);
+// 密码可见性
+const passwordVisible = ref(false);
 
 onMounted(() => {
   handleCode();
@@ -93,13 +122,12 @@ onMounted(() => {
 const handleCode = async () => {
   key.value = new Date().getTime();
   uni.request({
-    url: `http://47.106.243.134:7181/island/sys/randomImage/${key.value}`,
+    url: `http://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
     method: 'GET',
     header: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     success: (res) => {
-      // 处理返回的数据
       codeImg.value = res.data.result;
     },
     fail: (err) => {
@@ -113,23 +141,109 @@ const handleChangeCode = () => {
   handleCode();
 };
 
+// 切换密码可见性
+const togglePasswordVisibility = () => {
+  passwordVisible.value = !passwordVisible.value;
+};
+
+// 校验用户名
+const validateUsername = () => {
+  if (!formData.username) {
+    errors.username = '用户名不能为空';
+  } else if (formData.username.length < 5 || formData.username.length > 11) {
+    errors.username = '用户名长度必须在5到11位之间';
+  } else {
+    errors.username = '';
+  }
+};
+
+// 校验密码
+const validatePassword = () => {
+  if (!formData.password) {
+    errors.password = '密码不能为空';
+  } else if (formData.password.length < 3 || formData.password.length > 12) {
+    errors.password = '密码长度必须在3到12位之间';
+  } else {
+    errors.password = '';
+  }
+};
+
+// 校验图形验证码
+const validateVerifyCode = () => {
+  if (!formData.verifyCode) {
+    errors.verifyCode = '图形验证码不能为空';
+  } else if (formData.verifyCode.length !== 4) {
+    errors.verifyCode = '图形验证码必须为4位';
+  } else {
+    errors.verifyCode = '';
+  }
+};
+
+// 校验手机号
+const validatePhone = () => {
+  if (!formData.phone) {
+    errors.phone = '手机号不能为空';
+  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    errors.phone = '请输入正确的手机号';
+  } else {
+    errors.phone = '';
+  }
+};
+
+// 校验手机验证码
+const validatePhoneCode = () => {
+  if (!formData.phoneCode) {
+    errors.phoneCode = '手机验证码不能为空';
+  } else if (formData.phoneCode.length !== 6) {
+    errors.phoneCode = '手机验证码必须为6位';
+  } else {
+    errors.phoneCode = '';
+  }
+};
+
 // 发送手机验证码
 const handleSendPhoneCode = async () => {
   // 校验手机号和图形验证码是否为空
-  if (!formData.phone ) {
-    uni.showToast({
-      title: '请输入手机号',
-      icon: 'none'
-    });
+  validatePhone();
+  validateVerifyCode();
+  if (errors.phone || errors.verifyCode) {
     return;
   }
-  else if (!formData.verifyCode) {
-    uni.showToast({
-      title: '请输入图形验证码',
-      icon: 'none'
-    });
-    return;
-  }
+
+  // 发送验证码请求
+  uni.request({
+    url: 'http://island.zhangshuiyi.com/island/sys/sms',
+    method: 'POST',
+    data: {
+      mobile: formData.phone,
+      smsmode: '1',
+      captcha: 'xxx',
+      checkKey: 'xxx'
+    },
+    header: {
+      'Content-Type': 'application/json'
+    },
+    success: (res) => {
+      if(res.data.success === true){
+        const result = res.data;
+      uni.showToast({
+        title: '已发送短信验证码',
+        icon: 'none',
+        duration: 1500
+      });
+      }else{
+        uni.showToast({
+          title: res.data.message,
+          icon: 'none',
+          duration: 1500
+        });
+      }
+      
+    },
+    fail: (err) => {
+      console.error('获取验证码失败:', err);
+    }
+  });
   // 发送手机验证码逻辑
   phoneCodeBtnText.value = `${countdown.value}s后重试`;
   timer.value = setInterval(() => {
@@ -138,58 +252,60 @@ const handleSendPhoneCode = async () => {
     if (countdown.value === 0) {
       clearInterval(timer.value);
       phoneCodeBtnText.value = '发送验证码';
-      countdown.value = 60;
+      countdown.value = 7;
     }
   }, 1000);
 };
 
+
 // 注册逻辑
 const handleRegister = async () => {
-  // 校验用户名是否为空
-  if (!formData.username) {
-    uni.showToast({
-      title: '请输入用户名',
-      icon: 'none'
-    });
-    return;
+  let isValid = true;
+
+  validateUsername();
+  validatePassword();
+  validateVerifyCode();
+  validatePhone();
+  validatePhoneCode();
+
+  if (errors.username || errors.password || errors.verifyCode || errors.phone || errors.phoneCode) {
+    isValid = false;
   }
-  // 校验密码是否为空
-  if (!formData.password) {
-    uni.showToast({
-      title: '请输入密码',
-      icon: 'none'
-    });
-    return;
-  }
-  // 校验图形验证码是否为空
-  if (!formData.verifyCode) {
-    uni.showToast({
-      title: '请输入图形验证码',
-      icon: 'none'
-    });
-    return;
-  }
-  // 校验手机号是否为空
-  if (!formData.phone) {
-    uni.showToast({
-      title: '请输入手机号',
-      icon: 'none'
-    });
-    return;
-  }
-  // 校验手机验证码是否为空
-  if (!formData.phoneCode) {
-    uni.showToast({
-      title: '请输入手机验证码',
-      icon: 'none'
-    });
+
+  if (!isValid) {
     return;
   }
 
-  // 在这里添加实际的注册请求逻辑
-  uni.showToast({
-    title: '注册成功',
-    icon: 'success'
+  // 发送注册接口
+  uni.request({
+    url: 'http://island.zhangshuiyi.com/island/sys/user/register',
+    method: 'POST',
+    data: {
+      username: formData.username,
+      password: formData.password,
+      phone: formData.phone,
+      smscode: '123456'
+    },
+    header: { 'Content-Type': 'application/json' },
+    success: (res) => {
+      console.log(res.data);
+      if (res.data.success === true) {
+        // 在这里添加实际的注册请求逻辑
+        uni.showToast({
+          title: res.data.message,
+          icon: 'success',
+          duration: 1500
+        });
+        // handleLogin()
+      } else {
+        uni.showToast({
+          title: res.data.message,
+          icon: 'none',
+          duration: 1500
+        });
+      }
+    },
+    
   });
 };
 
@@ -275,7 +391,6 @@ button {
   height: 104rpx;
 }
 
-
 .code-btn {
   flex-shrink: 0;
   background-color: #f5f5f5;
@@ -301,5 +416,16 @@ button {
 .action-link {
   color: #666666;
   font-size: 14px;
+}
+
+/* 校验错误 */
+.error-message {
+  color: red;
+  font-size: 22rpx;
+  margin-left: 50rpx;
+}
+
+.password-input {
+  -webkit-text-security: disc !important;
 }
 </style>

@@ -334,25 +334,25 @@ export default {
         });
         // 延迟跳转到登录页面，给用户一些时间看到提示
           // 获取当前页面栈
-            const pages = getCurrentPages();
-        
-            // 获取当前页面的实例
-            const currentPage = pages[pages.length - 1];
-			
-			const getQueryString = (params) =>{
-			  return Object.keys(params)
-			    .map(key => key + '=' + params[key])
-			    .join('&');
-			};
-        
-            // 获取完整的 URL (包含查询参数)
-            const currentUrl = '/' + currentPage.route + '?' + getQueryString(currentPage.options);
-				console.log("currentUrl",currentUrl)
-            // 保存到本地存储	
-            uni.setStorage({
-              key: 'loginRedirectUrl',
-              data: currentUrl
-            });
+        const pages = getCurrentPages();
+    
+        // 获取当前页面的实例
+        const currentPage = pages[pages.length - 1];
+  
+        const getQueryString = (params) =>{
+          return Object.keys(params)
+            .map(key => key + '=' + params[key])
+            .join('&');
+        };
+          
+          // 获取完整的 URL (包含查询参数)
+        const currentUrl = '/' + currentPage.route + '?' + getQueryString(currentPage.options);
+        console.log("currentUrl",currentUrl)
+        // 保存到本地存储	
+        uni.setStorage({
+          key: 'loginRedirectUrl',
+          data: currentUrl
+        });
 			
         setTimeout(() => {
           uni.navigateTo({

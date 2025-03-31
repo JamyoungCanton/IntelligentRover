@@ -433,8 +433,8 @@ page {
   box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
 }
 .ai-btn image{
-  width: 44rpx;
-  height: 44rpx;
+  width: 70%;
+  height: 70%;
   align-items: center;
   justify-content: center;
 }

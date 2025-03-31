@@ -16,6 +16,7 @@ app.$mount()
 //设置pinia
 import { createSSRApp } from 'vue'
 import pinia from './store/index'
+import './router/index'
 export function createApp() {
   const app = createSSRApp(App)
   app.use(pinia)

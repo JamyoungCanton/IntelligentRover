@@ -11,9 +11,6 @@ importers:
       '@dcloudio/types':
         specifier: ^3.4.14
         version: 3.4.14
-      '@dcloudio/uni-app':
-        specifier: 2.0.2-4050520250307001
-        version: 2.0.2-4050520250307001(@dcloudio/types@3.4.14)(@vue/composition-api@1.7.2(vue@3.5.13))
       '@dcloudio/uni-ui':
         specifier: ^1.5.7
         version: 1.5.7
@@ -26,15 +23,18 @@ importers:
       destr:
         specifier: ^2.0.3
         version: 2.0.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^2.0.36
         version: 2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13)
-      pinia-plugin-persist:
-        specifier: ^1.0.0
-        version: 1.0.0(@vue/composition-api@1.7.2(vue@3.5.13))(pinia@2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13))(vue@3.5.13)
       pinia-plugin-persistedstate:
         specifier: ^4.2.0
         version: 4.2.0(pinia@2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13))
+      vue:
+        specifier: ^3.5.13
+        version: 3.5.13
     devDependencies:
       '@types/vue':
         specifier: ^2.0.0
@@ -61,12 +61,6 @@ packages:
 
   '@dcloudio/types@3.4.14':
     resolution: {integrity: sha512-VolQeZfTh8pQFsr2IlfIVX93blfvGTuBoJuZUc7iWOqtHV8gDrq6fXLhzsVlgZyuhhRZLOxlo33rkEqnY+ucAw==}
-
-  '@dcloudio/uni-app@2.0.2-4050520250307001':
-    resolution: {integrity: sha512-5Qd+1wOP15+zvoYxGC0g6YSBeDXt8VkBNjnSCvo2Fx6/Tv7A4qS6DAKLjOWy4fyo/Sy5+QOuT4yBgzT0EU8gRw==}
-    peerDependencies:
-      '@dcloudio/types': ^3.0.15
-      '@vue/composition-api': ^1.7.0
 
   '@dcloudio/uni-ui@1.5.7':
     resolution: {integrity: sha512-DugxSIrQrze1FLdUOj9a+JEQ0bHGjnJTcGUK1mN/MivKg7nuKJBRWk5Ipa9sUdoBznX6ndz5h2e7Uao6x1CdCw==}
@@ -351,6 +345,9 @@ packages:
     resolution: {integrity: sha512-WunYko2W1NcdfAFpuLUoucsgULmgDBRkdxHxWQ7mK0cQqwPiy8E1enjuRBrhLtZkB5iScJ1XIPdhVEFK8aOLSg==}
     engines: {node: '>=14'}
 
+  lodash@4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
@@ -413,16 +410,6 @@ packages:
   picomatch@4.0.2:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
-
-  pinia-plugin-persist@1.0.0:
-    resolution: {integrity: sha512-M4hBBd8fz/GgNmUPaaUsC29y1M09lqbXrMAHcusVoU8xlQi1TqgkWnnhvMikZwr7Le/hVyMx8KUcumGGrR6GVw==}
-    peerDependencies:
-      '@vue/composition-api': ^1.0.0
-      pinia: ^2.0.0
-      vue: ^2.0.0 || >=3.0.0
-    peerDependenciesMeta:
-      '@vue/composition-api':
-        optional: true
 
   pinia-plugin-persistedstate@4.2.0:
     resolution: {integrity: sha512-3buhA7ac+ssbOIx3VRCC8oHkoFwhDM9oHRCjo7nj+O8WUqnW+jRqh7eYT5eS/DNa3H28zp3dYf/nd/Vc8zj8eQ==}
@@ -578,11 +565,6 @@ snapshots:
 
   '@dcloudio/types@3.4.14': {}
 
-  '@dcloudio/uni-app@2.0.2-4050520250307001(@dcloudio/types@3.4.14)(@vue/composition-api@1.7.2(vue@3.5.13))':
-    dependencies:
-      '@dcloudio/types': 3.4.14
-      '@vue/composition-api': 1.7.2(vue@3.5.13)
-
   '@dcloudio/uni-ui@1.5.7': {}
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
@@ -669,6 +651,7 @@ snapshots:
   '@vue/composition-api@1.7.2(vue@3.5.13)':
     dependencies:
       vue: 3.5.13
+    optional: true
 
   '@vue/devtools-api@6.6.4': {}
 
@@ -904,6 +887,8 @@ snapshots:
       pkg-types: 2.1.0
       quansync: 0.2.10
 
+  lodash@4.17.21: {}
+
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -955,14 +940,6 @@ snapshots:
   picomatch@2.3.1: {}
 
   picomatch@4.0.2: {}
-
-  pinia-plugin-persist@1.0.0(@vue/composition-api@1.7.2(vue@3.5.13))(pinia@2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13))(vue@3.5.13):
-    dependencies:
-      pinia: 2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13)
-      vue: 3.5.13
-      vue-demi: 0.12.5(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13)
-    optionalDependencies:
-      '@vue/composition-api': 1.7.2(vue@3.5.13)
 
   pinia-plugin-persistedstate@4.2.0(pinia@2.0.36(@vue/composition-api@1.7.2(vue@3.5.13))(vue@3.5.13)):
     dependencies:
