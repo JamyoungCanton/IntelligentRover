@@ -51,13 +51,18 @@
           <view class="avatar ai-avatar">
             <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
           </view>
+
           <view class="message-content">
             <!-- If message has an image -->
-            <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
+            <image v-if="msg.image" class="response-image" src="https://wlmtsys.com:9000/travel/fashboat.png"
+              mode="widthFix"></image>
 
+            <!-- ai回复框 -->
             <!-- 使用rich-text渲染动态HTML内容，添加点击事件 -->
-            <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content"
+            <!-- <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content"
               @tap="onCustomRichTextTap">
+            </rich-text> -->
+            <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content">
             </rich-text>
 
 
@@ -65,11 +70,11 @@
             <view v-if="msg.itinerary" class="itinerary-container">
               <view class="itinerary-title">{{ msg.itinerary.title }}</view>
 
-              <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
+              <!-- <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
                 <text class="time">{{ item.time }}:</text>
                 <rich-text class="detail custom-rich-text" :nodes="formatItineraryText(item.detail)"
                   @tap="onCustomRichTextTap"></rich-text>
-              </view>
+              </view> -->
 
               <view v-if="msg.itinerary.recommendations" class="recommendations">
                 <text class="section-title">推荐商家:</text>
@@ -114,6 +119,15 @@
 import { ref, reactive, onMounted, nextTick, computed } from 'vue';
 import { useUserStore } from '@/store';
 import { marked } from 'marked';
+
+// 检查 TextDecoder 是否可用，如果不可用则提供一个简单的替代方案
+const TextDecoder = globalThis.TextDecoder || function (encoding) {
+  return {
+    decode: function (uint8Array) {
+      return new TextDecoder(encoding).decode(uint8Array);
+    }
+  };
+};
 
 export default {
   setup() {
@@ -410,7 +424,7 @@ export default {
 
       // 检查是否点击了带有clickable-span类的元素
       // if (target.className && target.className.includes('clickable-span')) {
-        handleClickElement(target);
+      handleClickElement(target);
       // }
     };
 
@@ -484,8 +498,119 @@ export default {
       scrollToLatestMessage();
 
       // 调用智能对话接口
-      callAIInterface(chatMessages[chatMessages.length - 1].content);
+      // callAIInterface(chatMessages[chatMessages.length - 1].content);
+
+      // 模拟AI回复
+      AIAnswerThinking();
+      // 模拟AI思考几秒钟
+      setTimeout(() => {
+        // AI回复的消息内容
+        const lastMessage = chatMessages[chatMessages.length - 1];
+        // 模拟AI回复的内容，这里仅为示例。实际应用中应从服务器获取或根据用户输入动态生成。
+        let deadAnswer = "";
+        deadAnswer = '<div class="trip-container"><p>据您的需求，我建议如下行程：✅</p><div class="trip-section"><h3>📝 行程概览</h3><p>📍 本次行程将围绕“海钓”这一核心活动展开，结合万山岛的特色景点和便利交通，为您打造一次难忘的海岛体验。</p></div><hr class="divider"><div class="trip-section"><h3>⏱️ 行程安排</h3><div class="trip-day"><h4>⏰ 第一天：抵达与准备</h4><ul><li><span class="transport clickable-span">🚢 1-船</span> 从出发地乘船前往万山岛，建议选择上午的班次（8:00或10:00）。</li><li><span class="accommodation clickable-span">🏠 2-万山渔家乐</span> 办理入住，稍作休息。</li><li><span class="restaurant clickable-span">🍽️ 3-碧海鱼排</span> 享用午餐，品尝新鲜海鲜。</li><li><span class="activity clickable-span">🎣 4-海钓</span> 下午开始海钓活动，体验3-4小时的海钓乐趣。</li><li><span class="accommodation clickable-span">🍽️ 5-万山渔家乐</span> 晚餐后返回酒店休息。</li></ul></div><div class="trip-day"><h4>⏰ 第二天：探索与返程</h4><ul><li><span class="restaurant clickable-span">🍽️ 6-岛上咖啡馆</span> 享用早餐。</li><li><span class="activity clickable-span">🎣 7-海钓</span> 上午继续海钓活动，享受海钓的乐趣。</li><li><span class="restaurant clickable-span">🍽️ 8-岛上美食坊</span> 午餐后稍作休息。</li><li><span class="transport clickable-span">🚢 9-船</span> 下午乘船返程，建议选择13:30的班次。</li></ul></div></div><hr class="divider"><div class="trip-section"><h3>📊 推荐亮点</h3><ul><li><span class="activity clickable-span">🎣 1-海钓</span> 海钓活动是本次行程的核心，适合中等难度的钓鱼爱好者，价格800元。</li><li><span class="accommodation clickable-span">🏠 2-万山渔家乐</span> 海景房住宿，价格500元，评分4.2，环境舒适。</li><li><span class="restaurant clickable-span">🍽️ 3-碧海鱼排</span> 提供新鲜海鲜，价格为200元。</li></ul></div><hr class="divider"><div class="trip-section"><h3>❓ 注意事项</h3><ul><li>海钓活动需提前预约，建议联系当地旅行社或酒店安排。</li><li>船票价格100元，建议提前购票以确保座位。</li></ul></div><hr class="divider"><div class="trip-section"><h3>✉️ 总结</h3><p>本次行程以海钓为核心，结合万山岛的特色餐饮和住宿，为您提供一次轻松愉快的海岛体验。如有其他需求或问题，欢迎随时联系！</p></div><hr class="divider"><div class="price-section"><div class="price-info"><div class="price"><span class="price-symbol">¥</span><span class="price-value">988</span></div><div class="price-details">含往返交通、住宿、活动费用</div></div><div class="discount">优惠: <span class="discount-value">¥428元</span></div></div><div class="ai-comfirm-button">确认行程</div></div>';
+        // AI回复内容
+        AIAnser(deadAnswer, lastMessage);
+        // 为clickable-span和ai-comfirm-button添加交互行为
+        // bindClickableElements();
+      }, 2000);
+
     };
+
+    // 在sendMessage中使用此方法会让ai回复一个正在思考中...
+    const AIAnswerThinking = function () {
+      // 创建一个空的AI消息
+      const aiMessage = {
+        type: 'ai',
+        content: '正在思考中',  // 初始文本，不带点
+        id: Date.now(),
+        thinking: true,  // 标记是否为思考状态
+        startTime: Date.now() // 记录开始时间
+      };
+      chatMessages.push(aiMessage);
+
+      // 创建思考动画定时器
+      let dotCount = 0;
+      const THINKING_TIMEOUT = 30000; // 30秒超时
+      const thinkingInterval = setInterval(() => {
+        if (aiMessage.thinking) {  // 只在thinking为true时更新点
+          // 检查是否超时
+          if (Date.now() - aiMessage.startTime > THINKING_TIMEOUT) {
+            clearInterval(thinkingInterval);  // 停止动画
+            aiMessage.thinking = false;
+            aiMessage.content = '抱歉，响应超时。请重新发送消息。';
+            updateCounter.value++;
+
+            // 显示超时提示
+            uni.showToast({
+              title: '响应超时，请重试',
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
+
+          dotCount = (dotCount + 1) % 4;  // 0到3循环
+          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+          // 触发视图更新
+          updateCounter.value++;
+        } else {
+          clearInterval(thinkingInterval);  // 停止动画
+        }
+      }, 500);  // 每500毫秒更新一次
+
+      // 立即触发视图更新
+      globalUpdateKey.value = Date.now();
+      updateCounter.value++;
+
+      // 确保消息框立即可见
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+
+
+    // 思考完毕调用这个方法输出数据
+    const AIAnser = function (content, aiMessage) {
+      // 收到实际回答时，停止思考动画
+      aiMessage.thinking = false;
+      // 使用打字机效果显示答案
+      showTypingEffect(content, aiMessage);
+
+      // 使用nextTick确保DOM更新后再滚动
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+
+    // 为clickable-span和ai-comfirm-button添加交互行为
+    function bindClickableElements() {
+      // 为clickable-span添加点击事件
+      document.querySelectorAll('.clickable-span').forEach(element => {
+        element.addEventListener('click', function () {
+          const id = this.getAttribute('data-id');
+          const type = this.getAttribute('data-type');
+          AINavigatorTo(id, type);
+        });
+      });
+
+      // 为ai-comfirm-button添加点击事件
+      const confirmButton = document.querySelector('.ai-comfirm-button');
+      if (confirmButton) {
+        confirmButton.addEventListener('click', function () {
+          // 这里可以根据需要传递不同的参数
+          AINavigatorTo('confirm', 'trip');
+        });
+      }
+    }
+
+    const AINavigatorTo = function (id, type) {
+      console.log(`Navigating to: id=${id}, type=${type}`);
+      // 实际应用中，这里可以实现页面跳转或其他交互行为
+      // 例如: window.location.href = `/detail?id=${id}&type=${type}`;
+    };
+
+
 
     // 负责处理用户消息并获取AI回复。它实现了与AI聊天服务器的通信，并处理流式响应数据。
     const callAIInterface = (userQuery, retryCount = 0) => {
@@ -680,8 +805,15 @@ export default {
         try {
           // 将ArrayBuffer转换为文本
           const uint8Array = new Uint8Array(res.data);
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(uint8Array);
+          let text;
+          try {
+            const decoder = new TextDecoder('utf-8');
+            text = decoder.decode(uint8Array);
+          } catch (error) {
+            console.error('TextDecoder failed:', error);
+            // 使用 String.fromCharCode 作为备选方案
+            text = String.fromCharCode.apply(null, new Uint8Array(uint8Array));
+          }
           console.log('收到的原始数据:', text); // 调试日志
 
           // 处理SSE格式数据
@@ -1045,6 +1177,28 @@ export default {
 </script>
 
 <style>
+/* 新增按钮样式 */
+.more-info-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.more-info-button:hover {
+  background-color: #0056b3;
+}
+
+.more-info-button:active {
+  background-color: #004494;
+}
+
 /* Markdown样式 */
 .markdown-content {
   font-size: 28rpx;
@@ -1704,4 +1858,161 @@ export default {
   justify-content: center;
   color: #4285f4;
 }
+
+
+/* -------------------------------------------------------------------------------------------- */
+.trip-container {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  /* background-color: #f9f9f9; */
+  border-radius: 10px;
+  /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
+}
+
+.trip-section {
+  margin-bottom: 30px;
+}
+
+h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 1.4em;
+}
+
+h4 {
+  color: #3498db;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+.divider {
+  border: none;
+  border-top: 2px dashed #bdc3c7;
+  margin: 20px 0;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+/* 标签样式 */
+.transport {
+  background-color: #3498db;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.accommodation {
+  background-color: #2ecc71;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.restaurant {
+  background-color: #e67e22;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.activity {
+  background-color: #9b59b6;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+/* 按钮样式 */
+.confirm-button {
+  background-color: #3498db;
+  /* 蓝色背景 */
+  color: white;
+  /* 白色字体 */
+  border: none;
+  padding: 12px 0;
+  width: 100%;
+  /* 宽度与父级相同 */
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.confirm-button:hover {
+  background-color: #2980b9;
+  /* 鼠标悬停时的背景色 */
+}
+
+.ai-comfirm-button {
+  /* 基本样式 */
+  background-color: #1e88e5;
+  /* 蓝色背景 */
+  color: white;
+  /* 白色文字 */
+  text-align: center;
+  /* 文字水平居中 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  /* 高度占满父级 */
+  width: 100%;
+  /* 宽度占满父级 */
+  border: none;
+  /* 无边框 */
+  border-radius: 5px;
+  /* 圆角 */
+  font-size: 16px;
+  /* 字体大小 */
+  font-weight: bold;
+  /* 加粗字体 */
+  cursor: pointer;
+  /* 鼠标悬停时显示手型 */
+  transition: background-color 0.3s, transform 0.2s;
+  /* 过渡效果 */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  /* 阴影效果 */
+}
+
+/* 悬停效果 */
+.ai-comfirm-button:hover {
+  background-color: #1565c0;
+  /* 深蓝色 */
+  transform: translateY(-2px);
+  /* 稍微上移 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* 更明显的阴影 */
+}
+
+/* 点击效果 */
+.ai-comfirm-button:active {
+  background-color: #0d47a1;
+  /* 更深的蓝色 */
+  transform: translateY(1px);
+  /* 稍微下移 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  /* 较弱的阴影 */
+}
+
+/* 确保按钮在父级容器中居中 */
+.trip-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* -------------------------------------------------------------------------------------------- */
 </style>
