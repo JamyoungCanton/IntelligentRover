@@ -51,25 +51,29 @@
           <view class="avatar ai-avatar">
             <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
           </view>
+
           <view class="message-content">
             <!-- If message has an image -->
-            <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
+            <image v-if="msg.image" class="response-image" src="https://wlmtsys.com:9000/travel/fashboat.png" mode="widthFix"></image>
 
-            <!-- 使用v-html渲染markdown内容 -->
-            <view v-if="msg.content" class="message-text custom-rich-text markdown-content" v-html="msg.content"
-              @tap="handleClickableSpan">
-            </view>
+            <!-- ai回复框 -->
+            <!-- 使用rich-text渲染动态HTML内容，添加点击事件 -->
+            <!-- <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content"
+              @tap="onCustomRichTextTap">
+            </rich-text> -->
+            <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content">
+            </rich-text>
 
 
             <!-- Itinerary details -->
             <view v-if="msg.itinerary" class="itinerary-container">
               <view class="itinerary-title">{{ msg.itinerary.title }}</view>
 
-              <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
+              <!-- <view v-for="(item, idx) in msg.itinerary.schedule" :key="idx" class="itinerary-item">
                 <text class="time">{{ item.time }}:</text>
                 <rich-text class="detail custom-rich-text" :nodes="formatItineraryText(item.detail)"
                   @tap="onCustomRichTextTap"></rich-text>
-              </view>
+              </view> -->
 
               <view v-if="msg.itinerary.recommendations" class="recommendations">
                 <text class="section-title">推荐商家:</text>
@@ -155,12 +159,30 @@ export default {
       if (!rawAnswers) return '';
 
       try {
-        // 首先使用marked解析markdown
-        let htmlContent = marked(rawAnswers);
+        // 保存可点击的span标签，防止被markdown处理
+        // const clickableSpans = [];
+        // let tempRawAnswers = rawAnswers;
+
+        // 提取并保存所有可点击span标签
+        // const spanRegex = /<span class="clickable-span">(.*?)<\/span>/g;
+        // let match;
+        // let index = 0;
+
+        // while ((match = spanRegex.exec(tempRawAnswers)) !== null) {
+        //   const placeholder = `__CLICKABLE_SPAN_${index}__`;
+        //   clickableSpans.push({
+        //     placeholder: placeholder,
+        //     original: match[0]
+        //   });
+        //   tempRawAnswers = tempRawAnswers.replace(match[0], placeholder);
+        //   index++;
+        // }
+
+        // 使用marked解析markdown
+        let htmlContent = marked(tempRawAnswers);
         let processedContent = htmlContent;
 
         // 处理其他常见HTML标签，将它们转换为适当的样式类
-
         // 处理标题标签
         processedContent = processedContent.replace(/<h1>(.*?)<\/h1>/g, '<view class="heading-1">$1</view>');
         processedContent = processedContent.replace(/<h2>(.*?)<\/h2>/g, '<view class="heading-2">$1</view>');
@@ -191,13 +213,15 @@ export default {
         // 处理表格 (简化处理)
         processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
 
-        // 移除可能剩余的HTML标签
-        // processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
+        // 恢复可点击span标签
+        // clickableSpans.forEach(span => {
+        //   processedContent = processedContent.replace(span.placeholder, span.original);
+        // });
 
         return processedContent;
       } catch (e) {
         console.error('HTML标签处理失败:', e);
-        return rawAnswers; // 返回原始内容而不是未定义的content变量
+        return rawAnswers; // 返回原始内容
       }
     };
 
@@ -261,8 +285,142 @@ export default {
       }
     ]);
 
+    // 打字机效果函数
+    const showTypingEffect = (content, aiMessage) => {
+      if (!content) return;
+
+      let currentIndex = 0;
+      const fullText = content;
+      const typingSpeed = 30; // 每个字符的显示速度（毫秒）
+
+      // 清除之前可能存在的计时器
+      if (aiMessage.typingTimer) {
+        clearInterval(aiMessage.typingTimer);
+      }
+
+      // 初始化显示内容为空
+      aiMessage.content = '';
+
+      // 创建打字效果的计时器
+      aiMessage.typingTimer = setInterval(() => {
+        if (currentIndex < fullText.length) {
+          // 添加下一个字符
+          aiMessage.content = fullText.substring(0, currentIndex + 1);
+          currentIndex++;
+
+          // 更新视图
+          globalUpdateKey.value = Date.now();
+          updateCounter.value++;
+
+          // 确保滚动到最新消息
+          nextTick(() => {
+            scrollToBottom();
+          });
+        } else {
+          // 完成打字效果，清除计时器
+          clearInterval(aiMessage.typingTimer);
+          aiMessage.typingTimer = null;
+        }
+      }, typingSpeed);
+    };
+
     // 用于标记消息是否完成
     const messageComplete = ref(false);
+
+    // 处理可点击元素的点击事件
+    const handleClickElement = (element) => {
+      // 获取元素的类名、文本内容和动作
+      const className = element.className || '';
+      const text = element.textContent || '';
+      const action = element.dataset ? element.dataset.action : '';
+
+      console.log('点击了元素:', text, '类名:', className, '动作:', action);
+
+      // 根据data-action属性和类名决定执行的操作
+      if (className.includes('clickable-span')) {
+        if (action === 'btnClick') {
+          // 执行计数操作
+          count.value++;
+          list.value.push(count.value);
+          // 显示提示
+          uni.showToast({
+            title: '点击成功，计数: ' + count.value,
+            icon: 'none',
+            duration: 1500
+          });
+          return;
+        }
+
+        // 原有的跳转逻辑
+        if (text.includes('酒店') || text.includes('住宿') || text.includes('民宿') || text.includes('客栈')) {
+          uni.navigateTo({
+            url: '/pages/hotelBooking/hotelBooking',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        } else if (text.includes('餐厅') || text.includes('餐饮') || text.includes('美食')) {
+          uni.navigateTo({
+            url: '/pages/foodRecommendation/foodRecommendation',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        } else if (text.includes('景点') || text.includes('渔村') || text.includes('景区') || text.includes('旅游')) {
+          uni.navigateTo({
+            url: '/pages/attractionGuide/attractionGuide',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        }
+      }
+    };
+
+    // 处理消息内容点击事件
+    const handleMessageTap = (event) => {
+      // 获取点击的元素
+      const target = event.target;
+      console.log('点击了消息内容', target);
+
+      // 检查是否点击了带有clickable-span类的元素
+      if (target && target.className && target.className.includes('clickable-span')) {
+        handleClickElement(target);
+      }
+    };
+
+    // 处理rich-text的点击事件
+    const onCustomRichTextTap = (event) => {
+      console.log('Rich text tap event:', event);
+
+      // 获取点击的元素
+      const target = event.target;
+      if (!target) {
+        console.log('No target element found');
+        return;
+      }
+
+      // 检查是否点击了带有clickable-span类的元素
+      // if (target.className && target.className.includes('clickable-span')) {
+      handleClickElement(target);
+      // }
+    };
+
+    // 响应式数据
+    const count = ref(0);
+    const list = ref([]);
 
     // Methods
     const selectCategory = (categoryId) => {
@@ -330,20 +488,133 @@ export default {
       scrollToLatestMessage();
 
       // 调用智能对话接口
-      callAIInterface(chatMessages[chatMessages.length - 1].content);
+      // callAIInterface(chatMessages[chatMessages.length - 1].content);
+
+      // 模拟AI回复
+      AIAnswerThinking();
+      // 模拟AI思考几秒钟
+      setTimeout(() => {
+        // AI回复的消息内容
+        const lastMessage = chatMessages[chatMessages.length - 1];
+        // 模拟AI回复的内容，这里仅为示例。实际应用中应从服务器获取或根据用户输入动态生成。
+        let deadAnswer = "";
+        deadAnswer = '<div class="trip-container"><p>据您的需求，我建议如下行程：✅</p><div class="trip-section"><h3>📝 行程概览</h3><p>📍 本次行程将围绕“海钓”这一核心活动展开，结合万山岛的特色景点和便利交通，为您打造一次难忘的海岛体验。</p></div><hr class="divider"><div class="trip-section"><h3>⏱️ 行程安排</h3><div class="trip-day"><h4>⏰ 第一天：抵达与准备</h4><ul><li><span class="transport clickable-span">🚢 1-船</span> 从出发地乘船前往万山岛，建议选择上午的班次（8:00或10:00）。</li><li><span class="accommodation clickable-span">🏠 2-万山渔家乐</span> 办理入住，稍作休息。</li><li><span class="restaurant clickable-span">🍽️ 3-碧海鱼排</span> 享用午餐，品尝新鲜海鲜。</li><li><span class="activity clickable-span">🎣 4-海钓</span> 下午开始海钓活动，体验3-4小时的海钓乐趣。</li><li><span class="accommodation clickable-span">🍽️ 5-万山渔家乐</span> 晚餐后返回酒店休息。</li></ul></div><div class="trip-day"><h4>⏰ 第二天：探索与返程</h4><ul><li><span class="restaurant clickable-span">🍽️ 6-岛上咖啡馆</span> 享用早餐。</li><li><span class="activity clickable-span">🎣 7-海钓</span> 上午继续海钓活动，享受海钓的乐趣。</li><li><span class="restaurant clickable-span">🍽️ 8-岛上美食坊</span> 午餐后稍作休息。</li><li><span class="transport clickable-span">🚢 9-船</span> 下午乘船返程，建议选择13:30的班次。</li></ul></div></div><hr class="divider"><div class="trip-section"><h3>📊 推荐亮点</h3><ul><li><span class="activity clickable-span">🎣 1-海钓</span> 海钓活动是本次行程的核心，适合中等难度的钓鱼爱好者，价格800元。</li><li><span class="accommodation clickable-span">🏠 2-万山渔家乐</span> 海景房住宿，价格500元，评分4.2，环境舒适。</li><li><span class="restaurant clickable-span">🍽️ 3-碧海鱼排</span> 提供新鲜海鲜，价格为200元。</li></ul></div><hr class="divider"><div class="trip-section"><h3>❓ 注意事项</h3><ul><li>海钓活动需提前预约，建议联系当地旅行社或酒店安排。</li><li>船票价格100元，建议提前购票以确保座位。</li></ul></div><hr class="divider"><div class="trip-section"><h3>✉️ 总结</h3><p>本次行程以海钓为核心，结合万山岛的特色餐饮和住宿，为您提供一次轻松愉快的海岛体验。如有其他需求或问题，欢迎随时联系！</p></div><hr class="divider"><div class="price-section"><div class="price-info"><div class="price"><span class="price-symbol">¥</span><span class="price-value">988</span></div><div class="price-details">含往返交通、住宿、活动费用</div></div><div class="discount">优惠: <span class="discount-value">¥428元</span></div></div><div class="ai-comfirm-button">确认行程</div></div>';
+        // AI回复内容
+        AIAnser(deadAnswer, lastMessage);
+        // 为clickable-span和ai-comfirm-button添加交互行为
+        // bindClickableElements();
+      }, 2000);
+
     };
+
+    // 在sendMessage中使用此方法会让ai回复一个正在思考中...
+    const AIAnswerThinking = function () {
+      // 创建一个空的AI消息
+      const aiMessage = {
+        type: 'ai',
+        content: '正在思考中',  // 初始文本，不带点
+        id: Date.now(),
+        thinking: true,  // 标记是否为思考状态
+        startTime: Date.now() // 记录开始时间
+      };
+      chatMessages.push(aiMessage);
+
+      // 创建思考动画定时器
+      let dotCount = 0;
+      const THINKING_TIMEOUT = 30000; // 30秒超时
+      const thinkingInterval = setInterval(() => {
+        if (aiMessage.thinking) {  // 只在thinking为true时更新点
+          // 检查是否超时
+          if (Date.now() - aiMessage.startTime > THINKING_TIMEOUT) {
+            clearInterval(thinkingInterval);  // 停止动画
+            aiMessage.thinking = false;
+            aiMessage.content = '抱歉，响应超时。请重新发送消息。';
+            updateCounter.value++;
+
+            // 显示超时提示
+            uni.showToast({
+              title: '响应超时，请重试',
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
+
+          dotCount = (dotCount + 1) % 4;  // 0到3循环
+          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+          // 触发视图更新
+          updateCounter.value++;
+        } else {
+          clearInterval(thinkingInterval);  // 停止动画
+        }
+      }, 500);  // 每500毫秒更新一次
+
+      // 立即触发视图更新
+      globalUpdateKey.value = Date.now();
+      updateCounter.value++;
+
+      // 确保消息框立即可见
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+
+
+    // 思考完毕调用这个方法输出数据
+    const AIAnser = function (content, aiMessage) {
+      // 收到实际回答时，停止思考动画
+      aiMessage.thinking = false;
+      // 使用打字机效果显示答案
+      showTypingEffect(content, aiMessage);
+
+      // 使用nextTick确保DOM更新后再滚动
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+
+    // 为clickable-span和ai-comfirm-button添加交互行为
+    function bindClickableElements() {
+      // 为clickable-span添加点击事件
+      document.querySelectorAll('.clickable-span').forEach(element => {
+        element.addEventListener('click', function () {
+          const id = this.getAttribute('data-id');
+          const type = this.getAttribute('data-type');
+          AINavigatorTo(id, type);
+        });
+      });
+
+      // 为ai-comfirm-button添加点击事件
+      const confirmButton = document.querySelector('.ai-comfirm-button');
+      if (confirmButton) {
+        confirmButton.addEventListener('click', function () {
+          // 这里可以根据需要传递不同的参数
+          AINavigatorTo('confirm', 'trip');
+        });
+      }
+    }
+
+    const AINavigatorTo = function (id, type) {
+      console.log(`Navigating to: id=${id}, type=${type}`);
+      // 实际应用中，这里可以实现页面跳转或其他交互行为
+      // 例如: window.location.href = `/detail?id=${id}&type=${type}`;
+    };
+
+
 
     // 负责处理用户消息并获取AI回复。它实现了与AI聊天服务器的通信，并处理流式响应数据。
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3; // 最大重试次数
-      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
+      // const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
+      const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
-          original_intention: 'unknown',
-          recommended_plan: 'unknown'
+          original_intention: '',
+          recommended_plan: ''
         },
-        query: userQuery
+        query: userQuery,
+        webMode: ''
       };
 
       // 如果是重试请求，显示重试提示
@@ -377,9 +648,6 @@ export default {
           console.error('请求失败:', err);
           // 打印完整的错误信息
           console.error('错误详情:', JSON.stringify(err));
-
-          // 定义最大重试次数
-          const MAX_RETRIES = 2;
 
           // 更新最后添加的AI消息，显示错误信息
           const lastMessage = chatMessages[chatMessages.length - 1];
@@ -438,27 +706,6 @@ export default {
           // 更新UI
           globalUpdateKey.value = Date.now();
           updateCounter.value++;
-
-          // 如果是网络错误并且未超过最大重试次数，尝试重新连接
-          if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
-            err.errMsg && err.errMsg.includes('network error')) &&
-            retryCount < MAX_RETRIES) {
-
-            const retryDelay = 1000 * (retryCount + 1); // 递增重试延迟
-
-            uni.showToast({
-              title: `连接中断，${retryCount + 1}秒后自动重试...`,
-              icon: 'none',
-              duration: retryDelay
-            });
-
-            setTimeout(() => {
-              console.log(`第${retryCount + 1}次重试连接...`);
-              callAIInterface(userMessage, retryCount + 1);
-            }, retryDelay);
-          } else {
-            scrollToLatestMessage();
-          }
         }
       });
 
@@ -590,25 +837,25 @@ export default {
                     const decodedAnswer = decodeUnicode(answer);
                     console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
-                    // 如果是workflow_finished事件，则直接使用这个答案
-                    if (jsonData.event === 'workflow_finished') {
-                      fullResponse = `事件[workflow_finished] 解码后的答案: ${decodedAnswer}`;
-                    } else {
-                      // 其他事件正常累加到完整响应中
-                      fullResponse += decodedAnswer;
-                    }
+                    // 处理文本中的特定关键词，添加可点击样式
+                    const processedAnswer = decodedAnswer.replace(
+                      /(酒店|餐厅|景点|渔村)/g,
+                      '<span class="clickable-span data-action="btnClick"">$1</span>'
+                    );
+
+                    // 其他事件正常累加到完整响应中
+                    fullResponse += processedAnswer;
+
+                    // 更新内容后绑定点击事件
+                    bindClickEvents();
 
                     // 更新AI消息内容
                     const lastMessage = chatMessages[chatMessages.length - 1];
                     if (lastMessage && lastMessage.type === 'ai') {
                       // 收到实际回答时，停止思考动画
                       lastMessage.thinking = false;
-                      // 直接使用解码后的答案
-                      lastMessage.content = decodedAnswer;
-
-                      // 立即强制视图更新
-                      globalUpdateKey.value = Date.now();
-                      updateCounter.value++;
+                      // 使用打字机效果显示答案
+                      showTypingEffect(decodedAnswer, lastMessage);
 
                       // 使用nextTick确保DOM更新后再滚动
                       nextTick(() => {
@@ -638,13 +885,13 @@ export default {
                   console.log('所有原始answer值:', rawAnswers);
                   console.log('所有原始answer值拼接:', rawAnswers.join(' '));
 
-                  // 直接使用完整响应，不进行额外处理
+                  // 使用打字机效果显示完整响应
                   aiMessage.thinking = false;  // 确保停止思考动画
-                  aiMessage.content = fullResponse;
 
-                  // 立即强制视图更新
-                  globalUpdateKey.value = Date.now();
-                  updateCounter.value++;
+                  // 如果内容与当前显示不同，使用打字机效果
+                  if (aiMessage.content !== fullResponse) {
+                    showTypingEffect(fullResponse, aiMessage);
+                  }
 
                   // 确保DOM更新后再滚动
                   nextTick(() => {
@@ -676,18 +923,6 @@ export default {
           }
         }
       });
-      let text = '';
-      try {
-        // 将ArrayBuffer转换为Uint8Array
-        const uint8Array = new Uint8Array(data);
-        // 将二进制数据转换为字符串
-        text = String.fromCharCode.apply(null, uint8Array);
-        // 处理特殊字符编码
-        text = decodeURIComponent(escape(text));
-      } catch (e) {
-        // console.error('数据解码失败:', e);
-      }
-      return text;
     };
 
     // 解码 Unicode 编码
@@ -709,16 +944,6 @@ export default {
       }
     };
 
-    const formatResponse = (responseText) => {
-      // 在这里对接口返回的文本进行格式化处理
-      // 例如，可以将文本中的换行符替换为<br>标签，以便在页面上正确显示
-      let formattedText = responseText.replace(/\n/g, '<br>');
-
-      // 进一步的格式化逻辑可以根据实际需求添加
-      // 例如，添加HTML标签来美化文本，或者处理特定的关键词
-
-      return formattedText;
-    };
 
     const navigatortopaymoent = () => {
       uni.navigateTo({
@@ -803,16 +1028,6 @@ export default {
           console.log('Selected option:', res.tapIndex);
         }
       });
-    };
-
-    // 实时更新消息内容
-    const showTypingEffect = (content, aiMessage) => {
-      // 处理并立即更新消息内容
-      aiMessage.content = processRawAnswers(content);
-      // 立即更新视图
-      globalUpdateKey.value = Date.now();
-      // 手动触发更新
-      updateCounter.value++;
     };
 
     onMounted(() => {
@@ -908,51 +1123,6 @@ export default {
       }
     };
 
-    // 处理自定义富文本点击事件
-    const onCustomRichTextTap = (event) => {
-      // 获取点击的目标元素
-      const target = event.target;
-
-      // 检查是否点击了带有特定属性的元素
-      if (target && target.dataset && target.dataset.action) {
-        console.log('检测到可点击元素:', {
-          action: target.dataset.action,
-          id: target.dataset.id,
-          type: target.dataset.type
-        });
-
-        // 阻止事件冒泡
-        event.stopPropagation();
-
-        // 根据不同的action执行相应的操作
-        switch (target.dataset.action) {
-          case 'hotel':
-            uni.navigateTo({
-              url: '/pages/hotelBooking/hotelBooking',
-              success: () => {
-                console.log('成功跳转到酒店预订页面');
-                uni.showToast({
-                  title: '正在前往酒店预订页面',
-                  icon: 'none',
-                  duration: 1500
-                });
-              },
-              fail: (err) => {
-                console.error('跳转失败:', err);
-                uni.showToast({
-                  title: '跳转失败，请重试',
-                  icon: 'none'
-                });
-              }
-            });
-            break;
-          // 可以在这里添加其他类型的action处理
-          default:
-            console.log('未知的action类型:', target.dataset.action);
-        }
-      }
-    };
-
 
     return {
       inputMessage,
@@ -967,7 +1137,6 @@ export default {
       getCategoryName,
       sendMessage,
       navigatortopaymoent,
-      formatResponse,
       formatItineraryText,
       processRawAnswers, // 导出处理原始答案的函数
       goBack,
@@ -978,6 +1147,12 @@ export default {
       onScroll, // 滚动事件处理函数
       handleSpanClick, // 处理span点击的函数
       onCustomRichTextTap, // 自定义富文本点击处理函数
+      handleMessageTap, // 添加消息点击处理函数
+      handleClickElement, // 添加元素点击处理函数
+      count, // 导出计数器
+      list, // 导出列表
+      // navigateToPage, // 添加页面导航函数
+      // addClickListeners, // 添加点击监听器函数
       decodeUnicode, // 导出Unicode解码函数
     };
   }
@@ -985,6 +1160,28 @@ export default {
 </script>
 
 <style>
+/* 新增按钮样式 */
+.more-info-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.more-info-button:hover {
+  background-color: #0056b3;
+}
+
+.more-info-button:active {
+  background-color: #004494;
+}
+
 /* Markdown样式 */
 .markdown-content {
   font-size: 28rpx;
@@ -1644,4 +1841,161 @@ export default {
   justify-content: center;
   color: #4285f4;
 }
+
+
+/* -------------------------------------------------------------------------------------------- */
+.trip-container {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  /* background-color: #f9f9f9; */
+  border-radius: 10px;
+  /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
+}
+
+.trip-section {
+  margin-bottom: 30px;
+}
+
+h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 1.4em;
+}
+
+h4 {
+  color: #3498db;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+.divider {
+  border: none;
+  border-top: 2px dashed #bdc3c7;
+  margin: 20px 0;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+/* 标签样式 */
+.transport {
+  background-color: #3498db;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.accommodation {
+  background-color: #2ecc71;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.restaurant {
+  background-color: #e67e22;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+.activity {
+  background-color: #9b59b6;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-right: 5px;
+}
+
+/* 按钮样式 */
+.confirm-button {
+  background-color: #3498db;
+  /* 蓝色背景 */
+  color: white;
+  /* 白色字体 */
+  border: none;
+  padding: 12px 0;
+  width: 100%;
+  /* 宽度与父级相同 */
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.confirm-button:hover {
+  background-color: #2980b9;
+  /* 鼠标悬停时的背景色 */
+}
+
+.ai-comfirm-button {
+  /* 基本样式 */
+  background-color: #1e88e5;
+  /* 蓝色背景 */
+  color: white;
+  /* 白色文字 */
+  text-align: center;
+  /* 文字水平居中 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  /* 高度占满父级 */
+  width: 100%;
+  /* 宽度占满父级 */
+  border: none;
+  /* 无边框 */
+  border-radius: 5px;
+  /* 圆角 */
+  font-size: 16px;
+  /* 字体大小 */
+  font-weight: bold;
+  /* 加粗字体 */
+  cursor: pointer;
+  /* 鼠标悬停时显示手型 */
+  transition: background-color 0.3s, transform 0.2s;
+  /* 过渡效果 */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  /* 阴影效果 */
+}
+
+/* 悬停效果 */
+.ai-comfirm-button:hover {
+  background-color: #1565c0;
+  /* 深蓝色 */
+  transform: translateY(-2px);
+  /* 稍微上移 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* 更明显的阴影 */
+}
+
+/* 点击效果 */
+.ai-comfirm-button:active {
+  background-color: #0d47a1;
+  /* 更深的蓝色 */
+  transform: translateY(1px);
+  /* 稍微下移 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  /* 较弱的阴影 */
+}
+
+/* 确保按钮在父级容器中居中 */
+.trip-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* -------------------------------------------------------------------------------------------- */
 </style>

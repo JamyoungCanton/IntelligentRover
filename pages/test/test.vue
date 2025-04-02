@@ -1,12 +1,7 @@
 <template>
   <view class="container">
     <view class="input-area">
-      <input
-        class="input-box"
-        type="text"
-        v-model="inputText"
-        placeholder="请输入测试内容"
-      />
+      <input class="input-box" type="text" v-model="inputText" placeholder="请输入测试内容" />
       <button class="send-button" @click="sendRequest">发送</button>
     </view>
     <view class="result-area">
