@@ -20,9 +20,9 @@
         <view class="category-scroll">
           <button class="category-item active">全部</button>
           <button class="category-item">热门</button>
-          <button class="category-item">自然风光</button>
-          <button class="category-item">人文古迹</button>
-          <button class="category-item">特色体验</button>
+          <button class="category-item">自然景观</button>
+          <button class="category-item">沙滩浴场</button>
+          <button class="category-item">观景台</button>
         </view>
       </scroll-view>
 

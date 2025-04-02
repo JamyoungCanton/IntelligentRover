@@ -34,7 +34,7 @@
           :url="`/pages/itineraryDetails/itineraryDetails?id=${item.id}`" 
           class="card-image"
         >
-          <image :src="getImagePath(item.coverImage)" mode="widthFix"></image>
+          <image :src="item.coverImage" mode="widthFix"></image>
           <view class="status-tag">{{ item.status }}</view>
         </navigator>
         
@@ -96,7 +96,7 @@ const itineraryData = [
     price: 1288,
     type: "海岛游",
     status: "未开始",
-    coverImage: "island.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "https://wlmtsys.com:9000/travel/island.jpg", // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐摆渡车前往海岛", location: "酒店门口", description: "" },
       { time: "09:00", title: "海岛游览", location: "海岛", description: "享受海滩美景" },
@@ -112,7 +112,7 @@ const itineraryData = [
     price: 398,
     type: "海鲜美食",
     status: "未开始",
-    coverImage: "fish-pier.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "https://wlmtsys.com:9000/travel/fish-pier.jpg", // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐'万山号'摆渡车前往'碧海渔排'", location: "万山海景酒店门口", description: "" },
       { time: "09:00", title: "在'碧海渔排'进行海钓活动", location: "碧海渔排", description: "享受自助烹饪服务" },
@@ -124,9 +124,6 @@ const itineraryData = [
   }
 ];
 
-function getImagePath(imageName) {
-  return `/static/itinerary/${imageName}`;
-}
 
 export default {
   components: {
@@ -187,9 +184,6 @@ export default {
     this.getSafeAreaInfo();
   },
   methods: {
-    getImagePath(imageName) {
-      return getImagePath(imageName);
-    },
     getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
       this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };

@@ -13,7 +13,7 @@
 
     <!-- 主视觉图 -->
     <view class="main-image">
-      <image src="/static/Orders/bulider.png" mode="aspectFill"></image>
+      <image src="https://wlmtsys.com:9000/travel/bulider.png" mode="aspectFill"></image>
     </view>
 
     <!-- 评分和月售信息 -->
