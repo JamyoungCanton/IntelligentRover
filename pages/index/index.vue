@@ -68,7 +68,7 @@
 
     <view class="ai-float-btn" @click="showAiDialog">
       <view class="ai-btn">
-        <img src="/static/chat/robot-avatar.png" alt="">
+        <img src="https://wlmtsys.com:9000/travel/logo.png" alt="">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -425,7 +425,7 @@ page {
 .ai-btn {
   width: 96rpx;
   height: 96rpx;
-  background-color: #4A88FF;
+  background-color: #fff;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
@@ -433,8 +433,8 @@ page {
   box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
 }
 .ai-btn image{
-  width: 70%;
-  height: 70%;
+  width: 80%;
+  height: 80%;
   align-items: center;
   justify-content: center;
 }

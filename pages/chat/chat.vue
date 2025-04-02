@@ -55,10 +55,10 @@
             <!-- If message has an image -->
             <image v-if="msg.image" class="response-image" src="/static/chat/fashboat.png" mode="widthFix"></image>
 
-            <!-- 使用v-html渲染markdown内容 -->
-            <view v-if="msg.content" class="message-text custom-rich-text markdown-content" v-html="msg.content"
-              @tap="handleClickableSpan">
-            </view>
+            <!-- 使用rich-text渲染动态HTML内容，添加点击事件 -->
+            <rich-text v-if="msg.content" class="message-text custom-rich-text markdown-content" :nodes="msg.content"
+              @tap="onCustomRichTextTap">
+            </rich-text>
 
 
             <!-- Itinerary details -->
@@ -155,12 +155,30 @@ export default {
       if (!rawAnswers) return '';
 
       try {
-        // 首先使用marked解析markdown
-        let htmlContent = marked(rawAnswers);
+        // 保存可点击的span标签，防止被markdown处理
+        // const clickableSpans = [];
+        // let tempRawAnswers = rawAnswers;
+
+        // 提取并保存所有可点击span标签
+        // const spanRegex = /<span class="clickable-span">(.*?)<\/span>/g;
+        // let match;
+        // let index = 0;
+
+        // while ((match = spanRegex.exec(tempRawAnswers)) !== null) {
+        //   const placeholder = `__CLICKABLE_SPAN_${index}__`;
+        //   clickableSpans.push({
+        //     placeholder: placeholder,
+        //     original: match[0]
+        //   });
+        //   tempRawAnswers = tempRawAnswers.replace(match[0], placeholder);
+        //   index++;
+        // }
+
+        // 使用marked解析markdown
+        let htmlContent = marked(tempRawAnswers);
         let processedContent = htmlContent;
 
         // 处理其他常见HTML标签，将它们转换为适当的样式类
-
         // 处理标题标签
         processedContent = processedContent.replace(/<h1>(.*?)<\/h1>/g, '<view class="heading-1">$1</view>');
         processedContent = processedContent.replace(/<h2>(.*?)<\/h2>/g, '<view class="heading-2">$1</view>');
@@ -191,13 +209,15 @@ export default {
         // 处理表格 (简化处理)
         processedContent = processedContent.replace(/<table>([\s\S]*?)<\/table>/g, '<view class="table">$1</view>');
 
-        // 移除可能剩余的HTML标签
-        // processedContent = processedContent.replace(/<\/?[^>]+(>|$)/g, '');
+        // 恢复可点击span标签
+        // clickableSpans.forEach(span => {
+        //   processedContent = processedContent.replace(span.placeholder, span.original);
+        // });
 
         return processedContent;
       } catch (e) {
         console.error('HTML标签处理失败:', e);
-        return rawAnswers; // 返回原始内容而不是未定义的content变量
+        return rawAnswers; // 返回原始内容
       }
     };
 
@@ -261,8 +281,142 @@ export default {
       }
     ]);
 
+    // 打字机效果函数
+    const showTypingEffect = (content, aiMessage) => {
+      if (!content) return;
+
+      let currentIndex = 0;
+      const fullText = content;
+      const typingSpeed = 30; // 每个字符的显示速度（毫秒）
+
+      // 清除之前可能存在的计时器
+      if (aiMessage.typingTimer) {
+        clearInterval(aiMessage.typingTimer);
+      }
+
+      // 初始化显示内容为空
+      aiMessage.content = '';
+
+      // 创建打字效果的计时器
+      aiMessage.typingTimer = setInterval(() => {
+        if (currentIndex < fullText.length) {
+          // 添加下一个字符
+          aiMessage.content = fullText.substring(0, currentIndex + 1);
+          currentIndex++;
+
+          // 更新视图
+          globalUpdateKey.value = Date.now();
+          updateCounter.value++;
+
+          // 确保滚动到最新消息
+          nextTick(() => {
+            scrollToBottom();
+          });
+        } else {
+          // 完成打字效果，清除计时器
+          clearInterval(aiMessage.typingTimer);
+          aiMessage.typingTimer = null;
+        }
+      }, typingSpeed);
+    };
+
     // 用于标记消息是否完成
     const messageComplete = ref(false);
+
+    // 处理可点击元素的点击事件
+    const handleClickElement = (element) => {
+      // 获取元素的类名、文本内容和动作
+      const className = element.className || '';
+      const text = element.textContent || '';
+      const action = element.dataset ? element.dataset.action : '';
+
+      console.log('点击了元素:', text, '类名:', className, '动作:', action);
+
+      // 根据data-action属性和类名决定执行的操作
+      if (className.includes('clickable-span')) {
+        if (action === 'btnClick') {
+          // 执行计数操作
+          count.value++;
+          list.value.push(count.value);
+          // 显示提示
+          uni.showToast({
+            title: '点击成功，计数: ' + count.value,
+            icon: 'none',
+            duration: 1500
+          });
+          return;
+        }
+
+        // 原有的跳转逻辑
+        if (text.includes('酒店') || text.includes('住宿') || text.includes('民宿') || text.includes('客栈')) {
+          uni.navigateTo({
+            url: '/pages/hotelBooking/hotelBooking',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        } else if (text.includes('餐厅') || text.includes('餐饮') || text.includes('美食')) {
+          uni.navigateTo({
+            url: '/pages/foodRecommendation/foodRecommendation',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        } else if (text.includes('景点') || text.includes('渔村') || text.includes('景区') || text.includes('旅游')) {
+          uni.navigateTo({
+            url: '/pages/attractionGuide/attractionGuide',
+            fail: (err) => {
+              console.error('跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
+        }
+      }
+    };
+
+    // 处理消息内容点击事件
+    const handleMessageTap = (event) => {
+      // 获取点击的元素
+      const target = event.target;
+      console.log('点击了消息内容', target);
+
+      // 检查是否点击了带有clickable-span类的元素
+      if (target && target.className && target.className.includes('clickable-span')) {
+        handleClickElement(target);
+      }
+    };
+
+    // 处理rich-text的点击事件
+    const onCustomRichTextTap = (event) => {
+      console.log('Rich text tap event:', event);
+
+      // 获取点击的元素
+      const target = event.target;
+      if (!target) {
+        console.log('No target element found');
+        return;
+      }
+
+      // 检查是否点击了带有clickable-span类的元素
+      // if (target.className && target.className.includes('clickable-span')) {
+        handleClickElement(target);
+      // }
+    };
+
+    // 响应式数据
+    const count = ref(0);
+    const list = ref([]);
 
     // Methods
     const selectCategory = (categoryId) => {
@@ -336,14 +490,16 @@ export default {
     // 负责处理用户消息并获取AI回复。它实现了与AI聊天服务器的通信，并处理流式响应数据。
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3; // 最大重试次数
-      const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
+      // const url = 'http://47.106.243.134:7181/island/front/ai/chat/chatMessage-stream';
+      const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
-          original_intention: 'unknown',
-          recommended_plan: 'unknown'
+          original_intention: '',
+          recommended_plan: ''
         },
-        query: userQuery
+        query: userQuery,
+        webMode: ''
       };
 
       // 如果是重试请求，显示重试提示
@@ -377,9 +533,6 @@ export default {
           console.error('请求失败:', err);
           // 打印完整的错误信息
           console.error('错误详情:', JSON.stringify(err));
-
-          // 定义最大重试次数
-          const MAX_RETRIES = 2;
 
           // 更新最后添加的AI消息，显示错误信息
           const lastMessage = chatMessages[chatMessages.length - 1];
@@ -438,27 +591,6 @@ export default {
           // 更新UI
           globalUpdateKey.value = Date.now();
           updateCounter.value++;
-
-          // 如果是网络错误并且未超过最大重试次数，尝试重新连接
-          if ((err.errMsg && err.errMsg.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
-            err.errMsg && err.errMsg.includes('network error')) &&
-            retryCount < MAX_RETRIES) {
-
-            const retryDelay = 1000 * (retryCount + 1); // 递增重试延迟
-
-            uni.showToast({
-              title: `连接中断，${retryCount + 1}秒后自动重试...`,
-              icon: 'none',
-              duration: retryDelay
-            });
-
-            setTimeout(() => {
-              console.log(`第${retryCount + 1}次重试连接...`);
-              callAIInterface(userMessage, retryCount + 1);
-            }, retryDelay);
-          } else {
-            scrollToLatestMessage();
-          }
         }
       });
 
@@ -590,25 +722,25 @@ export default {
                     const decodedAnswer = decodeUnicode(answer);
                     console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
-                    // 如果是workflow_finished事件，则直接使用这个答案
-                    if (jsonData.event === 'workflow_finished') {
-                      fullResponse = `事件[workflow_finished] 解码后的答案: ${decodedAnswer}`;
-                    } else {
-                      // 其他事件正常累加到完整响应中
-                      fullResponse += decodedAnswer;
-                    }
+                    // 处理文本中的特定关键词，添加可点击样式
+                    const processedAnswer = decodedAnswer.replace(
+                      /(酒店|餐厅|景点|渔村)/g,
+                      '<span class="clickable-span data-action="btnClick"">$1</span>'
+                    );
+
+                    // 其他事件正常累加到完整响应中
+                    fullResponse += processedAnswer;
+
+                    // 更新内容后绑定点击事件
+                    bindClickEvents();
 
                     // 更新AI消息内容
                     const lastMessage = chatMessages[chatMessages.length - 1];
                     if (lastMessage && lastMessage.type === 'ai') {
                       // 收到实际回答时，停止思考动画
                       lastMessage.thinking = false;
-                      // 直接使用解码后的答案
-                      lastMessage.content = decodedAnswer;
-
-                      // 立即强制视图更新
-                      globalUpdateKey.value = Date.now();
-                      updateCounter.value++;
+                      // 使用打字机效果显示答案
+                      showTypingEffect(decodedAnswer, lastMessage);
 
                       // 使用nextTick确保DOM更新后再滚动
                       nextTick(() => {
@@ -638,13 +770,13 @@ export default {
                   console.log('所有原始answer值:', rawAnswers);
                   console.log('所有原始answer值拼接:', rawAnswers.join(' '));
 
-                  // 直接使用完整响应，不进行额外处理
+                  // 使用打字机效果显示完整响应
                   aiMessage.thinking = false;  // 确保停止思考动画
-                  aiMessage.content = fullResponse;
 
-                  // 立即强制视图更新
-                  globalUpdateKey.value = Date.now();
-                  updateCounter.value++;
+                  // 如果内容与当前显示不同，使用打字机效果
+                  if (aiMessage.content !== fullResponse) {
+                    showTypingEffect(fullResponse, aiMessage);
+                  }
 
                   // 确保DOM更新后再滚动
                   nextTick(() => {
@@ -676,18 +808,6 @@ export default {
           }
         }
       });
-      let text = '';
-      try {
-        // 将ArrayBuffer转换为Uint8Array
-        const uint8Array = new Uint8Array(data);
-        // 将二进制数据转换为字符串
-        text = String.fromCharCode.apply(null, uint8Array);
-        // 处理特殊字符编码
-        text = decodeURIComponent(escape(text));
-      } catch (e) {
-        // console.error('数据解码失败:', e);
-      }
-      return text;
     };
 
     // 解码 Unicode 编码
@@ -709,16 +829,6 @@ export default {
       }
     };
 
-    const formatResponse = (responseText) => {
-      // 在这里对接口返回的文本进行格式化处理
-      // 例如，可以将文本中的换行符替换为<br>标签，以便在页面上正确显示
-      let formattedText = responseText.replace(/\n/g, '<br>');
-
-      // 进一步的格式化逻辑可以根据实际需求添加
-      // 例如，添加HTML标签来美化文本，或者处理特定的关键词
-
-      return formattedText;
-    };
 
     const navigatortopaymoent = () => {
       uni.navigateTo({
@@ -803,16 +913,6 @@ export default {
           console.log('Selected option:', res.tapIndex);
         }
       });
-    };
-
-    // 实时更新消息内容
-    const showTypingEffect = (content, aiMessage) => {
-      // 处理并立即更新消息内容
-      aiMessage.content = processRawAnswers(content);
-      // 立即更新视图
-      globalUpdateKey.value = Date.now();
-      // 手动触发更新
-      updateCounter.value++;
     };
 
     onMounted(() => {
@@ -908,51 +1008,6 @@ export default {
       }
     };
 
-    // 处理自定义富文本点击事件
-    const onCustomRichTextTap = (event) => {
-      // 获取点击的目标元素
-      const target = event.target;
-
-      // 检查是否点击了带有特定属性的元素
-      if (target && target.dataset && target.dataset.action) {
-        console.log('检测到可点击元素:', {
-          action: target.dataset.action,
-          id: target.dataset.id,
-          type: target.dataset.type
-        });
-
-        // 阻止事件冒泡
-        event.stopPropagation();
-
-        // 根据不同的action执行相应的操作
-        switch (target.dataset.action) {
-          case 'hotel':
-            uni.navigateTo({
-              url: '/pages/hotelBooking/hotelBooking',
-              success: () => {
-                console.log('成功跳转到酒店预订页面');
-                uni.showToast({
-                  title: '正在前往酒店预订页面',
-                  icon: 'none',
-                  duration: 1500
-                });
-              },
-              fail: (err) => {
-                console.error('跳转失败:', err);
-                uni.showToast({
-                  title: '跳转失败，请重试',
-                  icon: 'none'
-                });
-              }
-            });
-            break;
-          // 可以在这里添加其他类型的action处理
-          default:
-            console.log('未知的action类型:', target.dataset.action);
-        }
-      }
-    };
-
 
     return {
       inputMessage,
@@ -967,7 +1022,6 @@ export default {
       getCategoryName,
       sendMessage,
       navigatortopaymoent,
-      formatResponse,
       formatItineraryText,
       processRawAnswers, // 导出处理原始答案的函数
       goBack,
@@ -978,6 +1032,12 @@ export default {
       onScroll, // 滚动事件处理函数
       handleSpanClick, // 处理span点击的函数
       onCustomRichTextTap, // 自定义富文本点击处理函数
+      handleMessageTap, // 添加消息点击处理函数
+      handleClickElement, // 添加元素点击处理函数
+      count, // 导出计数器
+      list, // 导出列表
+      // navigateToPage, // 添加页面导航函数
+      // addClickListeners, // 添加点击监听器函数
       decodeUnicode, // 导出Unicode解码函数
     };
   }

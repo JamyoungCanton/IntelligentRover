@@ -159,6 +159,7 @@ export default {
   },
   methods: {
     goBack() {
+      // 返回上一页
       uni.navigateBack();
     },
     decreaseParticipants() {

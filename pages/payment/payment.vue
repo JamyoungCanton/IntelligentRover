@@ -119,6 +119,7 @@
 </template>
 
 <script setup>
+import { useUserStore } from '@/store/modules/user';
 import { ref } from 'vue';
 
 const phone = ref('13800138000');
@@ -134,6 +135,53 @@ const selectPayment = (payment) => {
 };
 
 const handleConfirmPayment = () => {
+
+  const userStore = useUserStore();
+  console.log(userStore.token);
+  
+  // 调用支付接口
+  uni.request({
+    url: 'http://island.zhangshuiyi.com/island/front/order/payOrder',
+    method: 'POST',
+    data: {
+      orderSn:'',
+    },
+    header:{
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      // 支付成功
+      console.log(res.data);
+      if(res.data.success === true){
+        uni.showToast({
+          title: '支付成功',
+          icon: 'success'
+        });
+
+        // 跳转到支付成功页面
+
+        // 获取订单信息
+        
+      }else{
+        // 提示失败原因
+        uni.showToast({
+          title: res.data.message,
+          icon: 'none'
+        });
+
+      }
+    },
+    fail: (err) => {
+      // 支付失败
+      // 提示用户支付失败
+      uni.showToast({
+        title: '支付失败',
+        icon: 'none'
+      });
+    }
+  });
+
   uni.navigateTo({
     url: '/pages/pay_success/pay_success'
   });

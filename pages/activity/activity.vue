@@ -113,7 +113,7 @@ export default {
         // 图标大小
         iconSize: 24,
         // 活动图片
-        activityImage: '/static/activity/diving.jpg',
+        activityImage: 'https://wlmtsys.com:9000/travel/diving.jpg',
         // 文本内容
         title: '深潜探索',
         activityName: '海底世界深潜体验',

@@ -127,7 +127,7 @@ export default {
       notes: ['• 请携带有效身份证件', '• 建议携带防晒用品', '• 请遵守导游安排', '• 注意安全，听从工作人员指挥'],
       // 图片资源路径
       assets: {
-        banner: '/static/route/beach.jpg'
+        banner: 'https://wlmtsys.com:9000/travel/beach.jpg'
       }
     };
   },

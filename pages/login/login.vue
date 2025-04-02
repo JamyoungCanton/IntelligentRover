@@ -1,8 +1,8 @@
 <template>
   <view class="container">
     <view class="header">
-      <image class="logo" src="/static/login/logo.jpg" mode="aspectFit" />
-      <text class="title">AI旅游行程管家</text>
+      <image class="logo" src="https://wlmtsys.com:9000/travel/logo.png" mode="aspectFit" />
+      <text class="title">海岛智游侠</text>
     </view>
 
     <view class="login-form">
@@ -18,7 +18,7 @@
       <view class="phone-login">
         <view class="input-group">
           <uni-icons type="username" size="24" color="#999999" />
-          <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @input="validateUsername" />
+          <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @blur="validateUsername" />
         </view>
         <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
 
@@ -28,10 +28,10 @@
           <input
             :type="passwordVisible ? 'text' : 'password'"
             placeholder="请输入密码"
-            maxlength="12"
+            maxlength="16"
             v-model="formData.password"
             :class="{ 'password-input': !passwordVisible && formData.password }"
-            @input="validatePassword"
+            @blur="validatePassword"
           />
           <uni-icons
             :type="passwordVisible ? 'eye' : 'eye-slash'"
@@ -48,7 +48,7 @@
           <view class="code-input-wrap">
             <view class="input-group">
               <uni-icons type="locked" size="24" color="#999999" />
-              <input type="text" placeholder="请输入验证码" maxlength="4" v-model="formData.verifyCode" @input="validateVerifyCode" />
+              <input type="text" placeholder="请输入验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" />
             </view>
             <image
               :src="codeImg"
@@ -140,7 +140,7 @@ const validateUsername = () => {
   if (!formData.username) {
     errors.username = '用户名不能为空';
   } else if (formData.username.length < 3 || formData.username.length > 11) {
-    errors.username = '用户名长度必须在5到11位之间';
+    errors.username = '用户名长度必须在3到11位之间';
   } else {
     errors.username = '';
   }
@@ -150,8 +150,8 @@ const validateUsername = () => {
 const validatePassword = () => {
   if (!formData.password) {
     errors.password = '密码不能为空';
-  } else if (formData.password.length < 3 || formData.password.length > 12) {
-    errors.password = '密码长度必须在3到12位之间';
+  } else if (formData.password.length < 5 || formData.password.length > 16) {
+    errors.password = '密码长度必须在5到16位之间';
   } else {
     errors.password = '';
   }
