@@ -54,7 +54,8 @@
 
           <view class="message-content">
             <!-- If message has an image -->
-            <image v-if="msg.image" class="response-image" src="https://wlmtsys.com:9000/travel/fashboat.png" mode="widthFix"></image>
+            <image v-if="msg.image" class="response-image" src="https://wlmtsys.com:9000/travel/fashboat.png"
+              mode="widthFix"></image>
 
             <!-- ai回复框 -->
             <!-- 使用rich-text渲染动态HTML内容，添加点击事件 -->
@@ -118,6 +119,15 @@
 import { ref, reactive, onMounted, nextTick, computed } from 'vue';
 import { useUserStore } from '@/store';
 import { marked } from 'marked';
+
+// 检查 TextDecoder 是否可用，如果不可用则提供一个简单的替代方案
+const TextDecoder = globalThis.TextDecoder || function (encoding) {
+  return {
+    decode: function (uint8Array) {
+      return new TextDecoder(encoding).decode(uint8Array);
+    }
+  };
+};
 
 export default {
   setup() {
@@ -795,8 +805,15 @@ export default {
         try {
           // 将ArrayBuffer转换为文本
           const uint8Array = new Uint8Array(res.data);
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(uint8Array);
+          let text;
+          try {
+            const decoder = new TextDecoder('utf-8');
+            text = decoder.decode(uint8Array);
+          } catch (error) {
+            console.error('TextDecoder failed:', error);
+            // 使用 String.fromCharCode 作为备选方案
+            text = String.fromCharCode.apply(null, new Uint8Array(uint8Array));
+          }
           console.log('收到的原始数据:', text); // 调试日志
 
           // 处理SSE格式数据
