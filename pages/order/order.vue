@@ -1,4 +1,3 @@
-
 <template>
   <view class="page">
     <!-- 顶部导航 -->
@@ -14,10 +13,8 @@
       </view>
       <scroll-view class="order-status-tabs" scroll-x>
         <view class="tabs-wrapper">
-          <view v-for="(tab, index) in tabs" :key="index" 
-                class="tab-item" 
-                :class="{ active: currentTab === index }"
-                @click="handleTabClick(index)">
+          <view v-for="(tab, index) in tabs" :key="index" class="tab-item" :class="{ active: currentTab === index }"
+            @click="handleTabClick(index)">
             {{ tab }}
             <view v-if="currentTab === index" class="tab-indicator"></view>
           </view>
@@ -28,17 +25,46 @@
     <!-- 主内容区 -->
     <scroll-view class="main-content" scroll-y>
       <view class="order-list">
+
         <!-- 订单项1 -->
+        <view class="order-item">
+          <view class="order-header">
+            <text class="order-title">两天精选海岛行程</text>
+            <text class="order-status paid">已支付</text>
+          </view>
+          <view class="order-info">
+            <image class="order-image"
+              src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+            </image>
+            <view class="order-details">
+              <text class="detail-text">出发：2025-04-5</text>
+              <text class="detail-text">结束：2025-04-7</text>
+              <text class="detail-text">订单号：2024011500001</text>
+            </view>
+          </view>
+          <view class="order-footer">
+            <text class="price">¥ 950</text>
+            <view class="button-group">
+              <button class="btn btn-primary">查看详情</button>
+            </view>
+          </view>
+        </view>
+
+
+
+        <!-- 订单项2 -->
         <view class="order-item">
           <view class="order-header">
             <text class="order-title">碧海渔排</text>
             <text class="order-status waiting">待支付</text>
           </view>
           <view class="order-info">
-            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/d12ebc8619a462d9b7de65e8ee0f61b9.jpg" mode="aspectFill"></image>
+            <image class="order-image"
+              src="https://ai-public.mastergo.com/ai/img_res/d12ebc8619a462d9b7de65e8ee0f61b9.jpg" mode="aspectFill">
+            </image>
             <view class="order-details">
-              <text class="detail-text">用餐日期：2024-01-18</text>
-              <text class="detail-text">人数：2人</text>
+              <text class="detail-text">用餐日期：2025-04-6</text>
+              <text class="detail-text">人数：1人</text>
               <text class="detail-text">订单号：2024011800001</text>
             </view>
           </view>
@@ -51,27 +77,7 @@
           </view>
         </view>
 
-        <!-- 订单项2 -->
-        <view class="order-item">
-          <view class="order-header">
-            <text class="order-title">两天精选海岛行程</text>
-            <text class="order-status paid">已支付</text>
-          </view>
-          <view class="order-info">
-            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill"></image>
-            <view class="order-details">
-              <text class="detail-text">出发：2024-01-15</text>
-              <text class="detail-text">结束：2024-01-16</text>
-              <text class="detail-text">订单号：2024011500001</text>
-            </view>
-          </view>
-          <view class="order-footer">
-            <text class="price">¥ 1,288</text>
-            <view class="button-group">
-              <button class="btn btn-primary">查看详情</button>
-            </view>
-          </view>
-        </view>
+
 
         <!-- 订单项3 -->
         <view class="order-item">
@@ -80,10 +86,12 @@
             <text class="order-status completed">已完成</text>
           </view>
           <view class="order-info">
-            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/a99c445c6e48f144ebfafad1f3e4e966.jpg" mode="aspectFill"></image>
+            <image class="order-image"
+              src="https://ai-public.mastergo.com/ai/img_res/a99c445c6e48f144ebfafad1f3e4e966.jpg" mode="aspectFill">
+            </image>
             <view class="order-details">
-              <text class="detail-text">出发：2024-01-01</text>
-              <text class="detail-text">结束：2024-01-03</text>
+              <text class="detail-text">出发：2025-01-01</text>
+              <text class="detail-text">结束：2025-01-03</text>
               <text class="detail-text">订单号：2024010100001</text>
             </view>
           </view>
@@ -97,7 +105,7 @@
       </view>
     </scroll-view>
 
-    
+
   </view>
 </template>
 
@@ -294,7 +302,4 @@ page {
   background: #1890FF;
   color: #fff;
 }
-
-
 </style>
-

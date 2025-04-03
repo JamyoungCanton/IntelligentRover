@@ -12,7 +12,7 @@
     <!-- Chat Container -->
     <scroll-view scroll-y class="chat-container" :scroll-top="scrollTop" scroll-with-animation
       :scroll-into-view="scrollIntoView" :scroll-anchoring="true" enhanced :show-scrollbar="false"
-      @scrolltoupper="onScrollToUpper" @scroll="onScroll">
+      @scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 30px;">
       <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
         <view class="avatar ai-avatar">
@@ -122,7 +122,7 @@
     </scroll-view>
 
     <!-- Input Area -->
-    <view class="input-container">
+    <view class="input-container" :style="{ paddingBottom: safeAreaBottom + 'px' }">
       <view class="add-icon avatar ai-avatar" @tap="showAddOptions" style="background-color: #f5f5f5;">
         <image src="/static/chat/add.png"></image>
       </view>
@@ -172,6 +172,9 @@ export default {
     // 记录可视区域的高度
     const viewportHeight = ref(0);
 
+    // 底部安全区高度
+    const safeAreaBottom = ref(0);
+
     // Category data
     const categories = reactive([
       {
@@ -204,6 +207,14 @@ export default {
     // Chat messages，这个一定，一定，不能删，删了发消息会报错
     const chatMessages = reactive([
     ]);
+
+    // 初始化底部安全区高度
+    onMounted(() => {
+      // 获取系统信息
+      const systemInfo = uni.getSystemInfoSync();
+      // 设置底部安全区高度
+      safeAreaBottom.value = systemInfo.safeAreaInsets.bottom;
+    });
 
     // 打字机效果函数
     const showTypingEffect = (content, aiMessage) => {
@@ -316,7 +327,6 @@ export default {
       // 模拟AI回复
       AIAnswerThinking();
     };
-
 
     // 在sendMessage中使用此方法会让ai回复一个正在思考中...
     const AIAnswerThinking = function () {
@@ -480,7 +490,7 @@ export default {
               {
                 type: "价格",
                 id: "",
-                content: "¥988 含往返交通、住宿、活动费用"
+                content: "¥950 含往返交通、住宿、活动费用"
               },
               {
                 type: "优惠",
@@ -520,8 +530,6 @@ export default {
         scrollToBottom();
       });
     }
-
-
 
     // 实现打字机效果的函数
     const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
@@ -564,23 +572,6 @@ export default {
       // 确保滚动到最新消息
       scrollToBottom();
     };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3;
@@ -821,6 +812,7 @@ export default {
       chatMessages,
       updateCounter,
       globalUpdateKey,
+      safeAreaBottom,
       selectCategory,
       getCategoryName,
       sendMessage,

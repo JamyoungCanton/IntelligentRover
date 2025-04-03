@@ -15,19 +15,19 @@
         <view class="schedule-list">
           <view class="schedule-item">
             <text class="time">上午</text>
-            <text class="desc">前往"珊瑚海滩"，享受浮潜服务</text>
+            <text class="desc">乘船前往万山岛</text>
           </view>
           <view class="schedule-item">
             <text class="time">中午</text>
-            <text class="desc">在"海滩餐厅"享用午餐</text>
+            <text class="desc">在"碧海鱼排"享用午餐</text>
           </view>
           <view class="schedule-item">
             <text class="time">下午</text>
-            <text class="desc">参观"海岛文化博物馆"</text>
+            <text class="desc">开始"海钓"活动</text>
           </view>
           <view class="schedule-item">
             <text class="time">晚上</text>
-            <text class="desc">返回"海景酒店B"休息</text>
+            <text class="desc">返回"万山渔家乐"休息</text>
           </view>
         </view>
       </view>
@@ -39,12 +39,16 @@
         </view>
         <view class="fee-list">
           <view class="fee-item">
-            <text class="fee-name">浮潜服务</text>
-            <text class="fee-value">¥200/人</text>
+            <text class="fee-name">船票</text>
+            <text class="fee-value">¥100/人</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">午餐套餐</text>
             <text class="fee-value">¥150/人</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">海钓费用</text>
+            <text class="fee-value">¥200/人</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">海景酒店住宿</text>
@@ -53,15 +57,15 @@
           <view class="fee-summary">
             <view class="fee-line">
               <text class="fee-name">原价</text>
-              <text class="fee-original">¥850</text>
+              <text class="fee-original">¥1378</text>
             </view>
             <view class="fee-line">
               <text class="fee-name">优惠金额</text>
-              <text class="fee-discount">-¥100</text>
+              <text class="fee-discount">-¥428</text>
             </view>
             <view class="fee-line">
               <text class="fee-name-highlight">实付金额</text>
-              <text class="fee-final">¥750</text>
+              <text class="fee-final">¥950</text>
             </view>
           </view>
         </view>
