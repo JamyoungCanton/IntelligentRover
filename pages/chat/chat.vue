@@ -201,167 +201,8 @@ export default {
       },
     ]);
 
-    // Chat messages
+    // Chat messages，这个一定，一定，不能删，删了发消息会报错
     const chatMessages = reactive([
-      {
-        type: 'user',
-        content: '我想了解海钓体验的详细行程'
-      },
-      {
-        type: 'ai',
-        content: [
-          {
-            type: "text",
-            id: "",
-            content: "据您的需求，我建议如下行程：✅"
-          },
-          {
-            type: "行程概览",
-            id: "",
-            content: '📝 行程概览<br>📍 本次行程将围绕"海钓"这一核心活动展开，结合万山岛的特色景点和便利交通，为您打造一次难忘的海岛体验。'
-          },
-          {
-            type: "divider",
-            id: "",
-            content: ""
-          },
-          {
-            type: "行程安排",
-            id: "",
-            content: "⏱️ 行程安排"
-          },
-          {
-            type: "行程日",
-            id: "day1",
-            content: "⏰ 第一天：抵达与准备"
-          },
-          {
-            type: "transport",
-            id: "1",
-            content: "🚢 1-船 从出发地乘船前往万山岛，建议选择上午的班次（8:00或10:00）。"
-          },
-          {
-            type: "accommodation",
-            id: "2",
-            content: "🏠 2-万山渔家乐 办理入住，稍作休息。"
-          },
-          {
-            type: "restaurant",
-            id: "3",
-            content: "🍽️ 3-碧海鱼排 享用午餐，品尝新鲜海鲜。"
-          },
-          {
-            type: "activity",
-            id: "4",
-            content: "🎣 4-海钓 下午开始海钓活动，体验3-4小时的海钓乐趣。"
-          },
-          {
-            type: "accommodation",
-            id: "5",
-            content: "🏠 5-万山渔家乐 晚餐后返回酒店休息。"
-          },
-          {
-            type: "行程日",
-            id: "day2",
-            content: "⏰ 第二天：探索与返程"
-          },
-          {
-            type: "restaurant",
-            id: "6",
-            content: "🍽️ 6-岛上咖啡馆 享用早餐。"
-          },
-          {
-            type: "activity",
-            id: "7",
-            content: "🎣 7-海钓 上午继续海钓活动，享受海钓的乐趣。"
-          },
-          {
-            type: "restaurant",
-            id: "8",
-            content: "🍽️ 8-岛上美食坊 午餐后稍作休息。"
-          },
-          {
-            type: "transport",
-            id: "9",
-            content: "🚢 9-船 下午乘船返程，建议选择13:30的班次。"
-          },
-          {
-            type: "divider",
-            id: "",
-            content: ""
-          },
-          {
-            type: "推荐亮点",
-            id: "",
-            content: "📊 推荐亮点"
-          },
-          {
-            type: "activity",
-            id: "10",
-            content: "🎣 1-海钓 海钓活动是本次行程的核心，适合中等难度的钓鱼爱好者，价格800元。"
-          },
-          {
-            type: "accommodation",
-            id: "11",
-            content: "🏠 2-万山渔家乐 海景房住宿，价格500元，评分4.2，环境舒适。"
-          },
-          {
-            type: "restaurant",
-            id: "12",
-            content: "🍽️ 3-碧海鱼排 提供新鲜海鲜，价格为200元。"
-          },
-          {
-            type: "divider",
-            id: "",
-            content: ""
-          },
-          {
-            type: "注意事项",
-            id: "",
-            content: "❓ 注意事项"
-          },
-          {
-            type: "text",
-            id: "",
-            content: "海钓活动需提前预约，建议联系当地旅行社或酒店安排。"
-          },
-          {
-            type: "text",
-            id: "",
-            content: "船票价格100元，建议提前购票以确保座位。"
-          },
-          {
-            type: "divider",
-            id: "",
-            content: ""
-          },
-          {
-            type: "总结",
-            id: "",
-            content: "✉️ 总结<br>本次行程以海钓为核心，结合万山岛的特色餐饮和住宿，为您提供一次轻松愉快的海岛体验。如有其他需求或问题，欢迎随时联系！"
-          },
-          {
-            type: "divider",
-            id: "",
-            content: ""
-          },
-          {
-            type: "价格",
-            id: "",
-            content: "¥988 含往返交通、住宿、活动费用"
-          },
-          {
-            type: "优惠",
-            id: "",
-            content: "优惠: ¥428元"
-          },
-          {
-            type: "按钮",
-            id: "",
-            content: "确认行程"
-          }
-        ]
-      }
     ]);
 
     // 打字机效果函数
@@ -477,50 +318,6 @@ export default {
     };
 
 
-
-
-    // 实现打字机效果的函数
-    const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
-      // 如果已经完成所有段落，结束递归
-      if (index >= fullContent.length) {
-        return;
-      }
-
-      const currentItem = fullContent[index];
-      const fullText = currentItem.content;
-
-      // 如果是新段落，初始化为空字符串
-      if (charIndex === 0) {
-        if (!message.content[index]) {
-          message.content[index] = {
-            type: currentItem.type,
-            id: currentItem.id || "",
-            content: ""
-          };
-        }
-      }
-
-      // 如果当前段落还没打完
-      if (charIndex < fullText.length) {
-        // 添加下一个字符
-        message.content[index].content = fullText.substring(0, charIndex + 1);
-        updateCounter.value++;
-
-        // 安排下一个字符
-        setTimeout(() => {
-          typewriterEffect(message, fullContent, index, charIndex + 1, delay);
-        }, delay);
-      } else {
-        // 当前段落打完，移到下一段
-        setTimeout(() => {
-          typewriterEffect(message, fullContent, index + 1, 0, delay);
-        }, delay * 10); // 段落之间停顿更长
-      }
-
-      // 确保滚动到最新消息
-      scrollToBottom();
-    };
-
     // 在sendMessage中使用此方法会让ai回复一个正在思考中...
     const AIAnswerThinking = function () {
       // 创建一个空的AI消息
@@ -544,7 +341,7 @@ export default {
             aiMessage.thinking = false;
 
             // 准备AI回复的完整内容
-            const fullContent = [
+            let fullContent = [
               {
                 type: "text",
                 id: "",
@@ -723,6 +520,53 @@ export default {
         scrollToBottom();
       });
     }
+
+
+
+    // 实现打字机效果的函数
+    const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
+      // 如果已经完成所有段落，结束递归
+      if (index >= fullContent.length) {
+        return;
+      }
+
+      const currentItem = fullContent[index];
+      const fullText = currentItem.content;
+
+      // 如果是新段落，初始化为空字符串
+      if (charIndex === 0) {
+        if (!message.content[index]) {
+          message.content[index] = {
+            type: currentItem.type,
+            id: currentItem.id || "",
+            content: ""
+          };
+        }
+      }
+
+      // 如果当前段落还没打完
+      if (charIndex < fullText.length) {
+        // 添加下一个字符
+        message.content[index].content = fullText.substring(0, charIndex + 1);
+        updateCounter.value++;
+
+        // 安排下一个字符
+        setTimeout(() => {
+          typewriterEffect(message, fullContent, index, charIndex + 1, delay);
+        }, delay);
+      } else {
+        // 当前段落打完，移到下一段
+        setTimeout(() => {
+          typewriterEffect(message, fullContent, index + 1, 0, delay);
+        }, delay * 10); // 段落之间停顿更长
+      }
+
+      // 确保滚动到最新消息
+      scrollToBottom();
+    };
+
+
+
 
 
 
