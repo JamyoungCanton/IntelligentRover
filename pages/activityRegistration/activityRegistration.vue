@@ -94,7 +94,7 @@ export default {
         location: 'location'
       },
       // 活动图片
-      registrationImage: '/static/activity/diving2.jpg',
+      registrationImage: 'https://wlmtsys.com:9000/travel/diving2.jpg',
       // 表单数据
       form: {
         name: '',

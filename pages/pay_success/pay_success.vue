@@ -27,19 +27,19 @@
           <text class="item-value">202308151234567</text>
         </view>
       </view>
-      <button class="btn primary" @tap="navigatortoOrders">查看订单详情</button>
-	  <button class="btn default" @tap="ToitineraryEvaluation">评价一下</button>
+      <button class="btn primary" @tap="navigatortoOrder">查看订单详情</button>
+      <button class="btn default" @tap="ToitineraryEvaluation">评价一下</button>
       <button class="btn default" @tap="Toindex">返回首页</button>
     </view>
   </view>
 </template>
 
-<script  setup>
+<script setup>
 import Navbar from '../navbar/navbar.vue';
-const navigatortoOrders = () => {
-	uni.navigateTo({
-	url: '/pages/Orders/Orders'
-   });
+const navigatortoOrder = () => {
+  uni.switchTab({
+    url: '/pages/order/order'
+  });
 };
 const ToitineraryEvaluation = () => {
   uni.navigateTo({
@@ -198,8 +198,8 @@ const components = {
 .tab-text.active {
   color: #4CAF50;
 }
-	
-.navbar{
+
+.navbar {
   position: fixed;
   bottom: 0;
   width: 100%;
