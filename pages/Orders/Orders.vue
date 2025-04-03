@@ -65,7 +65,7 @@
 
     <!-- 地图展示 -->
     <view class="map-section">
-      <image src="/static/Orders/map.png" mode="aspectFit"></image>
+      <image src="https://wlmtsys.com:9000/travel/map.png" mode="aspectFit"></image>
     </view>
 
     <!-- 底部价格和预订按钮 -->
