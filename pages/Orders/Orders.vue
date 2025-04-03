@@ -28,7 +28,7 @@
     <!-- 活动信息卡片 -->
     <view class="promotion-card">
       <p class="promotion-title">限时特惠活动</p>
-      <text class="promotion-date">活动时间：2024.01.15 - 2024.02.15</text>
+      <text class="promotion-date">活动时间：2025.03.15 - 2025.04.15</text>
       <text class="promotion-price">4人套餐优惠价 ¥398（原价 ¥598）</text>
       <text class="promotion-details">包含：渔具租赁、专业指导、船票、午餐、饮用水等</text>
     </view>
@@ -74,7 +74,7 @@
         <text class="current-price">¥398</text>
         <text class="original-price">¥598</text>
       </view>
-      <button class="book-btn">立即预订</button>
+      <button class="book-btn" @tap="gopayment">立即预订</button>
     </view>
   </view>
 </template>
@@ -86,6 +86,12 @@ import { ref } from 'vue';
 const goBack = () => {
   uni.navigateBack();
 };
+
+const gopayment = ()=> {
+  // 跳转到详情支付页面
+  uni.navigateTo({ url: '/pages/payment/payment' })
+
+}
 const getSafeAreaInsets = () => {
         const systemInfo = uni.getSystemInfoSync();
         if (systemInfo.safeArea) {
@@ -260,13 +266,13 @@ const getSafeAreaInsets = () => {
   font-size: 40rpx;
   color: #FF5A5F;
   font-weight: bold;
+  margin-left: 50rpx;
 }
 
 .original-price {
   font-size: 28rpx;
   color: #999;
   text-decoration: line-through;
-  margin-left: 10rpx;
 }
 
 .book-btn {
@@ -276,6 +282,6 @@ const getSafeAreaInsets = () => {
   border-radius: 10rpx;
   padding: 5rpx 50rpx;
   font-size: 32rpx;
-  margin-left: 290rpx;
+  margin-right: 50rpx;
 }
 </style>
