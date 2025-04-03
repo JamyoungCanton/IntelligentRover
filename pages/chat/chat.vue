@@ -180,27 +180,27 @@ export default {
       {
         id: 'fishing',
         name: '海钓体验',
-        icon: '/static/chat/fishing.jpg'
+        icon: 'https://wlmtsys.com:9000/travel/fishing.jpg'
       },
       {
         id: 'snorkeling',
         name: '浮潜探索',
-        icon: '/static/chat/snorkeling.jpg'
+        icon: 'https://wlmtsys.com:9000/travel/snorkeling.jpg'
       },
       {
         id: 'family',
         name: '亲子娱乐',
-        icon: '/static/chat/family.jpg'
+        icon: 'https://wlmtsys.com:9000/travel/family.jpg'
       },
       {
         id: 'leisure',
         name: '休闲畅游',
-        icon: '/static/chat/leisure.jpg'
+        icon: 'https://wlmtsys.com:9000/travel/leisure.jpg'
       },
       {
         id: 'island',
         name: '海岛介绍',
-        icon: '/static/chat/island.jpg'
+        icon: 'https://wlmtsys.com:9000/travel/island.jpg'
       },
     ]);
 
