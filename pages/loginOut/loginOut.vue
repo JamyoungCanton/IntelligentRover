@@ -1,14 +1,37 @@
 <template>
   <view class="container">
-    <button class="custom-button" @tap="">退出登录</button>
+    <button class="custom-button" @tap="goLogibOut">退出登录</button>
   </view>
 </template>
 
 <script  setup>
-import { useUserStore } from `store/modules/user`
+
+import { useUserStore } from '/store/modules/user'
 const userStore = useUserStore()
-userStore.token = ''
-console.log(userStore.token);
+
+const goLogibOut =async () => {
+  const userStore = useUserStore()
+  // 弹窗是否退出登录
+   uni.showModal({
+    title: '提示',
+    content: '是否退出登录？',
+     success: (res) => {
+      if (res.confirm) {
+
+        // 确认退出登录
+       userStore.token = '';
+       console.log(userStore.token);
+
+       uni.navigateBack({
+    delta: 1
+  });
+       
+      }
+      console.log(userStore.token);
+    }
+  });
+ 
+}
 
 
 
