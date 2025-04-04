@@ -16,7 +16,7 @@
       <view class="order-info">
         <view class="info-item">
           <text class="item-label">订单金额</text>
-          <text class="item-value">¥ 2,580.00</text>
+          <text class="item-value">¥ 950.00</text>
         </view>
         <view class="info-item">
           <text class="item-label">支付方式</text>
