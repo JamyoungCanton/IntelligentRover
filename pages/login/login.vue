@@ -54,7 +54,7 @@
               :src="codeImg"
               mode="scaleToFill"
               @tap="handleChangeCode"
-              style="width: 170rpx;height: 80rpx; margin-top: 20rpx; border-radius: 12rpx;"
+              style="width: 190rpx;height: 90rpx; margin-top: 20rpx;"
             />
           </view>
         </view>
@@ -111,13 +111,14 @@ const handleCode = async () => {
   key.value = new Date().getTime();
 
   uni.request({
-    url: `http://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
+    url: `https://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
     method: 'GET',
     header: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     success: (res) => {
       codeImg.value = res.data.result;
+      
     },
     fail: (err) => {
       console.error('获取验证码失败:', err);
@@ -179,7 +180,7 @@ const handleLogin = async () => {
   }
 
   uni.request({
-    url: 'http://island.zhangshuiyi.com/island/sys/login',
+    url: 'https://island.zhangshuiyi.com/island/sys/login',
     method: 'POST',
     data: {
       username: formData.username,

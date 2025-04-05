@@ -122,7 +122,7 @@ onMounted(() => {
 const handleCode = async () => {
   key.value = new Date().getTime();
   uni.request({
-    url: `http://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
+    url: `https://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
     method: 'GET',
     header: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -212,7 +212,7 @@ const handleSendPhoneCode = async () => {
 
   // 发送验证码请求
   uni.request({
-    url: 'http://island.zhangshuiyi.com/island/sys/sms',
+    url: 'https://island.zhangshuiyi.com/island/sys/sms',
     method: 'POST',
     data: {
       mobile: formData.phone,
@@ -278,7 +278,7 @@ const handleRegister = async () => {
 
   // 发送注册接口
   uni.request({
-    url: 'http://island.zhangshuiyi.com/island/sys/user/register',
+    url: 'https://island.zhangshuiyi.com/island/sys/user/register',
     method: 'POST',
     data: {
       username: formData.username,

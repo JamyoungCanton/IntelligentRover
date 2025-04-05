@@ -146,10 +146,7 @@ onMounted(() => {
 
 // 退出登录页
 const goLoginOut = () => {
-    // 清除token
-    userStore.setToken('');
-    // 清除用户信息
-    userStore.updateUserInfo('');
+  uni.navigateTo({url:'/pages/loginOut/loginOut'})
   }
 
 </script>

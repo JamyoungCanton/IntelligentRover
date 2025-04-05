@@ -338,7 +338,7 @@ export default {
 
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3;
-      const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+      const url = 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
