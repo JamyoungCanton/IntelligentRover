@@ -1,4 +1,3 @@
-
 <template>
   <view class="page">
     <view class="header">
@@ -11,18 +10,22 @@
       </view>
       <view class="search-wrap">
         <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-        <input class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
+        <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
       </view>
     </view>
 
     <scroll-view class="content" scroll-y>
       <scroll-view class="category-list" scroll-x show-scrollbar="false">
         <view class="category-scroll">
-          <button class="category-item active">全部</button>
-          <button class="category-item">热门</button>
-          <button class="category-item">自然景观</button>
-          <button class="category-item">沙滩浴场</button>
-          <button class="category-item">观景台</button>
+          <button
+            v-for="category in categories"
+            :key="category"
+            class="category-item"
+            :class="{ active: selectedCategory === category }"
+            @click="changeTab(category)"
+          >
+            {{ category }}
+          </button>
         </view>
       </scroll-view>
 
@@ -40,90 +43,80 @@
       </view>
 
       <view class="spot-grid">
-        <view class="spot-item">
-          <image src="https://ai-public.mastergo.com/ai/img_res/2569365eb54206887ac84251ef619889.jpg" mode="aspectFill"></image>
+        <view
+          v-for="item in filteredAttractions"
+          :key="item.id"
+          class="spot-item"
+        >
+          <image :src="item.imageUrl" mode="aspectFill"></image>
           <view class="spot-info">
-            <text class="spot-name">东海仙岛</text>
+            <text class="spot-name">{{ item.name }}</text>
             <view class="rating">
-              <uni-rate value="4.8" size="10" readonly></uni-rate>
-              <text class="rating-score">4.8</text>
+              <uni-rate :value="item.rating" size="10" readonly></uni-rate>
+              <text class="rating-score">{{ item.rating }}</text>
             </view>
-            <text class="spot-desc">东海仙岛风景秀丽，是著名的观光胜地</text>
+            <text class="spot-desc">开放时间： {{ item.starttime }} - {{ item.endtime }}</text>
             <view class="spot-footer">
               <view class="location">
-                <uni-icons type="location" size="12" color="#999999"></uni-icons>
-                <text class="location-text">万山区</text>
+                <text class="location-text">门票价格</text>
               </view>
-              <text class="price">¥128起</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="spot-item">
-          <image src="https://ai-public.mastergo.com/ai/img_res/79fa0ec38e9040c0e012432637c1ff33.jpg" mode="aspectFill"></image>
-          <view class="spot-info">
-            <text class="spot-name">海上古寺</text>
-            <view class="rating">
-              <uni-rate value="4.2" size="10" readonly></uni-rate>
-              <text class="rating-score">4.2</text>
-            </view>
-            <text class="spot-desc">千年古刹，历史文化底蕴深厚</text>
-            <view class="spot-footer">
-              <view class="location">
-                <uni-icons type="location" size="12" color="#999999"></uni-icons>
-                <text class="location-text">万山区</text>
-              </view>
-              <text class="price">¥68起</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="spot-item">
-          <image src="https://ai-public.mastergo.com/ai/img_res/5f716f44484058a18a02a9543021ed24.jpg" mode="aspectFill"></image>
-          <view class="spot-info">
-            <text class="spot-name">灯塔湾</text>
-            <view class="rating">
-              <uni-rate value="4.9" size="10" readonly></uni-rate>
-              <text class="rating-score">4.9</text>
-            </view>
-            <text class="spot-desc">观赏日落的绝佳地点</text>
-            <view class="spot-footer">
-              <view class="location">
-                <uni-icons type="location" size="12" color="#999999"></uni-icons>
-                <text class="location-text">万山区</text>
-              </view>
-              <text class="price">¥88起</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="spot-item">
-          <image src="https://ai-public.mastergo.com/ai/img_res/aa8b6512a8e504500dd7b8cd0c0b2c53.jpg" mode="aspectFill"></image>
-          <view class="spot-info">
-            <text class="spot-name">珊瑚湾</text>
-            <view class="rating">
-              <uni-rate value="4.3" size="10" readonly></uni-rate>
-              <text class="rating-score">4.3</text>
-            </view>
-            <text class="spot-desc">绝美的潜水胜地</text>
-            <view class="spot-footer">
-              <view class="location">
-                <uni-icons type="location" size="12" color="#999999"></uni-icons>
-                <text class="location-text">万山区</text>
-              </view>
-              <text class="price">¥168起</text>
+              <text class="price">{{ item.ticketprice }}</text>
             </view>
           </view>
         </view>
       </view>
     </scroll-view>
-
-  
   </view>
 </template>
 
-<script  setup>
-// import { ref } from 'vue'
+<script setup>
+import { onMounted, ref, computed } from 'vue';
+import { useUserStore } from '@/store/modules/user';
+
+const userStore = useUserStore();
+const attractionGuidelist = ref([]);
+const selectedCategory = ref('全部');
+const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
+const searchInput = ref('');
+
+// 根据选中的分类筛选景点
+const filteredAttractions = computed(() => {
+  if(searchInput.value){
+   return attractionGuidelist.value.filter(item => item.name.includes(searchInput.value));
+  }
+  if (selectedCategory.value === '全部') {
+    return attractionGuidelist.value;
+  } 
+  else if (selectedCategory.value === '热门') {
+    return attractionGuidelist.value.sort((a,b) => b.rating - a.rating)
+  }
+  else {
+    return attractionGuidelist.value.filter(item => item.type === selectedCategory.value);
+  }
+});
+
+onMounted(() => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    },
+    data:{
+      pageNo: 1,
+      pageSize: 50
+    },
+    success: (res) => {
+      attractionGuidelist.value = res.data.result.records;
+    }
+  });
+});
+
+// 切换分类
+const changeTab = (category) => {
+  selectedCategory.value = category;
+};
 </script>
 
 <style>

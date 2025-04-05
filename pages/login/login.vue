@@ -222,7 +222,6 @@ const handleLogin = async () => {
             }
           },
           fail: (err) => {
-            console.error('获取存储的目标页面路径失败:', err);
             // 发生错误时跳转到首页或其他默认页面
             uni.reLaunch({ url: '/pages/index/index' });
           }
