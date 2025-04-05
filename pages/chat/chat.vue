@@ -59,61 +59,28 @@
               <block v-for="(item, idx) in msg.content" :key="`${idx}-${updateCounter}`">
                 <!-- 打字机效果的文本内容（带闪烁光标） -->
                 <view v-if="item.type === 'text'" class="text-content"
-                  :class="{ 'typing': msg.typing && idx === msg.content.length - 1 }">
-                  {{ item.content }}
+                  :class="{ 'typing': msg.typing && idx === msg.content.length - 1 }" v-html="item.content">
                 </view>
-                <view v-else-if="item.type === '行程概览'" class="trip-section">
-                  <h3>{{ item.content.split('<br>')[0] }}</h3>
-                  <p>{{ item.content.split('<br>')[1] }}</p>
-                </view>
-                <view v-else-if="item.type === '行程安排'" class="trip-section">
-                  <h3>{{ item.content }}</h3>
-                </view>
-                <view v-else-if="item.type === '行程日'" class="trip-day">
-                  <h4>{{ item.content }}</h4>
-                </view>
-                <view v-else-if="item.type === 'transport'" class="trip-item transport clickable-span"
+                <view v-else-if="item.type === 'Transport'" class="trip-item transport clickable-span"
                   @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'accommodation'" class="trip-item accommodation clickable-span"
+                <view v-else-if="item.type === 'Accommodation'" class="trip-item accommodation clickable-span"
                   @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'restaurant'" class="trip-item restaurant clickable-span"
+                <view v-else-if="item.type === 'Restaurant'" class="trip-item restaurant clickable-span"
                   @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'activity'" class="trip-item activity clickable-span"
+                <view v-else-if="item.type === 'Activity'" class="trip-item activity clickable-span"
                   @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === '推荐亮点'" class="trip-section">
-                  <h3>{{ item.content }}</h3>
-                </view>
-                <view v-else-if="item.type === '注意事项'" class="trip-section">
-                  <h3>{{ item.content }}</h3>
-                </view>
-                <view v-else-if="item.type === '总结'" class="trip-section">
-                  <h3>{{ item.content.split('<br>')[0] }}</h3>
-                  <p>{{ item.content.split('<br>')[1] }}</p>
-                </view>
-                <view v-else-if="item.type === '价格'" class="price-section">
-                  <view class="price-info">
-                    <view class="price">
-                      <span class="price-symbol">¥</span>
-                      <span class="price-value">{{ item.content.split(' ')[0].substring(1) }}</span>
-                    </view>
-                    <view class="price-details">{{ item.content.split(' ')[1] }}</view>
-                  </view>
-                </view>
-                <view v-else-if="item.type === '优惠'" class="discount">
-                  优惠: <span class="discount-value">{{ item.content.substring(3) }}</span>
-                </view>
-                <view v-else-if="item.type === '按钮'" class="ai-comfirm-button" @tap="confirmTrip">
+                <view v-else-if="item.type === 'Attraction'" class="trip-item attraction clickable-span"
+                  @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
-                <hr v-else-if="item.type === 'divider'" class="divider">
               </block>
             </view>
           </view>
@@ -141,16 +108,21 @@ import { marked } from 'marked';
 
 export default {
   setup() {
+    // 确保marked是可用的
+    const markdownParser = typeof marked === 'function' ? marked : (text) => text;
+
     // 配置marked选项
-    marked.setOptions({
-      renderer: new marked.Renderer(),
-      gfm: true,
-      breaks: true,
-      pedantic: false,
-      sanitize: false,
-      smartLists: true,
-      smartypants: true
-    });
+    if (typeof marked === 'object' && marked.setOptions) {
+      marked.setOptions({
+        renderer: new marked.Renderer(),
+        gfm: true,
+        breaks: true,
+        pedantic: false,
+        sanitize: false,
+        smartLists: true,
+        smartypants: true
+      });
+    }
     // 引入 store
     const userStore = useUserStore();
     const token = computed(() => userStore.token);
@@ -253,10 +225,10 @@ export default {
       console.log(`点击了${item.type}: ${item.content}`);
 
       const pageMap = {
-        transport: '/pages/ticketBooking/ticketBooking',
-        accommodation: '/pages/hotelBooking/hotelBooking',
-        restaurant: '/pages/Orders/Orders',
-        activity: '/pages/activity/activity'
+        Transport: '/pages/ticketBooking/ticketBooking',
+        Accommodation: '/pages/hotelBooking/hotelBooking',
+        Restaurant: '/pages/Orders/Orders',
+        Activity: '/pages/activity/activity'
       };
 
       const pagePath = pageMap[item.type];
@@ -314,18 +286,17 @@ export default {
         return;
       }
 
-      chatMessages.push({
+      const userMessage = {
         type: 'user',
         content: inputMessage.value
-      });
+      };
+      chatMessages.push(userMessage);
 
       inputMessage.value = '';
       scrollToLatestMessage();
 
-      // callAIInterface(chatMessages[chatMessages.length - 1].content);
-
-      // 模拟AI回复
-      AIAnswerThinking();
+      // 调用AI接口
+      callAIInterface(userMessage.content);
     };
 
     // 在sendMessage中使用此方法会让ai回复一个正在思考中...
@@ -342,180 +313,12 @@ export default {
 
       // 创建思考动画定时器
       let dotCount = 0;
-      const THINKING_TIMEOUT = 3000; // 3秒后显示回复
       const thinkingInterval = setInterval(() => {
         if (aiMessage.thinking) {  // 只在thinking为true时更新点
-          // 检查是否到达模拟回复时间
-          if (Date.now() - aiMessage.startTime > THINKING_TIMEOUT) {
-            clearInterval(thinkingInterval);  // 停止动画
-            aiMessage.thinking = false;
-
-            // 准备AI回复的完整内容
-            let fullContent = [
-              {
-                type: "text",
-                id: "",
-                content: "据您的需求，我建议如下行程：✅"
-              },
-              {
-                type: "行程概览",
-                id: "",
-                content: '📝 行程概览<br>📍 本次行程将围绕"海钓"这一核心活动展开，结合万山岛的特色景点和便利交通，为您打造一次难忘的海岛体验。'
-              },
-              {
-                type: "divider",
-                id: "",
-                content: ""
-              },
-              {
-                type: "行程安排",
-                id: "",
-                content: "⏱️ 行程安排"
-              },
-              {
-                type: "行程日",
-                id: "day1",
-                content: "⏰ 第一天：抵达与准备"
-              },
-              {
-                type: "transport",
-                id: "1",
-                content: "🚢 1-船 从出发地乘船前往万山岛，建议选择上午的班次（8:00或10:00）。"
-              },
-              {
-                type: "accommodation",
-                id: "2",
-                content: "🏠 2-万山渔家乐 办理入住，稍作休息。"
-              },
-              {
-                type: "restaurant",
-                id: "3",
-                content: "🍽️ 3-碧海鱼排 享用午餐，品尝新鲜海鲜。"
-              },
-              {
-                type: "activity",
-                id: "4",
-                content: "🎣 4-海钓 下午开始海钓活动，体验3-4小时的海钓乐趣。"
-              },
-              {
-                type: "accommodation",
-                id: "5",
-                content: "🏠 5-万山渔家乐 晚餐后返回酒店休息。"
-              },
-              {
-                type: "行程日",
-                id: "day2",
-                content: "⏰ 第二天：探索与返程"
-              },
-              {
-                type: "restaurant",
-                id: "6",
-                content: "🍽️ 6-岛上咖啡馆 享用早餐。"
-              },
-              {
-                type: "activity",
-                id: "7",
-                content: "🎣 7-海钓 上午继续海钓活动，享受海钓的乐趣。"
-              },
-              {
-                type: "restaurant",
-                id: "8",
-                content: "🍽️ 8-岛上美食坊 午餐后稍作休息。"
-              },
-              {
-                type: "transport",
-                id: "9",
-                content: "🚢 9-船 下午乘船返程，建议选择13:30的班次。"
-              },
-              {
-                type: "divider",
-                id: "",
-                content: ""
-              },
-              {
-                type: "推荐亮点",
-                id: "",
-                content: "📊 推荐亮点"
-              },
-              {
-                type: "activity",
-                id: "10",
-                content: "🎣 1-海钓 海钓活动是本次行程的核心，适合中等难度的钓鱼爱好者，价格800元。"
-              },
-              {
-                type: "accommodation",
-                id: "11",
-                content: "🏠 2-万山渔家乐 海景房住宿，价格500元，评分4.2，环境舒适。"
-              },
-              {
-                type: "restaurant",
-                id: "12",
-                content: "🍽️ 3-碧海鱼排 提供新鲜海鲜，价格为200元。"
-              },
-              {
-                type: "divider",
-                id: "",
-                content: ""
-              },
-              {
-                type: "注意事项",
-                id: "",
-                content: "❓ 注意事项"
-              },
-              {
-                type: "text",
-                id: "",
-                content: "海钓活动需提前预约，建议联系当地旅行社或酒店安排。"
-              },
-              {
-                type: "text",
-                id: "",
-                content: "船票价格100元，建议提前购票以确保座位。"
-              },
-              {
-                type: "divider",
-                id: "",
-                content: ""
-              },
-              {
-                type: "总结",
-                id: "",
-                content: "✉️ 总结<br>本次行程以海钓为核心，结合万山岛的特色餐饮和住宿，为您提供一次轻松愉快的海岛体验。如有其他需求或问题，欢迎随时联系！"
-              },
-              {
-                type: "divider",
-                id: "",
-                content: ""
-              },
-              {
-                type: "价格",
-                id: "",
-                content: "¥950 含往返交通、住宿、活动费用"
-              },
-              {
-                type: "优惠",
-                id: "",
-                content: "优惠: ¥428元"
-              },
-              {
-                type: "按钮",
-                id: "",
-                content: "确认行程"
-              }
-            ];
-
-            // 初始化空的内容数组，准备逐字填充
-            aiMessage.content = [];
-            aiMessage.typing = true; // 标记正在打字中
-
-            // 开始打字机效果
-            typewriterEffect(aiMessage, fullContent);
-          } else {
-            dotCount = (dotCount + 1) % 4;  // 0到3循环
-            aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
-            // 触发视图更新
-            updateCounter.value++;
-          }
+          dotCount = (dotCount + 1) % 4;  // 0到3循环
+          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+          // 触发视图更新
+          updateCounter.value++;
         } else {
           clearInterval(thinkingInterval);  // 停止动画
         }
@@ -529,49 +332,9 @@ export default {
       nextTick(() => {
         scrollToBottom();
       });
+
+      return aiMessage;
     }
-
-    // 实现打字机效果的函数
-    const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
-      // 如果已经完成所有段落，结束递归
-      if (index >= fullContent.length) {
-        return;
-      }
-
-      const currentItem = fullContent[index];
-      const fullText = currentItem.content;
-
-      // 如果是新段落，初始化为空字符串
-      if (charIndex === 0) {
-        if (!message.content[index]) {
-          message.content[index] = {
-            type: currentItem.type,
-            id: currentItem.id || "",
-            content: ""
-          };
-        }
-      }
-
-      // 如果当前段落还没打完
-      if (charIndex < fullText.length) {
-        // 添加下一个字符
-        message.content[index].content = fullText.substring(0, charIndex + 1);
-        updateCounter.value++;
-
-        // 安排下一个字符
-        setTimeout(() => {
-          typewriterEffect(message, fullContent, index, charIndex + 1, delay);
-        }, delay);
-      } else {
-        // 当前段落打完，移到下一段
-        setTimeout(() => {
-          typewriterEffect(message, fullContent, index + 1, 0, delay);
-        }, delay * 10); // 段落之间停顿更长
-      }
-
-      // 确保滚动到最新消息
-      scrollToBottom();
-    };
 
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3;
@@ -596,6 +359,9 @@ export default {
 
       console.log('Current token:', token.value);
 
+      // 先创建思考中的消息
+      const aiMessage = AIAnswerThinking();
+
       const requestTask = uni.request({
         url: url,
         method: 'POST',
@@ -609,22 +375,33 @@ export default {
         timeout: 30000,
         success: (res) => {
           console.log('请求成功:', res);
+          if (res.data && res.data.data && res.data.data.outputs && res.data.data.outputs.answer) {
+            try {
+              // 停止思考状态
+              aiMessage.thinking = false;
+
+              // 解析answer字段内容
+              const fullContent = JSON.parse(res.data.data.outputs.answer);
+
+              // 初始化空的内容数组，准备逐字填充
+              aiMessage.content = [];
+              aiMessage.typing = true; // 标记正在打字中
+
+              // 开始打字机效果
+              typewriterEffect(aiMessage, fullContent);
+            } catch (error) {
+              console.error('解析返回数据失败:', error);
+              aiMessage.thinking = false;
+              aiMessage.content = '抱歉，处理返回数据时出错了';
+            }
+          }
         },
         fail: (err) => {
           console.error('请求失败:', err);
 
           if (err.errMsg && err.errMsg.includes('timeout')) {
-            const lastMessage = chatMessages[chatMessages.length - 1];
-            if (lastMessage.type === 'ai') {
-              lastMessage.thinking = false;
-              lastMessage.content = '请求超时，请重试';
-            } else {
-              chatMessages.push({
-                type: 'ai',
-                content: '请求超时，请重试',
-                thinking: false
-              });
-            }
+            aiMessage.thinking = false;
+            aiMessage.content = '请求超时，请重试';
 
             uni.showToast({
               title: '请求超时，请重试',
@@ -651,42 +428,87 @@ export default {
               const jsonData = JSON.parse(jsonStr);
               console.log('解析到的JSON数据:', jsonData);
 
-              if (jsonData.event === 'message') {
-                let answer = '';
-                if (jsonData.data && jsonData.data.outputs && jsonData.data.outputs.answer) {
-                  answer = jsonData.data.outputs.answer;
-                } else if (jsonData.answer !== undefined) {
-                  answer = jsonData.answer;
-                }
+              if (jsonData.event === 'workflow_finished' &&
+                jsonData.data &&
+                jsonData.data.outputs &&
+                jsonData.data.outputs.answer) {
+                // 停止思考状态
+                aiMessage.thinking = false;
 
-                if (answer) {
-                  const decodedAnswer = decodeUnicode(answer);
-                  console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
+                // 解析answer字段内容
+                const fullContent = JSON.parse(jsonData.data.outputs.answer);
 
-                  const aiMessage = {
-                    type: 'ai',
-                    content: [
-                      // 这里可以根据需要解析并生成结构化的回复
-                      {
-                        type: "text",
-                        id: "",
-                        content: decodedAnswer
-                      }
-                    ]
-                  };
-                  chatMessages.push(aiMessage);
-                  scrollToLatestMessage();
-                }
+                // 初始化空的内容数组，准备逐字填充
+                aiMessage.content = [];
+                aiMessage.typing = true; // 标记正在打字中
+
+                // 开始打字机效果
+                typewriterEffect(aiMessage, fullContent);
               }
-            } catch (jsonError) {
-              console.warn('JSON解析错误:', jsonError);
+            } catch (error) {
+              console.error('解析数据流失败:', error);
             }
           }
-        } catch (e) {
-          console.error('数据处理失败:', e);
+        } catch (error) {
+          console.error('处理数据流失败:', error);
         }
       });
     };
+
+    // 实现打字机效果的函数
+    const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
+      // 如果已经完成所有段落，结束递归
+      if (index >= fullContent.length) {
+        return;
+      }
+
+      const currentItem = fullContent[index];
+      const fullText = currentItem.content;
+
+      // 如果是新段落，初始化为空字符串
+      if (charIndex === 0) {
+        if (!message.content[index]) {
+          message.content[index] = {
+            type: currentItem.type,
+            id: currentItem.id || "",
+            content: ""
+          };
+        }
+      }
+
+      // 如果当前段落还没打完
+      if (charIndex < fullText.length) {
+        // 添加下一个字符
+        if (currentItem.type === 'text') {
+          // 对于text类型，使用markdownParser处理markdown
+          try {
+            message.content[index].content = markdownParser(fullText.substring(0, charIndex + 1));
+          } catch (error) {
+            console.error('Markdown解析错误:', error);
+            message.content[index].content = fullText.substring(0, charIndex + 1);
+          }
+        } else {
+          // 对于非text类型，直接设置完整内容，不进行打字机效果
+          message.content[index].content = fullText;
+          charIndex = fullText.length - 1; // 设置为最后一个字符，以便下一次循环结束
+        }
+        updateCounter.value++;
+
+        // 安排下一个字符或下一个段落
+        setTimeout(() => {
+          if (charIndex < fullText.length - 1) {
+            typewriterEffect(message, fullContent, index, charIndex + 1, delay);
+          } else {
+            typewriterEffect(message, fullContent, index + 1, 0, delay);
+          }
+        }, delay);
+      }
+
+      // 确保滚动到最新消息
+      scrollToBottom();
+    };
+
+
 
     const decodeUnicode = (str) => {
       if (!str) return '';
