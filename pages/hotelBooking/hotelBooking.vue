@@ -3,9 +3,6 @@
   <view class="page">
     <view class="header">
       <view class="search-header">
-        <!-- <view class="back-btn" @click="goBack">
-          <uni-icons type="back" size="20" color="#666666"></uni-icons>
-        </view> -->
         <view class="search-input-wrap">
           <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
           <input type="text" class="search-input" placeholder="搜索酒店名称、地标、商圈" placeholder-class="placeholder"/>
@@ -18,7 +15,7 @@
       <view class="date-guest">
         <view class="date-section">
           <text class="label">入住-离店</text>
-          <view class="content">
+          <view class="content" >
             <uni-icons type="calendar" size="16" color="#1B4B98"></uni-icons>
             <text class="info">8月15日-8月16日</text>
           </view>
@@ -36,30 +33,46 @@
     <scroll-view class="content" scroll-y>
       <scroll-view class="filter-scroll" scroll-x>
         <view class="filter-wrap">
-          <view class="filter-btn active">综合排序</view>
-          <view class="filter-btn">价格</view>
-          <view class="filter-btn">评分</view>
-          <view class="filter-btn">位置</view>
-          <view class="filter-btn">筛选</view>
+          <view
+            v-for="(btn, index) in filterButtons"
+            :key="index"
+            class="filter-btn"
+            :class="{ active: activeFilter === btn.value }"
+            @click="setActiveFilter(btn.value)"
+          >
+            {{ btn.label }}
+          </view>
         </view>
       </scroll-view>
 
       <view class="hotel-list">
-        <view class="hotel-card" v-for="(hotel, index) in hotelList" :key="index">
-          <image :src="hotel.image" mode="aspectFill" class="hotel-image"></image>
+        <view class="hotel-card" v-for="(hotel, index) in filteredHotels" :key="index">
+          <image :src="hotel.imageURL" mode="aspectFill" class="hotel-image"></image>
           <view class="hotel-info">
             <view class="hotel-header">
               <text class="hotel-name">{{ hotel.name }}</text>
               <view class="rating">
-                <text class="score">{{ hotel.score }}</text>
-                <view class="stars">
-                  <uni-icons v-for="n in 5" :key="n" type="star-filled" size="14" color="#FFCD3C"></uni-icons>
-                </view>
+                <text class="score">{{ hotel.rating }}</text>
+                <uni-rate :value="hotel.rating" size="10" readonly></uni-rate>
               </view>
             </view>
             <view class="location">
-              <uni-icons type="location" size="14" color="#666666"></uni-icons>
-              <text class="location-text">{{ hotel.location }}</text>
+              <view class="start">
+                <text class="location-text">星级: </text>
+                <text class="location-amount">{{ hotel.starrating }}</text>
+              </view>
+              <view class="start">
+                <text class="location-text">房型: </text>
+                <text class="location-amount">{{ hotel.roomtype }}</text>
+              </view>
+              <view class="start">
+                <text class="location-text">类型: </text>
+                <text class="location-amount">{{ hotel.hoteltype }}</text>
+              </view>
+              <view class="start">
+                <text class="location-text">主题: </text>
+                <text class="location-amount">{{ hotel.hoteltheme }}</text>
+              </view>
             </view>
             <view class="price-book">
               <view class="price">
@@ -72,41 +85,104 @@
         </view>
       </view>
     </scroll-view>
-
-    
   </view>
 </template>
 
-<script  setup>
-import { ref } from 'vue'
+<script setup>
+import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useUserStore } from '@/store/modules/user';
+import { computed } from 'vue';
+const userStore = useUserStore();
+const hotelList = ref([]);
+const combinedArray = ref([]);
 
-const goBack = () => {
-  uni.navigateBack()
-}
+const imageUrls = ref([
+  "https://wlmtsys.com:9000/travel/h1.jpg",
+  "https://wlmtsys.com:9000/travel/h2.jpg",
+  "https://wlmtsys.com:9000/travel/h3.jpg",
+  "https://wlmtsys.com:9000/travel/h4.jpg",
+  "https://wlmtsys.com:9000/travel/h5.jpg",
+  "https://wlmtsys.com:9000/travel/h6.jpg",
+  "https://wlmtsys.com:9000/travel/h7.jpg",
+  "https://wlmtsys.com:9000/travel/h8.jpg",
+  "https://wlmtsys.com:9000/travel/h9.jpeg",
+  "https://wlmtsys.com:9000/travel/h10.jpg",
+  "https://wlmtsys.com:9000/travel/h11.jpg",
+  "https://wlmtsys.com:9000/travel/h12.jpg",
+  "https://wlmtsys.com:9000/travel/h13.jpg",
+  "https://wlmtsys.com:9000/travel/h14.jpg",
+  "https://wlmtsys.com:9000/travel/h15.jpg",
+  "https://wlmtsys.com:9000/travel/h16.jpg",
+  "https://wlmtsys.com:9000/travel/h17.jpg",
+  "https://wlmtsys.com:9000/travel/h18.jpg",
+  "https://wlmtsys.com:9000/travel/h19.jpeg",
+  "https://wlmtsys.com:9000/travel/h20.jpg",
 
-const hotelList = ref([
-  {
-    name: '海景湾度假酒店',
-    score: '4.8',
-    location: '万山群岛 · 距离海滩200米',
-    price: '688',
-    image: 'https://ai-public.mastergo.com/ai/img_res/b5b1594fa97ff73ddb1bf17fc90a7a62.jpg'
-  },
-  {
-    name: '蓝湾精品酒店',
-    score: '4.6',
-    location: '万山群岛 · 商业中心区',
-    price: '528',
-    image: 'https://ai-public.mastergo.com/ai/img_res/4330171583e81cbb88de3465393ec235.jpg'
-  },
-  {
-    name: '阳光海岸度假公寓',
-    score: '4.7',
-    location: '万山群岛 · 临近码头',
-    price: '458',
-    image: 'https://ai-public.mastergo.com/ai/img_res/58cf3d2730faf6aa3c2bab809d9811ca.jpg'
+]);
+
+const filterButtons = ref([
+  { label: '综合排序', value: 'comprehensive' },
+  { label: '价格↑', value: 'priceup' },
+  { label: '价格↓', value: 'pricedown' },
+  { label: '评分', value: 'rating' }
+]);
+
+const activeFilter = ref('comprehensive');
+
+const setActiveFilter = (value) => {
+  activeFilter.value = value;
+};
+
+onMounted(() => {
+  getHotelList();
+});
+
+const getHotelList = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/list',
+    method: 'GET',
+    data: {
+      pageNo: 1,
+      pageSize: 50
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      hotelList.value = res.data.result.records;
+      combinedArray.value = hotelList.value.map((item, index) => ({
+        ...item,
+        imageURL: imageUrls.value[index]
+      }));
+    },
+    fail: (err) => {
+      console.error('请求失败', err);
+      uni.showToast({
+        title: '加载失败，请稍后重试',
+        icon: 'none'
+      });
+    }
+  });
+};
+
+const filteredHotels = computed(() => {
+  switch (activeFilter.value) {
+    case 'comprehensive':
+    getHotelList();
+      return combinedArray.value;
+    case 'priceup':
+      return combinedArray.value.sort((a, b) => a.price - b.price);
+      case 'pricedown':
+      return combinedArray.value.sort((a, b) => b.price - a.price);
+    case 'rating':
+      return combinedArray.value.sort((a, b) => b.rating - a.rating);
+    case 'location':
+      return combinedArray.value.sort((a, b) => b.location - a.location);
   }
-])
+});
+
 
 
 </script>
@@ -134,14 +210,6 @@ page {
   padding: 0 30rpx;
   height: 88rpx;
 }
-
-/* .back-btn {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-} */
 
 .search-input-wrap {
   flex: 1;
@@ -215,13 +283,17 @@ page {
 
 .filter-wrap {
   display: inline-flex;
+  display: flex;
+  justify-content: space-between;
   gap: 20rpx;
 }
 
 .filter-btn {
+  flex: 1;
   padding: 12rpx 30rpx;
-  background: #F5F5F5;
+  background: #e2e1e1;
   border-radius: 8rpx;
+  text-align: center;
   font-size: 28rpx;
   color: #666666;
 }
@@ -239,6 +311,7 @@ page {
 .hotel-list {
   padding: 0 30rpx;
 }
+
 
 .hotel-card {
   background: #FFFFFF;
@@ -286,12 +359,20 @@ page {
   display: flex;
   align-items: center;
   margin-top: 16rpx;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .location-text {
   font-size: 28rpx;
   color: #666666;
   margin-left: 8rpx;
+}
+
+.location-amount{
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1B4B98;
 }
 
 .price-book {

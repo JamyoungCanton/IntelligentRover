@@ -32,12 +32,12 @@
       <!-- 餐厅列表 -->
       <scroll-view scroll-y class="restaurant-list">
         <view 
-          v-for="(restaurant, index) in restaurants" 
+          v-for="(restaurant, index) in combinedArray" 
           :key="index" 
           class="restaurant-card"
         >
           <view class="restaurant-image">
-            <image :src="restaurant.image" mode="aspectFill"/>
+            <image :src="restaurant.imageURL" mode="aspectFill"/>
             <text :class="['tag', restaurant.tagType]">{{ restaurant.tag }}</text>
           </view>
           <view class="restaurant-info">
@@ -48,8 +48,8 @@
               <text class="monthly-sale">月售 {{ restaurant.monthlySales }}</text>
             </view>
             <view class="price-distance">
-              <text class="price">人均 ¥{{ restaurant.averagePrice }}</text>
-              <text class="distance">距离 {{ restaurant.distance }}km</text>
+              <text class="price">人均 ¥{{ restaurant.priceaverage }}</text>
+              <text class="distance"> {{ restaurant.address }}</text>
             </view>
           </view>
         </view>
@@ -67,9 +67,10 @@
 
 <script setup>
 import { ref } from 'vue';
+import { onMounted } from 'vue';
+import { useUserStore } from '@/store/modules/user';
 
 const currentTab = ref(0);
-
 const filterTags = ref([
   { name: '全部', active: true },
   { name: '海鲜', active: false },
@@ -77,31 +78,34 @@ const filterTags = ref([
   { name: '特色小吃', active: false },
   { name: '农家菜', active: false }
 ]);
+const restaurants = ref([])
+const userStore = useUserStore();
+const combinedArray = ref([])
 
+const imageUrls = ref([
+  "https://wlmtsys.com:9000/travel/f1.jpg",
+  "https://wlmtsys.com:9000/travel/f2.jpg",
+  "https://wlmtsys.com:9000/travel/f3.jpg",
+  "https://wlmtsys.com:9000/travel/f4.jpg",
+  "https://wlmtsys.com:9000/travel/f5.jpg",
+  "https://wlmtsys.com:9000/travel/f6.jpg",
+  "https://wlmtsys.com:9000/travel/f7.jpg",
+  "https://wlmtsys.com:9000/travel/f8.jpg",
+  "https://wlmtsys.com:9000/travel/f9.jpg",
+  "https://wlmtsys.com:9000/travel/f10.jpg",
+  "https://wlmtsys.com:9000/travel/f11.jpg",
+  "https://wlmtsys.com:9000/travel/f12.jpg",
+  "https://wlmtsys.com:9000/travel/f13.jpg",
+  "https://wlmtsys.com:9000/travel/f14.jpeg",
+  "https://wlmtsys.com:9000/travel/f15.png",
+  "https://wlmtsys.com:9000/travel/f16.png",
+  "https://wlmtsys.com:9000/travel/f17.jpg",
+  "https://wlmtsys.com:9000/travel/f18.jpg",
+  "https://wlmtsys.com:9000/travel/f19.jpg",
+  "https://wlmtsys.com:9000/travel/f20.jpg",
 
-
-const restaurants = ref([
-  {
-    image: 'https://ai-public.mastergo.com/ai/img_res/a256aeabf41e28db3c1c0b25aec7373c.jpg',
-    name: '万山渔港海鲜餐厅',
-    rating: '4.8',
-    monthlySales: '2380',
-    averagePrice: '188',
-    distance: '1.2',
-    tag: '人气网红',
-    tagType: 'popular'
-  },
-  {
-    image: 'https://ai-public.mastergo.com/ai/img_res/6dcb4b894c7f14fcac90ab68d7dc378e.jpg',
-    name: '粤海味道',
-    rating: '4.6',
-    monthlySales: '1680',
-    averagePrice: '128',
-    distance: '0.8',
-    tag: '特色推荐',
-    tagType: 'featured'
-  }
 ]);
+
 
 const selectTag = (index) => {
   filterTags.value.forEach((tag, i) => {
@@ -123,6 +127,34 @@ const onSearch = () => {
     icon: 'none'
   });
 };
+
+onMounted(() => {
+  // 获取数据
+  getFoodList()
+});
+
+const getFoodList = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilDining/list',
+    method: 'GET',
+    data:{
+      pageNo: 1,
+      pageSize: 50
+    },
+    header:{
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      restaurants.value= res.data.result.records
+      combinedArray.value = restaurants.value.map((item,index)=>({
+        ...item,
+        imageURL: imageUrls.value[index]
+      }))
+    }
+  })
+}
+
 </script>
 
 <style>
