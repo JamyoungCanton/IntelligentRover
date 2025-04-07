@@ -130,8 +130,25 @@ const onSearch = () => {
 
 onMounted(() => {
   // 获取数据
+  hasToken(),
   getFoodList()
 });
+
+const hasToken = () => {
+  if(userStore.token === ''){
+    // 提示未登录，请先登录
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'false',
+      duration: 1500
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+  }
+}
 
 const getFoodList = () => {
   uni.request({

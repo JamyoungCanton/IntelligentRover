@@ -79,6 +79,22 @@ const selectedCategory = ref('全部');
 const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
 const searchInput = ref('');
 
+const hasToken = () => {
+  if(userStore.token === ''){
+    // 提示未登录，请先登录
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'false',
+      duration: 1500
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+  }
+}
+
 // 根据选中的分类筛选景点
 const filteredAttractions = computed(() => {
   if(searchInput.value){
@@ -96,6 +112,13 @@ const filteredAttractions = computed(() => {
 });
 
 onMounted(() => {
+  hasToken();
+  getAttractionList()
+  
+});
+
+// 获取数据
+const getAttractionList = () => {
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
     method: 'GET',
@@ -111,7 +134,7 @@ onMounted(() => {
       attractionGuidelist.value = res.data.result.records;
     }
   });
-});
+}
 
 // 切换分类
 const changeTab = (category) => {
