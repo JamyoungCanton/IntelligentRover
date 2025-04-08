@@ -10,21 +10,37 @@
     </view>
 
     <!-- Chat Container -->
-    <scroll-view scroll-y class="chat-container" :scroll-top="scrollTop" scroll-with-animation
-      :scroll-into-view="scrollIntoView" :scroll-anchoring="true" enhanced :show-scrollbar="false"
-      @scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 30px;">
+    <scroll-view
+      scroll-y
+      class="chat-container"
+      :scroll-top="scrollTop"
+      scroll-with-animation
+      :scroll-into-view="scrollIntoView"
+      :scroll-anchoring="true"
+      enhanced
+      :show-scrollbar="false"
+      @scrolltoupper="onScrollToUpper"
+      @scroll="onScroll"
+      style="margin-top: 30px"
+    >
       <!-- AI Welcome Message -->
       <view class="message ai-message" id="msg-0">
         <view class="avatar ai-avatar">
           <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
         </view>
         <view class="message-content">
-          <text>欢迎使用AI旅游助手！我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</text>
+          <text
+            >欢迎使用AI旅游助手！我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</text
+          >
 
           <!-- Category Options -->
           <view class="category-container">
-            <view v-for="(item, index) in categories" :key="index" class="category-item"
-              @tap="() => selectCategory(item.id)">
+            <view
+              v-for="(item, index) in categories"
+              :key="index"
+              class="category-item"
+              @tap="() => selectCategory(item.id)"
+            >
               <image :src="item.icon" mode="aspectFit"></image>
               <text>{{ item.name }}</text>
             </view>
@@ -35,7 +51,11 @@
       <!-- Chat Messages -->
       <block v-for="(msg, index) in chatMessages" :key="index">
         <!-- User Message -->
-        <view v-if="msg.type === 'user'" class="message user-message" :id="`msg-${index + 1}`">
+        <view
+          v-if="msg.type === 'user'"
+          class="message user-message"
+          :id="`msg-${index + 1}`"
+        >
           <view class="avatar user-avatar">
             <image src="/static/chat/user.png"></image>
           </view>
@@ -45,9 +65,17 @@
         </view>
 
         <!-- AI Response -->
-        <view v-else class="message ai-message" :id="`msg-${index + 1}`" :key="`${msg.id || index}-${updateCounter}`">
+        <view
+          v-else
+          class="message ai-message"
+          :id="`msg-${index + 1}`"
+          :key="`${msg.id || index}-${updateCounter}`"
+        >
           <view class="avatar ai-avatar">
-            <image src="/static/chat/robot-avatar.png" mode="aspectFill"></image>
+            <image
+              src="/static/chat/robot-avatar.png"
+              mode="aspectFill"
+            ></image>
           </view>
           <view class="message-content">
             <!-- 思考中状态 -->
@@ -56,44 +84,79 @@
             </view>
             <!-- 结构化回复模板 -->
             <view v-else-if="Array.isArray(msg.content)" class="trip-container">
-              <block v-for="(item, idx) in msg.content" :key="`${idx}-${updateCounter}`">
+              <block
+                v-for="(item, idx) in msg.content"
+                :key="`${idx}-${updateCounter}`"
+              >
                 <!-- 打字机效果的文本内容（带闪烁光标） -->
-                <view v-if="item.type === 'text'" class="text-content"
-                  :class="{ 'typing': msg.typing && idx === msg.content.length - 1 }" v-html="item.content">
+                <view
+                  v-if="item.type === 'text'"
+                  class="text-content"
+                  :class="{
+                    typing: msg.typing && idx === msg.content.length - 1,
+                  }"
+                  v-html="item.content"
+                >
                 </view>
-                <view v-else-if="item.type === 'Transport'" class="trip-item transport clickable-span"
-                  @tap="handleItemClick(item)">
+                <view
+                  v-else-if="item.type === 'Transport'"
+                  class="trip-item transport clickable-span"
+                  @tap="handleItemClick(item)"
+                >
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'Accommodation'" class="trip-item accommodation clickable-span"
-                  @tap="handleItemClick(item)">
+                <view
+                  v-else-if="item.type === 'Accommodation'"
+                  class="trip-item accommodation clickable-span"
+                  @tap="handleItemClick(item)"
+                >
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'Restaurant'" class="trip-item restaurant clickable-span"
-                  @tap="handleItemClick(item)">
+                <view
+                  v-else-if="item.type === 'Restaurant'"
+                  class="trip-item restaurant clickable-span"
+                  @tap="handleItemClick(item)"
+                >
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'Activity'" class="trip-item activity clickable-span"
-                  @tap="handleItemClick(item)">
+                <view
+                  v-else-if="item.type === 'Activity'"
+                  class="trip-item activity clickable-span"
+                  @tap="handleItemClick(item)"
+                >
                   {{ item.content }}
                 </view>
-                <view v-else-if="item.type === 'Attraction'" class="trip-item attraction clickable-span"
-                  @tap="handleItemClick(item)">
+                <view
+                  v-else-if="item.type === 'Attraction'"
+                  class="trip-item attraction clickable-span"
+                  @tap="handleItemClick(item)"
+                >
                   {{ item.content }}
                 </view>
                 <view v-else-if="item.type === '价格'" class="price-section">
                   <view class="price-info">
                     <view class="price">
                       <span class="price-symbol">¥</span>
-                      <span class="price-value">{{ item.content.split(' ')[0].substring(1) }}</span>
+                      <span class="price-value">{{
+                        item.content.split(" ")[0].substring(1)
+                      }}</span>
                     </view>
-                    <view class="price-details">{{ item.content.split(' ')[1] }}</view>
+                    <view class="price-details">{{
+                      item.content.split(" ")[1]
+                    }}</view>
                   </view>
                 </view>
                 <view v-else-if="item.type === '优惠'" class="discount">
-                  优惠: <span class="discount-value">{{ item.content.substring(3) }}</span>
+                  优惠:
+                  <span class="discount-value">{{
+                    item.content.substring(3)
+                  }}</span>
                 </view>
-                <view v-else-if="item.type === '按钮'" class="ai-comfirm-button" @tap="confirmTrip">
+                <view
+                  v-else-if="item.type === '按钮'"
+                  class="ai-comfirm-button"
+                  @tap="confirmTrip"
+                >
                   {{ item.content }}
                 </view>
               </block>
@@ -114,11 +177,24 @@
     </scroll-view>
 
     <!-- Input Area -->
-    <view class="input-container" :style="{ paddingBottom: safeAreaBottom + 'px' }">
-      <view class="add-icon avatar ai-avatar" @tap="showAddOptions" style="background-color: #f5f5f5;">
+    <view
+      class="input-container"
+      :style="{ paddingBottom: safeAreaBottom + 'px' }"
+    >
+      <view
+        class="add-icon avatar ai-avatar"
+        @tap="showAddOptions"
+        style="background-color: #f5f5f5"
+      >
         <image src="/static/chat/add.png"></image>
       </view>
-      <input class="message-input" type="text" v-model="inputMessage" placeholder="输入您的需求" @confirm="sendMessage" />
+      <input
+        class="message-input"
+        type="text"
+        v-model="inputMessage"
+        placeholder="输入您的需求"
+        @confirm="sendMessage"
+      />
       <view class="send-icon avatar ai-avatar" @tap="sendMessage">
         <image src="/static/chat/send.png"></image>
       </view>
@@ -127,17 +203,18 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, nextTick, computed } from 'vue';
-import { useUserStore } from '@/store';
-import { marked } from 'marked';
+import { ref, reactive, onMounted, nextTick, computed } from "vue";
+import { useUserStore } from "@/store";
+import { marked } from "marked";
 
 export default {
   setup() {
     // 确保marked是可用的
-    const markdownParser = typeof marked === 'function' ? marked : (text) => text;
+    const markdownParser =
+      typeof marked === "function" ? marked : (text) => text;
 
     // 配置marked选项
-    if (typeof marked === 'object' && marked.setOptions) {
+    if (typeof marked === "object" && marked.setOptions) {
       marked.setOptions({
         renderer: new marked.Renderer(),
         gfm: true,
@@ -145,7 +222,7 @@ export default {
         pedantic: false,
         sanitize: false,
         smartLists: true,
-        smartypants: true
+        smartypants: true,
       });
     }
     // 引入 store
@@ -157,9 +234,9 @@ export default {
     // 强制更新计数器
     const updateCounter = ref(0);
     // Reactive data
-    const inputMessage = ref('');
+    const inputMessage = ref("");
     const scrollTop = ref(0);
-    const scrollIntoView = ref('');
+    const scrollIntoView = ref("");
     // 是否允许自动滚动（当用户向上滚动查看历史消息时禁用）
     const enableAutoScroll = ref(true);
     // 记录最后一次的滚动位置
@@ -175,29 +252,29 @@ export default {
     // Category data
     const categories = reactive([
       {
-        id: 'fishing',
-        name: '海钓体验',
-        icon: 'https://wlmtsys.com:9000/travel/fishing.jpg'
+        id: "fishing",
+        name: "海钓体验",
+        icon: "https://wlmtsys.com:9000/travel/fishing.jpg",
       },
       {
-        id: 'snorkeling',
-        name: '浮潜探索',
-        icon: 'https://wlmtsys.com:9000/travel/snorkeling.jpg'
+        id: "snorkeling",
+        name: "浮潜探索",
+        icon: "https://wlmtsys.com:9000/travel/snorkeling.jpg",
       },
       {
-        id: 'family',
-        name: '亲子娱乐',
-        icon: 'https://wlmtsys.com:9000/travel/family.jpg'
+        id: "family",
+        name: "亲子娱乐",
+        icon: "https://wlmtsys.com:9000/travel/family.jpg",
       },
       {
-        id: 'leisure',
-        name: '休闲畅游',
-        icon: 'https://wlmtsys.com:9000/travel/leisure.jpg'
+        id: "leisure",
+        name: "休闲畅游",
+        icon: "https://wlmtsys.com:9000/travel/leisure.jpg",
       },
       {
-        id: 'island',
-        name: '海岛介绍',
-        icon: 'https://wlmtsys.com:9000/travel/island.jpg'
+        id: "island",
+        name: "海岛介绍",
+        icon: "https://wlmtsys.com:9000/travel/island.jpg",
       },
     ]);
 
@@ -224,7 +301,7 @@ export default {
         clearInterval(aiMessage.typingTimer);
       }
 
-      aiMessage.content = '';
+      aiMessage.content = "";
 
       aiMessage.typingTimer = setInterval(() => {
         if (currentIndex < fullText.length) {
@@ -249,51 +326,50 @@ export default {
       console.log(`点击了${item.type}: ${item.content}`);
 
       const pageMap = {
-        Transport: '/pages/ticketBooking/ticketBooking',
-        Accommodation: '/pages/hotelBooking/hotelBooking',
-        Restaurant: '/pages/Orders/Orders',
-        Activity: '/pages/activity/activity'
+        Transport: "/pages/ticketBooking/ticketBooking",
+        Accommodation: "/pages/hotelBooking/hotelBooking",
+        Restaurant: "/pages/Orders/Orders",
+        Activity: "/pages/activity/activity",
       };
 
       const pagePath = pageMap[item.type];
 
       if (pagePath) {
         uni.navigateTo({
-          url: pagePath
+          url: pagePath,
         });
       } else {
         uni.showToast({
-          title: '功能尚未实现',
-          icon: 'none'
+          title: "功能尚未实现",
+          icon: "none",
         });
       }
     };
 
     // 确认行程并跳转到支付页面
     const confirmTrip = (msg) => {
-      console.log('行程已确认！');
+      console.log("行程已确认！");
       uni.navigateTo({
-        url: '/pages/payment/payment'
+        url: "/pages/payment/payment",
       });
     };
 
     // Methods
     const selectCategory = (categoryId) => {
-      console.log('Selected category:', categoryId);
+      console.log("Selected category:", categoryId);
       chatMessages.push({
-        type: 'user',
-        content: `我想了解${getCategoryName(categoryId)}的详细信息`
+        type: "user",
+        content: `我想了解${getCategoryName(categoryId)}的详细信息`,
       });
       scrollToLatestMessage();
-	
-	  
-	  // 调用AI接口
-	  callAIInterface(`我想了解${getCategoryName(categoryId)}的详细信息`);
+
+      // 调用AI接口
+      callAIInterface(`我想了解${getCategoryName(categoryId)}的详细信息`);
     };
 
     const getCategoryName = (categoryId) => {
-      const category = categories.find(item => item.id === categoryId);
-      return category ? category.name : '';
+      const category = categories.find((item) => item.id === categoryId);
+      return category ? category.name : "";
     };
 
     const sendMessage = () => {
@@ -301,26 +377,26 @@ export default {
 
       if (!token.value) {
         uni.showToast({
-          title: '请先登录',
-          icon: 'none',
-          duration: 2000
+          title: "请先登录",
+          icon: "none",
+          duration: 2000,
         });
 
         setTimeout(() => {
           uni.navigateTo({
-            url: '/pages/login/login'
+            url: "/pages/login/login",
           });
         }, 2000);
         return;
       }
 
       const userMessage = {
-        type: 'user',
-        content: inputMessage.value
+        type: "user",
+        content: inputMessage.value,
       };
       chatMessages.push(userMessage);
 
-      inputMessage.value = '';
+      inputMessage.value = "";
       scrollToLatestMessage();
 
       // 调用AI接口
@@ -331,26 +407,27 @@ export default {
     const AIAnswerThinking = function () {
       // 创建一个空的AI消息
       const aiMessage = {
-        type: 'ai',
-        content: '正在思考中...',  // 初始文本，带点
+        type: "ai",
+        content: "正在思考中...", // 初始文本，带点
         id: Date.now(),
-        thinking: true,  // 标记是否为思考状态
-        startTime: Date.now() // 记录开始时间
+        thinking: true, // 标记是否为思考状态
+        startTime: Date.now(), // 记录开始时间
       };
       chatMessages.push(aiMessage);
 
       // 创建思考动画定时器
       let dotCount = 0;
       const thinkingInterval = setInterval(() => {
-        if (aiMessage.thinking) {  // 只在thinking为true时更新点
-          dotCount = (dotCount + 1) % 4;  // 0到3循环
-          aiMessage.content = '正在思考中' + '.'.repeat(dotCount);
+        if (aiMessage.thinking) {
+          // 只在thinking为true时更新点
+          dotCount = (dotCount + 1) % 4; // 0到3循环
+          aiMessage.content = "正在思考中" + ".".repeat(dotCount);
           // 触发视图更新
           updateCounter.value++;
         } else {
-          clearInterval(thinkingInterval);  // 停止动画
+          clearInterval(thinkingInterval); // 停止动画
         }
-      }, 500);  // 每500毫秒更新一次
+      }, 500); // 每500毫秒更新一次
 
       // 立即触发视图更新
       globalUpdateKey.value = Date.now();
@@ -362,120 +439,127 @@ export default {
       });
 
       return aiMessage;
-    }
+    };
 
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3;
-      const url = 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+      const url =
+        "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream";
       const data = {
-        conversation_id: '',
+        conversation_id: "",
         inputs: {
-          original_intention: '',
-          recommended_plan: ''
+          original_intention: "",
+          recommended_plan: "",
         },
         query: userQuery,
-        webMode: ''
+        webMode: "",
       };
 
       if (retryCount > 0) {
         uni.showToast({
           title: `第${retryCount}次重试连接...`,
-          icon: 'none',
-          duration: 2000
+          icon: "none",
+          duration: 2000,
         });
       }
 
-      console.log('Current token:', token.value);
+      console.log("Current token:", token.value);
 
       // 先创建思考中的消息
-      const aiMessage = AIAnswerThinking();
+      let aiMessage = reactive(AIAnswerThinking());
 
       const requestTask = uni.request({
         url: url,
-        method: 'POST',
+        method: "POST",
         header: {
-          'Content-Type': 'application/json',
-          'X-Access-Token': token.value
+          "Content-Type": "application/json",
+          "X-Access-Token": token.value,
         },
         data: JSON.stringify(data),
-        responseType: 'text',
+        responseType: "text",
         enableChunked: true,
         timeout: 300000,
         success: (res) => {
-          console.log('请求成功:', res);
-          if (res.data && res.data.data && res.data.data.outputs && res.data.data.outputs.answer) {
-            try {
-              // 停止思考状态
-              aiMessage.thinking = false;
-
-              // 解析answer字段内容
-              const fullContent = JSON.parse(res.data.data.outputs.answer);
-
-              // 提取金额并累加
-              let totalAmount = 0;
-              fullContent.forEach(item => {
-                if (item.content.includes('费用：')) {
-                  const amountText = item.content.match(/费用：(\d+)/);
-                  if (amountText && amountText[1]) {
-                    totalAmount += parseInt(amountText[1]);
-                  }
-                }
-              });
-
-              // 添加总金额到消息中
-              aiMessage.totalAmount = totalAmount;
-
-              console.log("111111111:" + fullContent)
-
-              // 初始化空的内容数组，准备逐字填充
-              aiMessage.content = [];
-              aiMessage.typing = true; // 标记正在打字中
-
-              // 开始打字机效果
-              typewriterEffect(aiMessage, fullContent);
-            } catch (error) {
-              // console.error('解析返回数据失败:', error);
-              aiMessage.thinking = false;
-              aiMessage.content = '抱歉，处理返回数据时出错了';
+          console.log("请求完毕:", res);
+          try {
+            let resDataCont = JSON.parse(res.data);
+            console.log("请求成功:", resDataCont);
+            if (resDataCont?.data?.outputs?.answer) {
             }
+            // 停止思考状态
+            aiMessage.thinking = false;
+
+            // 解析answer字段内容
+            const fullContent = resDataCont?.data?.data?.outputs?.answer;
+
+            // 提取金额并累加
+            let totalAmount = 0;
+            fullContent.forEach((item) => {
+              if (item.content.includes("费用：")) {
+                const amountText = item.content.match(/费用：(\d+)/);
+                if (amountText && amountText[1]) {
+                  totalAmount += parseInt(amountText[1]);
+                }
+              }
+            });
+
+            // 添加总金额到消息中
+            aiMessage.totalAmount = totalAmount;
+
+            console.log("111111111:" + fullContent);
+
+            // 初始化空的内容数组，准备逐字填充
+            aiMessage.content = [];
+            aiMessage.typing = true; // 标记正在打字中
+
+            // 开始打字机效果
+            typewriterEffect(aiMessage, fullContent);
+          } catch (error) {
+            console.log(aiMessage);
+            
+            aiMessage.thinking = false;
+            aiMessage.content = "抱歉，处理返回数据时出错了";
+            console.error('解析返回数据失败:', error);
           }
         },
         fail: (err) => {
-          console.error('请求失败:', err);
+          console.error("请求失败:", err);
 
-          if (err.errMsg && err.errMsg.includes('timeout')) {
+          if (err.errMsg && err.errMsg.includes("timeout")) {
             aiMessage.thinking = false;
-            aiMessage.content = '请求超时，请重试';
+            aiMessage.content = "请求超时，请重试";
 
             uni.showToast({
-              title: '请求超时，请重试',
-              icon: 'none',
-              duration: 3000
+              title: "请求超时，请重试",
+              icon: "none",
+              duration: 3000,
             });
 
             globalUpdateKey.value = Date.now();
             updateCounter.value++;
           }
-        }
+        },
       });
 
       requestTask.onChunkReceived((res) => {
         try {
           const uint8Array = new Uint8Array(res.data);
-          const decoder = new TextDecoder('utf-8');
+          const decoder = new TextDecoder("utf-8");
           const text = decoder.decode(uint8Array);
           // console.log('收到的原始数据:', text);
 
-          if (text.startsWith('data:')) {
+          if (text.startsWith("data:")) {
             const jsonStr = text.substring(5).trim();
             try {
               const jsonData = JSON.parse(jsonStr);
               // console.log('解析到的JSON数据:', jsonData);
 
-              if (jsonData.event === 'workflow_finished' &&
+              if (
+                jsonData.event === "workflow_finished" &&
                 jsonData.data &&
                 jsonData.data.outputs &&
-                jsonData.data.outputs.answer) {
+                jsonData.data.outputs.answer
+              ) {
                 // 停止思考状态
                 aiMessage.thinking = false;
 
@@ -484,8 +568,8 @@ export default {
 
                 // 提取金额并累加
                 let totalAmount = 0;
-                fullContent.forEach(item => {
-                  if (item.content.includes('费用：')) {
+                fullContent.forEach((item) => {
+                  if (item.content.includes("费用：")) {
                     const amountText = item.content.match(/费用：(\d+)/);
                     if (amountText && amountText[1]) {
                       totalAmount += parseInt(amountText[1]);
@@ -496,7 +580,7 @@ export default {
                 // 添加总金额到消息中
                 aiMessage.totalAmount = totalAmount;
 
-                console.log("2222222222:" + fullContent)
+                console.log("2222222222:" + fullContent);
 
                 // 初始化空的内容数组，准备逐字填充
                 aiMessage.content = [];
@@ -516,7 +600,13 @@ export default {
     };
 
     // 实现打字机效果的函数
-    const typewriterEffect = (message, fullContent, index = 0, charIndex = 0, delay = 30) => {
+    const typewriterEffect = (
+      message,
+      fullContent,
+      index = 0,
+      charIndex = 0,
+      delay = 30
+    ) => {
       // 如果已经完成所有段落，结束递归
       if (index >= fullContent.length) {
         return;
@@ -531,7 +621,7 @@ export default {
           message.content[index] = {
             type: currentItem.type,
             id: currentItem.id || "",
-            content: ""
+            content: "",
           };
         }
       }
@@ -539,13 +629,18 @@ export default {
       // 如果当前段落还没打完
       if (charIndex < fullText.length) {
         // 添加下一个字符
-        if (currentItem.type === 'text') {
+        if (currentItem.type === "text") {
           // 对于text类型，使用markdownParser处理markdown
           try {
-            message.content[index].content = markdownParser(fullText.substring(0, charIndex + 1));
+            message.content[index].content = markdownParser(
+              fullText.substring(0, charIndex + 1)
+            );
           } catch (error) {
-            console.error('Markdown解析错误:', error);
-            message.content[index].content = fullText.substring(0, charIndex + 1);
+            console.error("Markdown解析错误:", error);
+            message.content[index].content = fullText.substring(
+              0,
+              charIndex + 1
+            );
           }
         } else {
           // 对于非text类型，直接设置完整内容，不进行打字机效果
@@ -569,24 +664,24 @@ export default {
     };
 
     const decodeUnicode = (str) => {
-      if (!str) return '';
+      if (!str) return "";
 
       try {
-        if (typeof str === 'string') {
+        if (typeof str === "string") {
           return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
             String.fromCharCode(parseInt(hex, 16))
           );
         }
         return str;
       } catch (e) {
-        console.error('Unicode 解码失败:', e);
+        console.error("Unicode 解码失败:", e);
         return str;
       }
     };
 
     const navigatortopaymoent = () => {
       uni.navigateTo({
-        url: '/pages/payment/payment'
+        url: "/pages/payment/payment",
       });
     };
 
@@ -601,44 +696,53 @@ export default {
       }
 
       const query = uni.createSelectorQuery();
-      query.select('.chat-container').boundingClientRect(data => {
-        if (data) {
-          viewportHeight.value = data.height;
+      query
+        .select(".chat-container")
+        .boundingClientRect((data) => {
+          if (data) {
+            viewportHeight.value = data.height;
 
-          const messageQuery = uni.createSelectorQuery();
-          messageQuery.selectAll('.message').boundingClientRect(messages => {
-            if (messages && messages.length > 0) {
-              contentHeight.value = messages.reduce((sum, msg) => sum + msg.height, 0);
+            const messageQuery = uni.createSelectorQuery();
+            messageQuery
+              .selectAll(".message")
+              .boundingClientRect((messages) => {
+                if (messages && messages.length > 0) {
+                  contentHeight.value = messages.reduce(
+                    (sum, msg) => sum + msg.height,
+                    0
+                  );
 
-              scrollTop.value = contentHeight.value;
-              lastScrollTop.value = contentHeight.value;
-            }
-          }).exec();
-        }
-      }).exec();
+                  scrollTop.value = contentHeight.value;
+                  lastScrollTop.value = contentHeight.value;
+                }
+              })
+              .exec();
+          }
+        })
+        .exec();
     };
 
     const goBack = () => {
       uni.navigateBack({
-        delta: 1
+        delta: 1,
       });
     };
 
     const showMore = () => {
       uni.showActionSheet({
-        itemList: ['清空聊天记录', '设置', '关于'],
+        itemList: ["清空聊天记录", "设置", "关于"],
         success: (res) => {
-          console.log('Selected option:', res.tapIndex);
-        }
+          console.log("Selected option:", res.tapIndex);
+        },
       });
     };
 
     const showAddOptions = () => {
       uni.showActionSheet({
-        itemList: ['拍照', '从相册选择', '位置'],
+        itemList: ["拍照", "从相册选择", "位置"],
         success: (res) => {
-          console.log('Selected option:', res.tapIndex);
-        }
+          console.log("Selected option:", res.tapIndex);
+        },
       });
     };
 
@@ -649,7 +753,7 @@ export default {
     });
 
     const onScrollToUpper = () => {
-      console.log('到达顶部');
+      console.log("到达顶部");
     };
 
     const SCROLL_BOTTOM_THRESHOLD = 10;
@@ -658,27 +762,38 @@ export default {
       const currentScrollTop = e.detail.scrollTop;
 
       const query = uni.createSelectorQuery();
-      query.select('.chat-container').boundingClientRect(data => {
-        if (data) {
-          viewportHeight.value = data.height;
+      query
+        .select(".chat-container")
+        .boundingClientRect((data) => {
+          if (data) {
+            viewportHeight.value = data.height;
 
-          const messageQuery = uni.createSelectorQuery();
-          messageQuery.selectAll('.message').boundingClientRect(messages => {
-            if (messages && messages.length > 0) {
-              contentHeight.value = messages.reduce((sum, msg) => sum + msg.height, 0);
+            const messageQuery = uni.createSelectorQuery();
+            messageQuery
+              .selectAll(".message")
+              .boundingClientRect((messages) => {
+                if (messages && messages.length > 0) {
+                  contentHeight.value = messages.reduce(
+                    (sum, msg) => sum + msg.height,
+                    0
+                  );
 
-              const distanceFromBottom = contentHeight.value - (currentScrollTop + viewportHeight.value);
-              if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
-                enableAutoScroll.value = true;
-              } else {
-                if (currentScrollTop > lastScrollTop.value) {
-                  enableAutoScroll.value = false;
+                  const distanceFromBottom =
+                    contentHeight.value -
+                    (currentScrollTop + viewportHeight.value);
+                  if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
+                    enableAutoScroll.value = true;
+                  } else {
+                    if (currentScrollTop > lastScrollTop.value) {
+                      enableAutoScroll.value = false;
+                    }
+                  }
                 }
-              }
-            }
-          }).exec();
-        }
-      }).exec();
+              })
+              .exec();
+          }
+        })
+        .exec();
 
       lastScrollTop.value = currentScrollTop;
     };
@@ -705,9 +820,9 @@ export default {
       goBack,
       showMore,
       showAddOptions,
-      decodeUnicode
+      decodeUnicode,
     };
-  }
+  },
 };
 </script>
 
@@ -847,7 +962,7 @@ export default {
 }
 
 .user-avatar {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .user-avatar image {
