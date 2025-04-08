@@ -81,7 +81,32 @@
                   @tap="handleItemClick(item)">
                   {{ item.content }}
                 </view>
+                <view v-else-if="item.type === '价格'" class="price-section">
+                  <view class="price-info">
+                    <view class="price">
+                      <span class="price-symbol">¥</span>
+                      <span class="price-value">{{ item.content.split(' ')[0].substring(1) }}</span>
+                    </view>
+                    <view class="price-details">{{ item.content.split(' ')[1] }}</view>
+                  </view>
+                </view>
+                <view v-else-if="item.type === '优惠'" class="discount">
+                  优惠: <span class="discount-value">{{ item.content.substring(3) }}</span>
+                </view>
+                <view v-else-if="item.type === '按钮'" class="ai-comfirm-button" @tap="confirmTrip">
+                  {{ item.content }}
+                </view>
               </block>
+
+              <!-- 总金额显示 -->
+              <view v-if="msg.totalAmount" class="total-amount">
+                总金额: ¥{{ msg.totalAmount }}
+              </view>
+
+              <!-- 确认行程按钮 -->
+              <view class="confirm-trip-button" @tap="confirmTrip(msg)">
+                确认行程
+              </view>
             </view>
           </view>
         </view>
@@ -177,8 +202,7 @@ export default {
     ]);
 
     // Chat messages，这个一定，一定，不能删，删了发消息会报错
-    const chatMessages = reactive([
-    ]);
+    const chatMessages = reactive([]);
 
     // 初始化底部安全区高度
     onMounted(() => {
@@ -246,7 +270,7 @@ export default {
     };
 
     // 确认行程并跳转到支付页面
-    const confirmTrip = () => {
+    const confirmTrip = (msg) => {
       console.log('行程已确认！');
       uni.navigateTo({
         url: '/pages/payment/payment'
@@ -261,6 +285,10 @@ export default {
         content: `我想了解${getCategoryName(categoryId)}的详细信息`
       });
       scrollToLatestMessage();
+	
+	  
+	  // 调用AI接口
+	  callAIInterface(`我想了解${getCategoryName(categoryId)}的详细信息`);
     };
 
     const getCategoryName = (categoryId) => {
@@ -372,7 +400,7 @@ export default {
         data: JSON.stringify(data),
         responseType: 'text',
         enableChunked: true,
-        timeout: 30000,
+        timeout: 300000,
         success: (res) => {
           console.log('请求成功:', res);
           if (res.data && res.data.data && res.data.data.outputs && res.data.data.outputs.answer) {
@@ -383,6 +411,22 @@ export default {
               // 解析answer字段内容
               const fullContent = JSON.parse(res.data.data.outputs.answer);
 
+              // 提取金额并累加
+              let totalAmount = 0;
+              fullContent.forEach(item => {
+                if (item.content.includes('费用：')) {
+                  const amountText = item.content.match(/费用：(\d+)/);
+                  if (amountText && amountText[1]) {
+                    totalAmount += parseInt(amountText[1]);
+                  }
+                }
+              });
+
+              // 添加总金额到消息中
+              aiMessage.totalAmount = totalAmount;
+
+              console.log("111111111:" + fullContent)
+
               // 初始化空的内容数组，准备逐字填充
               aiMessage.content = [];
               aiMessage.typing = true; // 标记正在打字中
@@ -390,7 +434,7 @@ export default {
               // 开始打字机效果
               typewriterEffect(aiMessage, fullContent);
             } catch (error) {
-              console.error('解析返回数据失败:', error);
+              // console.error('解析返回数据失败:', error);
               aiMessage.thinking = false;
               aiMessage.content = '抱歉，处理返回数据时出错了';
             }
@@ -420,13 +464,13 @@ export default {
           const uint8Array = new Uint8Array(res.data);
           const decoder = new TextDecoder('utf-8');
           const text = decoder.decode(uint8Array);
-          console.log('收到的原始数据:', text);
+          // console.log('收到的原始数据:', text);
 
           if (text.startsWith('data:')) {
             const jsonStr = text.substring(5).trim();
             try {
               const jsonData = JSON.parse(jsonStr);
-              console.log('解析到的JSON数据:', jsonData);
+              // console.log('解析到的JSON数据:', jsonData);
 
               if (jsonData.event === 'workflow_finished' &&
                 jsonData.data &&
@@ -438,6 +482,22 @@ export default {
                 // 解析answer字段内容
                 const fullContent = JSON.parse(jsonData.data.outputs.answer);
 
+                // 提取金额并累加
+                let totalAmount = 0;
+                fullContent.forEach(item => {
+                  if (item.content.includes('费用：')) {
+                    const amountText = item.content.match(/费用：(\d+)/);
+                    if (amountText && amountText[1]) {
+                      totalAmount += parseInt(amountText[1]);
+                    }
+                  }
+                });
+
+                // 添加总金额到消息中
+                aiMessage.totalAmount = totalAmount;
+
+                console.log("2222222222:" + fullContent)
+
                 // 初始化空的内容数组，准备逐字填充
                 aiMessage.content = [];
                 aiMessage.typing = true; // 标记正在打字中
@@ -446,11 +506,11 @@ export default {
                 typewriterEffect(aiMessage, fullContent);
               }
             } catch (error) {
-              console.error('解析数据流失败:', error);
+              // console.error('解析数据流失败:', error);
             }
           }
         } catch (error) {
-          console.error('处理数据流失败:', error);
+          // console.error('处理数据流失败:', error);
         }
       });
     };
@@ -507,8 +567,6 @@ export default {
       // 确保滚动到最新消息
       scrollToBottom();
     };
-
-
 
     const decodeUnicode = (str) => {
       if (!str) return '';
@@ -1099,6 +1157,11 @@ export default {
   padding: 5px 0;
 }
 
+/* 修改 .clickable-span 样式，确保不换行 */
+.clickable-span {
+  white-space: nowrap;
+}
+
 .transport,
 .accommodation,
 .restaurant,
@@ -1122,10 +1185,6 @@ export default {
 
 .activity {
   background-color: #e8f5e9;
-}
-
-.clickable-span {
-  display: inline-block;
 }
 
 .divider {
@@ -1156,5 +1215,24 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   margin-top: 20px;
+}
+
+/* 新增样式 */
+.total-amount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #4285f4;
+  margin: 10px 0;
+}
+
+.confirm-trip-button {
+  background-color: #42b983;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 </style>

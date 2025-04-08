@@ -98,19 +98,19 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    img: '../../static/my/collectItinerary.png',
+    img: 'https://wlmtsys.com:9000/travel/collectItinerary.png',
     text: '收藏行程'
   },
   {
-    img: '../../static/my/historyOrder.png',
+    img: 'https://wlmtsys.com:9000/travel/historyOrder.png',
     text: '历史订单'
   },
   {
-    img: '../../static/my/pendingTravelOrders.png',
+    img: 'https://wlmtsys.com:9000/travel//pendingTravelOrders.png',
     text: '待出行'
   },
   {
-    img: '../../static/my/customerService.png',
+    img: 'https://wlmtsys.com:9000/travel/customerService.png',
     text: '客服中心'
   }
 ]);

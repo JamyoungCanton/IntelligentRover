@@ -68,7 +68,7 @@
 
     <view class="ai-float-btn" @click="showAiDialog">
       <view class="ai-btn">
-        <img src="https://wlmtsys.com:9000/travel/logo.png" alt="">
+        <img src="https://wlmtsys.com:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -433,10 +433,9 @@ page {
   box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
 }
 .ai-btn image{
-  width: 80%;
-  height: 80%;
-  align-items: center;
-  justify-content: center;
+  width: 60rpx; /* 调整图片宽度 */
+  height: 60rpx; /* 调整图片高度 */
+  object-fit: contain; /* 保持图片原始比例并完整显示在容器内 */
 }
 
 .ai-text {
