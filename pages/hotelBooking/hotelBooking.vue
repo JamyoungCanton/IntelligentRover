@@ -1,30 +1,25 @@
-
 <template>
   <view class="page">
     <view class="header">
       <view class="search-header">
         <view class="search-input-wrap">
           <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-          <input type="text" class="search-input" placeholder="搜索酒店名称、地标、商圈" placeholder-class="placeholder"/>
-        </view>
-        <view class="voice-btn">
-          <uni-icons type="mic-filled" size="20" color="#1B4B98"></uni-icons>
+          <input type="text" v-model="searchContent" class="search-input" placeholder="搜索酒店名称、地标、商圈" placeholder-class="placeholder"/>
         </view>
       </view>
       
       <view class="date-guest">
         <view class="date-section">
           <text class="label">入住-离店</text>
-          <view class="content" >
-            <uni-icons type="calendar" size="16" color="#1B4B98"></uni-icons>
-            <text class="info">8月15日-8月16日</text>
+          
+          <view class="example-body">
+            <uni-datetime-picker v-model="range" type="daterange" @maskClick="maskClick" />
           </view>
         </view>
         <view class="guest-section">
-          <text class="label">住客数</text>
-          <view class="content">
+          <view class="content" @click="showGuestPicker">
             <uni-icons type="person" size="16" color="#1B4B98"></uni-icons>
-            <text class="info">2人</text>
+            <text class="info">{{ guestCount }}人</text>
           </view>
         </view>
       </view>
@@ -85,6 +80,15 @@
         </view>
       </view>
     </scroll-view>
+
+    <!-- 弹出框 -->
+    <view v-if="showGuestPickerModal" class="guest-picker-modal">
+      <view class="guest-picker-content">
+        <view class="guest-option" v-for="(option, index) in guestOptions" :key="index" @click="selectGuestCount(option)">
+          {{ option }}人
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -92,10 +96,16 @@
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 const userStore = useUserStore();
 const hotelList = ref([]);
 const combinedArray = ref([]);
+
+const single = ref('');
+const datetimesingle = ref('');
+const range = ref(['2025-4-10', '2025-4-12']);
+
+const searchContent = ref('');
 
 const imageUrls = ref([
   "https://wlmtsys.com:9000/travel/h1.jpg",
@@ -118,7 +128,6 @@ const imageUrls = ref([
   "https://wlmtsys.com:9000/travel/h18.jpg",
   "https://wlmtsys.com:9000/travel/h19.jpeg",
   "https://wlmtsys.com:9000/travel/h20.jpg",
-
 ]);
 
 const filterButtons = ref([
@@ -129,6 +138,9 @@ const filterButtons = ref([
 ]);
 
 const activeFilter = ref('comprehensive');
+const guestCount = ref(2); // 初始人数
+const guestOptions = ref([1, 2, 3, 4]); // 可选人数
+const showGuestPickerModal = ref(false); // 控制弹出框显示隐藏
 
 const setActiveFilter = (value) => {
   activeFilter.value = value;
@@ -185,13 +197,15 @@ const getHotelList = () => {
 };
 
 const filteredHotels = computed(() => {
+  if(searchContent.value){
+    return combinedArray.value.filter (item => item.name.includes(searchContent.value)) 
+  }
   switch (activeFilter.value) {
     case 'comprehensive':
-    getHotelList();
       return combinedArray.value;
     case 'priceup':
       return combinedArray.value.sort((a, b) => a.price - b.price);
-      case 'pricedown':
+    case 'pricedown':
       return combinedArray.value.sort((a, b) => b.price - a.price);
     case 'rating':
       return combinedArray.value.sort((a, b) => b.rating - a.rating);
@@ -200,7 +214,61 @@ const filteredHotels = computed(() => {
   }
 });
 
+// 监听数据变化
+watch(datetimesingle, (newval) => {
+  console.log('单选:', datetimesingle.value);
+});
 
+watch(range, (newval) => {
+  console.log('范围选:', range.value);
+});
+
+// 在组件挂载后执行
+onMounted(() => {
+  setTimeout(() => {
+    // 将时间戳转换为日期时间字符串
+    const date = new Date(Date.now() - 2 * 24 * 3600 * 1000);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    datetimesingle.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    single.value = '2021-2-12';
+  }, 3000);
+});
+
+// 定义方法
+const change = (e) => {
+  // 获取事件对象中的值
+  single.value = e.detail.value;
+  console.log('change事件:', single.value);
+};
+
+const changeLog = (e) => {
+  console.log('change事件:', e);
+};
+
+const maskClick = (e) => {
+  console.log('maskClick事件:', e);
+};
+
+// 显示弹出框
+const showGuestPicker = () => {
+  showGuestPickerModal.value = true;
+};
+
+// 选择人数
+const selectGuestCount = (count) => {
+  guestCount.value = count;
+  closeGuestPickerModal();
+};
+
+// 关闭弹出框
+const closeGuestPickerModal = () => {
+  showGuestPickerModal.value = false;
+};
 
 </script>
 
@@ -254,13 +322,7 @@ page {
   color: #999999;
 }
 
-.voice-btn {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .date-guest {
   display: flex;
@@ -269,18 +331,22 @@ page {
 }
 
 .date-section {
-  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   margin-right: 30rpx;
 }
 
 .guest-section {
-  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .label {
   font-size: 24rpx;
   color: #999999;
-  margin-bottom: 10rpx;
+  /* margin-bottom: 10rpx; */
+  margin-right: 10px;
 }
 
 .content {
@@ -420,6 +486,50 @@ page {
   margin-right: 10rpx;
 }
 
+.example-body {
+    background-color: #fff;
+}
+
+/* 弹出框整体容器样式 */
+.guest-picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景，营造遮罩效果 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* 确保弹出框在其他元素之上 */
+}
+
+/* 弹出框内容区域样式 */
+.guest-picker-content {
+  background-color: white;
+  border-radius: 12px; /* 圆角 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+  padding: 20px;
+  width: 280px; /* 可根据内容调整宽度 */
+}
+
+/* 每个选项的样式 */
+.guest-option {
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0; /* 底部边框 */
+  font-size: 28rpx; /* 根据项目整体字体大小调整 */
+  text-align: center;
+  cursor: pointer; /* 鼠标悬停时显示指针 */
+}
+
+.guest-option:last-child {
+  border-bottom: none; /* 最后一个选项去掉底部边框 */
+}
+
+/* 选项被选中时的样式（可根据需求添加，这里仅作示例） */
+.guest-option.selected {
+  background-color: #f0f0f0; /* 选中时的背景颜色 */
+}
 
 </style>
 

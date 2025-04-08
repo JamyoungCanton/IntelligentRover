@@ -188,6 +188,12 @@
 			"style": {
 				"navigationBarTitleText": "loginOut"
 			}
+		},
+		{
+			"path": "pages/zujian/zujian",
+			"style": {
+				"navigationBarTitleText": "zujian"
+			}
 		}
 	],
 	"globalStyle": {
