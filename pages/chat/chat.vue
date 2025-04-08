@@ -285,6 +285,10 @@ export default {
         content: `我想了解${getCategoryName(categoryId)}的详细信息`
       });
       scrollToLatestMessage();
+	
+	  
+	  // 调用AI接口
+	  callAIInterface(`我想了解${getCategoryName(categoryId)}的详细信息`);
     };
 
     const getCategoryName = (categoryId) => {
@@ -362,7 +366,7 @@ export default {
 
     const callAIInterface = (userQuery, retryCount = 0) => {
       const MAX_RETRIES = 3;
-      const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+      const url = 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
       const data = {
         conversation_id: '',
         inputs: {
