@@ -39,7 +39,7 @@
         <view class="code-input-wrap">
           <view class="input-group">
             <uni-icons type="locked" size="24" color="#999999"></uni-icons>
-            <input type="number" placeholder="请输入图形验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" />
+            <input type="text" placeholder="请输入图形验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" />
           </view>
           <image
             :src="codeImg"
