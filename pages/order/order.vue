@@ -177,6 +177,13 @@ const filteredOrders = computed(() => {
     );
   }
 
+  // 按照创建时间降序排序，最近的订单在最上面
+  result.sort((a, b) => {
+    const dateA = new Date(a.createTime);
+    const dateB = new Date(b.createTime);
+    return dateB - dateA;
+  });
+
   return result;
 });
 
