@@ -4,7 +4,7 @@
     <view class="header">
       <text class="header-title">美食推荐</text>
       <view class="search-box">
-        <input type="text" v-model="searchKeyword" placeholder="搜索餐厅" class="search-input" />
+        <input type="text" v-model="searchKeyword" placeholder="搜索餐厅" class="search-input" @input="onSearchInput" />
         <uni-icons type="search" size="24" color="#333" @click="onSearch" />
       </view>
     </view>
@@ -56,20 +56,20 @@
               <text class="business-hours">营业时间: {{ formatTime(restaurant.starthour) }} - {{
                 formatTime(restaurant.endhour) }}</text>
             </view>
-            <!-- 第三行：评分和月售，如果后续有字段从后台传来可以启用这个 -->
+            <!-- 第三行：评分和月售 -->
             <!-- <view class="rating-box">
               <uni-icons type="star-filled" size="14" color="#FFA500" />
               <text class="rating">{{ restaurant.rating }}</text>
               <text class="monthly-sale">月售 {{ restaurant.monthlySales }}</text>
             </view> -->
             <!-- 第四行：价格和预订按钮 -->
-            <view class="price-book-row">
+            <!-- <view class="price-book-row">
               <text class="price">人均 ¥{{ restaurant.priceaverage }}</text>
               <view class="book-button" @click.stop="onBooking(restaurant)"
                 style="padding: 8rpx 50rpx; font-size: 30rpx; height: 60rpx; line-height: 60rpx;">
                 预订
               </view>
-            </view>
+            </view> -->
           </view>
         </view>
       </scroll-view>
@@ -117,13 +117,6 @@ const formatTime = (timeString) => {
   if (!timeString) return '';
   const [hours, minutes] = timeString.split(':');
   return `${hours}:${minutes || '00'}`;
-};
-
-// 生成订单ID函数
-const generateOrderId = () => {
-  const timestamp = new Date().getTime();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `FD${timestamp}${random}`;
 };
 
 // 根据筛选和排序条件显示餐厅列表
@@ -240,26 +233,125 @@ const onSearch = () => {
   });
 };
 
+const onSearchInput = () => {
+  // 实时搜索，不需要额外处理，因为已经在computed中处理了
+};
+
+// 处理预订点击事件
+// 创建订单函数
+const createOrder = (restaurant) => {
+  // 计算价格（使用人均价格）
+  const price = restaurant.priceaverage || 100;  // 默认100元如果没有价格
+  const quantity = 1;  // 默认预订1份
+  const totalAmount = price * quantity;
+
+  // 构建订单数据
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
+      contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+    },
+    items: [
+      {
+        bookInfo: {
+          date: new Date().toISOString().split('T')[0], // 当前日期
+          fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
+          idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
+          idCardType: "ID_CARD",  // 默认为身份证
+          schedule: restaurant.starthour || '12:00'  // 使用餐厅营业开始时间
+        },
+        productId: restaurant.id,  // 餐厅ID
+        productType: "Dining",  // 餐饮类型
+        quantity: quantity,  // 预订数量
+        price: price,  // 单价
+        amount: totalAmount  // 总金额
+      }
+    ]
+  };
+
+  // 在控制台打印订单信息
+  console.log('创建订单数据:', orderData);
+  console.log('餐厅信息:', restaurant);
+
+  // 发送创建订单请求
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    data: orderData,
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token || ''
+    },
+    success: (res) => {
+      // 在控制台打印响应结果
+      console.log('创建订单响应:', res.data);
+
+      if (res.data.success) {
+        uni.showToast({
+          title: '预订成功',
+          icon: 'success',
+          duration: 2000
+        });
+        // 预订成功后跳转到订单页面
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/order/order'
+          });
+        }, 2000);
+      } else {
+        uni.showToast({
+          title: res.data.message || '预订失败',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    },
+    fail: (err) => {
+      // 在控制台打印错误信息
+      console.error('创建订单失败:', err);
+
+      uni.showToast({
+        title: '网络错误，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  });
+};
+
 // 处理预订点击事件
 const onBooking = (restaurant) => {
-  // 生成订单ID
-  const orderId = generateOrderId();
+  // 在控制台打印点击预订的餐厅信息
+  console.log('点击预订按钮:', restaurant);
 
-  // 在控制台打印预订信息
-  console.log('预订信息:', {
-    订单ID: orderId,
-    餐厅名称: restaurant.name,
-    地址: restaurant.address,
-    营业时间: `${formatTime(restaurant.starthour)} - ${formatTime(restaurant.endhour)}`,
-    人均消费: `¥${restaurant.priceaverage}`,
-    预订时间: new Date().toLocaleString()
-  });
+  // 检查是否登录
+  if (!userStore.token || !userStore.userInfo) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      duration: 1500
+    });
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+    return;
+  }
 
-  // 显示预订提示
-  uni.showToast({
-    title: `预订${restaurant.name}`,
-    icon: 'none',
-    duration: 2000
+  // 创建订单确认框
+  uni.showModal({
+    title: '预订确认',
+    content: `是否确认预订${restaurant.name}？`,
+    success: (res) => {
+      console.log('用户确认结果:', res);
+      if (res.confirm) {
+        console.log('用户确认预订');
+        createOrder(restaurant);
+      } else {
+        console.log('用户取消预订');
+      }
+    }
   });
 };
 
