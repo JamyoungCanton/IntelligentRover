@@ -81,8 +81,6 @@
 
     <!-- 主内容区 -->
     <scroll-view class="main-content" scroll-y>
-
-
       <view class="order-list">
         <!-- 无订单数据时显示 -->
         <view v-if="filteredOrders.length === 0" class="no-order">
@@ -104,8 +102,7 @@
             </text>
           </view>
           <view class="order-info">
-            <image class="order-image"
-              src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
             </image>
             <view class="order-details">
               <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>
@@ -116,22 +113,14 @@
           <view class="order-footer">
             <text class="price">¥ {{ order.amount || 0 }}</text>
             <view class="button-group">
-              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default"
-                @click="cancelOrder(order.id)">取消订单</button>
+              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default" @click="cancelOrder(order.id)">取消订单</button>
               <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
               <button v-else class="btn btn-primary" @click="getOrderDetail(order.id)">查看详情</button>
             </view>
           </view>
         </view>
-
-
       </view>
-
-
-
     </scroll-view>
-
-
   </view>
 </template>
 
@@ -142,11 +131,11 @@ import { useUserStore } from '@/store/modules/user';
 
 const tabs = ['全部', '待支付', '待出行', '进行中', '已完成'];
 const currentTab = ref(0);
-const orders = ref([]); // 存储订单数据
+const orders = ref([]);
 const userStore = useUserStore();
-const searchKeyword = ref(''); // 搜索关键词
-const showDetailPopup = ref(false); // 控制详情弹窗显示
-const currentOrderDetail = ref(null); // 当前查看的订单详情
+const searchKeyword = ref('');
+const showDetailPopup = ref(false);
+const currentOrderDetail = ref(null);
 
 // 订单状态映射
 const statusMap = {
@@ -187,7 +176,7 @@ const filteredOrders = computed(() => {
   return result;
 });
 
-// 搜索处理函数
+// 搜索按钮点击事件
 const handleSearch = (value) => {
   searchKeyword.value = value;
 };
@@ -203,7 +192,7 @@ const debounce = (fn, delay = 300) => {
   };
 };
 
-// 带防抖的搜索处理函数  如果用户快速输入多个字符，只有在用户停止输入300ms后才会执行一次搜索 
+// 带防抖的搜索处理函数
 const debouncedSearch = debounce(handleSearch);
 
 // 切换标签页处理函数
@@ -212,7 +201,7 @@ const handleTabClick = (index) => {
   getOrderList(); // 切换标签时重新获取订单列表
 };
 
-// 获取订单列表，分页查询    发送GET请求获取订单列表数据
+// 获取订单列表
 const getOrderList = () => {
   // 显示加载提示
   uni.showLoading({
@@ -303,7 +292,7 @@ const getOrderList = () => {
   });
 };
 
-// 根据订单ID查询订单明细并显示弹窗  发送GET请求通过订单ID查询
+// 根据订单ID查询订单明细并显示弹窗
 const getOrderDetail = (orderId) => {
   // 显示加载提示
   uni.showLoading({
@@ -366,9 +355,7 @@ const getOrderDetail = (orderId) => {
   });
 };
 
-
-
-// 取消订单函数  发送DELETE请求
+// 取消订单
 const cancelOrder = (orderId) => {
   // 显示确认弹窗
   uni.showModal({
@@ -424,7 +411,7 @@ const cancelOrder = (orderId) => {
   });
 };
 
-// 支付订单函数  会调用updateOrderStatus函数
+// 支付订单
 const payOrder = (order) => {
   // 显示确认弹窗
   uni.showModal({
@@ -447,7 +434,7 @@ const payOrder = (order) => {
   });
 };
 
-// 更新订单状态函数  发送PUT请求
+// 更新订单状态
 const updateOrderStatus = (orderId) => {
   // 获取当前时间并格式化为后端期望的格式 yyyy-MM-dd HH:mm:ss
   const now = new Date();
@@ -516,7 +503,6 @@ const updateOrderStatus = (orderId) => {
     }
   });
 };
-
 
 // 关闭详情弹窗
 const closeDetailPopup = () => {
