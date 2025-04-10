@@ -270,7 +270,7 @@ const onBooking = (restaurant) => {
   });
 };
 
-// 创建订单函数
+// 创建订单函数  发送POST请求
 const createOrder = (restaurant) => {
   // 显示加载中
   uni.showLoading({
