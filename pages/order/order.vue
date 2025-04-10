@@ -116,8 +116,9 @@
           <view class="order-footer">
             <text class="price">¥ {{ order.amount || 0 }}</text>
             <view class="button-group">
-              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default">取消订单</button>
-              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary">立即支付</button>
+              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default"
+                @click="cancelOrder(order.id)">取消订单</button>
+              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
               <button v-else class="btn btn-primary" @click="getOrderDetail(order.id)">查看详情</button>
             </view>
           </view>
@@ -204,7 +205,7 @@ const handleTabClick = (index) => {
   getOrderList(); // 切换标签时重新获取订单列表
 };
 
-// 获取订单列表，分页查询
+// 获取订单列表，分页查询    发送GET请求获取订单列表数据
 const getOrderList = () => {
   // 显示加载提示
   uni.showLoading({
@@ -295,7 +296,7 @@ const getOrderList = () => {
   });
 };
 
-// 根据订单ID查询订单明细并显示弹窗
+// 根据订单ID查询订单明细并显示弹窗  发送GET请求通过订单ID查询
 const getOrderDetail = (orderId) => {
   // 显示加载提示
   uni.showLoading({
@@ -357,6 +358,158 @@ const getOrderDetail = (orderId) => {
     }
   });
 };
+
+
+
+// 取消订单函数  发送DELETE请求
+const cancelOrder = (orderId) => {
+  // 显示确认弹窗
+  uni.showModal({
+    title: '确认取消',
+    content: '确定要取消该订单吗？',
+    success: (res) => {
+      if (res.confirm) {
+        // 用户点击确定，发送取消订单请求
+        uni.showLoading({
+          title: '取消订单中...'
+        });
+
+        // 发起请求取消订单
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/order/ilOrder/delete',
+          method: 'DELETE',
+          data: {
+            id: orderId
+          },
+          header: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Access-Token': userStore.token
+          },
+          success: (res) => {
+            console.log('取消订单响应数据:', res.data);
+            if (res.data.success) {
+              uni.showToast({
+                title: '订单已取消',
+                icon: 'success'
+              });
+              // 刷新订单列表
+              getOrderList();
+            } else {
+              uni.showToast({
+                title: res.data.message || '取消订单失败',
+                icon: 'none'
+              });
+            }
+          },
+          fail: (err) => {
+            console.error('取消订单请求失败:', err);
+            uni.showToast({
+              title: '取消订单失败',
+              icon: 'none'
+            });
+          },
+          complete: () => {
+            uni.hideLoading();
+          }
+        });
+      }
+    }
+  });
+};
+
+// 支付订单函数  会调用updateOrderStatus函数
+const payOrder = (order) => {
+  // 显示确认弹窗
+  uni.showModal({
+    title: '确认支付',
+    content: `确定要支付该订单吗？金额: ¥${order.amount}`,
+    success: (res) => {
+      if (res.confirm) {
+        // 用户点击确定，发送支付请求
+        uni.showLoading({
+          title: '处理支付中...'
+        });
+
+        // 模拟支付过程
+        setTimeout(() => {
+          // 支付成功后，更新订单状态
+          updateOrderStatus(order.id);
+        }, 1500);
+      }
+    }
+  });
+};
+
+// 更新订单状态函数  发送PUT请求
+const updateOrderStatus = (orderId) => {
+  // 获取当前时间并格式化为后端期望的格式 yyyy-MM-dd HH:mm:ss
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+  // 准备请求数据
+  const updateData = {
+    id: orderId,
+    payStatus: 'PAID',
+    payTime: formattedDate, // 格式化的当前时间作为支付时间
+    // 可以添加其他需要更新的字段
+  };
+
+  // 发起请求更新订单状态
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/order/ilOrder/edit',
+    method: 'PUT',
+    data: updateData,
+    header: {
+      'Content-Type': 'application/json', // 注意这里是 application/json
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      console.log('更新订单状态响应数据:', res.data);
+      if (res.data.success) {
+        // 支付成功，跳转到支付成功页面或显示成功提示
+        uni.showModal({
+          title: '支付成功',
+          content: '您的订单已支付成功！',
+          showCancel: false,
+          success: () => {
+            // 刷新订单列表
+            getOrderList();
+
+            // 可以选择跳转到支付成功页面
+            // uni.navigateTo({
+            //   url: '/pages/pay_success/pay_success?orderId=' + orderId
+            // });
+          }
+        });
+      } else {
+        // 支付失败，显示错误提示
+        uni.showModal({
+          title: '支付失败',
+          content: res.data.message || '订单状态更新失败，请联系客服',
+          showCancel: false
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('更新订单状态请求失败:', err);
+      uni.showModal({
+        title: '支付失败',
+        content: '网络异常，请稍后重试',
+        showCancel: false
+      });
+    },
+    complete: () => {
+      uni.hideLoading();
+    }
+  });
+};
+
 
 // 关闭详情弹窗
 const closeDetailPopup = () => {
