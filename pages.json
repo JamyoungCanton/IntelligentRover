@@ -194,6 +194,12 @@
 			"style": {
 				"navigationBarTitleText": "zujian"
 			}
+		},
+		{
+			"path": "pages/confirmHotelOrder/confirmHotelOrder",
+			"style": {
+				"navigationBarTitleText": "酒店订单确认"
+			}
 		}
 	],
 	"globalStyle": {

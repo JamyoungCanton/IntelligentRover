@@ -74,7 +74,7 @@
                 <text class="price-label">起价</text>
                 <text class="price-amount">¥{{ hotel.price }}</text>
               </view>
-              <button class="book-btn">立即预订</button>
+              <button class="book-btn" @tap="createOrder(hotel.id)">立即预订</button>
             </view>
           </view>
         </view>
@@ -270,6 +270,37 @@ const closeGuestPickerModal = () => {
   showGuestPickerModal.value = false;
 };
 
+// 创建订单接口
+const createOrder = (id) => {
+  uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${id}` })
+  // uni.request({
+  //   url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/createOrder',
+  //   method: 'POST',
+  //   data: {
+  //     "contract": {
+  //       "contractName": "",
+  //       "contractPhone": ""
+  //     },
+  //     "items": [
+  //       {
+  //         "bookInfo": {
+  //           "date": "",
+  //           "fullname": "",
+  //           "idCardNo": "",
+  //           "idCardType": "",
+  //           "schedule": ""
+  //         },
+  //         "productId": "",
+  //         "productType": "",
+  //         "quantity": 0
+  //       }
+  //     ]
+
+  //   },
+  //   header: {}
+
+  // })
+}
 </script>
 
 <style>
