@@ -66,51 +66,12 @@
       </view>
     </scroll-view>
 
-    <view class="ai-float-btn" @click="showAiDialog">
+    <view class="ai-float-btn"  @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag" @touchend="endDrag" :style="{left: dragX + 'px', top: dragY + 'px'}">
       <view class="ai-btn">
         <img src="https://wlmtsys.com:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
-<!-- 
-    <navbar></navbar> -->
-    <!-- <uni-popup ref="aiPopup" type="bottom">
-      <view class="ai-dialog">
-        <view class="dialog-header">
-          <text class="dialog-title">智能导游</text>
-          <view class="close-btn" @click="hideAiDialog">
-            <uni-icons type="close" size="20" color="#999" />
-          </view>
-        </view>
-
-        <view class="dialog-content">
-          <view class="voice-input">
-            <uni-icons type="mic" size="40" color="#4A88FF" />
-            <text class="voice-tip">点击开始语音输入</text>
-          </view>
-
-          <view class="quick-actions">
-            <view class="action-btn" v-for="(action, index) in quickActions" :key="index">
-              <uni-icons :type="action.icon" size="16" color="#4A88FF" />
-              <text class="action-text">{{ action.text }}</text>
-            </view>
-          </view>
-
-          <view class="ai-message">
-            <view class="message-content">
-              <uni-icons type="spinner-cycle" size="20" color="#4A88FF" />
-              <view class="message-body">
-                <text class="message-text">您好！我是万山群岛智能导游。请问需要什么帮助？</text>
-                <view class="play-voice">
-                  <uni-icons type="play" size="12" color="#4A88FF" />
-                  <text class="play-text">播放语音</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </uni-popup> -->
 
     
   </view>
@@ -118,20 +79,46 @@
 
 <script  setup>
 import { ref } from 'vue';
-// import navbar from '../navbar/navbar.vue';
 
-const aiPopup = ref();
+const dragX = ref(uni.getSystemInfoSync().screenWidth - 96); // 96 是按钮的宽度
+const dragY = ref((uni.getSystemInfoSync().screenHeight - 96) / 2);
+const startX = ref(0);
+const startY = ref(0);
+const offsetX = ref(0);
+const offsetY = ref(0);
 
-const showAiDialog = () => {
-  // aiPopup.value.open();
-  uni.navigateTo({
-    url: '/pages/chat/chat'
-  });
+const startDrag = (e) => {
+  const { clientX, clientY } = e.touches[0];
+  startX.value = clientX;
+  startY.value = clientY;
+  offsetX.value = dragX.value;
+  offsetY.value = dragY.value;
 };
 
-// const hideAiDialog = () => {
-//   aiPopup.value.close();
-// };
+const moveDrag = (e) => {
+  const { clientX, clientY } = e.touches[0];
+  const x = clientX - startX.value + offsetX.value;
+  const y = clientY - startY.value + offsetY.value;
+  // 实时限制按钮在页面内
+  const screenWidth = uni.getSystemInfoSync().screenWidth;
+  const screenHeight = uni.getSystemInfoSync().screenHeight;
+
+  dragX.value = Math.max(0, Math.min(x, screenWidth - 96)); 
+  dragY.value = Math.max(0, Math.min(y, screenHeight - 96)); 
+};
+
+const endDrag = () => {
+  const screenWidth = uni.getSystemInfoSync().screenWidth;
+  const screenHeight = uni.getSystemInfoSync().screenHeight;
+
+  // 限制按钮在页面内
+  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth - 96)); // 96 是按钮的宽度
+  dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
+
+};
+
+
+
 
 const gridItems = [
   {
@@ -204,7 +191,7 @@ const navigateTo = (path) => {
 
 // 跳转到 chat 页面
 const navigateToChat = () => {
-  uni.navigateTo({
+  uni.switchTab({
     url: '/pages/chat/chat'
   });
 };
@@ -413,13 +400,14 @@ page {
 
 .ai-float-btn {
   position: fixed;
-  right: 32rpx;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0; /* 水平方向靠右 */
+  top: 50%; /* 垂直方向居中 */
+  transform: translateY(-50%); /* 垂直居中调整 */
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 99;
+  cursor: move; /* 添加鼠标样式 */
 }
 
 .ai-btn {
