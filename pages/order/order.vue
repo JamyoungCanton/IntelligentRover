@@ -160,6 +160,18 @@ const statusMap = {
 const filteredOrders = computed(() => {
   let result = orders.value;
 
+  // 获取当前登录用户的用户ID
+  const currentUserId = userStore.userInfo?.id;
+
+  // 过滤属于当前用户的订单
+  result = result.filter(order => {
+    // 判断订单是否属于当前用户
+    const isUserOrder = order.customerId === currentUserId;
+    console.log(order.customerId)
+    console.log("用户id："+currentUserId)
+    return isUserOrder;
+  });
+
   // 根据标签筛选
   if (currentTab.value !== 0) { // 不是"全部"标签
     const status = statusMap[currentTab.value];
@@ -179,9 +191,30 @@ const filteredOrders = computed(() => {
 
   // 按照创建时间降序排序，最近的订单在最上面
   result.sort((a, b) => {
-    const dateA = new Date(a.createTime);
-    const dateB = new Date(b.createTime);
-    return dateB - dateA;
+    // 兼容 iOS 的日期解析
+    const parseDate = (dateString) => {
+      if (!dateString) return new Date(0);
+
+      // 尝试多种格式
+      const formats = [
+        dateString.replace(' ', 'T'), // 转换为 ISO 格式
+        dateString.replace(' ', '/'), // 替换空格为 '/'
+        dateString
+      ];
+
+      for (let format of formats) {
+        const date = new Date(format);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+
+      return new Date(0); // 如果解析失败，返回最早的日期
+    };
+
+    const dateA = parseDate(a.createTime);
+    const dateB = parseDate(b.createTime);
+    return dateB.getTime() - dateA.getTime();
   });
 
   return result;
@@ -457,7 +490,7 @@ const updateOrderStatus = (orderId) => {
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
-  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`; // 使用 ISO 8601 格式
 
   // 准备请求数据
   const updateData = {
