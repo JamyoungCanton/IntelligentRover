@@ -4,14 +4,15 @@
       <view class="search-header">
         <view class="search-input-wrap">
           <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-          <input type="text" v-model="searchContent" class="search-input" placeholder="搜索酒店名称、地标、商圈" placeholder-class="placeholder"/>
+          <input type="text" v-model="searchContent" class="search-input" placeholder="搜索酒店名称、地标、商圈"
+            placeholder-class="placeholder" />
         </view>
       </view>
-      
+
       <view class="date-guest">
         <view class="date-section">
           <text class="label">入住-离店</text>
-          
+
           <view class="example-body">
             <uni-datetime-picker v-model="range" type="daterange" @maskClick="maskClick" />
           </view>
@@ -28,13 +29,8 @@
     <scroll-view class="content" scroll-y>
       <scroll-view class="filter-scroll" scroll-x>
         <view class="filter-wrap">
-          <view
-            v-for="(btn, index) in filterButtons"
-            :key="index"
-            class="filter-btn"
-            :class="{ active: activeFilter === btn.value }"
-            @click="setActiveFilter(btn.value)"
-          >
+          <view v-for="(btn, index) in filterButtons" :key="index" class="filter-btn"
+            :class="{ active: activeFilter === btn.value }" @click="setActiveFilter(btn.value)">
             {{ btn.label }}
           </view>
         </view>
@@ -74,7 +70,7 @@
                 <text class="price-label">起价</text>
                 <text class="price-amount">¥{{ hotel.price }}</text>
               </view>
-              <button class="book-btn">立即预订</button>
+              <button class="book-btn" @click="createHotelOrder(hotel)">立即预订</button>
             </view>
           </view>
         </view>
@@ -84,7 +80,8 @@
     <!-- 弹出框 -->
     <view v-if="showGuestPickerModal" class="guest-picker-modal">
       <view class="guest-picker-content">
-        <view class="guest-option" v-for="(option, index) in guestOptions" :key="index" @click="selectGuestCount(option)">
+        <view class="guest-option" v-for="(option, index) in guestOptions" :key="index"
+          @click="selectGuestCount(option)">
           {{ option }}人
         </view>
       </view>
@@ -97,9 +94,13 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import { computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
 const userStore = useUserStore();
+const router = useRouter();
 const hotelList = ref([]);
 const combinedArray = ref([]);
+
 
 const single = ref('');
 const datetimesingle = ref('');
@@ -152,7 +153,7 @@ onMounted(() => {
 });
 
 const hasToken = () => {
-  if(userStore.token === ''){
+  if (userStore.token === '') {
     // 提示未登录，请先登录
     uni.showToast({
       title: '未登录,请先登录',
@@ -197,8 +198,8 @@ const getHotelList = () => {
 };
 
 const filteredHotels = computed(() => {
-  if(searchContent.value){
-    return combinedArray.value.filter (item => item.name.includes(searchContent.value)) 
+  if (searchContent.value) {
+    return combinedArray.value.filter(item => item.name.includes(searchContent.value))
   }
   switch (activeFilter.value) {
     case 'comprehensive':
@@ -268,6 +269,97 @@ const selectGuestCount = (count) => {
 // 关闭弹出框
 const closeGuestPickerModal = () => {
   showGuestPickerModal.value = false;
+};
+
+// 创建酒店订单
+const createHotelOrder = (hotel) => {
+  // 检查是否登录
+  if (userStore.token === '') {
+    uni.showToast({
+      title: '未登录，请先登录',
+      icon: 'none',
+      duration: 1500
+    });
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+    return;
+  }
+
+  // 检查入住和离店日期
+  if (!range.value || range.value.length !== 2) {
+    uni.showToast({
+      title: '请选择入住和离店日期',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 准备订单数据
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo.realname || '',
+      contractPhone: userStore.userInfo.phone || ''
+    },
+    items: [
+      {
+        bookInfo: {
+          date: `${range.value[0]} - ${range.value[1]}`,
+          fullname: userStore.userInfo.realname || '',
+          idCardNo: userStore.userInfo.idCardNo || '',
+          idCardType: 'ID_CARD',
+          schedule: '' // 可以根据需要添加具体时间
+        },
+        productId: hotel.id,
+        productType: 'Accommodations',
+        quantity: 1
+      }
+    ]
+  };
+
+  // 打印请求数据
+  console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
+
+  // 创建订单请求
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: orderData,
+    success: (res) => {
+      // 打印响应数据
+      console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
+
+      if (res.data.code === 200) {
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        // 可以跳转到订单详情页或其他页面
+        // uni.navigateTo({
+        //   url: `/pages/order/order?orderId=${res.data.result.id}`
+        // });
+      } else {
+        uni.showToast({
+          title: res.data.message || '订单创建失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('创建订单失败', err);
+      uni.showToast({
+        title: '创建订单失败，请稍后重试',
+        icon: 'none'
+      });
+    }
+  });
 };
 
 </script>
@@ -452,7 +544,7 @@ page {
   margin-left: 8rpx;
 }
 
-.location-amount{
+.location-amount {
   font-size: 30rpx;
   font-weight: 500;
   color: #1B4B98;
@@ -487,7 +579,7 @@ page {
 }
 
 .example-body {
-    background-color: #fff;
+  background-color: #fff;
 }
 
 /* 弹出框整体容器样式 */
@@ -497,39 +589,47 @@ page {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景，营造遮罩效果 */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* 半透明黑色背景，营造遮罩效果 */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* 确保弹出框在其他元素之上 */
+  z-index: 1000;
+  /* 确保弹出框在其他元素之上 */
 }
 
 /* 弹出框内容区域样式 */
 .guest-picker-content {
   background-color: white;
-  border-radius: 12px; /* 圆角 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+  border-radius: 12px;
+  /* 圆角 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* 阴影效果 */
   padding: 20px;
-  width: 280px; /* 可根据内容调整宽度 */
+  width: 280px;
+  /* 可根据内容调整宽度 */
 }
 
 /* 每个选项的样式 */
 .guest-option {
   padding: 12px 0;
-  border-bottom: 1px solid #e0e0e0; /* 底部边框 */
-  font-size: 28rpx; /* 根据项目整体字体大小调整 */
+  border-bottom: 1px solid #e0e0e0;
+  /* 底部边框 */
+  font-size: 28rpx;
+  /* 根据项目整体字体大小调整 */
   text-align: center;
-  cursor: pointer; /* 鼠标悬停时显示指针 */
+  cursor: pointer;
+  /* 鼠标悬停时显示指针 */
 }
 
 .guest-option:last-child {
-  border-bottom: none; /* 最后一个选项去掉底部边框 */
+  border-bottom: none;
+  /* 最后一个选项去掉底部边框 */
 }
 
 /* 选项被选中时的样式（可根据需求添加，这里仅作示例） */
 .guest-option.selected {
-  background-color: #f0f0f0; /* 选中时的背景颜色 */
+  background-color: #f0f0f0;
+  /* 选中时的背景颜色 */
 }
-
 </style>
-
