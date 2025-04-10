@@ -30,7 +30,7 @@
               <view class="value" style="padding-left: 10px;">{{ currentDate }}</view>
             </picker>
           </view>
-          <view class="date-item align-right"  style="margin-left: 35px;">
+          <view class="date-item align-right" style="margin-left: 35px;">
             <text class="label">乘车人数</text>
             <picker mode="selector" :range="passengerOptions" @change="onPassengerChange">
               <view class="value" style="padding-left: 10px;">{{ passengerCount }} 人</view>
@@ -46,8 +46,10 @@
           <view class="sort-item">
             <text class="sort-text" @click="toggleSort('time')">时间</text>
             <image :src="sortType.time ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
-			<text class="sort-text" @click="toggleSort('price')" style="padding-left: 5px;">价格</text>
-			<image :src="sortType.price ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
+          </view>
+          <view class="sort-item">
+            <text class="sort-text" @click="toggleSort('price')">价格</text>
+            <image :src="sortType.price ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
           </view>
         </view>
         <view class="filter-right">
@@ -63,12 +65,12 @@
             <text class="duration">{{ ticket.duration }}</text>
           </view>
           <view class="ship-row">
-            <text class="ship-name">{{ ticket.shipName }}</text>
-            <text class="price">{{ ticket.price }}</text>
+            <text class="ship-name" style="color: gray;">{{ ticket.shipName }}</text>
+            <text class="price" style="color: blue; font-size: 20px;">{{ ticket.price }}起</text>
           </view>
           <view class="action-row">
             <text class="remain">剩余 {{ ticket.remain }} 张</text>
-            <button class="book-btn primary" type="button" size="mini" @click="bookTicket(ticket)">预订</button>
+            <button class="book-btn primary" type="button" @click="createOrder(ticket)">预订</button>
           </view>
         </view>
       </view>
@@ -146,6 +148,7 @@ const fetchTickets = () => {
     success: (res) => {
       if (res.data.success) {
         tickets.value = res.data.result.records.map(item => ({
+          id: item.id, // 确保包含 id
           time: formatTime(item.schedule),
           duration: `约 ${item.duration} 小时`,
           shipName: `${item.mode} | ${item.cabintype}`,
@@ -165,7 +168,7 @@ const fetchTickets = () => {
 // 格式化时间
 const formatTime = (schedule) => {
   const times = schedule.split(',');
-  return `${times[0]} → ${times[1]}`;
+  return `${times[0]} - ${times[1]}`;
 };
 
 // 排序船票
@@ -193,14 +196,75 @@ const toggleSort = (type) => {
   }
 };
 
-// 预订船票
-const bookTicket = (ticket) => {
-  console.log('预订船票:', ticket);
-  // 这里可以实现预订逻辑
+const createOrder = (ticket) => {
+  if (!hasToken()) return;
+
+  // 准备订单数据
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo.realname || '默认联系人',
+      contractPhone: userStore.userInfo.phone || '12345678901'
+    },
+    items: [
+      {
+        bookInfo: {
+          date: `${currentDate.value}`,
+          fullname: userStore.userInfo.realname || '默认联系人',
+          idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
+          idCardType: 'ID_CARD',
+          schedule: ticket.time
+        },
+        productId: ticket.id, // 使用船票的 ID 作为 productId
+        productType: 'Transportation',
+        quantity: passengerCount.value
+      }
+    ]
+  };
+
+  console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
+
+  // 创建订单请求
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: orderData,
+    success: (res) => {
+      console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
+
+      if (res.data.success) {
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        // 跳转到订单详情页
+        // uni.navigateTo({
+        //   url: `/pages/order/order?orderId=${res.data.result.id}`
+        // });
+      } else {
+        uni.showToast({
+          title: res.data.message || '订单创建失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('创建订单失败', err);
+      uni.showToast({
+        title: '创建订单失败，请稍后重试',
+        icon: 'none'
+      });
+    }
+  });
 };
 
 // 页面加载时获取船票
 onMounted(() => {
+  hasToken();
   fetchTickets();
 });
 </script>
@@ -336,6 +400,11 @@ onMounted(() => {
   border: none;
   padding: 8px 15px;
   border-radius: 5px;
+  width: 100px;
+  height: 40px;
+  line-height: 20px;
+  margin-right: 5px;
+  font-size: 20px;
 }
 
 input {
@@ -348,11 +417,5 @@ input {
   width: 16px;
   height: 16px;
   margin-left: 5px;
-}
-.book-btn{
-	width: 100px;
-	height: 40px;
-	line-height: 20px;
-	margin-right: 5px;
 }
 </style>
