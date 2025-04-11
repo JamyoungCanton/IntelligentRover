@@ -4129,8 +4129,13 @@
 				// 模拟AI回复
 				// AIAnswerThinking(fullContent);
 				// 调用接口
-				// callAIInterface(chatMessages[chatMessages.length - 1].content);
+				// #ifdef MP-WEIXIN
+				callAIInterface(chatMessages[chatMessages.length - 1].content);
+				// #endif
+				// #ifdef H5
 				callAIInterface2(chatMessages[chatMessages.length - 1].content);
+				// #endif
+				
 
 
 			};
@@ -5663,7 +5668,7 @@
 
 
 			const callAIInterface2 = async (userQuery, retryCount = 0) => {
-				const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+				const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux';
 				const data = {
 					conversation_id: '',
 					inputs: {
@@ -5684,397 +5689,356 @@
 					},
 					body: body, // 可以是字符串、FormData、Blob 等
 				});
-				
-				 const reader = response.body.getReader();
-				    const decoder = new TextDecoder();
-				
-				    while (true) {
-				      const { done, value } = await reader.read();
-				      if (done) break;
-				      const chunk = decoder.decode(value);
-				      console.log('收到数据块:', chunk);
-				    }
 
-				// const reader = response.body.getReader();
-				// const decoder = new TextDecoder("utf-8");
-				// let partialData = "";
-				// let typedResult = '';
-				// console.log("======== decoder =>", decoder);
-				// readStream(reader, decoder, partialData)
-				// const {
-				// 	done,
-				// 	value
-				// } = await reader.read();
-				// console.log(value);
+				// console.log("response =>", response);
+				const reader = response.body.getReader();
+				const decoder = new TextDecoder('utf-8');
 
-				// const text = decoder.decode(value, {
-				// 	stream: true
-				// });
-				// partialData += text;
-				// const lines = partialData.split("\n");
-				// partialData = lines.pop(); // 可能存在未完整的 JSON 片段
-				// console.log("partialData =>", partialData)
+				let str = ''
+				while (true) {
+					const {
+						done,
+						value
+					} = await reader.read();
+					if (done) break;
+					const chunk = decoder.decode(value);
+					// console.log('收到数据块:', chunk);
+					let a = "workflow_finished"
 
-				// for (const line of lines) {
-				// 	// 数据格式 data: {"id":"6b164fc4-5111-4267-a094-3d36edf3200d","object":"chat.completion.chunk","created":1741932057,"model":"deepseek-chat","system_fingerprint":"fp_3a5770e1b4_prod0225","choices":[{"index":0,"delta":{"content":"你在"},"logprobs":null,"finish_reason":null}]}
-				// 	if (line.trim().startsWith("data: ")) {
-				// 		const jsonStr = line.replace("data: ", "").trim(); // 去掉 "data: "
-				// 		if (jsonStr === "[DONE]") {
-				// 			onComplete && onComplete(typedResult);
-				// 			return;
-				// 		}
+					// if (chunk.indexOf(a) != -1) {
+					// 	str = chunk
+					// 	console.log('收到数据块:', chunk);
+					// 	if (chunk.startsWith("data:")) {
+					// 		const result = chunk.substring(5); // 如果以 "data:" 开头，则去掉它
+					// 		console.log("截取后的 result =>", result);
+					// 		console.log("JSON result =>", JSON.parse(result));
+					// 		const JSONP = JSON.parse(result);
+					// 		console.log("JSONP =>",JSONP);
+					// 		const answer = JSON.parse(JSONP.data.outputs.answer) || []
+					// 		console.log("answer =>", answer);
+					// 	}
+					// }
+					if (chunk.indexOf(a) != -1) {
+						if (chunk.startsWith('data:')) {
+							const jsonStr = chunk.substring(5).trim();
+							try {
+								const jsonData = JSON.parse(jsonStr);
+								console.log('解析到的JSON数据:', jsonData);
 
-				// 		try {
-				// 			const jsonData = JSON.parse(jsonStr);
-				// 			const content = jsonData.choices?.[0]?.delta?.content || ""; // DeepSeek SSE 增量更新
-				// 			for (let i = 0; i < content.length; i++) {
-				// 				if (isStopped) return;
-				// 				typedResult += content[i];
-				// 				await new Promise((res) => setTimeout(res, 30));
-				// 				onProgress && onProgress(typedResult);
-				// 			}
-				// 		} catch (e) {
-				// 			console.error("JSON 解析失败", e);
-				// 		}
-				// 	}
+								let answer = jsonData.data.outputs.answer;
+								if (answer) {
+									const decodedAnswer = JSON.parse((answer));
+									console.log(`事件[${jsonData.event}] 解码后的答案:`,
+										decodedAnswer);
 
-				}
-
-				const readStream = async (reader, decoder, partialData) => {
-					let isStopped = false;
-					let typedResult = '';
-
-					try {
-						const {
-							done,
-							value
-						} = await reader.read();
-						if (done || isStopped) {
-							onComplete && onComplete(typedResult);
-							return;
-						}
-
-						const text = decoder.decode(value, {
-							stream: true
-						});
-						partialData += text;
-
-						const lines = partialData.split("\n");
-						partialData = lines.pop(); // 可能存在未完整的 JSON 片段
-
-						for (const line of lines) {
-							// 数据格式 data: {"id":"6b164fc4-5111-4267-a094-3d36edf3200d","object":"chat.completion.chunk","created":1741932057,"model":"deepseek-chat","system_fingerprint":"fp_3a5770e1b4_prod0225","choices":[{"index":0,"delta":{"content":"你在"},"logprobs":null,"finish_reason":null}]}
-							if (line.trim().startsWith("data: ")) {
-								const jsonStr = line.replace("data: ", "").trim(); // 去掉 "data: "
-								if (jsonStr === "[DONE]") {
-									onComplete && onComplete(typedResult);
-									return;
-								}
-
-								try {
-									const jsonData = JSON.parse(jsonStr);
-									const content = jsonData.choices?.[0]?.delta?.content ||
-									""; // DeepSeek SSE 增量更新
-									for (let i = 0; i < content.length; i++) {
-										if (isStopped) return;
-										typedResult += content[i];
-										await new Promise((res) => setTimeout(res, 30));
-										onProgress && onProgress(typedResult);
-									}
-								} catch (e) {
-									console.error("JSON 解析失败", e);
-								}
-							}
-						}
-						readStream();
-					} catch (error) {
-						console.error("读取流数据失败", error);
-						onError && onError(error);
-					}
-
-				}
-
-
-
-				const callAIInterface = (userQuery, retryCount = 0) => {
-					const MAX_RETRIES = 3;
-					// const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux';
-					const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
-					const data = {
-						conversation_id: '',
-						inputs: {
-							original_intention: '',
-							recommended_plan: ''
-						},
-						query: userQuery,
-						webMode: ''
-					};
-
-					if (retryCount > 0) {
-						uni.showToast({
-							title: `第${retryCount}次重试连接...`,
-							icon: 'none',
-							duration: 2000
-						});
-					}
-
-					console.log('Current token:', token.value);
-
-					const requestTask = uni.request({
-						url: url,
-						method: 'POST',
-						header: {
-							'Content-Type': 'application/json',
-							'X-Access-Token': token.value
-						},
-						data: JSON.stringify(data),
-						responseType: 'text',
-						enableChunked: true,
-						timeout: 30000,
-						success: (res) => {
-							console.log('请求成功:', res);
-						},
-						fail: (err) => {
-							console.error('请求失败:', err);
-
-							if (err.errMsg && err.errMsg.includes('timeout')) {
-								const lastMessage = chatMessages[chatMessages.length - 1];
-								if (lastMessage.type === 'ai') {
-									lastMessage.thinking = false;
-									lastMessage.content = '请求超时，请重试';
-								} else {
-									chatMessages.push({
+									// const aiMessage = {
+									// 	type: 'ai',
+									// 	content: [
+									// 		// 这里可以根据需要解析并生成结构化的回复
+									// 		{
+									// 			type: "text",
+									// 			id: "",
+									// 			content: decodedAnswer
+									// 		}
+									// 	]
+									// };
+									const aiMessage = {
 										type: 'ai',
-										content: '请求超时，请重试',
-										thinking: false
-									});
+										content: decodedAnswer
+									};
+									chatMessages.push(aiMessage);
+									console.log("chatMessages =>",chatMessages);
+									scrollToLatestMessage();
 								}
 
-								uni.showToast({
-									title: '请求超时，请重试',
-									icon: 'none',
-									duration: 3000
+							} catch (jsonError) {
+								console.warn('JSON解析错误:', jsonError);
+							}
+						}
+					}
+				}
+			}
+
+
+			const callAIInterface = (userQuery, retryCount = 0) => {
+				const MAX_RETRIES = 3;
+				// const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux';
+				const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream';
+				const data = {
+					conversation_id: '',
+					inputs: {
+						original_intention: '',
+						recommended_plan: ''
+					},
+					query: userQuery,
+					webMode: ''
+				};
+
+				if (retryCount > 0) {
+					uni.showToast({
+						title: `第${retryCount}次重试连接...`,
+						icon: 'none',
+						duration: 2000
+					});
+				}
+
+				console.log('Current token:', token.value);
+
+				const requestTask = uni.request({
+					url: url,
+					method: 'POST',
+					header: {
+						'Content-Type': 'application/json',
+						'X-Access-Token': token.value
+					},
+					data: JSON.stringify(data),
+					responseType: 'text',
+					enableChunked: true,
+					timeout: 30000,
+					success: (res) => {
+						console.log('请求成功:', res);
+					},
+					fail: (err) => {
+						console.error('请求失败:', err);
+
+						if (err.errMsg && err.errMsg.includes('timeout')) {
+							const lastMessage = chatMessages[chatMessages.length - 1];
+							if (lastMessage.type === 'ai') {
+								lastMessage.thinking = false;
+								lastMessage.content = '请求超时，请重试';
+							} else {
+								chatMessages.push({
+									type: 'ai',
+									content: '请求超时，请重试',
+									thinking: false
 								});
-
-								globalUpdateKey.value = Date.now();
-								updateCounter.value++;
 							}
+
+							uni.showToast({
+								title: '请求超时，请重试',
+								icon: 'none',
+								duration: 3000
+							});
+
+							globalUpdateKey.value = Date.now();
+							updateCounter.value++;
 						}
-					});
-
-					requestTask.onChunkReceived((res) => {
-						try {
-							const uint8Array = new Uint8Array(res.data);
-							const decoder = new TextDecoder('utf-8');
-							const text = decoder.decode(uint8Array);
-							console.log('收到的原始数据:', text);
-
-							if (text.startsWith('data:')) {
-								const jsonStr = text.substring(5).trim();
-								try {
-									const jsonData = JSON.parse(jsonStr);
-									console.log('解析到的JSON数据:', jsonData);
-
-									if (jsonData.event === 'message') {
-										let answer = '';
-										if (jsonData.data && jsonData.data.outputs && jsonData.data
-											.outputs
-											.answer) {
-											answer = jsonData.data.outputs.answer;
-										} else if (jsonData.answer !== undefined) {
-											answer = jsonData.answer;
-										}
-
-										if (answer) {
-											const decodedAnswer = decodeUnicode(answer);
-											console.log(`事件[${jsonData.event}] 解码后的答案:`,
-											decodedAnswer);
-
-											const aiMessage = {
-												type: 'ai',
-												content: [
-													// 这里可以根据需要解析并生成结构化的回复
-													{
-														type: "text",
-														id: "",
-														content: decodedAnswer
-													}
-												]
-											};
-											chatMessages.push(aiMessage);
-											scrollToLatestMessage();
-										}
-									}
-								} catch (jsonError) {
-									console.warn('JSON解析错误:', jsonError);
-								}
-							}
-						} catch (e) {
-							console.error('数据处理失败:', e);
-						}
-					});
-				};
-
-				const decodeUnicode = (str) => {
-					if (!str) return "";
-
-					try {
-						if (typeof str === "string") {
-							return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
-								String.fromCharCode(parseInt(hex, 16))
-							);
-						}
-						return str;
-					} catch (e) {
-						console.error("Unicode 解码失败:", e);
-						return str;
 					}
-				};
-
-				const navigatortopaymoent = () => {
-					uni.navigateTo({
-						url: "/pages/payment/payment",
-					});
-				};
-
-				const scrollToLatestMessage = () => {
-					const lastIndex = chatMessages.length;
-					scrollIntoView.value = `msg-${lastIndex}`;
-				};
-
-				const scrollToBottom = () => {
-					if (!enableAutoScroll.value) {
-						return;
-					}
-
-					const query = uni.createSelectorQuery();
-					query
-						.select(".chat-container")
-						.boundingClientRect((data) => {
-							if (data) {
-								viewportHeight.value = data.height;
-
-								const messageQuery = uni.createSelectorQuery();
-								messageQuery
-									.selectAll(".message")
-									.boundingClientRect((messages) => {
-										if (messages && messages.length > 0) {
-											contentHeight.value = messages.reduce(
-												(sum, msg) => sum + msg.height,
-												0
-											);
-
-											scrollTop.value = contentHeight.value;
-											lastScrollTop.value = contentHeight.value;
-										}
-									})
-									.exec();
-							}
-						})
-						.exec();
-				};
-
-				const goBack = () => {
-					uni.navigateBack({
-						delta: 1,
-					});
-				};
-
-				const showMore = () => {
-					uni.showActionSheet({
-						itemList: ["清空聊天记录", "设置", "关于"],
-						success: (res) => {
-							console.log("Selected option:", res.tapIndex);
-						},
-					});
-				};
-
-				const showAddOptions = () => {
-					uni.showActionSheet({
-						itemList: ["拍照", "从相册选择", "位置"],
-						success: (res) => {
-							console.log("Selected option:", res.tapIndex);
-						},
-					});
-				};
-
-				onMounted(() => {
-					setTimeout(() => {
-						scrollToBottom();
-					}, 100);
 				});
 
-				const onScrollToUpper = () => {
-					console.log("到达顶部");
-				};
+				requestTask.onChunkReceived((res) => {
+					try {
+						const uint8Array = new Uint8Array(res.data);
+						const decoder = new TextDecoder('utf-8');
+						const text = decoder.decode(uint8Array);
+						console.log('收到的原始数据:', text);
 
-				const SCROLL_BOTTOM_THRESHOLD = 10;
+						if (text.startsWith('data:')) {
+							const jsonStr = text.substring(5).trim();
+							try {
+								const jsonData = JSON.parse(jsonStr);
+								console.log('解析到的JSON数据:', jsonData);
 
-				const onScroll = (e) => {
-					const currentScrollTop = e.detail.scrollTop;
+								if (jsonData.event === 'message') {
+									let answer = '';
+									if (jsonData.data && jsonData.data.outputs && jsonData.data
+										.outputs
+										.answer) {
+										answer = jsonData.data.outputs.answer;
+									} else if (jsonData.answer !== undefined) {
+										answer = jsonData.answer;
+									}
 
-					const query = uni.createSelectorQuery();
-					query
-						.select(".chat-container")
-						.boundingClientRect((data) => {
-							if (data) {
-								viewportHeight.value = data.height;
+									if (answer) {
+										const decodedAnswer = decodeUnicode(answer);
+										console.log(`事件[${jsonData.event}] 解码后的答案:`,
+											decodedAnswer);
 
-								const messageQuery = uni.createSelectorQuery();
-								messageQuery
-									.selectAll(".message")
-									.boundingClientRect((messages) => {
-										if (messages && messages.length > 0) {
-											contentHeight.value = messages.reduce(
-												(sum, msg) => sum + msg.height,
-												0
-											);
-
-											const distanceFromBottom =
-												contentHeight.value -
-												(currentScrollTop + viewportHeight.value);
-											if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
-												enableAutoScroll.value = true;
-											} else {
-												if (currentScrollTop > lastScrollTop.value) {
-													enableAutoScroll.value = false;
+										const aiMessage = {
+											type: 'ai',
+											content: [
+												// 这里可以根据需要解析并生成结构化的回复
+												{
+													type: "text",
+													id: "",
+													content: decodedAnswer
 												}
+											]
+										};
+										chatMessages.push(aiMessage);
+										scrollToLatestMessage();
+									}
+								}
+							} catch (jsonError) {
+								console.warn('JSON解析错误:', jsonError);
+							}
+						}
+					} catch (e) {
+						console.error('数据处理失败:', e);
+					}
+				});
+			};
+
+			const decodeUnicode = (str) => {
+				if (!str) return "";
+
+				try {
+					if (typeof str === "string") {
+						return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+							String.fromCharCode(parseInt(hex, 16))
+						);
+					}
+					return str;
+				} catch (e) {
+					console.error("Unicode 解码失败:", e);
+					return str;
+				}
+			};
+
+			const navigatortopaymoent = () => {
+				uni.navigateTo({
+					url: "/pages/payment/payment",
+				});
+			};
+
+			const scrollToLatestMessage = () => {
+				const lastIndex = chatMessages.length;
+				scrollIntoView.value = `msg-${lastIndex}`;
+			};
+
+			const scrollToBottom = () => {
+				if (!enableAutoScroll.value) {
+					return;
+				}
+
+				const query = uni.createSelectorQuery();
+				query
+					.select(".chat-container")
+					.boundingClientRect((data) => {
+						if (data) {
+							viewportHeight.value = data.height;
+
+							const messageQuery = uni.createSelectorQuery();
+							messageQuery
+								.selectAll(".message")
+								.boundingClientRect((messages) => {
+									if (messages && messages.length > 0) {
+										contentHeight.value = messages.reduce(
+											(sum, msg) => sum + msg.height,
+											0
+										);
+
+										scrollTop.value = contentHeight.value;
+										lastScrollTop.value = contentHeight.value;
+									}
+								})
+								.exec();
+						}
+					})
+					.exec();
+			};
+
+			const goBack = () => {
+				uni.navigateBack({
+					delta: 1,
+				});
+			};
+
+			const showMore = () => {
+				uni.showActionSheet({
+					itemList: ["清空聊天记录", "设置", "关于"],
+					success: (res) => {
+						console.log("Selected option:", res.tapIndex);
+					},
+				});
+			};
+
+			const showAddOptions = () => {
+				uni.showActionSheet({
+					itemList: ["拍照", "从相册选择", "位置"],
+					success: (res) => {
+						console.log("Selected option:", res.tapIndex);
+					},
+				});
+			};
+
+			onMounted(() => {
+				setTimeout(() => {
+					scrollToBottom();
+				}, 100);
+			});
+
+			const onScrollToUpper = () => {
+				console.log("到达顶部");
+			};
+
+			const SCROLL_BOTTOM_THRESHOLD = 10;
+
+			const onScroll = (e) => {
+				const currentScrollTop = e.detail.scrollTop;
+
+				const query = uni.createSelectorQuery();
+				query
+					.select(".chat-container")
+					.boundingClientRect((data) => {
+						if (data) {
+							viewportHeight.value = data.height;
+
+							const messageQuery = uni.createSelectorQuery();
+							messageQuery
+								.selectAll(".message")
+								.boundingClientRect((messages) => {
+									if (messages && messages.length > 0) {
+										contentHeight.value = messages.reduce(
+											(sum, msg) => sum + msg.height,
+											0
+										);
+
+										const distanceFromBottom =
+											contentHeight.value -
+											(currentScrollTop + viewportHeight.value);
+										if (distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD) {
+											enableAutoScroll.value = true;
+										} else {
+											if (currentScrollTop > lastScrollTop.value) {
+												enableAutoScroll.value = false;
 											}
 										}
-									})
-									.exec();
-							}
-						})
-						.exec();
+									}
+								})
+								.exec();
+						}
+					})
+					.exec();
 
-					lastScrollTop.value = currentScrollTop;
-				};
+				lastScrollTop.value = currentScrollTop;
+			};
 
-				return {
-					inputMessage,
-					scrollTop,
-					scrollIntoView,
-					enableAutoScroll,
-					categories,
-					chatMessages,
-					updateCounter,
-					globalUpdateKey,
-					selectCategory,
-					getCategoryName,
-					sendMessage,
-					navigatortopaymoent,
-					scrollToBottom,
-					onScrollToUpper,
-					onScroll,
-					handleItemClick,
-					confirmTrip,
-					goBack,
-					showMore,
-					showAddOptions,
-					decodeUnicode,
-				};
-			},
-		};
+			return {
+				inputMessage,
+				scrollTop,
+				scrollIntoView,
+				enableAutoScroll,
+				categories,
+				chatMessages,
+				updateCounter,
+				globalUpdateKey,
+				selectCategory,
+				getCategoryName,
+				sendMessage,
+				navigatortopaymoent,
+				scrollToBottom,
+				onScrollToUpper,
+				onScroll,
+				handleItemClick,
+				confirmTrip,
+				goBack,
+				showMore,
+				showAddOptions,
+				decodeUnicode,
+			};
+		},
+	};
 </script>
 
 <style>
