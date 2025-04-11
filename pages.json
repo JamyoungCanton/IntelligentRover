@@ -89,9 +89,11 @@
 		{
 			"path": "pages/chat/chat",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "",
+					"showTabBar": false
 			}
 		},
+		
 		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
@@ -124,6 +126,7 @@
 			"style": {
 				"navigationBarTitleText": "activityRegistration",
 				"navigationStyle": "custom"
+				
 			}
 		},
 		{
@@ -194,6 +197,18 @@
 			"style": {
 				"navigationBarTitleText": "zujian"
 			}
+		},
+		{
+			"path": "pages/confirmHotelOrder/confirmHotelOrder",
+			"style": {
+				"navigationBarTitleText": "酒店订单确认"
+			}
+		},
+		{
+			"path": "pages/dingingDetail/dingingDetail",
+			"style": {
+				"navigationBarTitleText": "dingingDetail"
+			}
 		}
 	],
 	"globalStyle": {
@@ -219,6 +234,12 @@
 				"text": "行程",
 				"iconPath": "/static/tabbar/itinerary.png",
 				"selectedIconPath": "/static/tabbar/itinerary1.png"
+			},
+			{
+				"pagePath": "pages/chat/chat",
+				"text": "ai导游",
+				"iconPath": "/static/tabbar/order.png",
+				"selectedIconPath": "/static/tabbar/order1.png"
 			},
 			{
 				"pagePath": "pages/order/order",

@@ -1,12 +1,11 @@
-
 <template>
   <view class="page">
     <!-- 导航栏 -->
     <view class="nav-bar" :style="{ paddingTop: safeAreaInsets.top ? safeAreaInsets.top + 'px' : '0px' }">
-    <uni-icons @click="goBack" type="back" size="24" color="#333333"></uni-icons>
-    <text class="nav-title">交通指南</text>
-    <uni-icons type="search" size="24" color="#333333"></uni-icons>
-  </view>
+      <uni-icons @click="goBack" type="back" size="24" color="#333333"></uni-icons>
+      <text class="nav-title">交通指南</text>
+      <uni-icons type="search" size="24" color="#333333"></uni-icons>
+    </view>
 
     <!-- 主内容区 -->
     <scroll-view class="main-content" scroll-y>
@@ -14,20 +13,8 @@
       <view class="card">
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
-          <input 
-            type="text"
-            class="province-input"
-            v-model="plateProvince"
-            placeholder="粤"
-            maxlength="1"
-          />
-          <input
-            type="text"
-            class="number-input"
-            v-model="plateNumber"
-            placeholder="请输入车牌号"
-            maxlength="6"
-          />
+          <input type="text" class="province-input" v-model="plateProvince" placeholder="粤" maxlength="1" />
+          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号" maxlength="6" />
           <view class="change-btn">
             <uni-icons type="loop" size="24" color="#666666"></uni-icons>
           </view>
@@ -37,11 +24,7 @@
           <view class="label">
             <text>我的车牌</text>
           </view>
-          <view
-            v-for="(plate, index) in historyPlates"
-            :key="index"
-            :class="['plate-item', { active: plate.active }]"
-          >
+          <view v-for="(plate, index) in historyPlates" :key="index" :class="['plate-item', { active: plate.active }]">
             {{ plate.text }}
           </view>
         </scroll-view>
@@ -74,18 +57,11 @@
         <view class="payment-list">
           <label class="payment-item" v-for="(item, index) in paymentMethods" :key="index">
             <view class="payment-info">
-              <image
-                :src="item.icon"
-                mode="scaleToFill"
-              />
+              <image :src="item.icon" mode="scaleToFill" />
               <text>{{ item.name }}</text>
             </view>
-            <radio 
-              :value="item.value" 
-              :checked="selectedPayment === item.value"
-              @click="selectedPayment = item.value"
-              color="#1E88E5"
-            />
+            <radio :value="item.value" :checked="selectedPayment === item.value" @click="selectedPayment = item.value"
+              color="#1E88E5" />
           </label>
         </view>
       </view>
@@ -100,7 +76,7 @@
           <text class="standingItem">3.24小时封顶50元</text>
         </view>
       </view>
-      
+
     </scroll-view>
 
     <!-- 底部支付栏 -->
@@ -108,7 +84,7 @@
       <button class="pay-btn" @click="onPayClick">立即支付 ￥15.00</button>
     </view>
 
-    
+
   </view>
 </template>
 
@@ -300,7 +276,7 @@ page {
   gap: 32rpx;
 }
 
-.payment-info image{
+.payment-info image {
   width: 38rpx;
   height: 38rpx;
 }
@@ -320,22 +296,25 @@ page {
   gap: 24rpx;
 }
 
-.standard{
+.standard {
   background-color: #ffffff;
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
   width: 83%;
 }
-.payStandingContent{
+
+.payStandingContent {
   display: flex;
   flex-direction: column;
 }
-.PayStandingTitle{
+
+.PayStandingTitle {
   font-size: 32rpx;
   font-weight: 500;
 }
-.payStandingContent{
+
+.payStandingContent {
   margin-top: 22rpx;
   font-size: 26rpx;
   font-weight: 300;
@@ -363,7 +342,4 @@ page {
   font-size: 32rpx;
   width: 500rpx;
 }
-
-
 </style>
-
