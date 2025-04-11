@@ -4135,7 +4135,7 @@
 				// #ifdef H5
 				callAIInterface2(chatMessages[chatMessages.length - 1].content);
 				// #endif
-				
+
 
 
 			};
@@ -5692,70 +5692,46 @@
 
 				// console.log("response =>", response);
 				const reader = response.body.getReader();
-				const decoder = new TextDecoder('utf-8');
+				const decoder = new TextDecoder();
 
 				let str = ''
 				while (true) {
 					const {
-						done,
 						value
 					} = await reader.read();
-					if (done) break;
 					const chunk = decoder.decode(value);
-					// console.log('收到数据块:', chunk);
-					let a = "workflow_finished"
-
-					// if (chunk.indexOf(a) != -1) {
-					// 	str = chunk
-					// 	console.log('收到数据块:', chunk);
-					// 	if (chunk.startsWith("data:")) {
-					// 		const result = chunk.substring(5); // 如果以 "data:" 开头，则去掉它
-					// 		console.log("截取后的 result =>", result);
-					// 		console.log("JSON result =>", JSON.parse(result));
-					// 		const JSONP = JSON.parse(result);
-					// 		console.log("JSONP =>",JSONP);
-					// 		const answer = JSON.parse(JSONP.data.outputs.answer) || []
-					// 		console.log("answer =>", answer);
-					// 	}
-					// }
-					if (chunk.indexOf(a) != -1) {
-						if (chunk.startsWith('data:')) {
-							const jsonStr = chunk.substring(5).trim();
-							try {
-								const jsonData = JSON.parse(jsonStr);
-								console.log('解析到的JSON数据:', jsonData);
-
-								let answer = jsonData.data.outputs.answer;
+					str += chunk
+					// console.log("str 合并中 =>", str);
+					if (chunk.indexOf('message_end') != -1) {
+						console.log("================= 接收结束 开始处理 ===============");
+						const chunks = str.split('data:');
+						let wantData = ''
+						for (let i = 0; i < chunks.length; i++) {
+							console.log("chunks[i] =>", chunks[i]);
+							if (chunks[i].indexOf('workflow_finished') != -1) {
+								console.log("chunks[i] =>", JSON.parse(chunks[i]));
+								const jsonData = JSON.parse(chunks[i]);
+								const answer = jsonData.data.outputs.answer;
 								if (answer) {
 									const decodedAnswer = JSON.parse((answer));
 									console.log(`事件[${jsonData.event}] 解码后的答案:`,
 										decodedAnswer);
 
-									// const aiMessage = {
-									// 	type: 'ai',
-									// 	content: [
-									// 		// 这里可以根据需要解析并生成结构化的回复
-									// 		{
-									// 			type: "text",
-									// 			id: "",
-									// 			content: decodedAnswer
-									// 		}
-									// 	]
-									// };
 									const aiMessage = {
 										type: 'ai',
 										content: decodedAnswer
 									};
 									chatMessages.push(aiMessage);
-									console.log("chatMessages =>",chatMessages);
+									console.log("chatMessages =>", chatMessages);
 									scrollToLatestMessage();
 								}
-
-							} catch (jsonError) {
-								console.warn('JSON解析错误:', jsonError);
+								break;
 							}
 						}
-					}
+						console.log("chunks 数组 =>", chunks);
+						console.log("================= 接收结束 处理完成开始渲染 ===============");
+						break
+					};
 				}
 			}
 
