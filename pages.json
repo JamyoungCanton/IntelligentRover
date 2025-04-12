@@ -90,10 +90,9 @@
 			"path": "pages/chat/chat",
 			"style": {
 				"navigationBarTitleText": "",
-					"showTabBar": false
+				"showTabBar": false
 			}
 		},
-		
 		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
@@ -126,7 +125,6 @@
 			"style": {
 				"navigationBarTitleText": "activityRegistration",
 				"navigationStyle": "custom"
-				
 			}
 		},
 		{
