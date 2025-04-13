@@ -5,7 +5,7 @@
       <view class="card">
         <view class="card-header">
           <uni-icons type="calendar" size="20" color="#3B82F6"/>
-          <text class="card-title">酒店或名宿名称</text>
+          <text class="hotalName">{{hotelList.name}}</text>
         </view>
        
       </view>
@@ -18,44 +18,44 @@
         <view class="fee-list">
           <view class="fee-item">
             <text class="fee-name">房型</text>
-            <text class="fee-value">房型</text>
+            <text class="fee-value">{{hotelList.roomtype}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">评分</text>
-            <text class="fee-value">评分</text>
+            <text class="fee-value">{{hotelList.tating}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">房间库存</text>
-            <text class="fee-value">¥200/人</text>
+            <text class="fee-value">{{hotelList.roominventory}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">酒店类型</text>
-            <text class="fee-value">¥500/晚</text>
+            <text class="fee-value">{{hotelList.hoteltype}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">酒店主题</text>
-            <text class="fee-value">¥200/人</text>
+            <text class="fee-value">{{hotelList.hoteltheme}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">星级</text>
-            <text class="fee-value">¥500/晚</text>
+            <text class="fee-value">{{hotelList.starrating}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">地址</text>
-            <text class="fee-value">¥500/晚</text>
+            <text class="fee-value">{{hotelList.address}}</text>
           </view>
           <view class="fee-summary">
             <view class="fee-line">
               <text class="fee-name">原价</text>
-              <text class="fee-original">¥1378</text>
+              <text class="fee-original">¥{{hotelList.price}}</text>
             </view>
             <view class="fee-line">
               <text class="fee-name">优惠金额</text>
-              <text class="fee-discount">-¥428</text>
+              <text class="fee-discount">-¥0</text>
             </view>
             <view class="fee-line">
               <text class="fee-name-highlight">实付金额</text>
-              <text class="fee-final">¥950</text>
+              <text class="fee-final">¥{{hotelList.price}}</text>
             </view>
           </view>
         </view>
@@ -115,12 +115,36 @@
 <script setup>
 import { useUserStore } from '@/store/modules/user';
 import { onLoad } from '@dcloudio/uni-app';
+import { ref,onMounted } from 'vue';
 
+const userStore = useUserStore();
+const id = ref(''); 
+const hotelList = ref([]);
 
 onLoad((options) => {
-  const id = options.id;
-  console.log("接受到的id" ,id);
+  id.value = options.id;
+  console.log("接受到的id" ,id.value);
 })
+onMounted(() => {
+  
+  uni.request({
+    url: `https://island.zhangshuiyi.com/island/front/product/accommodations/${id.value}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token,
+    },
+    data: { id: id},
+    success:(res)=>{
+      hotelList.value = res.data;
+    },fail:(err)=>{
+      console.log(err);
+      
+    }
+  })
+  
+})
+
 
 const phone = ref('13800138000');
 const remark = ref('');
@@ -180,6 +204,12 @@ page {
   display: flex;
   align-items: center;
   margin-bottom: 24rpx;
+}
+.hotalName {
+  margin-left: 16rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3B82F6;
 }
 
 .card-title {

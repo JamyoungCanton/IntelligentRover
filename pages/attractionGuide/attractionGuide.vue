@@ -47,6 +47,7 @@
           v-for="item in filteredAttractions"
           :key="item.id"
           class="spot-item"
+          @click="goAttraction(item.id)"
         >
           <image :src="item.imageUrl" mode="aspectFill"></image>
           <view class="spot-info">
@@ -139,6 +140,13 @@ const getAttractionList = () => {
 // 切换分类
 const changeTab = (category) => {
   selectedCategory.value = category;
+};
+
+// 跳转到景点详情页
+const goAttraction = (id) => {
+  uni.navigateTo({
+    url: `/pages/attractionDetail/attractionDetail?id=${id}`
+  });
 };
 </script>
 

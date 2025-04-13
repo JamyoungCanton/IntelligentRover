@@ -38,7 +38,7 @@
 
       <view class="hotel-list">
         <view class="hotel-card" v-for="(hotel, index) in filteredHotels" :key="index">
-          <image :src="hotel.imageURL" mode="aspectFill" class="hotel-image"></image>
+          <image @click="goHotelDetail(hotel)" :src="hotel.imageURL" mode="aspectFill" class="hotel-image"></image>
           <view class="hotel-info">
             <view class="hotel-header">
               <text class="hotel-name">{{ hotel.name }}</text>
@@ -152,6 +152,11 @@ onMounted(() => {
   getHotelList();
 });
 
+const goHotelDetail = (hotel) => {
+  uni.navigateTo({
+    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}`
+  });
+}
 const hasToken = () => {
   if (userStore.token === '') {
     // 提示未登录，请先登录
@@ -273,126 +278,98 @@ const closeGuestPickerModal = () => {
 
 // 创建酒店订单
 const createHotelOrder = (hotel) => {
-  // 检查是否登录
-  if (userStore.token === '') {
-    uni.showToast({
-      title: '未登录，请先登录',
-      icon: 'none',
-      duration: 1500
+
+  
+// 检查是否登录
+if (userStore.token === '') {
+  uni.showToast({
+    title: '未登录，请先登录',
+    icon: 'none',
+    duration: 1500
+  });
+  setTimeout(() => {
+    uni.navigateTo({
+      url: '/pages/login/login'
     });
-    setTimeout(() => {
-      uni.navigateTo({
-        url: '/pages/login/login'
-      });
-    }, 500);
-    return;
-  }
+  }, 500);
+  return;
+}
 
-  // 检查入住和离店日期
-  if (!range.value || range.value.length !== 2) {
-    uni.showToast({
-      title: '请选择入住和离店日期',
-      icon: 'none'
-    });
-    return;
-  }
+// 检查入住和离店日期
+if (!range.value || range.value.length !== 2) {
+  uni.showToast({
+    title: '请选择入住和离店日期',
+    icon: 'none'
+  });
+  return;
+}
+// 跳转详情页面
+const  goHotelDetail = (hotel) => {
+ uni.navigateTo({
+    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}`
+  }) 
+}
 
-  // 准备订单数据
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo.realname || '',
-      contractPhone: userStore.userInfo.phone || ''
-    },
-    items: [
-      {
-        bookInfo: {
-          date: `${range.value[0]} - ${range.value[1]}`,
-          fullname: userStore.userInfo.realname || '',
-          idCardNo: userStore.userInfo.idCardNo || '',
-          idCardType: 'ID_CARD',
-          schedule: '' // 可以根据需要添加具体时间
-        },
-        productId: hotel.id,
-        productType: 'Accommodations',
-        quantity: 1
-      }
-    ]
-  };
+// 准备订单数据
+const orderData = {
+  contract: {
+    contractName: userStore.userInfo.realname || '',
+    contractPhone: userStore.userInfo.phone || ''
+  },
+  items: [
+    {
+      bookInfo: {
+        date: `${range.value[0]} - ${range.value[1]}`,
+        fullname: userStore.userInfo.realname || '',
+        idCardNo: userStore.userInfo.idCardNo || '',
+        idCardType: 'ID_CARD',
+        schedule: '' // 可以根据需要添加具体时间
+      },
+      productId: hotel.id,
+      productType: 'Accommodations',
+      quantity: 1
+    }
+  ]
+};
 
-  // 打印请求数据
-  console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
 
-  // 创建订单请求
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
-    },
-    data: orderData,
-    success: (res) => {
-      // 打印响应数据
-      console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
-
-      if (res.data.code === 200) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
-        // 可以跳转到订单详情页或其他页面
-        // uni.navigateTo({
-        //   url: `/pages/order/order?orderId=${res.data.result.id}`
-        // });
-      } else {
-        uni.showToast({
-          title: res.data.message || '订单创建失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('创建订单失败', err);
+// 创建订单请求
+uni.request({
+  url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+  method: 'POST',
+  header: {
+    'Content-Type': 'application/json',
+    'X-Access-Token': userStore.token
+  },
+  data: orderData,
+  success: (res) => {
+    if (res.data.code === 200) {
       uni.showToast({
-        title: '创建订单失败，请稍后重试',
+        title: '订单创建成功',
+        icon: 'success',
+        duration: 1500
+      });
+      // 可以跳转到订单详情页或其他页面
+      uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotel.id}` })
+    } else {
+      uni.showToast({
+        title: res.data.message || '订单创建失败',
         icon: 'none'
       });
     }
-  });
-};
+  },
+  fail: (err) => {
+    console.error('创建订单失败', err);
+    uni.showToast({
+      title: '创建订单失败，请稍后重试',
+      icon: 'none'
+    });
+  }
+});
 
-// 创建订单接口
-const createOrder = (id) => {
-  uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${id}` })
-  // uni.request({
-  //   url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/createOrder',
-  //   method: 'POST',
-  //   data: {
-  //     "contract": {
-  //       "contractName": "",
-  //       "contractPhone": ""
-  //     },
-  //     "items": [
-  //       {
-  //         "bookInfo": {
-  //           "date": "",
-  //           "fullname": "",
-  //           "idCardNo": "",
-  //           "idCardType": "",
-  //           "schedule": ""
-  //         },
-  //         "productId": "",
-  //         "productType": "",
-  //         "quantity": 0
-  //       }
-  //     ]
-
-  //   },
-  //   header: {}
-
-  // })
 }
+
+
 </script>
 
 <style>
