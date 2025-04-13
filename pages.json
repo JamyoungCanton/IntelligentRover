@@ -207,6 +207,14 @@
 			"style": {
 				"navigationBarTitleText": "dingingDetail"
 			}
+		},
+		{
+			"path" : "pages/foodDetails/foodDetails",
+			"style" : 
+			{
+				"navigationBarTitleText" : "foodDetails",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {
