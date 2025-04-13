@@ -58,9 +58,15 @@
             </view>
             <!-- 第三行：评分和月售 -->
             <view class="rating-box">
-              <uni-icons type="star-filled" size="14" color="#FFA500" />
+              <view class="star-rating">
+                <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'"
+                  size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFA500' : '#CCCCCC'" />
+                <text v-if="restaurant.rating % 1 !== 0" class="half-star">
+                  <uni-icons type="star-filled" size="14" color="#FFA500" style="width: 50%;" />
+                </text>
+              </view>
               <text class="rating">{{ restaurant.rating }}</text>
-              <text class="monthly-sale">月售 {{ restaurant.monthlySales }}</text>
+              <text class="monthly-sale">月售 {{ restaurant.monthSale }}</text>
             </view>
             <!-- 第四行：价格和预订按钮 -->
             <view class="price-book-row">
@@ -237,7 +243,7 @@ const onSearchInput = () => {
   // 实时搜索，不需要额外处理，因为已经在computed中处理了
 };
 
-// 处理预订点击事件
+
 // 创建订单函数
 const createOrder = (restaurant) => {
   // 计算价格（使用人均价格）
