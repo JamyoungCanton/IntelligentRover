@@ -5,7 +5,8 @@
 			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
 		}
 	},
-	"pages": [
+	"pages": [ // pages数组中第一项表示应用启动页
+	
 		{
 			"path": "pages/index/index",
 			"style": {
@@ -59,6 +60,14 @@
 			"path": "pages/ticketBooking/ticketBooking",
 			"style": {
 				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/ticketDetails/ticketDetails",
+			"style": {
+				"navigationBarTitleText":"交通详情",
+				"navigationBarBackgroundColor":"#ffffff",
+				"navigationBarTextStyle":"black"
 			}
 		},
 		{
@@ -199,6 +208,14 @@
 			"path": "pages/dingingDetail/dingingDetail",
 			"style": {
 				"navigationBarTitleText": "dingingDetail"
+			}
+		},
+		{
+			"path" : "pages/foodDetails/foodDetails",
+			"style" : 
+			{
+				"navigationBarTitleText" : "foodDetails",
+				"navigationStyle": "custom"
 			}
 		},
 		{

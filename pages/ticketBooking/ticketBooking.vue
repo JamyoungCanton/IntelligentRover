@@ -46,9 +46,7 @@
           <view class="sort-item">
             <text class="sort-text" @click="toggleSort('time')">时间</text>
             <image :src="sortType.time ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
-          </view>
-          <view class="sort-item">
-            <text class="sort-text" @click="toggleSort('price')">价格</text>
+			<text class="sort-text" @click="toggleSort('price')">价格</text>
             <image :src="sortType.price ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
           </view>
         </view>
@@ -59,7 +57,7 @@
       </view>
 
       <view class="ticket-list">
-        <view class="ticket-card" v-for="(ticket, index) in tickets" :key="index">
+        <view class="ticket-card" v-for="(ticket, index) in tickets" :key="index" @click="goToDetails(ticket.id)">
           <view class="time-row">
             <text class="time">{{ ticket.time }}</text>
             <text class="duration">{{ ticket.duration }}</text>
@@ -70,7 +68,7 @@
           </view>
           <view class="action-row">
             <text class="remain">剩余 {{ ticket.remain }} 张</text>
-            <button class="book-btn primary" type="button" @click="createOrder(ticket)">预订</button>
+			<button class="book-btn primary" type="button">预订</button>
           </view>
         </view>
       </view>
@@ -196,75 +194,15 @@ const toggleSort = (type) => {
   }
 };
 
-const createOrder = (ticket) => {
-  if (!hasToken()) return;
-
-  // 准备订单数据
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo.realname || '默认联系人',
-      contractPhone: userStore.userInfo.phone || '12345678901'
-    },
-    items: [
-      {
-        bookInfo: {
-          date: `${currentDate.value}`,
-          fullname: userStore.userInfo.realname || '默认联系人',
-          idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
-          idCardType: 'ID_CARD',
-          schedule: ticket.time
-        },
-        productId: ticket.id, // 使用船票的 ID 作为 productId
-        productType: 'Transportation',
-        quantity: passengerCount.value
-      }
-    ]
-  };
-
-  console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
-
-  // 创建订单请求
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
-    },
-    data: orderData,
-    success: (res) => {
-      console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
-
-      if (res.data.success) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
-        // 跳转到订单详情页
-        // uni.navigateTo({
-        //   url: `/pages/order/order?orderId=${res.data.result.id}`
-        // });
-      } else {
-        uni.showToast({
-          title: res.data.message || '订单创建失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('创建订单失败', err);
-      uni.showToast({
-        title: '创建订单失败，请稍后重试',
-        icon: 'none'
-      });
-    }
+// 跳转到详情页
+const goToDetails = (ticketId) => {
+  uni.navigateTo({
+    url: `/pages/ticketDetails/ticketDetails?ticketId=${ticketId}`
   });
 };
 
 // 页面加载时获取船票
 onMounted(() => {
-  hasToken();
   fetchTickets();
 });
 </script>

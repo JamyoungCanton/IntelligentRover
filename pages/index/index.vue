@@ -1,7 +1,6 @@
-
 <template>
   <view class="page">
-    <view class="nav-bar fixed-top flex-row items-center px-32" :style="{paddingTop:safeAreaInsets.top + 'px'}">
+    <view class="nav-bar fixed-top flex-row items-center px-32" :style="{ paddingTop: safeAreaInsets.top + 'px' }">
       <view class="flex-row items-center text-white">
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
         <uni-icons type="spinner-cycle" size="24" color="#FFD700" />
@@ -11,7 +10,7 @@
       </view>
     </view>
 
-    
+
 
 
     <scroll-view class="main-content" scroll-y>
@@ -38,12 +37,8 @@
       <view class="section">
         <text class="section-title">热门活动</text>
         <view class="activity-container">
-          <view 
-            v-for="(activity, index) in activities" 
-            :key="index" 
-            class="activity-card"
-            @click="navigateToActivity"
-          >
+          <view v-for="(activity, index) in activities" :key="index" :id="activity.id || 'activity-' + index"
+            class="activity-card" @click="navigateToActivity(activity.id)">
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
             <view class="activity-info">
               <text class="activity-title">{{ activity.title }}</text>
@@ -56,7 +51,8 @@
       <view class="section">
         <text class="section-title">精选路线</text>
         <view class="route-card" @click="navigateToRoute">
-          <image src="https://ai-public.mastergo.com/ai/img_res/29f6b0ecc3a2e6885a39cbde9d4a762e.jpg" mode="aspectFill" class="route-image" />
+          <image src="https://ai-public.mastergo.com/ai/img_res/29f6b0ecc3a2e6885a39cbde9d4a762e.jpg" mode="aspectFill"
+            class="route-image" />
           <view class="route-info">
             <text class="route-title">浪漫双岛游</text>
             <text class="route-desc">东澳岛-外伶仃岛 2日游</text>
@@ -66,19 +62,22 @@
       </view>
     </scroll-view>
 
-    <view class="ai-float-btn"  @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag" @touchend="endDrag" :style="{left: dragX + 'px', top: dragY + 'px'}">
+    <view class="ai-float-btn" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag" @touchend="endDrag"
+      :style="{ left: dragX + 'px', top: dragY + 'px' }">
       <view class="ai-btn">
         <img src="https://wlmtsys.com:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
 
-    
+
   </view>
 </template>
 
-<script  setup>
+<script setup>
 import { ref } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
+import { useUserStore } from '@/store/modules/user';
 
 const dragX = ref(uni.getSystemInfoSync().screenWidth - 96); // 96 是按钮的宽度
 const dragY = ref((uni.getSystemInfoSync().screenHeight - 96) / 2);
@@ -86,6 +85,9 @@ const startX = ref(0);
 const startY = ref(0);
 const offsetX = ref(0);
 const offsetY = ref(0);
+
+
+const userStore = useUserStore();
 
 const startDrag = (e) => {
   const { clientX, clientY } = e.touches[0];
@@ -103,8 +105,8 @@ const moveDrag = (e) => {
   const screenWidth = uni.getSystemInfoSync().screenWidth;
   const screenHeight = uni.getSystemInfoSync().screenHeight;
 
-  dragX.value = Math.max(0, Math.min(x, screenWidth - 96)); 
-  dragY.value = Math.max(0, Math.min(y, screenHeight - 96)); 
+  dragX.value = Math.max(0, Math.min(x, screenWidth - 96));
+  dragY.value = Math.max(0, Math.min(y, screenHeight - 96));
 };
 
 const endDrag = () => {
@@ -144,7 +146,7 @@ const gridItems = [
   {
     image: 'https://ai-public.mastergo.com/ai/img_res/6e3b763c2b9b0240282a50a27279cc92.jpg',
     text: '停车收费',
-    path:'/pages/parkingFees/parkingFees'
+    path: '/pages/parkingFees/parkingFees'
   },
   {
     image: 'https://ai-public.mastergo.com/ai/img_res/868a88ac3f0c7165d1ff7e4edcd8c6de.jpg',
@@ -163,18 +165,20 @@ const gridItems = [
   }
 ];
 
-const activities = [
+const activities = ref([
   {
+    id: 1,
     image: 'https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg',
     title: '海钓体验',
     price: '¥288/人起'
   },
   {
+    id: 2,
     image: 'https://ai-public.mastergo.com/ai/img_res/553e2a3f698900f0619f5ee2615903a9.jpg',
     title: '深潜探索',
     price: '¥368/人起'
   }
-];
+]);
 
 const quickActions = [
   { icon: 'calendar', text: '2 天行程' },
@@ -197,21 +201,74 @@ const navigateToChat = () => {
 };
 
 // 跳转到 热门活动 页面
-const navigateToActivity = () => {
+const navigateToActivity = (id) => {
+  console.log("跳转到活动详情页面")
+  console.log(`/pages/activity/activity?id=${id}`)
   uni.navigateTo({
-    url: '/pages/activity/activity'
+    url: `/pages/activity/activity?id=${id}`
   });
 };
 
 // 跳转到 精选路线 页面
 const navigateToRoute = () => {
   uni.navigateTo({
-	url: '/pages/route/route'
+    url: '/pages/route/route'
   });
 };
 
 // 获取屏幕安全距离
 const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets;
+
+
+// 发起请求获取活动列表
+const getActivitiesList = () => {
+  // 构建请求参数
+  const params = {
+    pageNo: 1,
+    pageSize: 300
+  };
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilActivities/list',
+    method: 'GET',
+    data: params,
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      console.log('活动列表响应数据:', res.data);
+      // 如果请求成功，更新活动
+      if (res.data.success) {
+        // 清空activities数组
+        activities.value = [];
+
+        // 遍历响应数据，将活动信息添加到activities数组中
+        const activityList = res.data.result.records
+        for (let activity of activityList) {
+          activities.value.push({
+            id: activity.id,
+            image: activity.imageUrl || 'https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg',
+            title: activity.type,
+            price: '¥' + activity.price + '/人起'
+          })
+        }
+
+      }
+    },
+    fail: () => {
+      // 处理请求失败的场景
+      console.error('网络请求失败');
+    }
+
+  })
+}
+
+// 每次进入页面时调用
+onShow(() => {
+  // 发起请求获取活动列表
+  getActivitiesList();
+});
 </script>
 
 <style>
@@ -327,20 +384,42 @@ page {
   font-weight: 500;
   color: #333333;
   margin-bottom: 132rpx;
-  
+
 }
 
 .activity-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: row;
+  overflow-x: scroll;
+  white-space: nowrap;
   gap: 32rpx;
   margin-top: 22rpx;
+  padding: 0 32rpx;
+  -webkit-overflow-scrolling: touch;
+  /* 支持iOS流畅滚动 */
+  scrollbar-width: none;
+  /* Firefox隐藏滚动条 */
+}
+
+.activity-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome Safari隐藏滚动条 */
 }
 
 .activity-card {
+  flex: 0 0 auto;
+  width: 320rpx;
+  /* 固定宽度 */
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  margin-right: 32rpx;
+  /* 卡片间距 */
+}
+
+.activity-card:last-child {
+  margin-right: 0;
+  /* 最后一个卡片右侧无间距 */
 }
 
 .activity-image {
@@ -350,6 +429,9 @@ page {
 
 .activity-info {
   padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .activity-title {
@@ -360,8 +442,9 @@ page {
 
 .activity-price {
   font-size: 24rpx;
-  color: #999999;
+  color: #4A88FF;
   margin-top: 8rpx;
+  text-align: right;
 }
 
 .route-card {
@@ -400,14 +483,18 @@ page {
 
 .ai-float-btn {
   position: fixed;
-  right: 0; /* 水平方向靠右 */
-  top: 50%; /* 垂直方向居中 */
-  transform: translateY(-50%); /* 垂直居中调整 */
+  right: 0;
+  /* 水平方向靠右 */
+  top: 50%;
+  /* 垂直方向居中 */
+  transform: translateY(-50%);
+  /* 垂直居中调整 */
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 99;
-  cursor: move; /* 添加鼠标样式 */
+  cursor: move;
+  /* 添加鼠标样式 */
 }
 
 .ai-btn {
@@ -420,10 +507,14 @@ page {
   justify-content: center;
   box-shadow: 0 8rpx 24rpx rgba(74, 136, 255, 0.2);
 }
-.ai-btn image{
-  width: 60rpx; /* 调整图片宽度 */
-  height: 60rpx; /* 调整图片高度 */
-  object-fit: contain; /* 保持图片原始比例并完整显示在容器内 */
+
+.ai-btn image {
+  width: 60rpx;
+  /* 调整图片宽度 */
+  height: 60rpx;
+  /* 调整图片高度 */
+  object-fit: contain;
+  /* 保持图片原始比例并完整显示在容器内 */
 }
 
 .ai-text {
@@ -531,4 +622,3 @@ page {
   color: #4A88FF;
 }
 </style>
-
