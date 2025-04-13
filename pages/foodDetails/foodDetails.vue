@@ -368,6 +368,7 @@ const viewAllReviews = () => {
 
 const bookNow = () => {
 	console.log('立即预订');
+	createOrder();
 };
 
 
@@ -413,6 +414,9 @@ const getRestaurantDetailsById = (id) => {
 			console.log("获取餐厅信息成功:", res.data);
 			if (res.data.code === 200 && res.data.result) {
 				const details = res.data.result;
+
+				// 保存餐厅详情到foodDetails变量
+				foodDetails.value = details;
 
 				// 更新店铺主照片，优先使用imageUrl，如果没有则使用shopPhotos，最后使用默认图片
 				shopMainImage.value = details.imageUrl || details.shopPhotos || '/static/foodDetails/shop.jpg';
@@ -492,6 +496,96 @@ const getRestaurantDetailsById = (id) => {
 		}
 	})
 }
+
+// 创建订单函数
+const createOrder = () => {
+	// 检查是否获取到了餐厅详情
+	if (!foodDetails.value) {
+		uni.showToast({
+			title: '请先获取餐厅信息',
+			icon: 'none',
+			duration: 2000
+		});
+		return;
+	}
+
+	// 计算价格（使用人均价格）
+	const price = foodDetails.value.priceaverage || 100;  // 默认100元如果没有价格
+	const quantity = 1;  // 默认预订1份
+	const totalAmount = price * quantity;
+
+	// 构建订单数据
+	const orderData = {
+		contract: {
+			contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
+			contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+		},
+		items: [
+			{
+				bookInfo: {
+					date: new Date().toISOString().split('T')[0], // 当前日期
+					fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
+					idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
+					idCardType: "ID_CARD",  // 默认为身份证
+					schedule: foodDetails.value.starthour || '12:00'  // 使用餐厅营业开始时间
+				},
+				productId: foodDetails.value.id,  // 餐厅ID
+				productType: "Dining",  // 餐饮类型
+				quantity: quantity,  // 预订数量
+				price: price,  // 单价
+				amount: totalAmount  // 总金额
+			}
+		]
+	};
+
+	// 在控制台打印订单信息
+	console.log('创建订单数据:', orderData);
+
+	// 发送创建订单请求
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+		method: 'POST',
+		data: orderData,
+		header: {
+			'Content-Type': 'application/json',
+			'X-Access-Token': userStore.token || ''
+		},
+		success: (res) => {
+			// 在控制台打印响应结果
+			console.log('创建订单响应:', res.data);
+
+			if (res.data.success) {
+				uni.showToast({
+					title: '预订成功',
+					icon: 'success',
+					duration: 2000
+				});
+				// 预订成功后跳转到订单页面
+				setTimeout(() => {
+					uni.navigateTo({
+						url: '/pages/order/order'
+					});
+				}, 2000);
+			} else {
+				uni.showToast({
+					title: res.data.message || '预订失败',
+					icon: 'none',
+					duration: 2000
+				});
+			}
+		},
+		fail: (err) => {
+			// 在控制台打印错误信息
+			console.error('创建订单失败:', err);
+
+			uni.showToast({
+				title: '网络错误，请重试',
+				icon: 'none',
+				duration: 2000
+			});
+		}
+	});
+};
 </script>
 
 <style scoped>
