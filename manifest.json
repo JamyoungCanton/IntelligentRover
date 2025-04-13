@@ -75,15 +75,36 @@
         "enable" : false
     },
     "vueVersion" : "3",
-    "h5" : {
-        "devServer" : {
-            "https" : false,
-            "port" : ""
-        },
-        "title" : "海岛智游侠",
-        "router" : {
-            "mode" : "history",
-            "base" : "./"
-        }
-    }
+	"h5" : {
+	    "devServer" : {
+	        // "disableHostCheck": true,
+	        "historyApiFallback" : true,
+	        "port" : 8980,
+	        "proxy" : {
+	            "/island" : {
+	                "target" : "http://island.zhangshuiyi.com/island", //测试环境
+	                "changeOrigin" : true,
+	                "secure" : false,
+	                "pathRewrite" : {
+	                    "^/island" : ""
+	                }
+	            }
+	        }
+	    },
+	    "router" : {
+	        "mode" : "history",
+	        "base" : ""
+	    },
+	    "sdkConfigs" : {
+	        "maps" : {}
+	    },
+	    "optimization" : {
+	        "treeShaking" : {
+	            "enable" : true
+	        }
+	    },
+	    "title" : "海岛智游侠",
+	    "template" : ""
+	}
+    
 }
