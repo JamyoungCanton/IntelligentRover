@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <view class="header">
+    <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
       <view class="back-btn" @click="goBack">
         <uni-icons :type="icons.back" :size="iconSize"></uni-icons>
       </view>
@@ -70,7 +70,7 @@
       </view>
     </view>
 
-    <view class="bottom-bar">
+    <view class="bottom-bar" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
       <view class="price-info">
         <text class="price-label">{{ priceLabel }}</text>
         <view class="price-wrapper">
@@ -86,11 +86,17 @@
 </template>
 
 <script setup>
-import { ref, onLoad } from 'vue';
+import { ref, onMounted } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
+import { useUserStore } from '@/store/modules/user';
 
-// 获取活动ID
-const route = getCurrentPages()[getCurrentPages().length - 1].$page.options;
-const activityId = route.id || 1;  // 默认为1，防止没有传递ID
+const safeAreaInsets = ref({});
+const statusBarHeight = ref(0);
+
+const userStore = useUserStore();
+
+// 活动ID
+const activityId = 1;  // 默认为1，防止没有传递ID
 
 // 响应式变量
 const safeArea = ref({ top: 0, bottom: 0 });
@@ -189,43 +195,49 @@ const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value;
 };
 
-const getSafeAreaInfo = () => {
-  const systemInfo = uni.getSystemInfoSync();
-  safeArea.value = systemInfo.safeArea || { top: 0, bottom: 0 };
-};
-
-// 获取活动详情
-const fetchActivityDetails = async () => {
-  try {
-    const res = await uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilActivities/details',
-      method: 'GET',
-      data: { id: activityId },
-      header: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+// 调用接口获取活动详细信息
+const getActivityDetailsById = (id) => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilActivities/queryById',
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    data: {
+      id: id
+    },
+    success: (res) => {
+      console.log("获取餐厅信息成功:", res.data);
+      if (res.data.code === 200 && res.data.result) {
       }
-    });
+    },
+    fail: (err) => {
+      // 在控制台打印错误信息
+      console.error('获取餐厅信息失败:', err);
 
-    if (res.data.success) {
-      const details = res.data.result;
-      // 更新活动详情
-      activityImage.value = details.imageUrl || activityImage.value;
-      title.value = details.type || title.value;
-      activityName.value = details.name || activityName.value;
-      price.value = `¥${details.price}` || price.value;
-      ratingText.value = `${details.rating || 4.8} (${details.ratingCount || 1280}人评价)`;
-    }
-  } catch (error) {
-    console.error('获取活动详情失败', error);
-  }
+      uni.showToast({
+        title: '网络错误，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    },
+  });
 };
 
 // 生命周期钩子
 onLoad((options) => {
   console.log('活动详情页面收到的ID:', options.id);
-  getSafeAreaInfo();
-  // fetchActivityDetails();
+  getActivityDetailsById(options.id);
 });
+
+
+onMounted(() => {
+  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
+  statusBarHeight.value = sbHeight;
+  safeAreaInsets.value = insets;
+});
+
 </script>
 
 <style scoped>

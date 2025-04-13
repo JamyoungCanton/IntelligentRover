@@ -203,9 +203,10 @@ const navigateToChat = () => {
 // 跳转到 热门活动 页面
 const navigateToActivity = (id) => {
   console.log("跳转到活动详情页面")
-  // uni.navigateTo({
-  //   url: `/pages/activity/activity?id=${id}`
-  // });
+  console.log(`/pages/activity/activity?id=${id}`)
+  uni.navigateTo({
+    url: `/pages/activity/activity?id=${id}`
+  });
 };
 
 // 跳转到 精选路线 页面
