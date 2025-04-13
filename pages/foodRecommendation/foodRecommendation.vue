@@ -41,14 +41,14 @@
       <!-- 餐厅列表 -->
       <scroll-view scroll-y class="restaurant-list">
         <view v-for="(restaurant, index) in displayedRestaurants" :key="index" class="restaurant-card">
-          <view class="restaurant-image">
+          <view class="restaurant-image" @click="goToFoodDetails(restaurant)">
             <image :src="restaurant.imageURL" mode="aspectFill" />
             <text :class="['tag', restaurant.tagType]">{{ restaurant.tag }}</text>
           </view>
           <view class="restaurant-info">
             <!-- 第一行：餐厅名称和地址 -->
             <view class="name-address-row">
-              <text class="restaurant-name">{{ restaurant.name }}</text>
+              <text class="restaurant-name" @click="goToFoodDetails(restaurant)">{{ restaurant.name }}</text>
               <text class="distance">{{ restaurant.address }}</text>
             </view>
             <!-- 第二行：营业时间 -->
@@ -57,19 +57,25 @@
                 formatTime(restaurant.endhour) }}</text>
             </view>
             <!-- 第三行：评分和月售 -->
-            <!-- <view class="rating-box">
-              <uni-icons type="star-filled" size="14" color="#FFA500" />
+            <view class="rating-box">
+              <view class="star-rating">
+                <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'"
+                  size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFA500' : '#CCCCCC'" />
+                <text v-if="restaurant.rating % 1 !== 0" class="half-star">
+                  <uni-icons type="star-filled" size="14" color="#FFA500" style="width: 50%;" />
+                </text>
+              </view>
               <text class="rating">{{ restaurant.rating }}</text>
-              <text class="monthly-sale">月售 {{ restaurant.monthlySales }}</text>
-            </view> -->
+              <text class="monthly-sale">月售 {{ restaurant.monthSale }}</text>
+            </view>
             <!-- 第四行：价格和预订按钮 -->
-            <!-- <view class="price-book-row">
+            <view class="price-book-row">
               <text class="price">人均 ¥{{ restaurant.priceaverage }}</text>
               <view class="book-button" @click.stop="onBooking(restaurant)"
                 style="padding: 8rpx 50rpx; font-size: 30rpx; height: 60rpx; line-height: 60rpx;">
                 预订
               </view>
-            </view> -->
+            </view>
           </view>
         </view>
       </scroll-view>
@@ -237,7 +243,7 @@ const onSearchInput = () => {
   // 实时搜索，不需要额外处理，因为已经在computed中处理了
 };
 
-// 处理预订点击事件
+
 // 创建订单函数
 const createOrder = (restaurant) => {
   // 计算价格（使用人均价格）
@@ -319,7 +325,15 @@ const createOrder = (restaurant) => {
   });
 };
 
-// 处理预订点击事件
+
+// 跳转到餐厅详情页面
+const goToFoodDetails = (restaurant) => {
+  console.log("跳转到餐厅详情页面")
+  uni.navigateTo({
+    url: `/pages/foodDetails/foodDetails?id=${restaurant.id}`
+  });
+};
+
 const onBooking = (restaurant) => {
   // 在控制台打印点击预订的餐厅信息
   console.log('点击预订按钮:', restaurant);
@@ -599,10 +613,13 @@ page {
 
 .restaurant-name {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: bold;
+  /* 改为加粗 */
   color: #333333;
   flex-shrink: 0;
   margin-right: 16rpx;
+  cursor: pointer;
+  /* 添加鼠标悬停样式 */
 }
 
 .rating-box {
