@@ -2,44 +2,39 @@
   <view class="container">
     <view class="header">
       <view class="back-btn" @click="goBack">
-        <uni-icons :type="data.icons.back" :size="data.iconSize"></uni-icons>
+        <uni-icons :type="icons.back" :size="iconSize"></uni-icons>
       </view>
-      <text class="title">{{ data.title }}</text>
+      <text class="title">{{ title }}</text>
       <view class="share-btn">
-        <uni-icons :type="data.icons.share" :size="data.iconSize"></uni-icons>
+        <uni-icons :type="icons.share" :size="iconSize"></uni-icons>
       </view>
     </view>
-    
-    <image :src="data.activityImage" class="activity-image"></image>
-    
+
+    <image :src="activityImage" class="activity-image"></image>
+
     <view class="activity-info">
-      <text class="activity-name">{{ data.activityName }}</text>
+      <text class="activity-name">{{ activityName }}</text>
       <view class="price-container">
-        <text class="price">{{ data.price }}</text>
-        <text class="price-unit">{{ data.priceUnit }}</text>
+        <text class="price">{{ price }}</text>
+        <text class="price-unit">{{ priceUnit }}</text>
       </view>
-      
+
       <view class="rating-container">
-        <uni-icons 
-          v-for="(star, index) in data.ratingStars" 
-          :key="index" 
-          :type="data.icons.star" 
-          :size="data.iconSize" 
-          :color="data.starColor"
-        ></uni-icons>
-        <text class="rating">{{ data.ratingText }}</text>
+        <uni-icons v-for="(star, index) in ratingStars" :key="index" :type="icons.star" :size="iconSize"
+          :color="starColor"></uni-icons>
+        <text class="rating">{{ ratingText }}</text>
       </view>
-      
+
       <view class="favorite" @click="toggleFavorite">
-        <image :src="isFavorite ? data.icons.favoriteFilled : data.icons.favorite" class="favorite-icon"></image>
-        <text :class="['favorite-text', isFavorite ? 'active' : '']">{{ data.favoriteText }}</text>
+        <image :src="isFavorite ? icons.favoriteFilled : icons.favorite" class="favorite-icon"></image>
+        <text :class="['favorite-text', isFavorite ? 'active' : '']">{{ favoriteText }}</text>
       </view>
     </view>
-    
+
     <view class="activity-schedule">
-      <text class="section-title">{{ data.sections.schedule }}</text>
-      
-      <view class="schedule-item" v-for="(schedule, index) in data.schedules" :key="index">
+      <text class="section-title">{{ sections.schedule }}</text>
+
+      <view class="schedule-item" v-for="(schedule, index) in schedules" :key="index">
         <image :src="schedule.icon" class="schedule-icon"></image>
         <view class="schedule-content">
           <text class="time">{{ schedule.time }}</text>
@@ -47,153 +42,190 @@
         </view>
       </view>
     </view>
-    
+
     <view class="precautions">
-      <text class="section-title">{{ data.sections.precautions }}</text>
-      <view class="precaution-item" v-for="(precaution, index) in data.precautions" :key="index">
+      <text class="section-title">{{ sections.precautions }}</text>
+      <view class="precaution-item" v-for="(precaution, index) in precautions" :key="index">
         <text class="precaution-text">{{ precaution }}</text>
       </view>
     </view>
-    
+
     <view class="cost-explanation">
-      <text class="section-title">{{ data.sections.cost }}</text>
-      
+      <text class="section-title">{{ sections.cost }}</text>
+
       <view class="cost-section">
-        <text class="cost-title">{{ data.costSections.included }}</text>
-        <view class="cost-item" v-for="(included, index) in data.costs.included" :key="index">
-          <text class="checkmark">{{ data.icons.checkmark }}</text>
+        <text class="cost-title">{{ costSections.included }}</text>
+        <view class="cost-item" v-for="(included, index) in costs.included" :key="index">
+          <text class="checkmark">{{ icons.checkmark }}</text>
           <text class="cost-text">{{ included }}</text>
         </view>
       </view>
-      
+
       <view class="cost-section">
-        <text class="cost-title">{{ data.costSections.notIncluded }}</text>
-        <view class="cost-item" v-for="(notIncluded, index) in data.costs.notIncluded" :key="index">
-          <uni-icons :type="data.icons.close" :size="data.iconSize" :color="data.closeColor"></uni-icons>
+        <text class="cost-title">{{ costSections.notIncluded }}</text>
+        <view class="cost-item" v-for="(notIncluded, index) in costs.notIncluded" :key="index">
+          <uni-icons :type="icons.close" :size="iconSize" :color="closeColor"></uni-icons>
           <text class="cost-text">{{ notIncluded }}</text>
         </view>
       </view>
     </view>
-    
+
     <view class="bottom-bar">
       <view class="price-info">
-        <text class="price-label">{{ data.priceLabel }}</text>
+        <text class="price-label">{{ priceLabel }}</text>
         <view class="price-wrapper">
-          <text class="price-value">{{ data.price }}</text>
-          <text class="price-unit">{{ data.priceUnit }}</text>
+          <text class="price-value">{{ price }}</text>
+          <text class="price-unit">{{ priceUnit }}</text>
         </view>
       </view>
       <button class="register-btn" @click="goToRegistration">
-        <text class="register-text">{{ data.registerText }}</text>
+        <text class="register-text">{{ registerText }}</text>
       </button>
     </view>
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-	  safeArea: { top: 0, bottom: 0 },
-      isFavorite: false,
-      data: {
-        // 图标和图片路径
-        icons: {
-          back: 'back',
-          share: 'share',
-          star: 'star-filled',
-          favorite: '/static/activity/heart.png',
-          favoriteFilled: '/static/activity/heart_filled.png',
-          checkmark: '√',
-          close: 'close',
-          time: '/static/activity/time.png',
-          swim: '/static/activity/swim.png',
-          food: '/static/activity/food.png'
-        },
-        // 图标大小
-        iconSize: 24,
-        // 活动图片
-        activityImage: 'https://wlmtsys.com:9000/travel/diving.jpg',
-        // 文本内容
-        title: '深潜探索',
-        activityName: '海底世界深潜体验',
-        price: '¥368',
-        priceUnit: '起/人',
-        ratingText: '4.8 (1280人评价)',
-        starColor: '#FFD700',
-        favoriteText: '收藏',
-        sections: {
-          schedule: '活动流程',
-          precautions: '注意事项',
-          cost: '费用说明'
-        },
-        costSections: {
-          included: '费用包含',
-          notIncluded: '费用不含'
-        },
-        priceLabel: '起始价格',
-        registerText: '立即报名',
-        // 列表内容
-        ratingStars: 5,
-        schedules: [
-          {
-            time: '09:00 集合出发',
-            description: '在指定地点集合，进行安全说明',
-            icon: '/static/activity/time.png'
-          },
-          {
-            time: '10:00 潜水培训',
-            description: '专业教练指导潜水技巧和安全知识',
-            icon: '/static/activity/swim.png'
-          },
-          {
-            time: '12:00 午餐休息',
-            description: '享用精致午餐，补充体力',
-            icon: '/static/activity/food.png'
-          }
-        ],
-        precautions: [
-          '参与者需年满18周岁，请携带有效身份证件',
-          '活动期间请听从教练指导，确保安全',
-          '建议穿着轻便泳装，可自备防晒用品'
-        ],
-        costs: {
-          included: [
-            '专业潜水装备租赁',
-            '专业教练一对一指导',
-            '午餐及饮用水'
-          ],
-          notIncluded: [
-            '往返交通费用',
-            '个人消费项目'
-          ]
-        },
-        // 颜色配置
-        closeColor: '#FF6B6B'
+<script setup>
+import { ref, onLoad } from 'vue';
+
+// 获取活动ID
+const route = getCurrentPages()[getCurrentPages().length - 1].$page.options;
+const activityId = route.id || 1;  // 默认为1，防止没有传递ID
+
+// 响应式变量
+const safeArea = ref({ top: 0, bottom: 0 });
+const isFavorite = ref(false);
+
+// 图标和图片路径
+const icons = {
+  back: 'back',
+  share: 'share',
+  star: 'star-filled',
+  favorite: '/static/activity/heart.png',
+  favoriteFilled: '/static/activity/heart_filled.png',
+  checkmark: '√',
+  close: 'close',
+  time: '/static/activity/time.png',
+  swim: '/static/activity/swim.png',
+  food: '/static/activity/food.png'
+};
+
+const iconSize = 24;
+const starColor = '#FFD700';
+const closeColor = '#FF6B6B';
+
+// 活动详情数据
+const activityImage = ref('https://wlmtsys.com:9000/travel/diving.jpg');
+const title = ref('深潜探索');
+const activityName = ref('海底世界深潜体验');
+const price = ref('¥368');
+const priceUnit = ref('起/人');
+const ratingText = ref('4.8 (1280人评价)');
+const favoriteText = ref('收藏');
+const ratingStars = ref(5);
+
+const sections = {
+  schedule: '活动流程',
+  precautions: '注意事项',
+  cost: '费用说明'
+};
+
+const costSections = {
+  included: '费用包含',
+  notIncluded: '费用不含'
+};
+
+const priceLabel = ref('起始价格');
+const registerText = ref('立即报名');
+
+const schedules = ref([
+  {
+    time: '09:00 集合出发',
+    description: '在指定地点集合，进行安全说明',
+    icon: '/static/activity/time.png'
+  },
+  {
+    time: '10:00 潜水培训',
+    description: '专业教练指导潜水技巧和安全知识',
+    icon: '/static/activity/swim.png'
+  },
+  {
+    time: '12:00 午餐休息',
+    description: '享用精致午餐，补充体力',
+    icon: '/static/activity/food.png'
+  }
+]);
+
+const precautions = ref([
+  '参与者需年满18周岁，请携带有效身份证件',
+  '活动期间请听从教练指导，确保安全',
+  '建议穿着轻便泳装，可自备防晒用品'
+]);
+
+const costs = {
+  included: [
+    '专业潜水装备租赁',
+    '专业教练一对一指导',
+    '午餐及饮用水'
+  ],
+  notIncluded: [
+    '往返交通费用',
+    '个人消费项目'
+  ]
+};
+
+// 方法定义
+const goBack = () => {
+  uni.navigateBack();
+};
+
+const goToRegistration = () => {
+  uni.navigateTo({
+    url: '/pages/activityRegistration/activityRegistration'
+  });
+};
+
+const toggleFavorite = () => {
+  isFavorite.value = !isFavorite.value;
+};
+
+const getSafeAreaInfo = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  safeArea.value = systemInfo.safeArea || { top: 0, bottom: 0 };
+};
+
+// 获取活动详情
+const fetchActivityDetails = async () => {
+  try {
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/product/ilActivities/details',
+      method: 'GET',
+      data: { id: activityId },
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
-    };
-  },
-  onLoad(){
-	  this.getSafeAreaInfo();
-  },
-  methods: {
-    goBack() {
-      uni.navigateBack();
-    },
-    goToRegistration() {
-      uni.navigateTo({
-        url: '/pages/activityRegistration/activityRegistration'
-      });
-    },
-    toggleFavorite() {
-      this.isFavorite = !this.isFavorite;
-    }, 
-	getSafeAreaInfo() {
-      const systemInfo = uni.getSystemInfoSync();
-      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+    });
+
+    if (res.data.success) {
+      const details = res.data.result;
+      // 更新活动详情
+      activityImage.value = details.imageUrl || activityImage.value;
+      title.value = details.type || title.value;
+      activityName.value = details.name || activityName.value;
+      price.value = `¥${details.price}` || price.value;
+      ratingText.value = `${details.rating || 4.8} (${details.ratingCount || 1280}人评价)`;
     }
+  } catch (error) {
+    console.error('获取活动详情失败', error);
   }
 };
+
+// 生命周期钩子
+onLoad((options) => {
+  console.log('活动详情页面收到的ID:', options.id);
+  getSafeAreaInfo();
+  // fetchActivityDetails();
+});
 </script>
 
 <style scoped>
@@ -270,7 +302,8 @@ export default {
   right: 20px;
   bottom: 70px;
   display: flex;
-  flex-direction: column; /* 垂直排列 */
+  flex-direction: column;
+  /* 垂直排列 */
   align-items: center;
 }
 
@@ -372,8 +405,10 @@ export default {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 10px;
-  padding: 10px 0; /* 增加上下间距 */
-  border-bottom: 1px solid #f0f0f0; /* 可选，用于分隔费用包含和费用不含 */
+  padding: 10px 0;
+  /* 增加上下间距 */
+  border-bottom: 1px solid #f0f0f0;
+  /* 可选，用于分隔费用包含和费用不含 */
 }
 
 .cost-item {

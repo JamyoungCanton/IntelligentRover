@@ -38,7 +38,7 @@
         <text class="section-title">热门活动</text>
         <view class="activity-container">
           <view v-for="(activity, index) in activities" :key="index" :id="activity.id || 'activity-' + index"
-            class="activity-card" @click="navigateToActivity">
+            class="activity-card" @click="navigateToActivity(activity.id)">
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
             <view class="activity-info">
               <text class="activity-title">{{ activity.title }}</text>
@@ -201,10 +201,11 @@ const navigateToChat = () => {
 };
 
 // 跳转到 热门活动 页面
-const navigateToActivity = () => {
-  uni.navigateTo({
-    url: '/pages/activity/activity'
-  });
+const navigateToActivity = (id) => {
+  console.log("跳转到活动详情页面")
+  // uni.navigateTo({
+  //   url: `/pages/activity/activity?id=${id}`
+  // });
 };
 
 // 跳转到 精选路线 页面
@@ -406,7 +407,8 @@ page {
 
 .activity-card {
   flex: 0 0 auto;
-  width: 420rpx;  /* 调整活动卡片的宽度 */
+  width: 320rpx;
+  /* 固定宽度 */
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
