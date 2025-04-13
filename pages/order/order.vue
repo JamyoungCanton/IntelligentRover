@@ -47,8 +47,7 @@
             </text>
           </view>
           <view class="order-info">
-            <image class="order-image"
-              src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
             </image>
             <view class="order-details">
               <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>
@@ -59,8 +58,10 @@
           <view class="order-footer">
             <text class="price">¥ {{ order.amount || 0 }}</text>
             <view class="button-group">
+
               <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default"
                 @click="cancelOrder(order)">取消订单</button>
+
               <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
               <button v-else class="btn btn-primary" @click="getOrderDetailById1(order.orderSn)">查看详情</button>
             </view>
@@ -68,6 +69,7 @@
         </view>
       </view>
     </scroll-view>
+
 
     <!-- 订单详情弹窗 -->
     <view class="detail-popup" v-if="showDetailPopup">
@@ -129,6 +131,7 @@
         </scroll-view>
       </view>
     </view>
+
   </view>
 </template>
 
@@ -139,11 +142,13 @@ import { useUserStore } from '@/store/modules/user';
 
 const tabs = ['全部', '待支付', '已支付', '待出行', '进行中', '已完成'];
 const currentTab = ref(0);
-const orders = ref([]); // 存储订单数据
+const orders = ref([]);
 const userStore = useUserStore();
+
 const searchKeyword = ref(''); // 搜索结果关键词
 const showDetailPopup = ref(false); // 控制弹窗显示
 const currentOrderDetail = ref(null); // 当前订单详情
+
 
 // 订单状态映射
 const statusMap = {
@@ -210,7 +215,9 @@ const filteredOrders = computed(() => {
   return result;
 });
 
+
 // 搜索功能
+
 const handleSearch = (value) => {
   searchKeyword.value = value;
 };
@@ -234,6 +241,7 @@ const handleTabClick = (index) => {
   currentTab.value = index;
   getOrderList(); // 切换标签时重新获取订单列表
 };
+
 
 // 获取用户自身的订单列表  GET
 const getOrderList = () => {
@@ -287,6 +295,7 @@ const getOrderList = () => {
     }
   });
 };
+
 
 // 根据订单ID查询订单详情  GET
 const getOrderDetailById1 = (orderSn) => {
