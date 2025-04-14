@@ -485,7 +485,7 @@ page {
   position: fixed;
   /* 移除 right: 0 */
   top: 50%;
-  transform: translateY(150%);
+  transform: translateY(250%);
   display: flex;
   flex-direction: column;
   cursor: move;
