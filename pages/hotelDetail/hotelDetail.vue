@@ -1,37 +1,37 @@
 <template>
   <view class="container">
     <view class="header">
-      <img src="https://wlmtsys.com:9000/travel/h20.jpg" alt="">
+      <img :src="hotelData.imageUrl" alt="">
       <view class="title-name">
-        <text class="title">东澳湾度假酒店</text>
+        <text class="title">{{ hotelData.name }}</text>
         <view class="rating">
-              <uni-rate value="5" size="20" readonly></uni-rate>
-              <text class="score">5</text>
+              <uni-rate :value="hotelData.rating" size="20" readonly></uni-rate>
+              <text class="score">{{ hotelData.rating }}</text>
         </view>
       </view>
       <view class="address">
-        <text>📍 珠海市香洲区东澳湾海滨路88号</text>
+        <text>📍 {{ hotelData.address }}</text>
       </view>
       <view class="tags">
         <text class="tag">餐饮</text>
-        <text class="tag">酒店主题</text>
-        <text class="tag">酒店类型</text>
-        <text class="tag">酒店星级</text>
+        <text class="tag">{{ hotelData.hoteltheme }}</text>
+        <text class="tag">{{ hotelData.hoteltype }}</text>
+        <text class="tag">{{ hotelData.starrating }}星级</text>
       </view>
     </view>
     <view class="toomtype">
       <view class="room">
         <view class="roomtitem">
           <view class="roomtitle">房型: </view>
-          <view class="roomcontent">双人间</view>
+          <view class="roomcontent">{{ hotelData.roomtype }}</view>
         </view>
         <view class="roomtitem">
           <view class="roomtitle">预订方式：</view>
-          <view class="roomcontent">0756-1234567</view>
+          <view class="roomcontent">{{ hotelData.bookingmethod }}</view>
         </view>
         <view class="roomtitem">
           <view class="roomtitle">库存: </view>
-          <view class="roomcontent">1000</view>
+          <view class="roomcontent">{{ hotelData.roominventory }}</view>
         </view>
         <view class="roomtitem">
           <view class="roomtitle">入住时间: </view>
@@ -44,7 +44,7 @@
       </view>
     </view>
     <view class="price">
-      <text class="current-price">¥888</text>
+      <text class="current-price">¥{{ hotelData.price }}</text>
       <text class="original-price">¥1,088 起/晚</text>
       <button class="discount">限时特惠</button>
     </view>
@@ -140,7 +140,7 @@
       
     </view>
     
-    <button class="book-now">立即预订</button>
+    <button @click="creaOrder(hotelData)" class="book-now">立即预订</button>
   </view>
 </template>
 
@@ -150,19 +150,14 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user'
 
 const userStore = useUserStore()
-const hotelId = ref('')
-const hotelData = ref({
-  name: '',
-  rating: '',
-  price: '',
-  // 其他酒店数据字段
+let hotelId = ref('')
+let hotelData = ref({
 })
 
 // 接收路由参数
 onLoad((options) => {
   hotelId.value = options.id
-  console.log(hotelId.value);
-  
+  // console.log(hotelId.value);
   getDetailList()
 })
 
@@ -175,11 +170,80 @@ const getDetailList = () => {
         'Content-Type': 'application/json',
         'X-Access-Token': userStore.token
       },
-      success:(success)=>{
-        console.log(success);
-      },
+      success:(res)=>{
+        hotelData.value = res.data
+        // console.log(hotelData.value);
+        
+     },
 })
+
+
 }
+
+
+// 跳转到订单页面并创建订单
+const creaOrder = (hotel) => {
+
+  const orderData = ref({
+  contract: {
+    contractName: userStore.userInfo.realname || '',
+    contractPhone: userStore.userInfo.phone || ''
+  },
+  items: [
+    {
+      bookInfo: {
+        date: new Date().toISOString().split('T')[0], // 添加默认日期
+        fullname: userStore.userInfo.realname || '',
+        idCardNo: userStore.userInfo.idCardNo || '',
+        idCardType: 'ID_CARD',
+        schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+      },
+      productId: hotel.id, // 初始为空字符串
+      productType: "Accommodations",
+      quantity: 1
+    }
+  ]
+})
+
+
+  uni.request({
+  url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+  method: 'POST',
+  header: {
+    'Content-Type': 'application/json',
+    'X-Access-Token': userStore.token
+  },
+  data: orderData.value,
+  success: (res) => {
+    console.log(res.data);
+    
+    if (res.data.code === 200) {
+      uni.showToast({
+        title: '订单创建成功',
+        icon: 'success',
+        duration: 1500
+      });
+      // 可以跳转到订单详情页或其他页面
+      uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}` })
+    } else {
+      uni.showToast({
+        title: res.data.message || '订单创建失败',
+        icon: 'none'
+      });
+    }
+  },
+  fail: (err) => {
+    console.error('创建订单失败', err);
+    uni.showToast({
+      title: '创建订单失败，请稍后重试',
+      icon: 'none'
+    });
+  }
+});
+
+}
+
+
 </script>
 
 <style scoped>
@@ -429,7 +493,7 @@ const getDetailList = () => {
   background-color: #ff5722;
   color: #fff;
   border: none;
-  padding: 12px 24px;
+  padding: 5px 4px;
   border-radius: 4px;
   width: 100%;
 }

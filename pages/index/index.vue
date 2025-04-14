@@ -79,8 +79,8 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
-const dragX = ref(uni.getSystemInfoSync().screenWidth - 96); // 96 是按钮的宽度
-const dragY = ref((uni.getSystemInfoSync().screenHeight - 96) / 2);
+const dragX = ref(uni.getSystemInfoSync().screenWidth-58); // 96 是按钮的宽度
+const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);
 const startX = ref(0);
 const startY = ref(0);
 const offsetX = ref(0);
@@ -105,7 +105,7 @@ const moveDrag = (e) => {
   const screenWidth = uni.getSystemInfoSync().screenWidth;
   const screenHeight = uni.getSystemInfoSync().screenHeight;
 
-  dragX.value = Math.max(0, Math.min(x, screenWidth - 96));
+  dragX.value = Math.max(0, Math.min(x, screenWidth-58));
   dragY.value = Math.max(0, Math.min(y, screenHeight - 96));
 };
 
@@ -114,7 +114,7 @@ const endDrag = () => {
   const screenHeight = uni.getSystemInfoSync().screenHeight;
 
   // 限制按钮在页面内
-  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth - 96)); // 96 是按钮的宽度
+  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth)) // 96 是按钮的宽度
   dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
 
 };
@@ -483,18 +483,12 @@ page {
 
 .ai-float-btn {
   position: fixed;
-  right: 0;
-  /* 水平方向靠右 */
+  /* 移除 right: 0 */
   top: 50%;
-  /* 垂直方向居中 */
-  transform: translateY(-50%);
-  /* 垂直居中调整 */
+  transform: translateY(150%);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  z-index: 99;
   cursor: move;
-  /* 添加鼠标样式 */
 }
 
 .ai-btn {
