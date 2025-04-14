@@ -62,7 +62,7 @@
       <view class="instructions-list">
         <view 
           v-for="(instruction, index) in instructions" 
-          :key="index" 
+          :key="index"
           class="instruction-item"
         >
           <text class="instruction-icon">i</text>
