@@ -2,39 +2,43 @@
   <view class="container">
     <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
       <view class="back-btn" @click="goBack">
-        <uni-icons :type="icons.back" :size="iconSize"></uni-icons>
+        <uni-icons :type="activity.icons.back" :size="activity.iconSize"></uni-icons>
       </view>
-      <text class="title">{{ title }}</text>
+      <text class="title">{{ activity.type }}</text>
       <view class="share-btn">
-        <uni-icons :type="icons.share" :size="iconSize"></uni-icons>
+        <uni-icons :type="activity.icons.share" :size="activity.iconSize"></uni-icons>
       </view>
     </view>
 
-    <image :src="activityImage" class="activity-image"></image>
+    <image :src="activity.image" class="activity-image"></image>
 
     <view class="activity-info">
-      <text class="activity-name">{{ activityName }}</text>
+      <text class="activity-name">{{ activity.title }}</text>
       <view class="price-container">
-        <text class="price">{{ price }}</text>
-        <text class="price-unit">{{ priceUnit }}</text>
+        <text class="price">{{ activity.price }}</text>
+        <text class="price-unit">{{ activity.priceUnit }}</text>
       </view>
 
       <view class="rating-container">
-        <uni-icons v-for="(star, index) in ratingStars" :key="index" :type="icons.star" :size="iconSize"
-          :color="starColor"></uni-icons>
-        <text class="rating">{{ ratingText }}</text>
+        <uni-icons v-for="(star, index) in activity.ratingStars" :key="index" :type="activity.icons.star"
+          :size="activity.iconSize" :color="activity.starColor">
+        </uni-icons>
+        <text class="rating">{{ activity.ratingText }}</text>
       </view>
 
       <view class="favorite" @click="toggleFavorite">
-        <image :src="isFavorite ? icons.favoriteFilled : icons.favorite" class="favorite-icon"></image>
-        <text :class="['favorite-text', isFavorite ? 'active' : '']">{{ favoriteText }}</text>
+        <image :src="isFavorite ? activity.icons.favoriteFilled : activity.icons.favorite" class="favorite-icon">
+        </image>
+        <text :class="['favorite-text', isFavorite ? 'active' : '']">
+          {{ activity.favoriteText }}
+        </text>
       </view>
     </view>
 
     <view class="activity-schedule">
-      <text class="section-title">{{ sections.schedule }}</text>
+      <text class="section-title">{{ activity.sections.schedule }}</text>
 
-      <view class="schedule-item" v-for="(schedule, index) in schedules" :key="index">
+      <view class="schedule-item" v-for="(schedule, index) in activity.schedules" :key="index">
         <image :src="schedule.icon" class="schedule-icon"></image>
         <view class="schedule-content">
           <text class="time">{{ schedule.time }}</text>
@@ -44,150 +48,155 @@
     </view>
 
     <view class="precautions">
-      <text class="section-title">{{ sections.precautions }}</text>
-      <view class="precaution-item" v-for="(precaution, index) in precautions" :key="index">
+      <text class="section-title">{{ activity.sections.precautions }}</text>
+      <view class="precaution-item" v-for="(precaution, index) in activity.precautions" :key="index">
         <text class="precaution-text">{{ precaution }}</text>
       </view>
     </view>
 
     <view class="cost-explanation">
-      <text class="section-title">{{ sections.cost }}</text>
+      <text class="section-title">{{ activity.sections.cost }}</text>
 
       <view class="cost-section">
-        <text class="cost-title">{{ costSections.included }}</text>
-        <view class="cost-item" v-for="(included, index) in costs.included" :key="index">
-          <text class="checkmark">{{ icons.checkmark }}</text>
+        <text class="cost-title">{{ activity.costSections.included }}</text>
+        <view class="cost-item" v-for="(included, index) in activity.costs.included" :key="index">
+          <text class="checkmark">{{ activity.icons.checkmark }}</text>
           <text class="cost-text">{{ included }}</text>
         </view>
       </view>
 
       <view class="cost-section">
-        <text class="cost-title">{{ costSections.notIncluded }}</text>
-        <view class="cost-item" v-for="(notIncluded, index) in costs.notIncluded" :key="index">
-          <uni-icons :type="icons.close" :size="iconSize" :color="closeColor"></uni-icons>
+        <text class="cost-title">{{ activity.costSections.notIncluded }}</text>
+        <view class="cost-item" v-for="(notIncluded, index) in activity.costs.notIncluded" :key="index">
+          <uni-icons :type="activity.icons.close" :size="activity.iconSize" :color="activity.closeColor">
+          </uni-icons>
           <text class="cost-text">{{ notIncluded }}</text>
         </view>
       </view>
     </view>
 
-    <view class="bottom-bar" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
+    <view class="bottom-bar" :style="{ paddingBottom: `${safeAreaInsets.bottom || 0}px` }">
       <view class="price-info">
-        <text class="price-label">{{ priceLabel }}</text>
+        <text class="price-label">{{ activity.priceLabel }}</text>
         <view class="price-wrapper">
-          <text class="price-value">{{ price }}</text>
-          <text class="price-unit">{{ priceUnit }}</text>
+          <text class="price-value">{{ activity.price }}</text>
+          <text class="price-unit">{{ activity.priceUnit }}</text>
         </view>
       </view>
-      <button class="register-btn" @click="goToRegistration">
-        <text class="register-text">{{ registerText }}</text>
+      <button class="register-btn" @click="goToRegistration(activity.id)">
+        <text class="register-text">{{ activity.registerText }}</text>
       </button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { ref, reactive, onMounted } from 'vue';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
-const safeAreaInsets = ref({});
+const safeAreaInsets = ref({ bottom: 0 });
 const statusBarHeight = ref(0);
-
 const userStore = useUserStore();
 
-// 活动ID
-const activityId = 1;  // 默认为1，防止没有传递ID
-
-// 响应式变量
-const safeArea = ref({ top: 0, bottom: 0 });
 const isFavorite = ref(false);
 
-// 图标和图片路径
-const icons = {
-  back: 'back',
-  share: 'share',
-  star: 'star-filled',
-  favorite: '/static/activity/heart.png',
-  favoriteFilled: '/static/activity/heart_filled.png',
-  checkmark: '√',
-  close: 'close',
-  time: '/static/activity/time.png',
-  swim: '/static/activity/swim.png',
-  food: '/static/activity/food.png'
-};
-
-const iconSize = 24;
-const starColor = '#FFD700';
-const closeColor = '#FF6B6B';
-
-// 活动详情数据
-const activityImage = ref('https://wlmtsys.com:9000/travel/diving.jpg');
-const title = ref('深潜探索');
-const activityName = ref('海底世界深潜体验');
-const price = ref('¥368');
-const priceUnit = ref('起/人');
-const ratingText = ref('4.8 (1280人评价)');
-const favoriteText = ref('收藏');
-const ratingStars = ref(5);
-
-const sections = {
-  schedule: '活动流程',
-  precautions: '注意事项',
-  cost: '费用说明'
-};
-
-const costSections = {
-  included: '费用包含',
-  notIncluded: '费用不含'
-};
-
-const priceLabel = ref('起始价格');
-const registerText = ref('立即报名');
-
-const schedules = ref([
-  {
-    time: '09:00 集合出发',
-    description: '在指定地点集合，进行安全说明',
-    icon: '/static/activity/time.png'
+// 活动详情数据对象
+const activity = reactive({
+  // 图标和图片路径
+  icons: {
+    back: 'back',
+    share: 'share',
+    star: 'star-filled',
+    favorite: '/static/activity/heart.png',
+    favoriteFilled: '/static/activity/heart_filled.png',
+    checkmark: '√',
+    close: 'close',
+    time: '/static/activity/time.png',
+    swim: '/static/activity/swim.png',
+    food: '/static/activity/food.png'
   },
-  {
-    time: '10:00 潜水培训',
-    description: '专业教练指导潜水技巧和安全知识',
-    icon: '/static/activity/swim.png'
+
+  // 图标和颜色配置
+  iconSize: 24,
+  starColor: '#FFD700',
+  closeColor: '#FF6B6B',
+
+  // 基本活动信息
+  id: 1,
+  image: 'https://wlmtsys.com:9000/travel/diving.jpg',
+  type: '深潜探索',
+  title: '海底世界深潜体验',
+  price: '¥368',
+  priceUnit: '起/人',
+  ratingText: '4.8 (1280人评价)',
+  favoriteText: '收藏',
+  ratingStars: 5,
+  priceLabel: '起始价格',
+  registerText: '立即报名',
+
+  // 章节标题
+  sections: {
+    schedule: '活动流程',
+    precautions: '注意事项',
+    cost: '费用说明'
   },
-  {
-    time: '12:00 午餐休息',
-    description: '享用精致午餐，补充体力',
-    icon: '/static/activity/food.png'
-  }
-]);
 
-const precautions = ref([
-  '参与者需年满18周岁，请携带有效身份证件',
-  '活动期间请听从教练指导，确保安全',
-  '建议穿着轻便泳装，可自备防晒用品'
-]);
+  // 费用章节
+  costSections: {
+    included: '费用包含',
+    notIncluded: '费用不含'
+  },
 
-const costs = {
-  included: [
-    '专业潜水装备租赁',
-    '专业教练一对一指导',
-    '午餐及饮用水'
+  // 活动流程
+  schedules: [
+    {
+      time: '09:00 集合出发',
+      description: '在指定地点集合，进行安全说明',
+      icon: '/static/activity/time.png'
+    },
+    {
+      time: '10:00 潜水培训',
+      description: '专业教练指导潜水技巧和安全知识',
+      icon: '/static/activity/swim.png'
+    },
+    {
+      time: '12:00 午餐休息',
+      description: '享用精致午餐，补充体力',
+      icon: '/static/activity/food.png'
+    }
   ],
-  notIncluded: [
-    '往返交通费用',
-    '个人消费项目'
-  ]
-};
+
+  // 注意事项
+  precautions: [
+    '参与者需年满18周岁，请携带有效身份证件',
+    '活动期间请听从教练指导，确保安全',
+    '建议穿着轻便泳装，可自备防晒用品'
+  ],
+
+  // 费用说明
+  costs: {
+    included: [
+      '专业潜水装备租赁',
+      '专业教练一对一指导',
+      '午餐及饮用水'
+    ],
+    notIncluded: [
+      '往返交通费用',
+      '个人消费项目'
+    ]
+  }
+});
 
 // 方法定义
 const goBack = () => {
   uni.navigateBack();
 };
 
-const goToRegistration = () => {
+const goToRegistration = (id) => {
+  console.log("活动页面传递给下一个页面的id：",id)
   uni.navigateTo({
-    url: '/pages/activityRegistration/activityRegistration'
+    url: `/pages/activityRegistration/activityRegistration?id=${id}`
   });
 };
 
@@ -204,18 +213,50 @@ const getActivityDetailsById = (id) => {
       'Content-Type': 'application/x-www-form-urlencoded',
       'X-Access-Token': userStore.token || ''
     },
-    data: {
-      id: id
-    },
+    data: { id: id },
     success: (res) => {
-      console.log("获取餐厅信息成功:", res.data);
+      console.log("获取活动详情成功:", res.data);
       if (res.data.code === 200 && res.data.result) {
+        const result = res.data.result;
+
+        // 更新活动基本信息
+        activity.id = result.id || activity.id;
+        activity.image = result.imageUrl || activity.image;
+        activity.type = result.type || activity.type;
+        activity.title = result.title || activity.title;
+        activity.price = result.price ? `¥${result.price}` : activity.price;
+        activity.priceUnit = result.priceUnit || activity.priceUnit;
+
+        // 更新评分信息
+        activity.ratingText = result.rating
+          ? `${result.rating} (${result.ratingCount || 0}人评价)`
+          : activity.ratingText;
+
+        // 更新活动流程
+        if (result.schedules && result.schedules.length) {
+          activity.schedules = result.schedules.map((schedule, index) => ({
+            time: schedule.time || `时间段 ${index + 1}`,
+            description: schedule.description || '活动描述',
+            icon: schedule.icon || '/static/activity/time.png'
+          }));
+        }
+
+        // 更新注意事项
+        if (result.precautions && result.precautions.length) {
+          activity.precautions = result.precautions;
+        }
+
+        // 更新费用说明
+        if (result.costs) {
+          activity.costs = {
+            included: result.costs.included || activity.costs.included,
+            notIncluded: result.costs.notIncluded || activity.costs.notIncluded
+          };
+        }
       }
     },
     fail: (err) => {
-      // 在控制台打印错误信息
-      console.error('获取餐厅信息失败:', err);
-
+      console.error('获取活动详情失败:', err);
       uni.showToast({
         title: '网络错误，请重试',
         icon: 'none',
@@ -228,23 +269,22 @@ const getActivityDetailsById = (id) => {
 // 生命周期钩子
 onLoad((options) => {
   console.log('活动详情页面收到的ID:', options.id);
-  getActivityDetailsById(options.id);
+  const activityId = options.id || 1;
+  getActivityDetailsById(activityId);
 });
 
-
-onMounted(() => {
-  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
-  statusBarHeight.value = sbHeight;
-  safeAreaInsets.value = insets;
+onShow(() => {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = systemInfo.statusBarHeight || 0;
+  safeAreaInsets.value = systemInfo.safeAreaInsets || { bottom: 0 };
 });
-
 </script>
 
 <style scoped>
 .container {
   background-color: #f7f7f7;
   padding: 0 20px;
-  padding-top: v-bind('safeArea.top + "px"');
+  padding-top: v-bind('statusBarHeight + "px"');
 }
 
 .header {
