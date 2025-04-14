@@ -110,21 +110,25 @@ const fetchOrderDetails = () => {
   }
 
   console.log('开始请求交通详情接口...');
-  console.log('请求URL:', `https://island.zhangshui.com/island/product/ilTransportation/queryById?id=${id}`);
+  // console.log('请求URL:', `https://island.zhangshui.com/island/product/ilTransportation/queryById?id=${id}`);
   console.log('请求Header:', {
     'Content-Type': 'application/x-www-form-urlencoded',
     'X-Access-Token': userStore.token
   });
 
   uni.request({
-    url: `https://island.zhangshui.com/island/product/ilTransportation/queryById?id=${id}`,
-    method: 'GET',
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token
-    },
+    url: 'https://island.zhangshuiyi.com/island/product/ilTransportation/queryById',
+		method: 'GET',
+		header: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'X-Access-Token': userStore.token || ''
+		},
+		data: {
+			id: ticketId.value
+		},
     success: (res) => {
       console.log('接口返回数据:', res.data);
+      console.log('接口返回状态码:', res);
 
       if (res.data.success) {
         ticketInfo.value = res.data.result;
@@ -161,10 +165,6 @@ const fetchOrderDetails = () => {
         error.value = res.data.message || '获取数据失败';
         console.error('获取数据失败:', error.value);
       }
-    },
-    fail: (err) => {
-      error.value = '网络请求失败，请稍后重试';
-      console.error('网络请求失败:', err);
     }
   });
 };
