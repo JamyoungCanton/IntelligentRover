@@ -361,7 +361,11 @@ const onBooking = (restaurant) => {
       console.log('用户确认结果:', res);
       if (res.confirm) {
         console.log('用户确认预订');
-        createOrder(restaurant);
+        // 跳转到预订页面，并传递餐厅信息
+        uni.navigateTo({
+          url: `/pages/foodConfirm/foodConfirm?id=${restaurant.id}`
+        });
+        // createOrder(restaurant);
       } else {
         console.log('用户取消预订');
       }

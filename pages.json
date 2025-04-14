@@ -6,7 +6,6 @@
 		}
 	},
 	"pages": [ // pages数组中第一项表示应用启动页
-	
 		{
 			"path": "pages/index/index",
 			"style": {
@@ -65,9 +64,9 @@
 		{
 			"path": "pages/ticketDetails/ticketDetails",
 			"style": {
-				"navigationBarTitleText":"交通详情",
-				"navigationBarBackgroundColor":"#ffffff",
-				"navigationBarTextStyle":"black"
+				"navigationBarTitleText": "交通详情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
 			}
 		},
 		{
@@ -211,10 +210,9 @@
 			}
 		},
 		{
-			"path" : "pages/foodDetails/foodDetails",
-			"style" : 
-			{
-				"navigationBarTitleText" : "foodDetails",
+			"path": "pages/foodDetails/foodDetails",
+			"style": {
+				"navigationBarTitleText": "foodDetails",
 				"navigationStyle": "custom"
 			}
 		},
@@ -228,6 +226,13 @@
 			"path": "pages/attractionDetail/attractionDetail",
 			"style": {
 				"navigationBarTitleText": "attractionDetail"
+			}
+		},
+		{
+			"path": "pages/foodConfirm/foodConfirm",
+			"style": {
+				"navigationBarTitleText": "foodConfirm",
+				"navigationStyle": "custom"
 			}
 		}
 	],
