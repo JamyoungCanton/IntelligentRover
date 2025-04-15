@@ -13,7 +13,7 @@
     <view class="content">
       <view class="section">
         <text class="section-title">景点介绍</text>
-        <text class="section-content">{{ hotelData.description }}</text>
+        <text class="section-content">{{ hotelData.description.replace(/<[^>]*>/g, '') }}</text>
       </view>
       <view class="location">
         <!-- 位置图标 -->
@@ -48,14 +48,18 @@
           />
           <view class="locationDetail">
             <text class="location-title" >门票费用</text>
-            <text class="location-content" style="color:red">￥{{ hotelData.ticketprice }}</text>
+            <text class="location-contentprice" style="color:red">￥{{ hotelData.ticketprice }}.00</text>
           </view>
       </view>
       <view class="attractionimg">
         <text class="section-title">景点实拍</text>
         <view class="attimg">
           <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
+            src="https://wlmtsys.com:9000/travel/19.jpg"
+            mode="scaleToFill"
+          />
+          <image
+            src="https://wlmtsys.com:9000/travel/32.jpg"
             mode="scaleToFill"
           />
           <image
@@ -63,19 +67,15 @@
             mode="scaleToFill"
           />
           <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
+            src="https://wlmtsys.com:9000/travel/20.webp"
             mode="scaleToFill"
           />
           <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
+            src="https://wlmtsys.com:9000/travel/18.jpg"
             mode="scaleToFill"
           />
           <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
+            src="https://wlmtsys.com:9000/travel/12.jpg"
             mode="scaleToFill"
           />
         </view>
@@ -94,7 +94,7 @@
           </div>
           <text class="time">2025-03-15</text>
         </div>
-      <text class="comment">位置很好，就在海边，房间干净整洁，服务态度也很好，早餐丰富，性价比高。</text>
+      <text class="comment">白天可体验刺激的水上项目，傍晚在观景台欣赏落日余晖，夜晚还有精彩的特色表演。</text>
       </view>
       <view class="review-item">
         <view class="comheader">
@@ -107,7 +107,7 @@
           </view>
           <text class="time">2025-02-27</text>
         </view>
-        <text class="comment">酒店环境优美，海景房视野开阔，床品舒适干净，前台服务热情周到，早餐品种丰富，下次还会选择入住。</text>
+        <text class="comment">这里山海相拥，风光旖旎。碧蓝海水与奇石嶙峋的海岸线交相辉映，漫步沙滩可感受细软白沙的温柔触感。登高远眺，壮阔海景尽收眼底，是摄影爱好者的绝佳取景地</text>
       </view>
     </view>
     </view>
@@ -154,6 +154,20 @@
   // 跳转到订单页面并创建订单
 const creaOrder = (hotel) => {
 
+  if (hotel.ticketprice === 0) {
+    uni.showToast({
+      title: '该景点免费，无需预订',
+      icon: 'error',
+      duration: 2000,
+      style: {
+        fontSize: '24px', // 增大字体
+        color: '#333', // 深色字体
+        lineHeight: '1.5' // 增加行高
+      }
+    });
+    return; // 直接返回，不执行后续逻辑
+  }
+
 const orderData = ref({
 contract: {
   contractName: userStore.userInfo.realname || '',
@@ -194,7 +208,7 @@ success: (res) => {
       duration: 1500
     });
     // 可以跳转到订单详情页或其他页面
-    // uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}` })
+    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}` })
   } else {
     uni.showToast({
       title: res.data.message || '订单创建失败',
@@ -318,6 +332,12 @@ fail: (err) => {
   font-size: 14px;
   color: #333;
   margin-top: 5px;
+}
+.location-contentprice{
+  font-size: 24px;
+  margin-top: 5px;
+  font-weight: bold;
+
 }
 .openTime {
   display: flex;
