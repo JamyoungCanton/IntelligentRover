@@ -9,10 +9,6 @@
         <uni-icons type="spinner-cycle" size="24" color="#4CAF50" />
       </view>
     </view>
-
-
-
-
     <scroll-view class="main-content" scroll-y>
       <view class="search-container">
         <view class="search-box">
@@ -21,9 +17,24 @@
         </view>
       </view>
 
-      <view class="banner">
-        <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" mode="aspectFill" />
-      </view>
+      <view class="uni-margin-wrap">
+        <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
+          :duration="duration">
+          <swiper-item>
+            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" mode="aspectFill" class="swiper-item" />
+          </swiper-item>
+          <swiper-item>
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" mode="aspectFill" class="swiper-item" />
+          </swiper-item>
+          <swiper-item>
+            <image src="https://wlmtsys.com:9000/travel/18.jpg" mode="aspectFill" class="swiper-item" />
+          </swiper-item>
+          <swiper-item>
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" mode="aspectFill" class="swiper-item" />
+          </swiper-item>
+          
+			</swiper>
+		</view>
 
       <view class="grid-container">
         <view v-for="(item, index) in gridItems" :key="index" class="grid-item" @click="navigateTo(item.path)">
@@ -72,7 +83,7 @@
       <text class="ai-text">智能导游</text>
     </view>
 
-
+    <Tabbar />  
   </view>
 </template>
 
@@ -80,6 +91,29 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
+import Tabbar from '../Tabbar/Tabbar.vue';
+
+const background = ref(['color1', 'color2', 'color3'])
+const indicatorDots = ref(true)
+const autoplay = ref(true)
+const interval = ref(2000)
+const duration = ref(500)
+
+const changeIndicatorDots = () => {
+  indicatorDots.value = !indicatorDots.value
+}
+
+const changeAutoplay = () => {
+  autoplay.value = !autoplay.value
+}
+
+const intervalChange = (e) => {
+  interval.value = e.target.value
+}
+
+const durationChange = (e) => {
+  duration.value = e.target.value
+}
 
 const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
 const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);

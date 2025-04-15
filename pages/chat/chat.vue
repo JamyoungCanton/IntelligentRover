@@ -133,10 +133,12 @@
 				<image src="/static/chat/send.png"></image>
 			</view>
 		</view>
+		<Tabbar />
 	</view>
 </template>
 
 <script>
+import Tabbar from "../Tabbar/Tabbar.vue";
 	import {
 		ref,
 		reactive,
@@ -152,6 +154,9 @@
 	} from "marked";
 
 	export default {
+		components: {
+			Tabbar,	
+		},
 		setup() {
 			// 确保marked是可用的
 			const markdownParser =

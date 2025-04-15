@@ -85,7 +85,7 @@
         </view>
       </view>
     </scroll-view>
-
+    <Tabbar />
     
   </view>
 </template>
@@ -94,6 +94,7 @@
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user.js';
+import Tabbar from '../Tabbar/Tabbar.vue';
 const userStore = useUserStore();
 
 const gridItems = ref([

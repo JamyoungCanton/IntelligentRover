@@ -81,12 +81,13 @@
         </view>
       </view>
     </view>
+    <Tabbar />
   </view>
 </template>
 
 <script>
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
-
+import Tabbar from '../Tabbar/Tabbar.vue';
 const itineraryData = [
   {
     id: 1,
@@ -127,7 +128,8 @@ const itineraryData = [
 
 export default {
   components: {
-    uniIcons
+    uniIcons,
+    Tabbar
   },
   data() {
     return {

@@ -131,7 +131,7 @@
         </scroll-view>
       </view>
     </view>
-
+    <Tabbar />
   </view>
 </template>
 
@@ -139,6 +139,7 @@
 import { ref, computed, reactive } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
+import Tabbar from '../Tabbar/Tabbar.vue';
 
 const tabs = ['全部', '待支付', '已支付', '待出行', '进行中', '已完成'];
 const currentTab = ref(0);
