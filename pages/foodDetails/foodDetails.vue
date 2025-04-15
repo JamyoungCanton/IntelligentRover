@@ -13,21 +13,20 @@
 
 		<!-- 店铺图片 -->
 		<view class="shop-image">
-			<image :src="shopMainImage" mode="widthFix">
-				<view class="shop-info-overlay">
-					<view class="shop-name">{{ staticTexts.shopName }}</view>
-					<view class="shop-rating">
-						<view class="star-rating">
-							<template v-for="(star, index) in renderStars(staticTexts.shopRating.rating)" :key="index">
-								<uni-icons :type="star.type" size="18" :color="star.color"></uni-icons>
-							</template>
-						</view>
-						<text class="rating">{{ staticTexts.shopRating.rating }}</text>
-						<text class="monthly-sales">{{ staticTexts.shopRating.monthlySales }}</text>
-						<text class="average-price">{{ staticTexts.shopRating.averagePrice }}</text>
+			<image :src="shopMainImage" mode="widthFix"></image>
+			<view class="shop-info-overlay">
+				<view class="shop-name">{{ staticTexts.shopName }}</view>
+				<view class="shop-rating">
+					<view class="star-rating">
+						<template v-for="(star, index) in renderStars(staticTexts.shopRating.rating)" :key="index">
+							<uni-icons :type="star.type" size="18" :color="star.color"></uni-icons>
+						</template>
 					</view>
+					<text class="rating">{{ staticTexts.shopRating.rating }}</text>
+					<text class="monthly-sales">{{ staticTexts.shopRating.monthlySales }}</text>
+					<text class="average-price">{{ staticTexts.shopRating.averagePrice }}</text>
 				</view>
-			</image>
+			</view>
 		</view>
 
 		<!-- 功能按钮 -->
@@ -168,6 +167,7 @@ const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const foodDetails = ref(null);
 const userStore = useUserStore();
+const id = ref('');
 
 
 // 更新页面显示的数据的函数
@@ -350,15 +350,11 @@ const toggleIntro = () => {
 	if (isIntroUnfolded.value) {
 		console.log('展开餐厅介绍');
 		// 展开时显示全文
-		introTextElement.style.display = 'block';
-		introTextElement.style.webkitLineClamp = 'unset';
-		introTextElement.style.overflow = 'visible';
+		introTextElement.classList.remove('collapsed');
 	} else {
 		console.log('收起餐厅介绍');
 		// 收起时省略文本
-		introTextElement.style.display = '-webkit-box';
-		introTextElement.style.webkitLineClamp = '3';  // 收起的时候展示1行
-		introTextElement.style.overflow = 'hidden';
+		introTextElement.classList.add('collapsed');
 	}
 };
 
@@ -368,13 +364,17 @@ const viewAllReviews = () => {
 
 const bookNow = () => {
 	console.log('立即预订');
-	createOrder();
+	uni.navigateTo({
+		url: `/pages/foodConfirm/foodConfirm?id=${id.value}`
+	});
+
 };
 
 
 
 onLoad((options) => {
 	console.log('饮食详情页面收到的ID:', options.id);
+	id.value = options.id;
 
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
@@ -384,15 +384,6 @@ onMounted(() => {
 	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
 	statusBarHeight.value = sbHeight;
 	safeAreaInsets.value = insets;
-	// wx.getSystemInfo({
-	// 	success: (res) => {
-	// 		statusBarHeight.value = sbHeight;
-	// 		safeAreaInsets.value = insets;
-	// 	},
-	// 	fail: (err) => {
-	// 		console.error('获取系统信息失败:', err);
-	// 	}
-	// });
 
 });
 
@@ -603,9 +594,14 @@ const createOrder = () => {
 	bottom: 0;
 	left: 0;
 	right: 0;
+	z-index: 10;
+	/* 确保在图片上层 */
 	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
 	color: white;
 	padding: 15px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
 }
 
 .shop-info-overlay .shop-name {
@@ -617,6 +613,8 @@ const createOrder = () => {
 .shop-info-overlay .shop-rating {
 	display: flex;
 	align-items: center;
+	width: 100%;
+	flex-wrap: wrap;
 }
 
 .shop-info-overlay .rating,
@@ -624,6 +622,7 @@ const createOrder = () => {
 .shop-info-overlay .average-price {
 	color: white;
 	margin-left: 10px;
+	font-size: 12px;
 }
 
 /* 顶部导航栏 */
@@ -657,7 +656,7 @@ const createOrder = () => {
 /* 店铺图片 */
 .shop-image {
 	width: 100%;
-	height: 250px;
+	height: 400rpx;
 	overflow: hidden;
 }
 
@@ -665,6 +664,7 @@ const createOrder = () => {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	/* 裁剪图片以填满容器 */
 }
 
 /* 店铺信息 */
@@ -774,12 +774,10 @@ const createOrder = () => {
 .intro-text.collapsed {
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
-	/* 控制餐厅介绍显示的行数 */
+	/* 修改为1行 */
 	-webkit-box-orient: vertical;
 	overflow: hidden;
-	max-height: 4.8em;
-	/* 3行的大致高度 */
-
+	max-height: 1.6em;
 }
 
 .unfold-text {
