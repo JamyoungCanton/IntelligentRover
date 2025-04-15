@@ -8,7 +8,7 @@
                 :class="activeTab === index? 'tab-active' : ''"
             >
                 <view class="plus" v-if="index == 2">
-                    <uni-icons type="plus" size="24" color="#fff"></uni-icons>
+                    <uni-icons type="chat" size="28" color="#fff"></uni-icons>
                 </view>
                 <view v-else class="tab">
                     <uni-icons
@@ -52,7 +52,7 @@ const tabList = ref([
     {
         name: '',
         url: '/pages/chat/chat',
-        icon: 'robot',
+        icon: 'chatbubble',
         active: false
     },
     {
@@ -98,7 +98,7 @@ const switchTab = (url, index) => {
 <style scoped>
 .tabbar {
     background-color: #fff;
-    width: 750rpx;
+    width: 100%;
     height: 100rpx;
     position: fixed;
     bottom: 0;
