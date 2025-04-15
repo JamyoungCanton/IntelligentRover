@@ -1,34 +1,31 @@
 <template>
   <view class="container">
-      
-      <view class="transport-info">
-        <view class="island-info">
-          <text class="island-name">{{ ticketInfo?.fromIsland?.islandname || '出发岛屿' }}</text>
-          <text class="island-desc">{{ ticketInfo?.fromIsland?.id || '' }}</text>
-        </view>
-        <view class="arrow">
-          <image src="/static/ticket/boat.png" class="arrow-img"></image>  
-        </view>
-        <view class="island-info">
-          <text class="island-name">{{ ticketInfo?.toIsland?.islandname || '到达岛屿' }}</text>
-          <text class="island-desc">{{ ticketInfo?.toIsland?.id || '' }}</text>
-        </view>
-		
-		<view class="duration-view">
-		  <text class="duration">约{{ ticketInfo?.duration || 0 }}小时</text>
-		</view>
+    <view class="transport-info">
+      <view class="island-info">
+        <text class="island-name">{{ ticketInfo?.fromislandid || '出发岛屿' }}</text>
+		<p><text class="island-desc">{{ ticketInfo?.fromislandid || '' }}</text></p>
+      </view>
+	  
+      <view class="arrow">
+        <image src="/static/ticket/boat.png" class="arrow-img"></image>  
+      </view>
+      <view class="island-info">
+        <text class="island-name">{{ ticketInfo?.toislandid || '到达岛屿' }}</text>
+		<p><text class="island-desc">{{ ticketInfo?.toislandid || '' }}</text></p>
       </view>
       
-      
+      <view class="duration-view">
+        <text class="duration">约{{ ticketInfo?.duration || 0 }}小时</text>
+      </view>
+    </view>
     
     <view class="price-section">
-      <text class="price">¥{{ ticketInfo?.cost || 0 }}起</text>
+      <text class="price">¥{{ selectedCabinPrice || 0 }}起</text>
       <button class="book-btn" @click="createOrder">立即预订</button>
     </view>
     
+    <view class="section-title"><text>航班时刻</text></view>
     <view class="schedule-section">
-      <text class="section-title">航班时刻</text>
-      
       <view class="schedule-list">
         <view 
           v-for="(schedule, index) in parsedSchedule" 
@@ -41,32 +38,35 @@
       </view>
     </view>
     
+    <view class="section-title"><text>舱位类型</text></view>
     <view class="cabin-section">
-      <text class="section-title">舱位类型</text>
-      
-      <view class="cabin-list">
-        <view 
-          v-for="(cabin, index) in cabinTypes" 
-          :key="index" 
-          class="cabin-item"
-        >
-          <text class="cabin-name">{{ cabin.name }}</text>
-          <text class="cabin-price">¥{{ cabin.price }}</text>
-        </view>
-      </view>
+          <view class="cabin-list">
+            <view 
+              v-for="(cabin, index) in cabinTypes" 
+              :key="index" 
+              class="cabin-item"
+			  :class="{ 'selected': selectedCabinIndex === index }"
+              @click="selectCabin(index)"
+            >
+              <view class="cabin-info">
+				<b><text class="cabin-name">{{ cabin.name }}</text></b>
+				<text class="cabin-description">{{ cabin.description }}</text>
+				</view>
+				<text class="cabin-price">¥{{ cabin.price }}</text>
+            </view>
+          </view>
     </view>
     
+    <view class="section-title"><text>乘船须知</text></view>
     <view class="instructions-section">
-      <text class="section-title">乘船须知</text>
-      
       <view class="instructions-list">
         <view 
           v-for="(instruction, index) in instructions" 
           :key="index"
           class="instruction-item"
         >
-          <text class="instruction-icon">i</text>
-          <text class="instruction-text">{{ instruction }}</text>
+          <image :src="instruction.icon" class="instruction-icon"></image>
+          <text class="instruction-text">{{ instruction.text }}</text>
         </view>
       </view>
     </view>
@@ -88,6 +88,10 @@ const parsedSchedule = ref([]);
 const cabinTypes = ref([]);
 const instructions = ref([]);
 const error = ref('');
+const fromIslandName = ref(''); // 新增：出发岛屿名称
+const toIslandName = ref(''); // 新增：到达岛屿名称
+const selectedCabinIndex = ref(-1); // 选中的舱位索引
+const selectedCabinPrice = ref(0); // 选中的舱位价格
 
 // 从URL参数中获取ticketId
 const ticketId = ref('');
@@ -109,27 +113,18 @@ const fetchOrderDetails = () => {
     return;
   }
 
-  console.log('开始请求交通详情接口...');
-  // console.log('请求URL:', `https://island.zhangshui.com/island/product/ilTransportation/queryById?id=${id}`);
-  console.log('请求Header:', {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'X-Access-Token': userStore.token
-  });
-
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/product/ilTransportation/queryById',
-		method: 'GET',
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token || ''
-		},
-		data: {
-			id: ticketId.value
-		},
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    data: {
+      id: ticketId.value
+    },
     success: (res) => {
-      console.log('接口返回数据:', res.data);
-      console.log('接口返回状态码:', res);
-
+      console.log('接口返回的数据:', res.data);
       if (res.data.success) {
         ticketInfo.value = res.data.result;
         console.log('获取到的交通详情数据:', ticketInfo.value);
@@ -147,23 +142,93 @@ const fetchOrderDetails = () => {
         }
         
         // 解析舱位类型
-        cabinTypes.value = [
-          { name: '普通舱', price: 128 },
-          { name: '商务舱', price: 228 }
-        ];
-        console.log('舱位类型数据:', cabinTypes.value);
+                cabinTypes.value = [
+                  { name: '普通舱', price: 128, description: '标准座椅' },
+                  { name: '商务舱', price: 228, description: '宽敞座椅，赠送饮品' }
+                ];
+                console.log('舱位类型数据:', cabinTypes.value);
         
         // 解析乘船须知
         instructions.value = [
-          '请提前30分钟到达码头检票',
-          '候船区：东澳岛码头2号候船厅',
-          '靠岛时间：约15分钟',
-          '请携带有效身份证件'
+          { 
+            text: '请提前30分钟到达码头检票', 
+            icon: '/static/ticket/ticket.png'
+          },
+          { 
+            text: '候船区：东澳岛码头2号候船厅', 
+            icon: '/static/ticket/address.png' 
+          },
+          { 
+            text: '靠岛时间：约15分钟', 
+            icon: '/static/ticket/mao.png' 
+          },
+          { 
+            text: '请携带有效身份证件', 
+            icon: '/static/ticket/i.png' 
+          }
         ];
         console.log('乘船须知数据:', instructions.value);
+		// 默认选中第一个舱位
+		selectedCabinIndex.value = 0;
+		selectedCabinPrice.value = cabinTypes.value[0].price;
+        // 查询岛屿名称
+        fetchIslandNames();
       } else {
         error.value = res.data.message || '获取数据失败';
         console.error('获取数据失败:', error.value);
+      }
+    },
+    fail: (err) => {
+      console.error('网络请求失败:', err);
+      error.value = '网络请求失败，请稍后重试';
+    }
+  });
+};
+// 选中舱位
+const selectCabin = (index) => {
+  selectedCabinIndex.value = index;
+  selectedCabinPrice.value = cabinTypes.value[index].price;
+};
+
+// 查询岛屿名称
+const fetchIslandNames = () => {
+  if (!ticketInfo.value.fromislandid || !ticketInfo.value.toislandid) {
+    console.error('缺少岛屿ID');
+    return;
+  }
+
+  // 查询出发岛屿名称
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/info/byId', // 假设的接口地址
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    data: {
+      id: ticketInfo.value.fromislandid
+    },
+    success: (res) => {
+      if (res.data.success && res.data.result) {
+        fromIslandName.value = res.data.result.islandname;
+      }
+    }
+  });
+
+  // 查询到达岛屿名称
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/info/byId', // 假设的接口地址
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    data: {
+      id: ticketInfo.value.toislandid
+    },
+    success: (res) => {
+      if (res.data.success && res.data.result) {
+        toIslandName.value = res.data.result.islandname;
       }
     }
   });
@@ -209,7 +274,7 @@ const createOrder = () => {
   console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
 
   uni.request({
-    url: 'https://island.zhangshui.com/island/front/order/createOrder',
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
     header: {
       'Content-Type': 'application/json',
@@ -225,9 +290,6 @@ const createOrder = () => {
           icon: 'success',
           duration: 1500
         });
-        // uni.navigateTo({
-        //   url: `/pages/order/order?orderId=${res.data.result.id}`
-        // });
       } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',
@@ -285,7 +347,7 @@ const createOrder = () => {
 }
 
 .island-name {
-  font-size: 32rpx;
+  font-size: 45rpx;
   font-weight: bold;
   color: #333;
   margin-bottom: 5rpx;
@@ -293,7 +355,7 @@ const createOrder = () => {
 
 .island-desc {
   font-size: 24rpx;
-  color: #999;
+  color: #c6ced8;
 }
 
 .arrow-img {
@@ -320,7 +382,7 @@ const createOrder = () => {
 
 .duration {
   font-size: 24rpx;
-  color: #666;
+  color: #89929e;
 }
 
 .price-section {
@@ -358,11 +420,26 @@ const createOrder = () => {
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
+.instructions-section{
+	background-color: #e9e9ea;
+}
+
 .section-title {
   font-size: 32rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 20rpx;
+  margin-bottom: 10px;
+}
+
+.cabin-item.selected{
+	width: 95%;
+	border: #1890ff 1px solid;
+	border-radius: 10px;
+}
+
+.cabin-description{
+	color: #89929e;
+	font-size: 15px;
 }
 
 .schedule-list, .cabin-list, .instructions-list {
@@ -376,10 +453,16 @@ const createOrder = () => {
   justify-content: space-between;
   align-items: center;
   padding: 15rpx;
+  color: #ff4d4f;
+}
+
+.cabin-item{
+	width: 95%;
 }
 
 .time, .cabin-name, .instruction-text {
-  font-size: 28rpx;
+  font-size: 30rpx;
+  font-weight: bold;
   color: #333;
 }
 
@@ -401,19 +484,18 @@ const createOrder = () => {
 
 .instruction-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .instruction-icon {
-  display: inline-block;
-  width: 30rpx;
-  height: 30rpx;
-  background-color: #1890ff;
-  color: white;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 30rpx;
-  margin-right: 10rpx;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.instruction-text {
+  flex: 1;
 }
 
 .error-message {
