@@ -2,18 +2,16 @@
   <view class="container">
     <view class="transport-info">
       <view class="island-info">
-        <text class="island-name">{{ ticketInfo?.fromislandid || '出发岛屿' }}</text>
-		<p><text class="island-desc">{{ ticketInfo?.fromislandid || '' }}</text></p>
+        <text class="island-name">{{ fromIslandName || '出发岛屿' }}</text>
+        <p><text class="island-name island-desc ">{{ fromIslandName+'码头' || '码头' }}</text></p>
       </view>
-	  
       <view class="arrow">
-        <image src="/static/ticket/boat.png" class="arrow-img"></image>  
+        <image class="line" src="/static/ticket/line.png"></image><image src="/static/ticket/boat.png" class="arrow-img"></image><image class="line" src="/static/ticket/line.png"></image>
       </view>
       <view class="island-info">
-        <text class="island-name">{{ ticketInfo?.toislandid || '到达岛屿' }}</text>
-		<p><text class="island-desc">{{ ticketInfo?.toislandid || '' }}</text></p>
+        <text class="island-name">{{ toIslandName || '到达岛屿' }}</text>
+        <p><text class="island-name island-desc">{{ toIslandName+'码头' || '码头' }}</text></p>
       </view>
-      
       <view class="duration-view">
         <text class="duration">约{{ ticketInfo?.duration || 0 }}小时</text>
       </view>
@@ -40,21 +38,18 @@
     
     <view class="section-title"><text>舱位类型</text></view>
     <view class="cabin-section">
-          <view class="cabin-list">
-            <view 
-              v-for="(cabin, index) in cabinTypes" 
-              :key="index" 
-              class="cabin-item"
-			  :class="{ 'selected': selectedCabinIndex === index }"
-              @click="selectCabin(index)"
-            >
-              <view class="cabin-info">
-				<b><text class="cabin-name">{{ cabin.name }}</text></b>
-				<text class="cabin-description">{{ cabin.description }}</text>
-				</view>
-				<text class="cabin-price">¥{{ cabin.price }}</text>
-            </view>
-          </view>
+      <view class="cabin-list">
+        <view 
+          v-for="(cabin, index) in cabinTypes" 
+          :key="index" 
+          class="cabin-item"
+          :class="{ 'selected': selectedCabinIndex === index }"
+          @click="selectCabin(index)"
+        >
+          <b><text class="cabin-name">{{ cabin.name }}</text></b>
+          <text class="cabin-price">¥{{ cabin.price }}</text>
+        </view>
+      </view>
     </view>
     
     <view class="section-title"><text>乘船须知</text></view>
@@ -88,10 +83,17 @@ const parsedSchedule = ref([]);
 const cabinTypes = ref([]);
 const instructions = ref([]);
 const error = ref('');
-const fromIslandName = ref(''); // 新增：出发岛屿名称
-const toIslandName = ref(''); // 新增：到达岛屿名称
 const selectedCabinIndex = ref(-1); // 选中的舱位索引
 const selectedCabinPrice = ref(0); // 选中的舱位价格
+const fromIslandName = ref(''); // 出发岛屿名称
+const toIslandName = ref(''); // 到达岛屿名称
+
+// 岛屿ID到名称的映射
+const islandMap = {
+  101: '东澳岛',
+  102: '万山岛'
+  // 根据实际情况添加更多的岛屿ID和名称
+};
 
 // 从URL参数中获取ticketId
 const ticketId = ref('');
@@ -129,6 +131,10 @@ const fetchOrderDetails = () => {
         ticketInfo.value = res.data.result;
         console.log('获取到的交通详情数据:', ticketInfo.value);
         
+        // 使用映射更新岛屿名称
+        fromIslandName.value = islandMap[ticketInfo.value.fromislandid] || '未知岛屿';
+        toIslandName.value = islandMap[ticketInfo.value.toislandid] || '未知岛屿';
+        
         // 解析schedule字段为数组
         if (res.data.result.schedule) {
           parsedSchedule.value = res.data.result.schedule.split(',').map(item => {
@@ -142,37 +148,37 @@ const fetchOrderDetails = () => {
         }
         
         // 解析舱位类型
-                cabinTypes.value = [
-                  { name: '普通舱', price: 128, description: '标准座椅' },
-                  { name: '商务舱', price: 228, description: '宽敞座椅，赠送饮品' }
-                ];
-                console.log('舱位类型数据:', cabinTypes.value);
+        cabinTypes.value = [
+          { name: '普通舱', price: 128, description: '标准座椅' },
+          { name: '商务舱', price: 228, description: '宽敞座椅，赠送饮品' }
+        ];
+        console.log('舱位类型数据:', cabinTypes.value);
         
         // 解析乘船须知
+        // 解析乘船须知
         instructions.value = [
-          { 
-            text: '请提前30分钟到达码头检票', 
-            icon: '/static/ticket/ticket.png'
-          },
-          { 
-            text: '候船区：东澳岛码头2号候船厅', 
-            icon: '/static/ticket/address.png' 
-          },
-          { 
-            text: '靠岛时间：约15分钟', 
-            icon: '/static/ticket/mao.png' 
-          },
-          { 
-            text: '请携带有效身份证件', 
-            icon: '/static/ticket/i.png' 
-          }
-        ];
+            { 
+				text: '请提前30分钟到达码头检票', 
+				icon: '/static/ticket/ticket.png'
+			},
+			{
+				text: '候船区：东澳岛码头2号候船厅', 
+				icon: '/static/ticket/address.png' 
+			},
+			{ 
+				text: '靠岛时间：约15分钟', 
+				icon: '/static/ticket/mao.png' 
+			},
+			{ 
+				text: '请携带有效身份证件', 
+				icon: '/static/ticket/i.png' 
+			}
+			];
         console.log('乘船须知数据:', instructions.value);
-		// 默认选中第一个舱位
-		selectedCabinIndex.value = 0;
-		selectedCabinPrice.value = cabinTypes.value[0].price;
-        // 查询岛屿名称
-        fetchIslandNames();
+        
+        // 默认选中第一个舱位
+        selectedCabinIndex.value = 0;
+        selectedCabinPrice.value = cabinTypes.value[0].price;
       } else {
         error.value = res.data.message || '获取数据失败';
         console.error('获取数据失败:', error.value);
@@ -184,54 +190,11 @@ const fetchOrderDetails = () => {
     }
   });
 };
+
 // 选中舱位
 const selectCabin = (index) => {
   selectedCabinIndex.value = index;
   selectedCabinPrice.value = cabinTypes.value[index].price;
-};
-
-// 查询岛屿名称
-const fetchIslandNames = () => {
-  if (!ticketInfo.value.fromislandid || !ticketInfo.value.toislandid) {
-    console.error('缺少岛屿ID');
-    return;
-  }
-
-  // 查询出发岛屿名称
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/info/byId', // 假设的接口地址
-    method: 'GET',
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token || ''
-    },
-    data: {
-      id: ticketInfo.value.fromislandid
-    },
-    success: (res) => {
-      if (res.data.success && res.data.result) {
-        fromIslandName.value = res.data.result.islandname;
-      }
-    }
-  });
-
-  // 查询到达岛屿名称
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/info/byId', // 假设的接口地址
-    method: 'GET',
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token || ''
-    },
-    data: {
-      id: ticketInfo.value.toislandid
-    },
-    success: (res) => {
-      if (res.data.success && res.data.result) {
-        toIslandName.value = res.data.result.islandname;
-      }
-    }
-  });
 };
 
 // 创建订单
@@ -266,7 +229,8 @@ const createOrder = () => {
         },
         productId: ticketInfo.value.id,
         productType: 'Transportation',
-        quantity: 1
+        quantity: 1,
+        price: selectedCabinPrice.value
       }
     ]
   };
@@ -306,6 +270,10 @@ const createOrder = () => {
     }
   });
 };
+
+onMounted(() => {
+  fetchOrderDetails();
+});
 </script>
 
 <style scoped>
@@ -355,7 +323,12 @@ const createOrder = () => {
 
 .island-desc {
   font-size: 24rpx;
-  color: #c6ced8;
+  color: #9ea4ac;
+}
+
+.line{
+	width: 140rpx;
+	height: 4rpx;
 }
 
 .arrow-img {
@@ -421,7 +394,7 @@ const createOrder = () => {
 }
 
 .instructions-section{
-	background-color: #e9e9ea;
+	background-color: #fff;
 }
 
 .section-title {

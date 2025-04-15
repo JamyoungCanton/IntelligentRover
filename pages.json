@@ -241,6 +241,13 @@
 				"navigationBarTitleText": "foodConfirm",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path" : "pages/dayTravel/dayTravel",
+			"style" : 
+			{
+				"navigationBarTitleText" : ""
+			}
 		}
 	],
 	"globalStyle": {
