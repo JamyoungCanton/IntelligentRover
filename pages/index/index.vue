@@ -36,16 +36,19 @@
 
       <view class="section">
         <text class="section-title">热门活动</text>
-        <view class="activity-container">
-          <view v-for="(activity, index) in activities" :key="index" :id="activity.id || 'activity-' + index"
-            class="activity-card" @click="navigateToActivity(activity.id)">
-            <image :src="activity.image" mode="aspectFill" class="activity-image" />
-            <view class="activity-info">
-              <text class="activity-title">{{ activity.title }}</text>
-              <text class="activity-price">{{ activity.price }}</text>
+        <scroll-view class="activity-container" scroll-x @scroll="onScroll" :scroll-left="scrollLeft">
+          <view class="activity-wrapper">
+            <view v-for="(activity, index) in activities" :key="index" :id="activity.id || 'activity-' + index"
+              class="activity-card" @click="navigateToActivity(activity.id)">
+              <image :src="activity.image" mode="aspectFill" class="activity-image" />
+              <view class="activity-info">
+                <text class="activity-title">{{ activity.title }}</text>
+                <text class="activity-price">{{ activity.price }}</text>
+              </view>
             </view>
           </view>
-        </view>
+        </scroll-view>
+        <slider class="activity-slider" :value="sliderValue" :min="0" :max="100" @change="handleSliderChange" />
       </view>
 
       <view class="section">
@@ -79,7 +82,7 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
-const dragX = ref(uni.getSystemInfoSync().screenWidth-58); // 96 是按钮的宽度
+const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
 const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);
 const startX = ref(0);
 const startY = ref(0);
@@ -105,7 +108,7 @@ const moveDrag = (e) => {
   const screenWidth = uni.getSystemInfoSync().screenWidth;
   const screenHeight = uni.getSystemInfoSync().screenHeight;
 
-  dragX.value = Math.max(0, Math.min(x, screenWidth-58));
+  dragX.value = Math.max(0, Math.min(x, screenWidth - 58));
   dragY.value = Math.max(0, Math.min(y, screenHeight - 96));
 };
 
@@ -214,6 +217,41 @@ const navigateToRoute = () => {
   uni.navigateTo({
     url: '/pages/route/route'
   });
+};
+
+const scrollLeft = ref(0);
+const scrollWidth = ref(0);
+const sliderValue = ref(0);
+
+const handleSliderChange = (e) => {
+  const value = e.detail.value;
+  sliderValue.value = value;
+  const scrollView = uni.createSelectorQuery().select('.activity-container');
+  scrollView.fields({
+    scrollOffset: true,
+    size: true
+  }, (res) => {
+    const maxScroll = res.scrollWidth - res.width;
+    const scrollTo = (value / 100) * maxScroll;
+    uni.pageScrollTo({
+      scrollLeft: scrollTo,
+      selector: '.activity-container',
+      duration: 300
+    });
+  }).exec();
+};
+
+const onScroll = (e) => {
+  const scrollLeft = e.detail.scrollLeft;
+  const scrollView = uni.createSelectorQuery().select('.activity-container');
+  scrollView.fields({
+    scrollOffset: true,
+    size: true
+  }, (res) => {
+    const maxScroll = res.scrollWidth - res.width;
+    const value = (scrollLeft / maxScroll) * 100;
+    sliderValue.value = value;
+  }).exec();
 };
 
 // 获取屏幕安全距离
@@ -388,22 +426,20 @@ page {
 }
 
 .activity-container {
-  display: flex;
-  flex-direction: row;
-  overflow-x: scroll;
+  width: 100%;
   white-space: nowrap;
-  gap: 32rpx;
   margin-top: 22rpx;
-  padding: 0 32rpx;
-  -webkit-overflow-scrolling: touch;
-  /* 支持iOS流畅滚动 */
-  scrollbar-width: none;
-  /* Firefox隐藏滚动条 */
 }
 
-.activity-container::-webkit-scrollbar {
-  display: none;
-  /* Chrome Safari隐藏滚动条 */
+.activity-wrapper {
+  display: inline-flex;
+  gap: 32rpx;
+  padding: 0 32rpx;
+}
+
+.activity-slider {
+  width: 90%;
+  margin: 20rpx auto 0;
 }
 
 .activity-card {
@@ -485,7 +521,7 @@ page {
   position: fixed;
   /* 移除 right: 0 */
   top: 50%;
-  transform: translateY(150%);
+  transform: translateY(250%);
   display: flex;
   flex-direction: column;
   cursor: move;
