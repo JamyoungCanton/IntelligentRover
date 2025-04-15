@@ -48,7 +48,6 @@
             </view>
           </view>
         </scroll-view>
-        <slider class="activity-slider" :value="sliderValue" :min="0" :max="100" @change="handleSliderChange" />
       </view>
 
       <view class="section">
@@ -223,23 +222,6 @@ const scrollLeft = ref(0);
 const scrollWidth = ref(0);
 const sliderValue = ref(0);
 
-const handleSliderChange = (e) => {
-  const value = e.detail.value;
-  sliderValue.value = value;
-  const scrollView = uni.createSelectorQuery().select('.activity-container');
-  scrollView.fields({
-    scrollOffset: true,
-    size: true
-  }, (res) => {
-    const maxScroll = res.scrollWidth - res.width;
-    const scrollTo = (value / 100) * maxScroll;
-    uni.pageScrollTo({
-      scrollLeft: scrollTo,
-      selector: '.activity-container',
-      duration: 300
-    });
-  }).exec();
-};
 
 const onScroll = (e) => {
   const scrollLeft = e.detail.scrollLeft;
@@ -437,10 +419,6 @@ page {
   padding: 0 32rpx;
 }
 
-.activity-slider {
-  width: 90%;
-  margin: 20rpx auto 0;
-}
 
 .activity-card {
   flex: 0 0 auto;
