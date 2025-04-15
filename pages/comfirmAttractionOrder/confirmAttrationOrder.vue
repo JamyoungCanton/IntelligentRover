@@ -13,41 +13,37 @@
       <view class="card">
         <view class="card-header">
           <uni-icons type="list" size="20" color="#3B82F6"/>
-          <text class="card-title">酒店/民宿明细</text>
+          <text class="card-title">景点明细</text>
         </view>
         <view class="fee-list">
           <view class="fee-item">
-            <text class="fee-name">房型</text>
-            <text class="fee-value">{{hotelList.roomtype}}</text>
+            <text class="fee-name">注意事项：</text>
+            <text class="fee-value">{{hotelList.additionalfees}}</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">景点位置</text>
+            <text class="fee-value">{{hotelList.location}}</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">景点</text>
+            <text class="fee-value">{{hotelList.type}}</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">入场时间</text>
+            <text class="fee-value">{{hotelList.starttime}}</text>
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">结束时间</text>
+            <text class="fee-value">{{hotelList.endtime}}</text>
           </view>
           <view class="fee-item">
             <text class="fee-name">评分</text>
-            <text class="fee-value">{{hotelList.tating}}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">房间库存</text>
-            <text class="fee-value">{{hotelList.roominventory}}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">酒店类型</text>
-            <text class="fee-value">{{hotelList.hoteltype}}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">酒店主题</text>
-            <text class="fee-value">{{hotelList.hoteltheme}}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">星级</text>
-            <text class="fee-value">{{hotelList.starrating}}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">地址</text>
-            <text class="fee-value">{{hotelList.address}}</text>
+            <text class="fee-value">{{hotelList.rating}}</text>
           </view>
           <view class="fee-summary">
             <view class="fee-line">
               <text class="fee-name">原价</text>
-              <text class="fee-original">¥{{hotelList.price}}</text>
+              <text class="fee-original">¥{{hotelList.ticketprice}}</text>
             </view>
             <view class="fee-line">
               <text class="fee-name">优惠金额</text>
@@ -55,7 +51,7 @@
             </view>
             <view class="fee-line">
               <text class="fee-name-highlight">实付金额</text>
-              <text class="fee-final">¥{{hotelList.price}}</text>
+              <text class="fee-final">¥{{hotelList.ticketprice}}</text>
             </view>
           </view>
         </view>
@@ -128,7 +124,7 @@ onLoad((options) => {
 onMounted(() => {
   
   uni.request({
-    url: `https://island.zhangshuiyi.com/island/front/product/accommodations/${id.value}`,
+    url: `https://island.zhangshuiyi.com/island/front/product/attractions/${id.value}`,
     method: 'GET',
     header: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -137,6 +133,7 @@ onMounted(() => {
     data: { id: id},
     success:(res)=>{
       hotelList.value = res.data;
+      console.log(res.data);
     },fail:(err)=>{
       console.log(err);
       

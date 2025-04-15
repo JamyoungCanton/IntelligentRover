@@ -194,7 +194,7 @@ const goBack = () => {
 };
 
 const goToRegistration = (id) => {
-  console.log("活动页面传递给下一个页面的id：",id)
+  console.log("活动页面传递给下一个页面的id：", id)
   uni.navigateTo({
     url: `/pages/activityRegistration/activityRegistration?id=${id}`
   });

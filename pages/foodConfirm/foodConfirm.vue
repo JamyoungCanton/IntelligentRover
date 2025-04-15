@@ -68,7 +68,7 @@
 			<view class="total-price">
 				<text>合计：¥{{ foodDetails.price * quantity }}</text>
 			</view>
-			<button class="confirm-btn" @click="handleConfirmPayment">确认支付</button>
+			<button class="confirm-btn" @click="handleConfirmPayment()">立即预订</button>
 		</view>
 	</view>
 </template>
@@ -77,6 +77,7 @@
 import { useUserStore } from '@/store/modules/user';
 import { onLoad } from '@dcloudio/uni-app';
 import { ref, onMounted } from 'vue';
+
 
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
@@ -97,31 +98,33 @@ const diningTime = ref('');
 const remark = ref('');
 
 
-onMounted(() => {
-	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
-	statusBarHeight.value = sbHeight;
-	safeAreaInsets.value = insets;
 
-
-	// uni.request({
-	// 	url: `https://island.zhangshuiyi.com/island/front/product/dining/${id.value}`,
-	// 	method: 'GET',
-	// 	header: {
-	// 		'Content-Type': 'application/x-www-form-urlencoded',
-	// 		'X-Access-Token': userStore.token,
-	// 	},
-	// 	success: (res) => {
-	// 		foodDetails.value = res.data;
-	// 	},
-	// 	fail: (err) => {
-	// 		console.log(err);
-	// 	}
-	// })
-})
 
 const increaseQuantity = () => quantity.value++;
 const decreaseQuantity = () => quantity.value > 1 && quantity.value--;
-const bindTimeChange = (e) => diningTime.value = e.detail.value;
+const bindTimeChange = (e) => {
+	const selectedTime = e.detail.value;
+	const [startHour, endHour] = foodDetails.value.businessHours.split('-');
+
+	// 将时间转换为分钟数便于比较
+	const timeToMinutes = (time) => {
+		const [h, m] = time.split(':').map(Number);
+		return h * 60 + m;
+	};
+
+	const selectedMinutes = timeToMinutes(selectedTime);
+	const startMinutes = timeToMinutes(startHour);
+	const endMinutes = timeToMinutes(endHour) - 30; // 结束前30分钟停止接单
+
+	if (selectedMinutes >= startMinutes && selectedMinutes <= endMinutes) {
+		diningTime.value = selectedTime;
+	} else {
+		uni.showToast({
+			title: `请选择${startHour}至${endHour.substring(0, 5)}之间的时间`,
+			icon: 'none'
+		});
+	}
+};
 
 const handleConfirmPayment = () => {
 	if (!contactName.value) return uni.showToast({ title: '请输入联系人姓名', icon: 'none' });
@@ -129,22 +132,84 @@ const handleConfirmPayment = () => {
 	if (!diningTime.value) return uni.showToast({ title: '请选择用餐时间', icon: 'none' });
 
 	const orderData = {
-		foodId: id.value,
-		quantity: quantity.value,
-		contactName: contactName.value,
-		phone: phone.value,
-		diningTime: diningTime.value,
-		remark: remark.value,
-		totalAmount: foodDetails.value.price * quantity.value
+		contract: {
+			contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
+			contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+		},
+		items: [
+			{
+				bookInfo: {
+					date: new Date().toISOString().split('T')[0], // 当前日期
+					fullname: contactName.value || '游客',  // 预订人姓名
+					idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
+					idCardType: "ID_CARD",  // 默认为身份证
+					schedule: diningTime.value || '12:00'  // 使用用户选择的时间
+				},
+				productId: id.value,  // 餐厅ID
+				productType: "Dining",  // 餐饮类型
+				quantity: quantity.value,  // 预订数量
+				price: foodDetails.value.price,  // 单价
+				amount: foodDetails.value.price * quantity.value  // 总金额
+			}
+		]
 	};
 
-	uni.navigateTo({
-		url: '/pages/pay_success/pay_success'
+	createOrder(orderData);
+};
+
+// 创建订单函数
+const createOrder = (orderData) => {
+
+	// 在控制台打印订单信息
+	console.log('创建订单数据:', orderData);
+
+	// 发送创建订单请求
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+		method: 'POST',
+		data: orderData,
+		header: {
+			'Content-Type': 'application/json',
+			'X-Access-Token': userStore.token || ''
+		},
+		success: (res) => {
+			// 在控制台打印响应结果
+			console.log('创建订单响应:', res.data);
+
+			if (res.data.success) {
+				uni.showToast({
+					title: '预订成功',
+					icon: 'success',
+					duration: 2000
+				});
+				// 预订成功后跳转到订单页面
+				// setTimeout(() => {
+				// 	uni.navigateTo({
+				// 		url: '/pages/order/order'
+				// 	});
+				// }, 2000);
+			} else {
+				uni.showToast({
+					title: res.data.message || '预订失败',
+					icon: 'none',
+					duration: 2000
+				});
+			}
+		},
+		fail: (err) => {
+			// 在控制台打印错误信息
+			console.error('创建订单失败:', err);
+
+			uni.showToast({
+				title: '网络错误，请重试',
+				icon: 'none',
+				duration: 2000
+			});
+		}
 	});
 };
 
 // 调用接口获取餐厅信息
-
 const getRestaurantDetailsById = (id) => {
 	uni.request({
 		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
@@ -161,15 +226,26 @@ const getRestaurantDetailsById = (id) => {
 			if (res.data.code === 200 && res.data.result) {
 				const details = res.data.result;
 
+				// 格式化营业时间(去除秒数)
+				const formatTime = (timeStr) => {
+					if (!timeStr) return '00:00';
+					return timeStr.split(':').slice(0, 2).join(':');
+				};
+
+				const startHour = formatTime(details.starthour);
+				const endHour = formatTime(details.endhour);
+
 				// 更新餐厅详情数据，匹配模板结构
 				foodDetails.value = {
 					restaurant: details.name || '餐厅名称',
 					address: details.address || '餐厅地址',
-					businessHours: details.starthour && details.endhour
-						? `${details.starthour}-${details.endhour}`
+					businessHours: startHour && endHour
+						? `${startHour}-${endHour}`
 						: '10:00-22:00',
 					price: details.priceaverage || 168,
-					image: details.imageUrl || '/static/foodDetails/dish1.jpg'
+					image: details.imageUrl || '/static/foodDetails/dish1.jpg',
+					startHour: startHour || '10:00',
+					endHour: endHour || '22:00'
 				};
 			} else {
 				uni.showToast({
@@ -180,9 +256,7 @@ const getRestaurantDetailsById = (id) => {
 			}
 		},
 		fail: (err) => {
-			// 在控制台打印错误信息
 			console.error('获取餐厅信息失败:', err);
-
 			uni.showToast({
 				title: '网络错误，请重试',
 				icon: 'none',
@@ -194,11 +268,16 @@ const getRestaurantDetailsById = (id) => {
 
 onLoad((options) => {
 	console.log('饮食详情页面收到的ID:', options.id);
-	// id.value = options.id;
+	id.value = options.id;
 
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
 });
+onMounted(() => {
+	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
+	statusBarHeight.value = sbHeight;
+	safeAreaInsets.value = insets;
+})
 </script>
 
 <style>
@@ -325,6 +404,20 @@ page {
 .picker-text {
 	font-size: 28rpx;
 	color: #333;
+}
+
+/* 网页端专用样式 */
+@media (min-width: 768px) {
+	.time-picker {
+		margin-left: -120rpx;
+		/* 增加左移距离至120rpx */
+		position: relative;
+	}
+
+	/* 请选择用餐时间，调整弹出框位置 */
+	uni-picker {
+		left: -200rpx !important;
+	}
 }
 
 .picker-text:empty::after {
