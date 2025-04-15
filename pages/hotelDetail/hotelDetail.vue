@@ -122,22 +122,18 @@
       <text class="comment">位置很好，就在海边，房间干净整洁，服务态度也很好，早餐丰富，性价比高。</text>
       </view>
       <view class="review-item">
-        <div class="comheader">
-          <div class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png" alt="">
-            <div class="name-rating">
+        <view class="comheader">
+          <view class="ava-name-rating">
+            <img src="/static/hotel-attctive/ava.png "  alt="">
+            <view class="name-rating">
               <text class="date">黄女士</text>
               <text class="rating">★★★★</text>
-            </div>
-          </div>
+            </view>
+          </view>
           <text class="time">2025-02-27</text>
-        </div>
+        </view>
         <text class="comment">酒店环境优美，海景房视野开阔，床品舒适干净，前台服务热情周到，早餐品种丰富，下次还会选择入住。</text>
       </view>
-
-      
-     
-      
     </view>
     
     <button @click="creaOrder(hotelData)" class="book-now">立即预订</button>

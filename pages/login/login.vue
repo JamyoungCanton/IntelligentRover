@@ -6,7 +6,7 @@
     </view>
 
     <view class="login-form">
-      <button class="wechat-btn" @tap="handleWechatLogin">
+      <button class="wechat-btn" @click="handleWechatLogin">
         <uni-icons type="weixin" size="24" color="#ffffff" />
         <text class="btn-text">微信一键登录</text>
       </button>
@@ -251,6 +251,21 @@ const handleForgetPassword = () => {
 const handleGuestLogin = () => {
   // 游客登录逻辑
 };
+
+// 注册
+const handleWechatLogin = () => {
+  console.log(1);
+  
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/wxLogin',
+    header:{'Content-Type':'application/json'},
+    method:'POST',
+    data:{code:'wx200ca5910f255867'},
+    success:(success)=>{
+      console.log(success);
+    },
+  })
+}
 </script>
 
 <style>
