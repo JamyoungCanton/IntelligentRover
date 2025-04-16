@@ -10,12 +10,9 @@
       </view>
     </view>
     <scroll-view class="main-content" scroll-y>
-      <view class="search-container">
-        <view class="search-box">
-          <uni-icons type="search" size="16" color="#999" />
-          <input type="text" class="search-input" placeholder="搜索景点/美食/住宿" />
-        </view>
-      </view>
+      <!-- 一个公告飘屏 -->
+      <uni-notice-bar show-icon scrollable background-color="#EAF2FF" class="notice-bar"
+				text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
 
       <view class="uni-margin-wrap">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
@@ -98,6 +95,15 @@ const indicatorDots = ref(true)
 const autoplay = ref(true)
 const interval = ref(2000)
 const duration = ref(500)
+
+const getMore = () =>{
+				uni.showToast({
+					title: '点击查看更多',
+					icon: 'none'
+				})
+			}
+
+
 
 const changeIndicatorDots = () => {
   indicatorDots.value = !indicatorDots.value
@@ -358,26 +364,17 @@ page {
   overflow: auto;
 }
 
-.search-container {
-  padding: 24rpx 32rpx;
-  background-color: #FFFFFF;
+.notice-bar {
+  margin-bottom: 0; /* 移除底部外边距 */
 }
 
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 80rpx;
-  background-color: #f5f5f5;
-  border-radius: 8rpx;
-  padding: 0 32rpx;
+.uni-margin-wrap {
+  margin-top: 0; /* 移除顶部外边距 */
 }
 
-.search-input {
-  flex: 1;
-  height: 80rpx;
-  font-size: 28rpx;
-  margin-left: 16rpx;
+/* 或者更精确地控制间距 */
+.notice-bar + .uni-margin-wrap {
+  margin-top: 0;
 }
 
 .swiper-item{

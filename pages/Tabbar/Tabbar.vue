@@ -20,6 +20,27 @@
                 </view>
             </view>
         </view>
+        <!-- 弹出层 -->
+        <view class="popup-mask" v-if="showPopup" @click="showPopup = false">
+            <view class="popup-content" @click.stop>
+                <view class="popup-wrapper">
+                <view class="popup-button" @click="toCreatePost">
+                    <uni-icons type="file-text" size="24" :color="themeColor"></uni-icons>
+                    <view class="popup-text">
+                    <view class="popup-title">发布帖子</view>
+                    <view class="popup-desc">分享你的桌游故事和精彩瞬间</view>
+                    </view>
+                </view>
+                <view class="popup-button" @click="toCreateActivity">
+                    <uni-icons type="account" size="24" :color="themeColor"></uni-icons>
+                    <view class="popup-text">
+                    <view class="popup-title">发布活动</view>
+                    <view class="popup-desc">组织桌游聚会，创造难忘时刻</view>
+                    </view>
+                </view>
+                </view>
+            </view>
+            </view>
         <u-gap height="100"></u-gap>
     </view>
 </template>
@@ -76,28 +97,36 @@ watch(() => props.active, (newVal) => {
     activeTab.value = newVal;
 });
 
+const showPopup = ref(false) // 控制弹窗显示
+
 const switchTab = (url, index) => {
-    const prevActiveTab = activeTab.value; // 保存之前的激活状态
-    activeTab.value = index; // 更新当前激活的 tab 索引
+  if (index === 1) { // 行程是第二个tab项(index=1)
+    showPopup.value = true
+  } else {
+    const prevActiveTab = activeTab.value;
+    activeTab.value = index;
     nextTick(() => {
-        uni.switchTab({
-            url,
-            success: () => {
-                // 可以在这里添加跳转成功后的操作
-            },
-            fail: (err) => {
-                console.error('页面跳转失败:', err);
-                // 如果跳转失败，恢复原来的 activeTab
-                activeTab.value = prevActiveTab;
-            }
-        });
-    });
-};
+      uni.switchTab({ url })
+    })
+  }
+}
+
+
+
+const toCreatePost = () => {
+  uni.navigateTo({ url: '/pages/post/areatePost' })
+  showPopup.value = false
+}
+
+const toCreateActivity = () => {
+  uni.navigateTo({ url: '/pages/post/createActivity' })
+  showPopup.value = false
+}
 </script>
 
 <style scoped>
 .tabbar {
-    background-color: #fff;
+    background-color: #f3f4fa;
     width: 100%;
     height: 100rpx;
     position: fixed;
@@ -180,5 +209,34 @@ const switchTab = (url, index) => {
 .popup-desc {
     font-size: 24rpx;
     color: #999;
+}
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.popup-content {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 16rpx 16rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: popup-show 0.3s ease;
+}
+
+@keyframes popup-show {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 </style>
