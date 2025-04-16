@@ -6293,11 +6293,16 @@ import Tabbar from "../Tabbar/Tabbar.vue";
 	}
 
 	.input-container {
-		display: flex;
-		align-items: center;
-		padding: 8px 12px;
-		background-color: #ffffff;
-		border-top: 1px solid #eeeeee;
+		position: fixed;
+  bottom: 70px; /* 调整为导航栏的高度 */
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
+  z-index: 1000; /* 确保输入框在导航栏上方 */
 	}
 
 	.add-icon,

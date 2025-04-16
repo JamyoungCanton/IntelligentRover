@@ -18,16 +18,16 @@
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
           <swiper-item>
-            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="https://wlmtsys.com:9000/travel/18.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="https://wlmtsys.com:9000/travel/18.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           
 			</swiper>
@@ -364,23 +364,23 @@ page {
   overflow: auto;
 }
 
-.notice-bar {
-  margin-bottom: 0; /* 移除底部外边距 */
+uni-notice-bar {
+  background-color: #4A88FF;
+  color: #FFFFFF;
+  font-size: 24rpx; 
 }
 
-.uni-margin-wrap {
-  margin-top: 0; /* 移除顶部外边距 */
-}
-
-/* 或者更精确地控制间距 */
-.notice-bar + .uni-margin-wrap {
-  margin-top: 0;
-}
-
-.swiper-item{
-  width: 100%;
-  height: 100%;
-}
+.swiper-item {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 200px;
+    width: 100%;
+		color: #fff;
+	}
 
 .banner {
   width: 100%;

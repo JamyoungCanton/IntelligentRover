@@ -114,7 +114,7 @@ const switchTab = (url, index) => {
 
 
 const toCreatePost = () => {
-  uni.navigateTo({ url: '/pages/post/areatePost' })
+  uni.navigateTo({ url: '/pages/post/createPost' })
   showPopup.value = false
 }
 
