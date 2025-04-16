@@ -7,14 +7,15 @@
       </view>
       <view class="arrow">
         <image class="line" src="/static/ticket/line.png"></image><image src="/static/ticket/boat.png" class="arrow-img"></image><image class="line" src="/static/ticket/line.png"></image>
+		<view class="duration-view">
+			<text class="duration">约{{ ticketInfo?.duration || 0 }}小时</text>
+      </view>
       </view>
       <view class="island-info">
         <text class="island-name">{{ toIslandName || '到达岛屿' }}</text>
         <p><text class="island-name island-desc">{{ toIslandName+'码头' || '码头' }}</text></p>
       </view>
-      <view class="duration-view">
-        <text class="duration">约{{ ticketInfo?.duration || 0 }}小时</text>
-      </view>
+      
     </view>
     
     <view class="price-section">
@@ -91,7 +92,8 @@ const toIslandName = ref(''); // 到达岛屿名称
 // 岛屿ID到名称的映射
 const islandMap = {
   101: '东澳岛',
-  102: '万山岛'
+  102: '万山岛',
+  103: '外伶仃岛'
   // 根据实际情况添加更多的岛屿ID和名称
 };
 
@@ -315,7 +317,8 @@ onMounted(() => {
 }
 
 .island-name {
-  font-size: 45rpx;
+  width: 70px;
+  font-size: 35rpx;
   font-weight: bold;
   color: #333;
   margin-bottom: 5rpx;
@@ -327,7 +330,7 @@ onMounted(() => {
 }
 
 .line{
-	width: 140rpx;
+	width: 120rpx;
 	height: 4rpx;
 }
 
@@ -350,7 +353,7 @@ onMounted(() => {
   text-align: center;
   position: absolute;
   bottom: 10rpx;
-  left: 44%;
+  left: 43%;
 }
 
 .duration {

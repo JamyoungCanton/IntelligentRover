@@ -6,13 +6,13 @@
         <swiper-item v-for="(item, index) in carouselItems" :key="index">
           <view class="carousel-item">
             <image :src="item.image" class="carousel-image"></image>
-            <view class="carousel-text">
-              <text class="title">{{ item.title }}</text>
-              <p><text class="subtitle">{{ item.subtitle }}</text></p>
-            </view>
           </view>
         </swiper-item>
       </swiper>
+	  <view class="carousel-text">
+        <text class="title">一日畅游</text>
+        <p><text class="subtitle">欢乐无限 · 欢迎来到海岛一日游</text></p>
+      </view>
     </view>
 
     <!-- 导航栏 -->
@@ -25,6 +25,7 @@
           :class="{ active: activeTab === tab.value }"
           @click="setActive(tab.value)"
         >
+			<image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
           {{ tab.name }}
         </view>
       </scroll-view>
@@ -79,20 +80,26 @@ import { ref, computed } from 'vue';
 const activeTab = ref('all');
 const sortType = ref('');
 const tabs = ref([
-  { name: '全部', value: 'all' },
-  { name: '海滩休闲', value: 'beach' },
-  { name: '水上运动', value: 'water' },
-  { name: '文化体验', value: 'culture' },
-  { name: '美食', value: 'food' }
+  { name: '全部', value: 'all', imagetabs: '/static/dayTravel/all.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'} },
+  { name: '海滩休闲', value: 'beach', imagetabs: '/static/dayTravel/travel.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '水上运动', value: 'water', imagetabs: '/static/dayTravel/swim.png',imgtabStyle: {width: '15px', height: '15px', objectFit: 'contain'}},
+  { name: '文化体验', value: 'culture' , imagetabs: '/static/dayTravel/culture.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '美食', value: 'food' , imagetabs: '/static/dayTravel/food.png',imgtabStyle: {width: '18px', height: '18px', objectFit: 'contain'}}
 ]);
 
 const carouselItems = ref([
   {
     image: '/static/dayTravel/lunbo1.png',
-    title: '一日畅游',
-    subtitle: '欢乐无限 · 欢迎来到海岛一日游'
   },
-  // 更多轮播项...
+  {
+    image: '/static/dayTravel/lunbo2.png',
+  },
+  {
+    image: '/static/dayTravel/lunbo3.png',
+  },
+  {
+    image: '/static/dayTravel/lunbo4.png',
+  },
 ]);
 
 const spots = ref([
@@ -183,7 +190,7 @@ const goAttraction = (id) => {
 .carousel {
   position: relative;
   width: 100%;
-  height: 140px; /* 根据需要调整轮播图的高度 */
+  height: 150px; /* 根据需要调整轮播图的高度 */
 }
 
 .carousel-item {
@@ -215,17 +222,19 @@ const goAttraction = (id) => {
   padding: 10px;
   border-radius: 5px;
   z-index: 10;
-  background-color: rgba(0, 0, 0, 0.5);
+/*  background-color: rgba(0, 0, 0, 0.5); */
   width: 60%;
 }
 
 .title {
+  font-weight: bold;
   font-size: 32px;
   margin-bottom: 5px;
   color: coral;
 }
 
 .subtitle {
+  color: #FFFFFF;
   font-size: 16px;
 }
 
