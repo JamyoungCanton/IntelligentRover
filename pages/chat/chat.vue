@@ -442,55 +442,19 @@ const confirmTrip = () => {
 					for (let i = 0; i < processedData.length; i++) {
 						const { id, type } = processedData[i];
 						console.log(`ID: ${id}, 类型: ${type}`);
-						// 创建订单数据
-						const orderData = {
-							contract: {
-								contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
-								contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
-							},
-							items: [
-								{
-									bookInfo: {
-										date: new Date().toISOString().split('T')[0], // 当前日期
-										fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
-										idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
-										idCardType: "ID_CARD",  // 默认为身份证
-										schedule: new Date().toISOString().split('T')[0] || '12:00'
-									},
-									productId: id,  // ID
-									productType: type,  // 类型
-									quantity: 1,  // 预订数量
-								}
-							]
-						};
-						createOrder(orderData)
 					}
 
-
-					// 跳转到支付页面并传递数据
-					// uni.navigateTo({
-					//   url: "/pages/payment/payment",
-					//   events: {
-					//     // 传递数据到目标页面
-					//     acceptDataFromTargetPage: (data) => {
-					//       console.log("收到目标页面的数据:", data);
-					//     }
-					//   },
-					//   success: (res) => {
-					//     // 页面打开成功后发送数据
-					//     res.eventChannel.emit("acceptDataFromOpenPage", { processedData });
-					//   }
-					// });
+					// 跳转到订单页面
+					uni.switchTab({
+						url: "/pages/order/order",
+					});
 				} else {
 					console.log("没有找到有效的 AI 回复内容或 ID");
 				}
-				uni.switchTab({
-					url: "/pages/order/order"
-				});
 			} else if (res.cancel) {
 				console.log("用户点击了取消");
 			}
-		}
+		},
 	});
 };
 
@@ -506,10 +470,10 @@ const processAIMessageData = () => {
 
 	// 提取所有 ID 及对应的类型
 	const idWithType = lastAIMessage.content
-		.filter(item => item.id && item.type) // 确保 item.id 和 item.type 存在
-		.map(item => ({
+		.filter((item) => item.id && item.type) // 确保 item.id 和 item.type 存在
+		.map((item) => ({
 			id: item.id,
-			type: item.type
+			type: item.type,
 		})); // 提取 ID 和类型
 
 	console.log("AI 回复框中的所有 ID 及对应的类型:", idWithType);
@@ -519,70 +483,18 @@ const processAIMessageData = () => {
 		Activity: "Activities",
 		Transport: "Transportation",
 		Accommodation: "Accommodations",
-		Restaurant: "Dining"
+		Restaurant: "Dining",
 	};
 
 	// 处理类型替换
-	const processedData = idWithType.map(item => ({
+	const processedData = idWithType.map((item) => ({
 		id: item.id,
-		type: typeMapping[item.type] || item.type // 如果有映射则替换，否则保持原类型
+		type: typeMapping[item.type] || item.type, // 如果有映射则替换，否则保持原类型
 	}));
 
 	console.log("处理后的数据:", processedData);
 
 	return processedData;
-};
-
-// 创建订单函数
-const createOrder = (orderData) => {
-
-	// 在控制台打印订单信息
-	console.log('创建订单数据:', orderData);
-
-	// 发送创建订单请求
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-		method: 'POST',
-		data: orderData,
-		header: {
-			'Content-Type': 'application/json',
-			'X-Access-Token': userStore.token || ''
-		},
-		success: (res) => {
-			// 在控制台打印响应结果
-			console.log('创建订单响应:', res.data);
-
-			if (res.data.success) {
-				uni.showToast({
-					title: '预订成功',
-					icon: 'success',
-					duration: 2000
-				});
-				// 预订成功后跳转到订单页面
-				// setTimeout(() => {
-				// 	uni.navigateTo({
-				// 		url: '/pages/order/order'
-				// 	});
-				// }, 2000);
-			} else {
-				uni.showToast({
-					title: res.data.message || '预订失败',
-					icon: 'none',
-					duration: 2000
-				});
-			}
-		},
-		fail: (err) => {
-			// 在控制台打印错误信息
-			console.error('创建订单失败:', err);
-
-			uni.showToast({
-				title: '网络错误，请重试',
-				icon: 'none',
-				duration: 2000
-			});
-		}
-	});
 };
 
 // Methods
@@ -615,7 +527,6 @@ const selectCategory = (category) => {
 	}
 
 	// 模拟AI回复
-	// AIAnswerThinking(fullContent);
 	callAIInterface2(chatMessages[chatMessages.length - 1].content);
 };
 
@@ -650,9 +561,6 @@ const sendMessage = () => {
 	// 清空输入框并滚动到最新消息
 	inputMessage.value = "";
 	scrollToLatestMessage();
-
-	// 模拟AI回复
-	// AIAnswerThinking(fullContent);
 
 	callAIInterface2(chatMessages[chatMessages.length - 1].content);
 };
@@ -833,9 +741,8 @@ const onScroll = (e) => {
 	lastScrollTop.value = currentScrollTop;
 };
 
-
 const callAIInterface2 = async (userQuery, retryCount = 0) => {
-	const url = 'http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux';
+	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
 	const data = {
 		conversation_id: '',
 		inputs: {
@@ -857,32 +764,25 @@ const callAIInterface2 = async (userQuery, retryCount = 0) => {
 		body: body, // 可以是字符串、FormData、Blob 等
 	});
 
-	// console.log("response =>", response);
 	const reader = response.body.getReader();
 	const decoder = new TextDecoder();
 
-	let str = ''
+	let str = '';
 	while (true) {
-		const {
-			value
-		} = await reader.read();
+		const { value } = await reader.read();
 		const chunk = decoder.decode(value);
-		str += chunk
-		// console.log("str 合并中 =>", str);
+		str += chunk;
 		if (chunk.indexOf('message_end') != -1) {
 			console.log("================= 接收结束 开始处理 ===============");
 			const chunks = str.split('data:');
-			let wantData = ''
+			let wantData = '';
 			for (let i = 0; i < chunks.length; i++) {
-				console.log("chunks[i] =>", chunks[i]);
 				if (chunks[i].indexOf('workflow_finished') != -1) {
-					console.log("chunks[i] =>", JSON.parse(chunks[i]));
 					const jsonData = JSON.parse(chunks[i]);
 					const answer = jsonData.data.outputs.answer;
 					if (answer) {
 						const decodedAnswer = JSON.parse((answer));
-						console.log(`事件[${jsonData.event}] 解码后的答案:`,
-							decodedAnswer);
+						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
 						const aiMessage = {
 							type: 'ai',
@@ -897,11 +797,10 @@ const callAIInterface2 = async (userQuery, retryCount = 0) => {
 			}
 			console.log("chunks 数组 =>", chunks);
 			console.log("================= 接收结束 处理完成开始渲染 ===============");
-			break
-		};
+			break;
+		}
 	}
-}
-
+};
 
 onMounted(() => {
 	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
@@ -1195,8 +1094,6 @@ onMounted(() => {
 	opacity: 0.9;
 }
 
-
-
 .add-icon,
 .send-icon {
 	width: 36px;
@@ -1403,7 +1300,6 @@ onMounted(() => {
 	padding: 8px 12px;
 	background-color: #ffffff;
 	border-top: 1px solid #eeeeee;
-
 	position: fixed;
 	position: relative;
 	bottom: 17px;
@@ -1446,14 +1342,17 @@ onMounted(() => {
 	margin-bottom: 15px;
 }
 
+/* 修改 .trip-item 样式，确保不换行、蓝色字体、下划线、无背景色 */
 .trip-item {
-	margin-bottom: 10px;
-	padding: 5px 0;
-}
-
-/* 修改 .clickable-span 样式，确保不换行 */
-.clickable-span {
 	white-space: nowrap;
+	/* 不换行 */
+	color: #4285f4;
+	/* 蓝色字体 */
+	text-decoration: underline;
+	/* 下划线 */
+	cursor: pointer;
+	background-color: transparent;
+	/* 无背景色 */
 }
 
 .transport,
@@ -1465,7 +1364,7 @@ onMounted(() => {
 	border-radius: 4px;
 }
 
-.transport {
+/* .transport {
 	background-color: #e0f7fa;
 }
 
@@ -1479,7 +1378,7 @@ onMounted(() => {
 
 .activity {
 	background-color: #e8f5e9;
-}
+} */
 
 .divider {
 	border: none;

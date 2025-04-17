@@ -12,26 +12,30 @@
     <scroll-view class="main-content" scroll-y>
       <!-- 一个公告飘屏 -->
       <uni-notice-bar show-icon scrollable background-color="#EAF2FF" class="notice-bar"
-				text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
+        text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
 
       <view class="uni-margin-wrap">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
           <swiper-item>
-            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
+            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg"
+              style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" style="height: 300px"
+              mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="https://wlmtsys.com:9000/travel/18.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
+            <image src="https://wlmtsys.com:9000/travel/18.jpg" style="height: 300px" mode="aspectFill"
+              class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" style="height: 300px"
+              mode="aspectFill" class="swiper-item" />
           </swiper-item>
-          
-			</swiper>
-		</view>
+
+        </swiper>
+      </view>
 
       <view class="grid-container">
         <view v-for="(item, index) in gridItems" :key="index" class="grid-item" @click="navigateTo(item.path)">
@@ -44,18 +48,19 @@
 
       <view class="section">
         <text class="section-title">热门活动</text>
-        <scroll-view class="activity-container" scroll-x @scroll="onScroll" :scroll-left="scrollLeft">
-          <view class="activity-wrapper">
-            <view v-for="(activity, index) in activities" :key="index" :id="activity.id || 'activity-' + index"
-              class="activity-card" @click="navigateToActivity(activity.id)">
-              <image :src="activity.image" mode="aspectFill" class="activity-image" />
-              <view class="activity-info">
-                <text class="activity-title">{{ activity.title }}</text>
-                <text class="activity-price">{{ activity.price }}</text>
-              </view>
+        <view class="activity-grid">
+          <view v-for="(activity, index) in displayedActivities" :key="index" class="activity-card"
+            @click="navigateToActivity(activity.id)">
+            <image :src="activity.image" mode="aspectFill" class="activity-image" />
+            <view class="activity-info">
+              <text class="activity-title">{{ activity.title }}</text>
+              <text class="activity-price">{{ activity.price }}</text>
             </view>
           </view>
-        </scroll-view>
+        </view>
+        <view v-if="activities.length > 9" class="expand-btn" @click="toggleActivities">
+          {{ isExpanded ? '收起' : '展开更多活动' }}
+        </view>
       </view>
 
       <view class="section">
@@ -80,12 +85,12 @@
       <text class="ai-text">智能导游</text>
     </view>
 
-    <Tabbar />  
+    <Tabbar />
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
@@ -96,12 +101,12 @@ const autoplay = ref(true)
 const interval = ref(2000)
 const duration = ref(500)
 
-const getMore = () =>{
-				uni.showToast({
-					title: '点击查看更多',
-					icon: 'none'
-				})
-			}
+const getMore = () => {
+  uni.showToast({
+    title: '点击查看更多',
+    icon: 'none'
+  })
+}
 
 
 
@@ -262,6 +267,16 @@ const scrollLeft = ref(0);
 const scrollWidth = ref(0);
 const sliderValue = ref(0);
 
+// 控制活动展示的响应式变量
+const isExpanded = ref(false);
+const displayedActivities = computed(() => {
+  return isExpanded.value ? activities.value : activities.value.slice(0, 9);
+});
+
+// 切换活动展开/收起的方法
+const toggleActivities = () => {
+  isExpanded.value = !isExpanded.value;
+};
 
 const onScroll = (e) => {
   const scrollLeft = e.detail.scrollLeft;
@@ -277,7 +292,7 @@ const onScroll = (e) => {
 };
 
 // 获取屏幕安全距离
-const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets;
+const safeAreaInsets = ref(uni.getSystemInfoSync().safeAreaInsets || { top: 0 });
 
 
 // 发起请求获取活动列表
@@ -367,20 +382,20 @@ page {
 uni-notice-bar {
   background-color: #4A88FF;
   color: #FFFFFF;
-  font-size: 24rpx; 
+  font-size: 24rpx;
 }
 
 .swiper-item {
-		/* #ifndef APP-NVUE */
-		display: flex;
-		/* #endif */
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		height: 200px;
-    width: 100%;
-		color: #fff;
-	}
+  /* #ifndef APP-NVUE */
+  display: flex;
+  /* #endif */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+  color: #fff;
+}
 
 .banner {
   width: 100%;
@@ -449,27 +464,26 @@ uni-notice-bar {
   margin-top: 22rpx;
 }
 
-.activity-wrapper {
-  display: inline-flex;
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 32rpx;
   padding: 0 32rpx;
 }
 
-
 .activity-card {
-  flex: 0 0 auto;
-  width: 320rpx;
-  /* 固定宽度 */
+  width: 100%;
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
-  margin-right: 32rpx;
-  /* 卡片间距 */
 }
 
-.activity-card:last-child {
-  margin-right: 0;
-  /* 最后一个卡片右侧无间距 */
+.expand-btn {
+  text-align: center;
+  color: #4A88FF;
+  padding: 16rpx;
+  margin-top: 16rpx;
+  font-size: 28rpx;
 }
 
 .activity-image {
