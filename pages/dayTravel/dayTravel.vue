@@ -9,7 +9,7 @@
           </view>
         </swiper-item>
       </swiper>
-	  <view class="carousel-text">
+      <view class="carousel-text">
         <text class="title">一日畅游</text>
         <p><text class="subtitle">欢乐无限 · 欢迎来到海岛一日游</text></p>
       </view>
@@ -25,7 +25,7 @@
           :class="{ active: activeTab === tab.value }"
           @click="setActive(tab.value)"
         >
-			<image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
+          <image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
           {{ tab.name }}
         </view>
       </scroll-view>
@@ -53,16 +53,15 @@
         class="spot-item"
         @click="goAttraction(item.id)"
       >
-		<view class="img">
-			<image :src="item.image" mode="aspectFill"></image>
-			<view class="rating">
-				<image :src="item.imagestar" :style="item.starStyle" class="starlove"></image>
-				<text>{{ item.rating }}</text>
-			</view>
-		</view>
+        <view class="img">
+          <image :src="item.image" mode="aspectFill"></image>
+          <view class="rating">
+            <image :src="item.imagestar" :style="item.starStyle" class="starlove"></image>
+            <text>{{ item.rating }}</text>
+          </view>
+        </view>
         <view class="spot-info">
           <text class="spot-name">{{ item.name }}</text>
-          
           <text class="spot-desc">{{ item.desc }}</text>
           <view class="spot-footer">
             <text class="price">¥{{ item.price }}<text style="color: darkgray; font-size: 15px;">起</text></text>
@@ -75,104 +74,95 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+
+// 用户认证检查
+const hasToken = () => {
+  if (userStore.token === '') {
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'false',
+      duration: 1500
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+  }
+}
 
 const activeTab = ref('all');
 const sortType = ref('');
 const tabs = ref([
-  { name: '全部', value: 'all', imagetabs: '/static/dayTravel/all.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'} },
-  { name: '海滩休闲', value: 'beach', imagetabs: '/static/dayTravel/travel.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
-  { name: '水上运动', value: 'water', imagetabs: '/static/dayTravel/swim.png',imgtabStyle: {width: '15px', height: '15px', objectFit: 'contain'}},
-  { name: '文化体验', value: 'culture' , imagetabs: '/static/dayTravel/culture.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
-  { name: '美食', value: 'food' , imagetabs: '/static/dayTravel/food.png',imgtabStyle: {width: '18px', height: '18px', objectFit: 'contain'}}
+  { name: '全部', value: 'all', imagetabs: '/static/dayTravel/all.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'} },
+  { name: '海滩休闲', value: 'beach', imagetabs: '/static/dayTravel/travel.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '水上运动', value: 'water', imagetabs: '/static/dayTravel/swim.png', imgtabStyle: {width: '15px', height: '15px', objectFit: 'contain'}},
+  { name: '文化体验', value: 'culture', imagetabs: '/static/dayTravel/culture.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '美食', value: 'food', imagetabs: '/static/dayTravel/food.png', imgtabStyle: {width: '18px', height: '18px', objectFit: 'contain'}}
 ]);
+
+// tabs value 字符串与接口 type 数字映射表
+tabs.value.forEach((tab) => {
+  if(tab.value === 'all') tab.type = 0;
+  else if(tab.value === 'beach') tab.type = 2;
+  else if(tab.value === 'water') tab.type = 3;
+  else if(tab.value === 'culture') tab.type = 4;
+  else if(tab.value === 'food') tab.type = 5;
+});
 
 const carouselItems = ref([
-  {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
-  },
-  {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
-  },
-  {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
-  },
-  {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
-  }
+  { image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png' },
+  { image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png' },
+  { image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png' },
+  { image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png' }
 ]);
 
-const spots = ref([
-  {
-    id: 1,
-    name: '蓝湾浮潜体验',
-    rating: 4.9,
-    desc: '浮潜装备 · 专业教练 · 午餐',
-    price: 299,
-    sales: 1234,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/7af902439b584760a186a7e0ed33742b.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 2,
-    name: '海滩BBQ派对',
-    rating: 4.8,
-    desc: '烧烤套餐 · 沙滩椅 · 饮品',
-    price: 399,
-    sales: 890,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/0c2edc5b674e44009b09348604405883.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 3,
-    name: '日落帆船巡游',
-    rating: 4.9,
-    desc: '帆船体验 · 香槟 · 晚餐',
-    price: 599,
-    sales: 678,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/6cd868d202854bc496a4f29e9b35c108.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 4,
-    name: '珊瑚礁探索',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/608bf9566ace40008c5868900accaa1b.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 5,
-    name: '海滩探险',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png',
-  	imagestar: '/static/dayTravel/star.png',
-  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 6,
-    name: '海边石林',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/c035c810b715403097a091bb712c127e.jpg',
-  	imagestar: '/static/dayTravel/star.png',
-  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  }
-]);
+const spots = ref([]);
 
+// 拉取后端套餐数据
+const fetchSpots = async () => {
+  const tabObj = tabs.value.find(t => t.value === activeTab.value);
+  const type = tabObj ? tabObj.type : 0;
+  try {
+    uni.request({
+      url: '/island/il-package/list',
+      method: 'POST',
+      data: { type },
+      header: {
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/json'
+      },
+      success: res => {
+        if (res.statusCode === 200 && res.data && res.data.success) {
+          spots.value = (res.data.result || []).map(item => ({
+            id: item.id,
+            name: item.packname || item.title,
+            rating: item.score || 0,
+            desc: (item.tags || '').replace(/,/g, ' · '),
+            price: Number(item.price),
+            sales: item.soldSum,
+            image: (item.images && item.images[0]) ? item.images[0].url : '',
+            imagestar: '/static/dayTravel/star.png',
+            starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+          }));
+        } else {
+          uni.showToast({ title: '套餐获取失败！', icon: 'none' });
+        }
+      },
+      fail: () => {
+        uni.showToast({ title: '套餐获取失败！', icon: 'none' });
+      }
+    })
+  } catch (err) {
+    uni.showToast({ title: '网络异常', icon: 'none' });
+  }
+};
+
+// tab切换
 const setActive = (tab) => {
   activeTab.value = tab;
+  fetchSpots();
 };
 
 const toggleFilter = () => {
@@ -200,6 +190,11 @@ const goAttraction = (id) => {
     url: `/pages/dayTravelDetail/dayTravelDetail`
   });
 };
+
+onMounted(() => {
+  hasToken();
+  fetchSpots();
+});
 </script>
 
 <style>
