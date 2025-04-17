@@ -89,17 +89,17 @@ const tabs = ref([
 
 const carouselItems = ref([
   {
-    image: '/static/dayTravel/lunbo1.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
   },
   {
-    image: '/static/dayTravel/lunbo2.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
   },
   {
-    image: '/static/dayTravel/lunbo3.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
   },
   {
-    image: '/static/dayTravel/lunbo4.png',
-  },
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
+  }
 ]);
 
 const spots = ref([
@@ -110,7 +110,7 @@ const spots = ref([
     desc: '浮潜装备 · 专业教练 · 午餐',
     price: 299,
     sales: 1234,
-    image: '/static/dayTravel/1.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/7af902439b584760a186a7e0ed33742b.png',
 	imagestar: '/static/dayTravel/star.png',
 	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
   },
@@ -121,7 +121,7 @@ const spots = ref([
     desc: '烧烤套餐 · 沙滩椅 · 饮品',
     price: 399,
     sales: 890,
-    image: '/static/dayTravel/2.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/0c2edc5b674e44009b09348604405883.png',
 	imagestar: '/static/dayTravel/star.png',
 	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
   },
@@ -132,7 +132,7 @@ const spots = ref([
     desc: '帆船体验 · 香槟 · 晚餐',
     price: 599,
     sales: 678,
-    image: '/static/dayTravel/3.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/6cd868d202854bc496a4f29e9b35c108.png',
 	imagestar: '/static/dayTravel/star.png',
 	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
   },
@@ -143,10 +143,32 @@ const spots = ref([
     desc: '潜水装备 · 专业向导 · 水下相机',
     price: 349,
     sales: 432,
-    image: '/static/dayTravel/4.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/608bf9566ace40008c5868900accaa1b.png',
 	imagestar: '/static/dayTravel/star.png',
 	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
   },
+  {
+    id: 5,
+    name: '海滩探险',
+    rating: 4.7,
+    desc: '潜水装备 · 专业向导 · 水下相机',
+    price: 349,
+    sales: 432,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png',
+  	imagestar: '/static/dayTravel/star.png',
+  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+  {
+    id: 6,
+    name: '海边石林',
+    rating: 4.7,
+    desc: '潜水装备 · 专业向导 · 水下相机',
+    price: 349,
+    sales: 432,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/c035c810b715403097a091bb712c127e.jpg',
+  	imagestar: '/static/dayTravel/star.png',
+  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  }
 ]);
 
 const setActive = (tab) => {
@@ -175,7 +197,7 @@ const sortedSpots = computed(() => {
 
 const goAttraction = (id) => {
   uni.navigateTo({
-    url: `/pages/attractionDetail/attractionDetail?id=${id}`
+    url: `/pages/dayTravelDetail/dayTravelDetail`
   });
 };
 </script>

@@ -2,13 +2,7 @@
   <view class="container">
     <!-- 顶部图片区域 -->
     <view class="header-image-container">
-      <image class="header-image" :src="productDetail.coverImage" mode="aspectFill"></image>
-      <view class="back-button">
-        <text class="iconfont">&#xe600;</text>
-      </view>
-      <view class="share-button">
-        <text class="iconfont">&#xe603;</text>
-      </view>
+      <image class="header-image" src="https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png" mode="aspectFill"></image>
     </view>
 
     <!-- 标题和价格区域 -->
@@ -24,16 +18,16 @@
     <!-- 功能按钮区域 -->
     <view class="action-buttons">
       <view class="action-button" @click="handleAction('favorite')">
-        <text class="iconfont">&#xe602;</text>
-        <text>收藏</text>
+        <image src="/static/daytravelDetail/email.png" class="three"></image>
+        <text> 专业教练</text>
       </view>
       <view class="action-button" @click="handleAction('share')">
-        <text class="iconfont">&#xe601;</text>
-        <text>分享</text>
+        <image src="/static/daytravelDetail/food.png" class="three"></image>
+        <text>海鲜午餐</text>
       </view>
       <view class="action-button" @click="handleAction('service')">
-        <text class="iconfont">&#xe604;</text>
-        <text>客服</text>
+        <image src="/static/daytravelDetail/save.png" class="three"></image>
+        <text>旅游保险</text>
       </view>
     </view>
 
@@ -50,23 +44,51 @@
         >
           <text class="date-day">{{ item.day }}</text>
           <text class="date-week">{{ item.weekday }}</text>
+		  <text class="date-price">{{ item.price }}</text>
         </view>
       </view>
     </view>
 
-    <!-- 行程特色 -->
-    <view class="section-container">
-      <view class="section-title">行程特色</view>
-      <view class="feature-list">
-        <view class="feature-item" v-for="(feature, index) in productDetail.features" :key="index">
-          <text class="feature-dot"></text>
-          <text class="feature-text">{{ feature }}</text>
+    <!-- 行程安排部分 -->
+        <view class="schedule-section">
+          <view class="section-title">行程安排</view>
+          <view class="timeline">
+            <view v-for="(item, index) in scheduleList" :key="index" class="timeline-item">
+              <view class="time-point">
+                <view class="circle" />
+                <view v-if="index !== scheduleList.length - 1" class="line" />
+              </view>
+              <view class="time-content">
+                <view class="time">{{ item.time }}</view>
+                <view class="content">{{ item.content }}</view>
+              </view>
+            </view>
+          </view>
         </view>
-      </view>
-    </view>
+    
+        <!-- 费用说明部分 -->
+        <view class="usage-section">
+          <view class="section-title">费用说明</view>
+		  <view style="color: color: #333;font-size: 17px;">费用包含</view>
+          <view class="usage-list">
+            <view v-for="(item, index) in usageList" :key="index" class="usage-item">
+              <view class="dot" />
+              <text>{{ item }}</text>
+            </view>
+          </view>
+		  <!-- 费用不含 -->
+		  <view style="color: color: #333;font-size: 17px;">费用不含</view>
+		  <view class="usage-list">
+		    <view v-for="(item, index) in nousageList" :key="index" class="usage-item">
+		      <view class="dot" />
+		      <text>{{ item }}</text>
+		    </view>
+		  </view>
+        </view>
 
     <!-- 用户评论区域 -->
     <view class="section-container" v-if="reviews.length > 0">
+	<view class="findAll">查看全部</view>
       <view class="section-title">用户点评</view>
       <view class="comment-list">
         <view class="comment-item" v-for="(review, index) in reviews" :key="index">
@@ -75,11 +97,11 @@
             <view class="user-info">
               <text class="user-name">{{ review.username }}</text>
               <view class="rating">
-                <text
+                <view
                   class="iconfont star-icon"
                   v-for="star in 5"
                   :key="star"
-                >&#xe605;</text>
+                ><image src="/static/dayTravel/star.png" class="starimg"></image></view>
               </view>
             </view>
           </view>
@@ -182,30 +204,65 @@ const productDetail = reactive<ProductDetail>({
 
 // 可选日期
 const availableDates = ref<DateOption[]>([
-  { day: '14', weekday: '周一', date: '2025-01-14', available: true },
-  { day: '15', weekday: '周二', date: '2025-01-15', available: true },
-  { day: '16', weekday: '周三', date: '2025-01-16', available: true },
-  { day: '17', weekday: '周四', date: '2025-01-17', available: true },
-  { day: '18', weekday: '周五', date: '2025-01-18', available: true },
+  { day: '14', weekday: '周一', date: '2025-01-14', price: 799, available: true },
+  { day: '15', weekday: '周二', date: '2025-01-15', price: 799,available: true },
+  { day: '16', weekday: '周三', date: '2025-01-16', price: 799,available: true },
+  { day: '17', weekday: '周四', date: '2025-01-17', price: 799,available: true },
+  { day: '18', weekday: '周五', date: '2025-01-18', price: 799,available: true },
+]);
+
+// 行程安排数据
+const scheduleList = ref([
+  { time: '08:30', content: '酒店集合出发' },
+  { time: '09:30', content: '抵达海南，清蓝慧村' },
+  { time: '10:00', content: '快艇深海体验' },
+  { time: '12:00', content: '海鲜特色午餐' },
+  { time: '14:00', content: '海底世界体验' },
+  { time: '16:00', content: '自由活动，拍照' },
+  { time: '17:00', content: '返程' }
+]);
+
+// 费用说明数据
+const usageList = ref([
+  '费用门票',
+  '专业接待',
+  '安排住宿',
+  '海鲜午餐',
+  '景点咨询'
+]);
+
+// 费用说明数据
+const nousageList = ref([
+  '个人消费',
+  '保险服务',
+  '小费'
 ]);
 
 // 用户评论
 const reviews = ref<Review[]>([
   {
     id: 1,
-    username: '王二',
-    avatar: 'https://mp-a056c4c7-b4d0-4355-9c6a-3136b7fc2d66.cdn.bspapp.com/cloudstorage/b7b00e10-fd14-4b64-83b6-a02a1c7fe77b.png',
+    username: '李小姐',
+    avatar: '/static/daytravelDetail/man.png',
     rating: 5,
-    content: '服务很好，环境很美，导游很专业。酒店早餐丰富，房间宽敞明亮，性价比很高！',
-    date: '2024-12-10'
+    content: '教练很专业，海鲜午餐很新鲜，整体体验非常棒！',
+    date: '2024-01-15'
   },
   {
     id: 2,
-    username: '张三',
-    avatar: 'https://mp-a056c4c7-b4d0-4355-9c6a-3136b7fc2d66.cdn.bspapp.com/cloudstorage/b7b00e10-fd14-4b64-83b6-a02a1c7fe77b.png',
+    username: '张先生',
+    avatar: '/static/daytravelDetail/man.png',
     rating: 5,
-    content: '价格实惠，体验非常好，下次还会再来。一天的行程安排得很合理，不会太赶！',
-    date: '2024-12-05'
+    content: '海底漫步太神奇了，第一次体验这么特别的项目。',
+    date: '2024-01-14'
+  },
+  {
+    id: 3,
+    username: '王小姐',
+    avatar: '/static/daytravelDetail/man.png',
+    rating: 4,
+    content: '整体不错，就是集合时间有点早。午餐很丰盛！',
+    date: '2024-01-13'
   }
 ]);
 
@@ -214,13 +271,13 @@ const recommendations = ref<RecommendedProduct[]>([
   {
     id: 2,
     title: '三亚海岛度假5日游',
-    image: '/static/images/beach.jpg',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f05760d6c1e146b7bb07bc32c5b47d2b.png',
     price: 799
   },
   {
     id: 3,
     title: '海南热带丛林探险',
-    image: '/static/images/beach.jpg',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/072f4bac0fa6481f9390c8145e356f22.png',
     price: 999
   }
 ]);
@@ -350,18 +407,18 @@ const handleBooking = () => {
 </script>
 
 <style>
-/* 引入图标字体 */
-@font-face {
-  font-family: 'iconfont';
-  src: url('https://at.alicdn.com/t/font_8d5l8fzk5b87iudi.ttf') format('truetype');
-}
-
+/* 原来的样式 */
 .iconfont {
   font-family: "iconfont" !important;
   font-size: 24px;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.left{
+	width: 25px;
+	height: 25px;
 }
 
 .container {
@@ -422,6 +479,11 @@ const handleBooking = () => {
   color: #666;
   margin-bottom: 20rpx;
 }
+	
+.three{
+	width: 30px;
+	height: 30px;
+}
 
 .price-container {
   display: flex;
@@ -444,18 +506,24 @@ const handleBooking = () => {
 /* 功能按钮区域 */
 .action-buttons {
   display: flex;
-  background-color: #fff;
-  padding: 20rpx 0;
+  background-color: #ffffff;
+  border-radius: 5px;
   border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
   margin-bottom: 20rpx;
+  padding: 20rpx 0;
 }
 
 .action-button {
-  flex: 1;
+  width: 120px;
+  height: 70px;
+  background-color: #eff6ff;
+  border-radius: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  margin-left: 20px;
+  padding-top: 5px;
 }
 
 .action-button text:last-child {
@@ -468,14 +536,19 @@ const handleBooking = () => {
 .section-container {
   background-color: #fff;
   padding: 30rpx;
-  margin-bottom: 20rpx;
 }
 
 .section-title {
   font-size: 32rpx;
   font-weight: bold;
   color: #333;
+  margin-top: 5rpx;
   margin-bottom: 20rpx;
+}
+
+.findAll{
+	float: right;
+	color: #8ba6ef;
 }
 
 .date-grid {
@@ -509,32 +582,101 @@ const handleBooking = () => {
   color: #666;
   margin-top: 5rpx;
 }
+.date-price {
+  font-size: 24rpx;
+  color: #1471c7;
+  margin-top: 10rpx;
+}
 
-/* 行程特色 */
-.feature-list {
+/* 行程安排样式 */
+.schedule-section {
+  background-color: #ffffff;
+  margin-top: 10px;
+  border-top: #f8f8f9;
+  margin-left: 10px;
+  margin-bottom: 20px;
+}
+
+.timeline {
+  padding: 15px 0;
+}
+
+.timeline-item {
+  display: flex;
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.time-point {
+  width: 20px;
   display: flex;
   flex-direction: column;
-}
-
-.feature-item {
-  display: flex;
   align-items: center;
-  margin-bottom: 15rpx;
+  position: relative;
 }
 
-.feature-dot {
-  width: 16rpx;
-  height: 16rpx;
-  background-color: #4dabf7;
+.circle {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  margin-right: 15rpx;
+  background-color: #0077cc;
+  margin-top: 6px;
 }
 
-.feature-text {
-  font-size: 28rpx;
+.line {
+  width: 1px;
+  height: 50px;
+  background-color: #0077cc;
+  margin-top: 3px;
+}
+
+.time-content {
+  flex: 1;
+  padding-bottom: 15px;
+  padding-left: 10px;
+}
+
+.time {
+  font-size: 15px;
+  font-weight: bold;
   color: #333;
 }
 
+.content {
+  font-size: 14px;
+  color: #666;
+  margin-top: 3px;
+}
+
+/* 费用说明样式 */
+.usage-section {
+  background-color: #ffffff;
+  padding-bottom: 20px;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #f8f8f9;
+  border-top: 1px solid #f8f8f9;
+}
+
+.usage-list {
+  padding: 15px 0;
+}
+
+.usage-item {
+  color: #777c83;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #333;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
 /* 用户评论区域 */
 .comment-list {
   display: flex;
@@ -578,6 +720,11 @@ const handleBooking = () => {
   color: #ffb805;
   font-size: 26rpx;
   margin-right: 5rpx;
+}
+
+.starimg{
+  width: 17px;
+  height: 17px;
 }
 
 .comment-content {

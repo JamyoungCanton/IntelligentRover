@@ -62,7 +62,7 @@
                 <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'"
                   size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFA500' : '#CCCCCC'" />
                 <text v-if="restaurant.rating % 1 !== 0" class="half-star">
-                  <uni-icons type="star-filled" size="14" color="#FFA500" style="width: 50%;" />
+                  <!-- <uni-icons type="star-filled" size="14" color="#FFA500" style="width: 50%;" /> -->
                 </text>
               </view>
               <text class="rating">{{ restaurant.rating }}</text>
