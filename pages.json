@@ -90,7 +90,7 @@
 		{
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "社区互动"
 			}
 		},
 		{
@@ -270,6 +270,12 @@
 			"path": "pages/post/component/popup",
 			"style": {
 				"navigationBarTitleText": "popup"
+			}
+		},
+		{
+			"path": "pages/post/postDetail",
+			"style": {
+				"navigationBarTitleText": "帖子详情"
 			}
 		}
 	],
