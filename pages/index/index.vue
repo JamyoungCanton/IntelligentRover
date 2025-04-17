@@ -481,7 +481,6 @@ uni-notice-bar {
   color: #333333;
   margin-bottom: 122rpx;
   padding-bottom: 20px;
-
 }
 
 .activity-container {
@@ -495,6 +494,7 @@ uni-notice-bar {
   grid-template-columns: repeat(3, 1fr);
   gap: 32rpx;
   padding: 0 32rpx;
+  margin-top: 50rpx;
 }
 
 .activity-card {
@@ -538,13 +538,16 @@ uni-notice-bar {
   color: #4A88FF;
   margin-top: 8rpx;
   text-align: right;
+  word-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
 }
 
 .route-card {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
-  margin-top: 25rpx;
+  margin-top: 50rpx;
 }
 
 .route-image {

@@ -14,7 +14,7 @@
       </scroll-view>
     </view>
     <view class="postContent">
-      <view class="postItem">
+      <view class="postItem" @click="navigateToPostDetail">
         <view class="postHeader">
           <image class="itemava"
             src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
@@ -46,7 +46,7 @@
               <uni-icons type="star" size="16" color="#666"></uni-icons>
               <text class="data-detail">3</text>
               <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text class="data-detail">7</text>
+              <text class="data-detail">2</text>
             </view>
           </view>
         </view>
@@ -149,11 +149,17 @@ export default {
       activeType.value = type;
       // 这里可以添加选择类型后的逻辑
     };
+    const navigateToPostDetail = () => {
+      uni.navigateTo({
+        url: '/pages/post/postDetail'
+      });
+    };
     
     return {
       typeList,
       activeType,
-      selectType
+      selectType,
+      navigateToPostDetail
     };
   }
 };

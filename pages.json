@@ -90,7 +90,7 @@
 		{
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "社区互动"
 			}
 		},
 		{
@@ -265,13 +265,19 @@
 			"style": {
 				"navigationBarTitleText": "创建活动"
 			}
+		},
+		{
+			"path": "pages/post/component/popup",
+			"style": {
+				"navigationBarTitleText": "popup"
+			}
+		},
+		{
+			"path": "pages/post/postDetail",
+			"style": {
+				"navigationBarTitleText": "帖子详情"
+			}
 		}
-		// {
-		// 	"path": "pages/post/component/popup",
-		// 	"style": {
-		// 		"navigationBarTitleText": "popup"
-		// 	}
-		// }
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
