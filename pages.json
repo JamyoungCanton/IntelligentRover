@@ -5,7 +5,7 @@
 			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
 		}
 	},
-	"pages": [ 
+	"pages": [
 		{
 			"path": "pages/index/index",
 			"style": {
@@ -225,14 +225,26 @@
 		{
 			"path": "pages/attractionDetail/attractionDetail",
 			"style": {
-				"navigationBarTitleText": "attractionDetail"
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/dayTravel/dayTravel",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/dayTravelDetail/dayTravelDetail",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/comfirmAttractionOrder/confirmAttrationOrder",
 			"style": {
-			  "navigationBarTitleText": "attractionConfirm",
-			  "navigationStyle": "custom"
+				"navigationBarTitleText": "attractionConfirm",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -243,10 +255,21 @@
 			}
 		},
 		{
-			"path" : "pages/dayTravel/dayTravel",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/post/createPost",
+			"style": {
+				"navigationBarTitleText": "创建帖子"
+			}
+		},
+		{
+			"path": "pages/post/createActivity",
+			"style": {
+				"navigationBarTitleText": "创建活动"
+			}
+		},
+		{
+			"path": "pages/post/component/popup",
+			"style": {
+				"navigationBarTitleText": "popup"
 			}
 		}
 	],

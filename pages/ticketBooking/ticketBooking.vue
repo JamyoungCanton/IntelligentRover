@@ -259,7 +259,7 @@ onMounted(() => {
 
 .value {
   background-color: #eeeded;
-  width: 140px;
+  width: 130px;
   height: 40px;
   line-height: 40px;
 }
