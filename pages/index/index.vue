@@ -53,8 +53,10 @@
             @click="navigateToActivity(activity.id)">
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
             <view class="activity-info">
-              <text class="activity-title">{{ activity.title }}</text>
-              <text class="activity-price">{{ activity.price }}</text>
+              <view class="activity-text-container">
+                <text class="activity-title">{{ activity.title }}</text>
+                <text class="activity-price">{{ activity.price }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -451,10 +453,11 @@ uni-notice-bar {
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: 40rpx;
   font-weight: 500;
   color: #333333;
   margin-bottom: 132rpx;
+  font-size: bold;
 
 }
 
@@ -469,6 +472,7 @@ uni-notice-bar {
   grid-template-columns: repeat(3, 1fr);
   gap: 32rpx;
   padding: 0 32rpx;
+  margin-top: 50rpx;
 }
 
 .activity-card {
@@ -493,9 +497,12 @@ uni-notice-bar {
 
 .activity-info {
   padding: 24rpx;
+}
+
+.activity-text-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .activity-title {
@@ -509,13 +516,16 @@ uni-notice-bar {
   color: #4A88FF;
   margin-top: 8rpx;
   text-align: right;
+  word-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
 }
 
 .route-card {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
-  margin-top: 25rpx;
+  margin-top: 50rpx;
 }
 
 .route-image {
