@@ -646,6 +646,7 @@ page {
 }
 
 .price {
+  color: #f3a200;
   font-size: 32rpx;
   font-weight: 500;
 }
@@ -659,6 +660,8 @@ page {
   font-size: 24rpx;
   padding: 12rpx 30rpx;
   border-radius: 8rpx;
+  height: 35px;
+  line-height: 23px;
 }
 
 .btn-default {
@@ -668,6 +671,7 @@ page {
 }
 
 .btn-primary {
+  height: 35px;
   background: #1890FF;
   color: #fff;
 }

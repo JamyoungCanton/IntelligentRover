@@ -13,7 +13,12 @@
       <!-- 一个公告飘屏 -->
       <uni-notice-bar show-icon scrollable background-color="#EAF2FF" class="notice-bar"
         text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
-
+		<view class="search-container">
+		    <view class="search-box">
+		        <uni-icons type="search" size="16" color="#999" />
+		        <input type="text" class="search-input" placeholder="搜索景点/美食/住宿" />
+		    </view>
+		</view>
       <view class="uni-margin-wrap">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
@@ -52,10 +57,10 @@
           <view v-for="(activity, index) in displayedActivities" :key="index" class="activity-card"
             @click="navigateToActivity(activity.id)">
             <image :src="activity.image" mode="aspectFill" class="activity-image" />
-            <view class="activity-info">
+            <p><view class="activity-info">
               <text class="activity-title">{{ activity.title }}</text>
               <text class="activity-price">{{ activity.price }}</text>
-            </view>
+            </view></p>
           </view>
         </view>
         <view v-if="activities.length > 9" class="expand-btn" @click="toggleActivities">
@@ -368,17 +373,38 @@ page {
 }
 
 .nav-title {
-  font-size: 32rpx;
+  font-size: 40rpx;
+  font-weight: bold;
   color: #FFFFFF;
   margin: 0 16rpx;
   font-family: 'Cursive', cursive;
 }
 
 .main-content {
+  position: relative;
   flex: 1;
   overflow: auto;
 }
 
+.search-box{
+	position: absolute;
+	top: 80px;
+	right: 30px;
+	align-items: center;
+	display: flex;
+	width: 300px;
+	height: 80rpx;
+	background-color: rgba(245, 245, 245, 0.7);
+	border-radius: 8rpx;
+	padding: 0 32rpx;
+	z-index: 999;
+}
+.search-input{
+	flex: 1;
+	height: 80rpx;
+	font-size: 28rpx;
+	margin-left: 16rpx;
+}
 uni-notice-bar {
   background-color: #4A88FF;
   color: #FFFFFF;
@@ -444,17 +470,17 @@ uni-notice-bar {
 }
 
 .section {
-  margin-top: 16rpx;
   padding: 48rpx 32rpx;
   /* margin-bottom: ; */
   background-color: #FFFFFF;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: 40rpx;
+  font-weight: bold;
   color: #333333;
-  margin-bottom: 132rpx;
+  margin-bottom: 122rpx;
+  padding-bottom: 20px;
 
 }
 
@@ -472,7 +498,9 @@ uni-notice-bar {
 }
 
 .activity-card {
+  margin-top: 20px;
   width: 100%;
+  height: 200px;
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
@@ -494,8 +522,9 @@ uni-notice-bar {
 .activity-info {
   padding: 24rpx;
   display: flex;
+  flex-direction: column; /* 修改这里 */
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* 根据需要调整对齐方式 */
 }
 
 .activity-title {

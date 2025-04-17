@@ -243,6 +243,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 20px 0;
+  background-color: #fffdff;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .title {
@@ -324,7 +329,7 @@ export default {
 .card-title {
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 20px;
 }
 
 .card-date {
