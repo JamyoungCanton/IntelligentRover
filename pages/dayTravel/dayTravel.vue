@@ -99,7 +99,7 @@ const carouselItems = ref([
   },
   {
     image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
-  },
+  }
 ]);
 
 const spots = ref([
@@ -147,6 +147,28 @@ const spots = ref([
 	imagestar: '/static/dayTravel/star.png',
 	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
   },
+  {
+    id: 5,
+    name: '海滩探险',
+    rating: 4.7,
+    desc: '潜水装备 · 专业向导 · 水下相机',
+    price: 349,
+    sales: 432,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png',
+  	imagestar: '/static/dayTravel/star.png',
+  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+  {
+    id: 6,
+    name: '海边石林',
+    rating: 4.7,
+    desc: '潜水装备 · 专业向导 · 水下相机',
+    price: 349,
+    sales: 432,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/c035c810b715403097a091bb712c127e.jpg',
+  	imagestar: '/static/dayTravel/star.png',
+  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  }
 ]);
 
 const setActive = (tab) => {
@@ -175,7 +197,7 @@ const sortedSpots = computed(() => {
 
 const goAttraction = (id) => {
   uni.navigateTo({
-    url: `/pages/attractionDetail/attractionDetail?id=${id}`
+    url: `/pages/dayTravelDetail/dayTravelDetail`
   });
 };
 </script>
