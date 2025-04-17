@@ -2,10 +2,7 @@
   <view class="container">
     <!-- 顶部图片区域 -->
     <view class="header-image-container">
-      <image class="header-image" src="/static/daytravelDetail/one.png" mode="aspectFill"></image>
-      <view class="back-button">
-        <image src="/static/chat/left.png" class="left"></image>
-      </view>
+      <image class="header-image" src="https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png" mode="aspectFill"></image>
     </view>
 
     <!-- 标题和价格区域 -->
@@ -274,13 +271,13 @@ const recommendations = ref<RecommendedProduct[]>([
   {
     id: 2,
     title: '三亚海岛度假5日游',
-    image: '/static/daytravelDetail/two.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f05760d6c1e146b7bb07bc32c5b47d2b.png',
     price: 799
   },
   {
     id: 3,
     title: '海南热带丛林探险',
-    image: '/static/daytravelDetail/three.png',
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/072f4bac0fa6481f9390c8145e356f22.png',
     price: 999
   }
 ]);

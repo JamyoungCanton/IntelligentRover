@@ -18,10 +18,13 @@ import { createSSRApp } from 'vue'
 import pinia from './store/index'
 import './router/index'
 import Tabbar from './pages/Tabbar/Tabbar.vue'
+// import uView from 'uview-ui'
+
 
 export function createApp() {
   const app = createSSRApp(App)
   app.use(pinia)
+  // app.use(uView)
   
   // 全局注册Tabbar组件
   app.component('Tabbar', Tabbar)

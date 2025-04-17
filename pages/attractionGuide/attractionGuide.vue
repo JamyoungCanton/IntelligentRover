@@ -1,148 +1,178 @@
 <template>
   <view class="page">
-    <view class="header">
-      <view class="title-section">
-        <text class="title">景点攻略</text>
-        <view class="header-actions">
-          <uni-icons type="heart" size="24" color="#FFFFFF" class="header-icon"></uni-icons>
-          <uni-icons type="arrow-right" size="24" color="#FFFFFF" class="header-icon"></uni-icons>
-        </view>
-      </view>
-      <view class="search-wrap">
-        <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-        <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
+    <!-- 轮播图 -->
+    <view class="carousel">
+      <swiper :autoplay="true" :interval="3000" :duration="500" :circular="true">
+        <swiper-item v-for="(item, index) in carouselItems" :key="index">
+          <view class="carousel-item">
+            <image :src="item.image" class="carousel-image"></image>
+          </view>
+        </swiper-item>
+      </swiper>
+	  <view class="carousel-text">
+        <text class="title">一日畅游</text>
+        <p><text class="subtitle">欢乐无限 · 欢迎来到海岛一日游</text></p>
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y>
-      <scroll-view class="category-list" scroll-x show-scrollbar="false">
-        <view class="category-scroll">
-          <button
-            v-for="category in categories"
-            :key="category"
-            class="category-item"
-            :class="{ active: selectedCategory === category }"
-            @click="changeTab(category)"
-          >
-            {{ category }}
-          </button>
+    <!-- 导航栏 -->
+    <view class="navbar">
+      <scroll-view class="nav-scroll" scroll-x>
+        <view
+          v-for="(tab, index) in tabs"
+          :key="index"
+          class="nav-item"
+          :class="{ active: activeTab === tab.value }"
+          @click="setActive(tab.value)"
+        >
+			<image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
+          {{ tab.name }}
         </view>
       </scroll-view>
+    </view>
 
-      <view class="filter-bar">
-        <view class="filter-options">
-          <view class="filter-item">
-            <text>综合排序</text>
-            <uni-icons type="bottom" size="12" color="#666666"></uni-icons>
-          </view>
-          <view class="filter-item">
-            <text>筛选</text>
-            <uni-icons type="filter" size="12" color="#666666"></uni-icons>
+    <!-- 筛选和排序 -->
+    <view class="filter-bar">
+      <view class="filter-options">
+        <view class="filter-item" @click="toggleFilter">
+          <text>筛选</text>
+        </view>
+      </view>
+      <view class="sub-filter">
+        <view class="sub-filter-item" @click="setSort('price')">价格</view>
+        <view class="sub-filter-item" @click="setSort('sales')">销量</view>
+        <view class="sub-filter-item" @click="setSort('rating')">好评</view>
+      </view>
+    </view>
+
+    <!-- 景点列表 -->
+    <view class="spot-grid">
+      <view
+        v-for="item in sortedSpots"
+        :key="item.id"
+        class="spot-item"
+        @click="goAttraction(item.id)"
+      >
+		<view class="img">
+			<image :src="item.image" mode="aspectFill"></image>
+			<view class="rating">
+				<image :src="item.imagestar" :style="item.starStyle" class="starlove"></image>
+				<text>{{ item.rating }}</text>
+			</view>
+		</view>
+        <view class="spot-info">
+          <text class="spot-name">{{ item.name }}</text>
+          
+          <text class="spot-desc">{{ item.desc }}</text>
+          <view class="spot-footer">
+            <text class="price">¥{{ item.price }}<text style="color: darkgray; font-size: 15px;">起</text></text>
+            <text class="sales">已售{{ item.sales }}</text>
           </view>
         </view>
       </view>
-
-      <view class="spot-grid">
-        <view
-          v-for="item in filteredAttractions"
-          :key="item.id"
-          class="spot-item"
-          @click="goAttraction(item.id)"
-        >
-          <image :src="item.imageUrl" mode="aspectFill"></image>
-          <view class="spot-info">
-            <text class="spot-name">{{ item.name }}</text>
-            <view class="rating">
-              <uni-rate :value="item.rating" size="10" readonly></uni-rate>
-              <text class="rating-score">{{ item.rating }}</text>
-            </view>
-            <text class="spot-desc">开放时间： {{ item.starttime }} - {{ item.endtime }}</text>
-            <view class="spot-footer">
-              <view class="location">
-                <text class="location-text">门票价格</text>
-              </view>
-              <text class="price">{{ item.ticketprice }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
-import { useUserStore } from '@/store/modules/user';
+import { ref, computed } from 'vue';
 
-const userStore = useUserStore();
-const attractionGuidelist = ref([]);
-const selectedCategory = ref('全部');
-const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
-const searchInput = ref('');
+const activeTab = ref('all');
+const sortType = ref('');
+const tabs = ref([
+  { name: '全部', value: 'all', imagetabs: '/static/dayTravel/all.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'} },
+  { name: '海滩休闲', value: 'beach', imagetabs: '/static/dayTravel/travel.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '水上运动', value: 'water', imagetabs: '/static/dayTravel/swim.png',imgtabStyle: {width: '15px', height: '15px', objectFit: 'contain'}},
+  { name: '文化体验', value: 'culture' , imagetabs: '/static/dayTravel/culture.png',imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
+  { name: '美食', value: 'food' , imagetabs: '/static/dayTravel/food.png',imgtabStyle: {width: '18px', height: '18px', objectFit: 'contain'}}
+]);
 
-const hasToken = () => {
-  if(userStore.token === ''){
-    // 提示未登录，请先登录
-    uni.showToast({
-      title: '未登录,请先登录',
-      icon: 'false',
-      duration: 1500
-    })
-    setTimeout(() => {
-      uni.navigateTo({
-        url: '/pages/login/login'
-      });
-    }, 500);
-  }
-}
+const carouselItems = ref([
+  {
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
+  },
+  {
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
+  },
+  {
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
+  },
+  {
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
+  },
+]);
 
-// 根据选中的分类筛选景点
-const filteredAttractions = computed(() => {
-  if(searchInput.value){
-   return attractionGuidelist.value.filter(item => item.name.includes(searchInput.value));
-  }
-  if (selectedCategory.value === '全部') {
-    return attractionGuidelist.value;
-  } 
-  else if (selectedCategory.value === '热门') {
-    return attractionGuidelist.value.sort((a,b) => b.rating - a.rating)
-  }
-  else {
-    return attractionGuidelist.value.filter(item => item.type === selectedCategory.value);
-  }
-});
+const spots = ref([
+  {
+    id: 1,
+    name: '蓝湾浮潜体验',
+    rating: 4.9,
+    desc: '浮潜装备 · 专业教练 · 午餐',
+    price: 299,
+    sales: 1234,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/7af902439b584760a186a7e0ed33742b.png',
+	imagestar: '/static/dayTravel/star.png',
+	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+  {
+    id: 2,
+    name: '海滩BBQ派对',
+    rating: 4.8,
+    desc: '烧烤套餐 · 沙滩椅 · 饮品',
+    price: 399,
+    sales: 890,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/0c2edc5b674e44009b09348604405883.png',
+	imagestar: '/static/dayTravel/star.png',
+	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+  {
+    id: 3,
+    name: '日落帆船巡游',
+    rating: 4.9,
+    desc: '帆船体验 · 香槟 · 晚餐',
+    price: 599,
+    sales: 678,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/6cd868d202854bc496a4f29e9b35c108.png',
+	imagestar: '/static/dayTravel/star.png',
+	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+  {
+    id: 4,
+    name: '珊瑚礁探索',
+    rating: 4.7,
+    desc: '潜水装备 · 专业向导 · 水下相机',
+    price: 349,
+    sales: 432,
+    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/608bf9566ace40008c5868900accaa1b.png',
+	imagestar: '/static/dayTravel/star.png',
+	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+  },
+]);
 
-onMounted(() => {
-  hasToken();
-  getAttractionList()
-  
-});
-
-// 获取数据
-const getAttractionList = () => {
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
-    method: 'GET',
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token
-    },
-    data:{
-      pageNo: 1,
-      pageSize: 50
-    },
-    success: (res) => {
-      attractionGuidelist.value = res.data.result.records;
-    }
-  });
-}
-
-// 切换分类
-const changeTab = (category) => {
-  selectedCategory.value = category;
+const setActive = (tab) => {
+  activeTab.value = tab;
 };
 
-// 跳转到景点详情页
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
+
+const setSort = (type) => {
+  sortType.value = type;
+};
+
+const sortedSpots = computed(() => {
+  let sorted = [...spots.value];
+  if (sortType.value === 'price') {
+    sorted = sorted.sort((a, b) => a.price - b.price);
+  } else if (sortType.value === 'sales') {
+    sorted = sorted.sort((a, b) => b.sales - a.sales);
+  } else if (sortType.value === 'rating') {
+    sorted = sorted.sort((a, b) => b.rating - a.rating);
+  }
+  return sorted;
+});
+
 const goAttraction = (id) => {
   uni.navigateTo({
     url: `/pages/attractionDetail/attractionDetail?id=${id}`
@@ -151,122 +181,129 @@ const goAttraction = (id) => {
 </script>
 
 <style>
-page {
-  height: 100%;
-  background: #FFFFFF;
-}
-
 .page {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.header {
-  background: #0066CC;
-  padding: 20rpx 30rpx;
-  flex-shrink: 0;
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 150px; /* 根据需要调整轮播图的高度 */
 }
 
-.title-section {
+.carousel-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10;
+/*  background-color: rgba(0, 0, 0, 0.5); */
+  width: 60%;
 }
 
 .title {
+  font-weight: bold;
+  font-size: 32px;
+  margin-bottom: 5px;
+  color: coral;
+}
+
+.subtitle {
   color: #FFFFFF;
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: 16px;
 }
 
-.header-actions {
+.navbar {
+  width: 100%;
+  background-color: #f8f8f8f8;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.nav-scroll {
   display: flex;
-  align-items: center;
-  gap: 30rpx;
+  overflow-x: auto; /* 水平滚动 */
+  white-space: nowrap; /* 防止换行 */
 }
 
-.header-icon {
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.nav-item {
+  display: inline-block; /* 使元素在同一行显示 */
+  padding: 15px;
+  cursor: pointer;
+  color: #666;
 }
 
-.search-wrap {
-  position: relative;
-  margin-top: 10rpx;
-}
-
-.search-input {
-  width: 77%;
-  height: 72rpx;
-  background: #FFFFFF;
-  border-radius: 8rpx;
-  padding: 0 80rpx;
-  font-size: 28rpx;
-  color: #333333;
-}
-
-.search-icon {
-  position: absolute;
-  left: 20rpx;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.placeholder {
-  color: #999999;
-}
-
-.content {
-  flex: 1;
-  overflow: auto;
-}
-
-.category-list {
-  padding: 20rpx 30rpx;
-  white-space: nowrap;
-}
-
-.category-scroll {
-  display: inline-flex;
-  gap: 15rpx;
-}
-
-.category-item {
-  /* padding: 12rpx 30rpx; */
-  background: #F5F5F5;
-  border-radius: 8rpx;
-  color: #666666;
-  font-size: 28rpx;
-  border: none;
-}
-
-.category-item.active {
-  background: #0066CC;
-  color: #FFFFFF;
+.nav-item.active {
+  color: #007aff;
+  font-weight: bold;
+  border-bottom: 2px solid #007aff;
 }
 
 .filter-bar {
-  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  background-color: #f8f8f8f8;
+  padding: 10px;
+  border-radius: 5px;
 }
 
 .filter-options {
   display: flex;
-  gap: 20rpx;
+  gap: 20px;
 }
 
 .filter-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 20rpx;
-  background: #F5F5F5;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #666666;
+  gap: 8px;
+  cursor: pointer;
+  color: #666;
+}
+
+.icon {
+  font-size: 16px;
+}
+
+.sub-filter {
+  position: absolute;
+  padding: 10px;
+  z-index: 1000;
+  right: 5px;
+}
+
+.sub-filter-item {
+  margin-right: 10px;
+  cursor: pointer;
+  float: left;
+  color: #666;
+}
+
+.sub-filter-item:hover {
+  color: #007aff;
 }
 
 .spot-grid {
@@ -280,7 +317,7 @@ page {
   background: #FFFFFF;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0,0.1);
 }
 
 .spot-item image {
@@ -299,15 +336,18 @@ page {
 }
 
 .rating {
-  display: flex;
-  align-items: center;
-  margin-top: 8rpx;
-}
-
-.rating-score {
-  font-size: 24rpx;
-  color: #999999;
-  margin-left: 8rpx;
+	width: 40px;
+	height: 25px;
+	line-height: 25px;
+	font-size: 15px;
+	position: absolute;
+	align-items: center;
+	border-radius: 10px;
+	z-index: 10;
+	background-color: rgba(0, 0, 0, 0.3);
+	right: 2px;
+	bottom: 15px;
+	color: #FFFFFF;
 }
 
 .spot-desc {
@@ -337,11 +377,22 @@ page {
   color: #999999;
 }
 
+.img{
+	position: relative;
+}
+.starlove{
+	width: 5px;
+	height: 5px;
+}
 .price {
-  font-size: 24rpx;
-  color: #0066CC;
+  font-size: 35rpx;
+  color: #cc1c42;
+  font-weight: bold;
 }
 
-
+.sales {
+  font-size: 15px;
+  padding-right: 5rpx;
+  color: #999999;
+}
 </style>
-

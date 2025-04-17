@@ -1,37 +1,22 @@
 <template>
-  <div class="createActivity">createActivity</div>
+  <view class="createActivity">createActivity</view>
 </template>
 
-<script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
-  components: {},
-  data() {
-    return {}
-  },
-  computed: {},
-  methods: {},
-  watch: {},
+<script setup lang="ts">
 
-  // 页面周期函数--监听页面加载
-  onLoad() {},
-  // 页面周期函数--监听页面初次渲染完成
-  onReady() {},
-  // 页面周期函数--监听页面显示(not-nvue)
-  onShow() {},
-  // 页面周期函数--监听页面隐藏
-  onHide() {},
-  // 页面周期函数--监听页面卸载
-  onUnload() {},
-  // 页面处理函数--监听用户下拉动作
-  // onPullDownRefresh() { uni.stopPullDownRefresh(); },
-  // 页面处理函数--监听用户上拉触底
-  // onReachBottom() {},
-  // 页面处理函数--监听页面滚动(not-nvue)
-  // onPageScroll(event) {},
-  // 页面处理函数--用户点击右上角分享
-  // onShareAppMessage(options) {},
-}) 
+
+
+// 如果需要下拉刷新
+// function onPullDownRefresh() {
+//   uni.stopPullDownRefresh()
+// }
+
+// 如果需要上拉触底
+// function onReachBottom() {}
 </script>
 
-<style scoped></style>
+<style scoped>
+.createActivity {
+  /* 添加样式 */
+}
+</style>

@@ -10,27 +10,24 @@
       </view>
     </view>
     <scroll-view class="main-content" scroll-y>
-      <view class="search-container">
-        <view class="search-box">
-          <uni-icons type="search" size="16" color="#999" />
-          <input type="text" class="search-input" placeholder="搜索景点/美食/住宿" />
-        </view>
-      </view>
+      <!-- 一个公告飘屏 -->
+      <uni-notice-bar show-icon scrollable background-color="#EAF2FF" class="notice-bar"
+				text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
 
       <view class="uni-margin-wrap">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
           <swiper-item>
-            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="https://wlmtsys.com:9000/travel/18.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="https://wlmtsys.com:9000/travel/18.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" mode="aspectFill" class="swiper-item" />
+            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg" style="height: 300px" mode="aspectFill" class="swiper-item" />
           </swiper-item>
           
 			</swiper>
@@ -98,6 +95,15 @@ const indicatorDots = ref(true)
 const autoplay = ref(true)
 const interval = ref(2000)
 const duration = ref(500)
+
+const getMore = () =>{
+				uni.showToast({
+					title: '点击查看更多',
+					icon: 'none'
+				})
+			}
+
+
 
 const changeIndicatorDots = () => {
   indicatorDots.value = !indicatorDots.value
@@ -358,32 +364,23 @@ page {
   overflow: auto;
 }
 
-.search-container {
-  padding: 24rpx 32rpx;
-  background-color: #FFFFFF;
+uni-notice-bar {
+  background-color: #4A88FF;
+  color: #FFFFFF;
+  font-size: 24rpx; 
 }
 
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 80rpx;
-  background-color: #f5f5f5;
-  border-radius: 8rpx;
-  padding: 0 32rpx;
-}
-
-.search-input {
-  flex: 1;
-  height: 80rpx;
-  font-size: 28rpx;
-  margin-left: 16rpx;
-}
-
-.swiper-item{
-  width: 100%;
-  height: 100%;
-}
+.swiper-item {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 200px;
+    width: 100%;
+		color: #fff;
+	}
 
 .banner {
   width: 100%;
