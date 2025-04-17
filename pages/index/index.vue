@@ -192,7 +192,7 @@ const gridItems = [
   },
   {
     image: 'https://ai-public.mastergo.com/ai/img_res/868a88ac3f0c7165d1ff7e4edcd8c6de.jpg',
-    text: '小票积分',
+    text: '社区互动',
     path: '/pages/ticketPoints/ticketPoints'
   },
   {
