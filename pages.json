@@ -225,7 +225,7 @@
 		{
 			"path": "pages/attractionDetail/attractionDetail",
 			"style": {
-				"navigationBarTitleText": "attractionDetail"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -240,20 +240,6 @@
 			"style": {
 				"navigationBarTitleText": "foodConfirm",
 				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path" : "pages/dayTravel/dayTravel",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
-			}
-		},
-		{
-			"path" : "pages/dayTravelDetail/dayTravelDetail",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
 			}
 		}
 	],

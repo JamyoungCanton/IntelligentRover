@@ -192,7 +192,7 @@ const gridItems = [
   {
     image: 'https://ai-public.mastergo.com/ai/img_res/ff98fe41d0920a84166f2cb230b71b03.jpg',
     text: '一日游',
-    path: '/pages/dayTravel/dayTravel'
+    path: '/pages/attractionGuide/attractionGuide'
   },
   {
     image: 'https://ai-public.mastergo.com/ai/img_res/a23f3a06a4a4106ad0a8dbe37d4ba3c8.jpg',
