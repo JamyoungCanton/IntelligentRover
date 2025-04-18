@@ -266,12 +266,12 @@
 				"navigationBarTitleText": "创建活动"
 			}
 		},
-		{
-			"path": "pages/post/component/popup",
-			"style": {
-				"navigationBarTitleText": "popup"
-			}
-		},
+		// {
+		// 	"path": "pages/post/component/popup",
+		// 	"style": {
+		// 		"navigationBarTitleText": "popup"
+		// 	}
+		// },
 		{
 			"path": "pages/post/postDetail",
 			"style": {
