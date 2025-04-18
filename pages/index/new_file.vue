@@ -9,8 +9,6 @@
     </view>
     <scroll-view class="main-content" scroll-y @scroll="handleScroll">
       <!-- 轮播图 -->
-       <uni-notice-bar show-icon scrollable background-color="#1976D2" color="#FFFFFF" class="notice-bar"
-        text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
       <view class="banner-container">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
@@ -543,10 +541,10 @@ page {
 .section-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #2196F3;
+  color: #1976D2;
   margin-bottom: 30rpx;
   padding-left: 10rpx;
-  border-left: 8rpx solid #2196F3;
+  border-left: 8rpx solid #1976D2;
 }
 
 .activity-grid {
