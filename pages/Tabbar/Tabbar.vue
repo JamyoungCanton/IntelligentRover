@@ -65,7 +65,7 @@ const tabList = ref([
         active: false
     },
     {
-        name: '行程',
+        name: '发布',
         url: '/pages/itinerary/itinerary',
         icon: 'list',
         active: false
