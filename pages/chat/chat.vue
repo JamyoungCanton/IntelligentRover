@@ -117,7 +117,7 @@
 
 							<!-- AI生成标记和交互按钮 -->
 							<view class="ai-interaction-container">
-								<view class="ai-generated-mark">内容由AI生成，仅供参考</view>
+
 
 								<view class="ai-interaction-buttons">
 									<view class="interaction-button like-button" hover-class="button-hover"
@@ -140,7 +140,12 @@
 										@mouseover="showTooltip('收藏', $event)" @mouseout="hideTooltip">
 										<text class="iconfont icon-collect">❤️</text>
 									</view>
+
+
 								</view>
+
+								<view class="ai-generated-mark">
+									内容由AI生成，仅供参考</view>
 							</view>
 						</view>
 					</view>
@@ -149,7 +154,7 @@
 		</scroll-view>
 
 		<!-- Input Area -->
-		<view class="input-container" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
+		<view class="input-container">
 			<view class="add-icon avatar ai-avatar" @tap="showAddOptions" style="background-color: #f5f5f5">
 				<image src="/static/chat/add.png"></image>
 			</view>
@@ -368,11 +373,30 @@ const copyMessageContent = () => {
 		let textContent = "";
 		if (Array.isArray(lastAIMessage.content)) {
 			textContent = lastAIMessage.content
-				.filter((item) => item.type === "text")
-				.map((item) => item.content)
-				.join("\n");
+				// 排除 thinking 状态和非文本类型的内容
+				.filter(item =>
+					item.type === 'text' &&
+					!item.content.includes('<') &&
+					!item.content.includes('>')
+				)
+				.map(item => item.content)
+				.join("\n")
+				// 去除可能的 HTML 标签
+				.replace(/<[^>]*>/g, '');
 		} else {
 			textContent = lastAIMessage.content;
+		}
+
+		// 去除多余的空白字符
+		textContent = textContent.trim();
+
+		// 如果没有有效内容，提示用户
+		if (!textContent) {
+			uni.showToast({
+				title: "没有可复制的纯文本内容",
+				icon: "none",
+			});
+			return;
 		}
 
 		// 复制到剪贴板
@@ -936,6 +960,10 @@ onMounted(() => {
 .chat-container {
 	flex: 1;
 	overflow-y: auto;
+	padding-bottom: 60px;
+	/* 增加底部间距，为输入框和消息之间留出更多空间 */
+	margin-bottom: 20px;
+	/* 在聊天容器和输入框之间增加间隔 */
 }
 
 .avatar {
@@ -1190,13 +1218,25 @@ onMounted(() => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 10px;
+	margin-top: 30px;
+}
+
+.ai-generated-mark {
+	font-size: 12px;
+	color: #999;
+	position: relative;
+	white-space: nowrap;
+	display: inline-block;
+	top: 60px;
+	left: -240px;
 }
 
 .ai-interaction-buttons {
 	display: flex;
 	justify-content: flex-end;
+	align-items: center;
 	gap: 10px;
+	margin-left: auto;
 }
 
 .iconfont {
@@ -1245,10 +1285,7 @@ onMounted(() => {
 	background-color: rgba(0, 0, 0, 0.15);
 }
 
-.ai-generated-mark {
-	font-size: 12px;
-	color: #999;
-}
+
 
 /* 提示文本样式 */
 .tooltip-container {
@@ -1300,9 +1337,9 @@ onMounted(() => {
 	padding: 8px 12px;
 	background-color: #ffffff;
 	border-top: 1px solid #eeeeee;
-	position: fixed;
 	position: relative;
-	bottom: 17px;
+	bottom: 65px;
+	/* z-index: 1005; */
 }
 
 .message-input {
