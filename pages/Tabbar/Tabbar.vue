@@ -65,7 +65,7 @@ const tabList = ref([
         active: false
     },
     {
-        name: '行程',
+        name: '社交',
         url: '/pages/itinerary/itinerary',
         icon: 'list',
         active: false
@@ -155,7 +155,8 @@ const toCreateActivity = () => {
 .plus {
     width: 80rpx;
     height: 80rpx;
-    background-color: #f17700;
+    color: #007aff; /* 直接使用颜色值 */
+    background-color: #007aff;
     border-radius: 30rpx;
     display: flex;
     justify-content: center;

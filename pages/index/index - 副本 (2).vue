@@ -7,34 +7,24 @@
         <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
       </view>
     </view>
-    <scroll-view class="main-content" scroll-y @scroll="handleScroll">
-      <!-- 轮播图 -->
-       <uni-notice-bar show-icon scrollable background-color="#1976D2" color="#FFFFFF" class="notice-bar"
+    <scroll-view class="main-content" scroll-y @scroll="handleScrollThrottled" refresher-enabled 
+      :refresher-triggered="isRefreshing" @refresherrefresh="onRefresh">
+      <!-- 公告飘屏 - 放在顶部，但在轮播图下方 -->
+      <uni-notice-bar show-icon scrollable background-color="#1976D2" color="#FFFFFF" class="notice-bar"
         text="欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~" />
+        
+      <!-- 轮播图 -->
       <view class="banner-container">
         <swiper class="swiper" circular :indicator-dots="indicatorDots" :autoplay="autoplay" :interval="interval"
           :duration="duration">
-          <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg"
-              mode="aspectFill" class="swiper-item" />
-          </swiper-item>
-          <swiper-item>
-            <image src="https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg"
-              mode="aspectFill" class="swiper-item" />
-          </swiper-item>
-          <swiper-item>
-            <image src="https://wlmtsys.com:9000/travel/18.jpg" mode="aspectFill"
-              class="swiper-item" />
-          </swiper-item>
-          <swiper-item>
-            <image src="http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg"
-              mode="aspectFill" class="swiper-item" />
+          <swiper-item v-for="(item, index) in bannerImages" :key="index">
+            <image :src="item" mode="aspectFill" class="swiper-item" :lazy-load="true" />
           </swiper-item>
         </swiper>
         
         <!-- 搜索框 -->
         <view class="search-box">
-          <uni-icons type="search" size="16" color="#1E88E5" />
+          <uni-icons type="search" size="16" color="#1976D2" />
           <input type="text" class="search-input" placeholder="搜索景点/美食/住宿" />
         </view>
       </view>
@@ -43,7 +33,7 @@
       <view class="grid-container animate-fade-in">
         <view v-for="(item, index) in gridItems" :key="index" class="grid-item" @click="navigateTo(item.path)">
           <view class="grid-image-container" :class="{'animate-float': animateIndex === index}">
-            <image :src="item.image" mode="aspectFill" />
+            <image :src="item.image" mode="aspectFill" :lazy-load="true" />
           </view>
           <text class="grid-text">{{ item.text }}</text>
         </view>
@@ -52,10 +42,19 @@
       <!-- 热门活动 -->
       <view class="section animate-slide-up" :class="{'visible': scrollPosition > 200}">
         <text class="section-title">热门活动</text>
-        <view class="activity-grid">
+        <view v-if="isLoading" class="skeleton-container">
+          <view v-for="i in 3" :key="i" class="skeleton-card">
+            <view class="skeleton-image"></view>
+            <view class="skeleton-content">
+              <view class="skeleton-title"></view>
+              <view class="skeleton-price"></view>
+            </view>
+          </view>
+        </view>
+        <view v-else class="activity-grid">
           <view v-for="(activity, index) in displayedActivities" :key="index" class="activity-card"
             @click="navigateToActivity(activity.id)">
-            <image :src="activity.image" mode="aspectFill" class="activity-image" />
+            <image :src="activity.image" mode="aspectFill" class="activity-image" :lazy-load="true" />
             <view class="activity-info">
               <text class="activity-title">{{ activity.title }}</text>
               <text class="activity-price">{{ activity.price }}</text>
@@ -72,7 +71,7 @@
         <text class="section-title">精选路线</text>
         <view class="route-card" @click="navigateToRoute">
           <image src="https://ai-public.mastergo.com/ai/img_res/29f6b0ecc3a2e6885a39cbde9d4a762e.jpg" mode="aspectFill"
-            class="route-image" />
+            class="route-image" :lazy-load="true" />
           <view class="route-info">
             <text class="route-title">海岸线探索</text>
             <text class="route-desc">东澳岛-外伶仃岛 2日游</text>
@@ -89,41 +88,75 @@
       </view>
       <text class="ai-text">智能导游</text>
     </view>
-
-    <Tabbar />
+    <Tabbar/>
   </view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 
-const background = ref(['color1', 'color2', 'color3'])
-const indicatorDots = ref(true)
-const autoplay = ref(true)
-const interval = ref(2000)
-const duration = ref(500)
+// 预加载轮播图图片
+const bannerImages = [
+  'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
+  'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
+  'https://wlmtsys.com:9000/travel/18.jpg',
+  'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
+];
+
+const indicatorDots = ref(true);
+const autoplay = ref(true);
+const interval = ref(3000); // 增加轮播间隔，减少性能消耗
+const duration = ref(500);
 
 // 添加动画状态
 const animationReady = ref(false);
 const scrollPosition = ref(0);
 const animateIndex = ref(-1);
+const isRefreshing = ref(false);
+const isLoading = ref(true);
 
-// 处理滚动事件
-const handleScroll = (e) => {
-  scrollPosition.value = e.detail.scrollTop;
+// 使用节流函数优化滚动事件
+let scrollTimer = null;
+const handleScrollThrottled = (e) => {
+  if (scrollTimer) return;
+  scrollTimer = setTimeout(() => {
+    scrollPosition.value = e.detail.scrollTop;
+    scrollTimer = null;
+  }, 16); // 约60fps
 };
 
-// 定时切换动画的图标
+// 下拉刷新处理
+const onRefresh = () => {
+  isRefreshing.value = true;
+  
+  // 刷新数据
+  getActivitiesList();
+  
+  // 模拟网络请求延迟
+  setTimeout(() => {
+    isRefreshing.value = false;
+  }, 1000);
+};
+
+// 优化动画，减少频率
 const startIconAnimation = () => {
-  setInterval(() => {
+  const animationInterval = setInterval(() => {
     animateIndex.value = Math.floor(Math.random() * 8);
     setTimeout(() => {
       animateIndex.value = -1;
     }, 2000);
-  }, 3000);
+  }, 5000); // 增加间隔到5秒
+  
+  // 清理定时器
+  onUnmounted(() => {
+    clearInterval(animationInterval);
+    if (scrollTimer) {
+      clearTimeout(scrollTimer);
+    }
+  });
 };
 
 onMounted(() => {
@@ -133,38 +166,33 @@ onMounted(() => {
   
   // 启动图标动画
   startIconAnimation();
+  
+  // 预加载图片
+  preloadImages();
 });
 
-const getMore = () => {
-  uni.showToast({
-    title: '点击查看更多',
-    icon: 'none'
-  })
-}
+// 预加载图片函数
+const preloadImages = () => {
+  // 预加载轮播图和网格图标
+  const imagesToPreload = [
+    ...bannerImages,
+    ...gridItems.map(item => item.image)
+  ];
+  
+  // 使用 Image 对象预加载
+  imagesToPreload.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+};
 
-const changeIndicatorDots = () => {
-  indicatorDots.value = !indicatorDots.value
-}
-
-const changeAutoplay = () => {
-  autoplay.value = !autoplay.value
-}
-
-const intervalChange = (e) => {
-  interval.value = e.target.value
-}
-
-const durationChange = (e) => {
-  duration.value = e.target.value
-}
-
-const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
+// 拖拽相关变量
+const dragX = ref(uni.getSystemInfoSync().screenWidth - 58);
 const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);
 const startX = ref(0);
 const startY = ref(0);
 const offsetX = ref(0);
 const offsetY = ref(0);
-
 
 const userStore = useUserStore();
 
@@ -180,6 +208,7 @@ const moveDrag = (e) => {
   const { clientX, clientY } = e.touches[0];
   const x = clientX - startX.value + offsetX.value;
   const y = clientY - startY.value + offsetY.value;
+  
   // 实时限制按钮在页面内
   const screenWidth = uni.getSystemInfoSync().screenWidth;
   const screenHeight = uni.getSystemInfoSync().screenHeight;
@@ -193,9 +222,8 @@ const endDrag = () => {
   const screenHeight = uni.getSystemInfoSync().screenHeight;
 
   // 限制按钮在页面内
-  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth)) // 96 是按钮的宽度
-  dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
-
+  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth));
+  dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96));
 };
 
 const gridItems = [
@@ -241,6 +269,7 @@ const gridItems = [
   }
 ];
 
+// 默认活动数据，避免等待API响应时的空白
 const activities = ref([
   {
     id: 1,
@@ -262,13 +291,18 @@ const activities = ref([
   }
 ]);
 
-const quickActions = [
-  { icon: 'calendar', text: '2 天行程' },
-  { icon: 'spinner-cycle', text: '我想去海钓' },
-  { icon: 'spinner-cycle', text: '美食推荐' },
-  { icon: 'spinner-cycle', text: '住宿预订' }
-];
+// 控制活动展示的响应式变量
+const isExpanded = ref(false);
+const displayedActivities = computed(() => {
+  return isExpanded.value ? activities.value : activities.value.slice(0, 9);
+});
 
+// 切换活动展开/收起的方法
+const toggleActivities = () => {
+  isExpanded.value = !isExpanded.value;
+};
+
+// 导航方法
 const navigateTo = (path) => {
   uni.navigateTo({
     url: path
@@ -284,8 +318,6 @@ const navigateToChat = () => {
 
 // 跳转到 热门活动 页面
 const navigateToActivity = (id) => {
-  console.log("跳转到活动详情页面")
-  console.log(`/pages/activity/activity?id=${id}`)
   uni.navigateTo({
     url: `/pages/activity/activity?id=${id}`
   });
@@ -298,47 +330,40 @@ const navigateToRoute = () => {
   });
 };
 
-const scrollLeft = ref(0);
-const scrollWidth = ref(0);
-const sliderValue = ref(0);
-
-// 控制活动展示的响应式变量
-const isExpanded = ref(false);
-const displayedActivities = computed(() => {
-  return isExpanded.value ? activities.value : activities.value.slice(0, 9);
-});
-
-// 切换活动展开/收起的方法
-const toggleActivities = () => {
-  isExpanded.value = !isExpanded.value;
-};
-
-const onScroll = (e) => {
-  const scrollLeft = e.detail.scrollLeft;
-  const scrollView = uni.createSelectorQuery().select('.activity-container');
-  scrollView.fields({
-    scrollOffset: true,
-    size: true
-  }, (res) => {
-    const maxScroll = res.scrollWidth - res.width;
-    const value = (scrollLeft / maxScroll) * 100;
-    sliderValue.value = value;
-  }).exec();
-};
-
 // 获取屏幕安全距离
 const safeAreaInsets = ref(uni.getSystemInfoSync().safeAreaInsets || { top: 0 });
 
-
-// 发起请求获取活动列表
+// 发起请求获取活动列表 - 优化版本
 const getActivitiesList = () => {
+  isLoading.value = true;
+  
+  // 检查本地缓存
+  const cachedData = uni.getStorageSync('activities_cache');
+  const cacheTime = uni.getStorageSync('activities_cache_time');
+  const now = Date.now();
+  
+  // 如果有缓存且缓存时间不超过10分钟，使用缓存数据
+  if (cachedData && cacheTime && (now - cacheTime < 10 * 60 * 1000) && !isRefreshing.value) {
+    try {
+      const parsedData = JSON.parse(cachedData);
+      if (parsedData && parsedData.length > 0) {
+        activities.value = parsedData;
+        isLoading.value = false;
+        return;
+      }
+    } catch (e) {
+      console.error('缓存解析错误:', e);
+    }
+  }
+  
   // 构建请求参数
   const params = {
     pageNo: 1,
     pageSize: 300
   };
 
-  uni.request({
+  // 设置请求超时
+  const requestTask = uni.request({
     url: 'https://island.zhangshuiyi.com/island/product/ilActivities/list',
     method: 'GET',
     data: params,
@@ -347,32 +372,41 @@ const getActivitiesList = () => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      console.log('活动列表响应数据:', res.data);
-      // 如果请求成功，更新活动
-      if (res.data.success) {
-        // 清空activities数组
-        activities.value = [];
-
-        // 遍历响应数据，将活动信息添加到activities数组中
-        const activityList = res.data.result.records
-        for (let activity of activityList) {
-          activities.value.push({
-            id: activity.id,
-            image: activity.imageUrl || 'https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg',
-            title: activity.type,
-            price: '¥' + activity.price + '/人起'
-          })
-        }
-
+      if (res.data && res.data.success) {
+        // 处理数据
+        const activityList = res.data.result.records;
+        const formattedActivities = activityList.map(activity => ({
+          id: activity.id,
+          image: activity.imageUrl || 'https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg',
+          title: activity.type,
+          price: '¥' + activity.price + '/人起'
+        }));
+        
+        // 更新数据
+        activities.value = formattedActivities;
+        
+        // 缓存数据
+        uni.setStorageSync('activities_cache', JSON.stringify(formattedActivities));
+        uni.setStorageSync('activities_cache_time', Date.now());
       }
     },
-    fail: () => {
-      // 处理请求失败的场景
-      console.error('网络请求失败');
+    fail: (err) => {
+      console.error('网络请求失败:', err);
+    },
+    complete: () => {
+      isLoading.value = false;
     }
-
-  })
-}
+  });
+  
+  // 设置超时处理
+  setTimeout(() => {
+    if (isLoading.value) {
+      requestTask.abort();
+      isLoading.value = false;
+      console.error('请求超时');
+    }
+  }, 5000);
+};
 
 // 每次进入页面时调用
 onShow(() => {
@@ -393,6 +427,7 @@ page {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  will-change: transform; /* 优化动画性能 */
 }
 
 .nav-bar {
@@ -422,6 +457,12 @@ page {
   overflow: auto;
   padding-bottom: 30rpx;
   box-sizing: border-box;
+  -webkit-overflow-scrolling: touch; /* 优化iOS滚动 */
+}
+
+.notice-bar {
+  margin: 0 0 10rpx 0;
+  z-index: 99;
 }
 
 .banner-container {
@@ -439,12 +480,14 @@ page {
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
+  will-change: transform; /* 优化动画性能 */
 }
 
 .swiper-item {
   width: 100%;
   height: 100%;
   border-radius: 20rpx;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .search-box {
@@ -469,7 +512,7 @@ page {
   height: 70rpx;
   font-size: 28rpx;
   margin-left: 16rpx;
-  color: #555;
+  color: #333333;
 }
 
 .grid-container {
@@ -504,6 +547,7 @@ page {
   box-shadow: 0 4rpx 12rpx rgba(33, 150, 243, 0.2);
   transition: all 0.3s ease;
   border: 2rpx solid #E3F2FD;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .grid-image-container image {
@@ -514,7 +558,7 @@ page {
 .grid-text {
   margin-top: 12rpx;
   font-size: 24rpx;
-  color: #444444;
+  color: #333333;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -533,6 +577,7 @@ page {
   transition: opacity 0.5s ease, transform 0.5s ease;
   background-image: linear-gradient(to bottom, #FFFFFF, #F5F9FF);
   box-sizing: border-box;
+  will-change: opacity, transform; /* 优化动画性能 */
 }
 
 .section.visible {
@@ -543,10 +588,10 @@ page {
 .section-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #2196F3;
+  color: #1976D2;
   margin-bottom: 30rpx;
   padding-left: 10rpx;
-  border-left: 8rpx solid #2196F3;
+  border-left: 8rpx solid #1976D2;
 }
 
 .activity-grid {
@@ -563,6 +608,7 @@ page {
   background-color: #FFFFFF;
   transition: all 0.3s ease;
   border: 1px solid #E3F2FD;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .activity-card:active {
@@ -595,6 +641,7 @@ page {
   height: 180rpx;
   object-fit: cover;
   transition: transform 0.5s ease;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .activity-card:hover .activity-image {
@@ -610,7 +657,7 @@ page {
 .activity-title {
   font-size: 28rpx;
   font-weight: 500;
-  color: #444444;
+  color: #333333;
   margin-bottom: 6rpx;
 }
 
@@ -627,6 +674,7 @@ page {
   background-color: #FFFFFF;
   transition: all 0.3s ease;
   border: 1px solid #E3F2FD;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .route-card:active {
@@ -639,6 +687,7 @@ page {
   height: 320rpx;
   object-fit: cover;
   transition: transform 0.5s ease;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .route-card:hover .route-image {
@@ -652,12 +701,12 @@ page {
 .route-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #444444;
+  color: #333333;
 }
 
 .route-desc {
   font-size: 26rpx;
-  color: #888888;
+  color: #666666;
   margin-top: 8rpx;
 }
 
@@ -676,6 +725,7 @@ page {
   flex-direction: column;
   align-items: center;
   z-index: 1000;
+  will-change: transform; /* 优化动画性能 */
 }
 
 .ai-btn {
@@ -689,6 +739,7 @@ page {
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   border: 1px solid #E3F2FD;
+  transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .ai-btn:active {
@@ -713,7 +764,64 @@ page {
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
-/* 动画效果 */
+/* 骨架屏样式 */
+.skeleton-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.skeleton-card {
+  width: 100%;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background-color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 180rpx;
+  background: linear-gradient(90deg, #f0f0f00,0,0.05);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 180rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-content {
+  padding: 12rpx 16rpx;
+}
+
+.skeleton-title {
+  width: 80%;
+  height: 28rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 10rpx;
+  border-radius: 4rpx;
+}
+
+.skeleton-price {
+  width: 50%;
+  height: 24rpx;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4rpx;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 动画效果 - 优化性能 */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -736,26 +844,24 @@ page {
   100% { transform: translateY(0); }
 }
 
-@keyframes wave {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+  will-change: opacity;
 }
 
 .animate-slide-up {
   animation: slideUp 0.5s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-pulse {
   animation: pulse 2s infinite;
+  will-change: transform;
 }
 
 .animate-float {
   animation: float 2s ease infinite;
+  will-change: transform;
 }
 
 /* 响应式调整 */
@@ -815,3 +921,5 @@ page {
   }
 }
 </style>
+
+
