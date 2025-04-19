@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <img :src="hotelData.imageUrl" alt="">
+      <img :src="hotelData.imageUrl" alt="" style="width: 100%;height: 100%;object-fit: cover;">
       <view class="title-name">
         <text class="title">{{ hotelData.name }}</text>
         <view class="rating">
@@ -86,7 +86,7 @@
       <view class="review-item">
         <div class="comheader">
           <div class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png" alt="">
+            <img src="/static/hotel-attctive/ava.png"  style="width: 50px;height: 50px; margin-right: 5px;" alt="">
             <div class="name-rating">
               <text class="date">张女士</text>
               <text class="rating">★★★★★</text>
@@ -99,7 +99,7 @@
       <view class="review-item">
         <view class="comheader">
           <view class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png "  alt="">
+            <img src="/static/hotel-attctive/ava.png " style="width: 50px;height: 50px; margin-right: 5px;" alt="">
             <view class="name-rating">
               <text class="date">黄女士</text>
               <text class="rating">★★★★</text>
@@ -250,6 +250,7 @@ fail: (err) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  margin-left: 20px;
 }
 .title-name {
   position: absolute;
@@ -390,10 +391,9 @@ fail: (err) => {
   flex-direction: row;
 }
 .ava-name-rating img{
-  width: 40px;
-  height: 40;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  margin-right: 10px;
 }
 .name-rating{
   display: flex;
@@ -401,7 +401,7 @@ fail: (err) => {
   justify-content: center;
 }
 .name-rating .rating{
-  font-size: 12px;
+  font-size: 20px;
   color: #ff9800;
   height: 12px;
 }

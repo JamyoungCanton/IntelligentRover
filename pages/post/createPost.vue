@@ -1,195 +1,404 @@
 <template>
   <view class="container">
-    <view class="postTitle">
-      <input type="text" placeholder="请输入标题..." v-model="title" />
+    <view class="post-title">
+      <input class="post-title-input" type="text" placeholder="请输入标题..." v-model="title" />
     </view>
+    
     <view class="section">
-      <text class="section-title">板块分区</text>
-      <view class="example-body box">
-        <text v-if="postType && postType.trim()">{{ postType }}</text>
-				<button class="button"  type="message" @click="toggle('center')"><text class="button-text">选择</text></button>
-      </view>
+      <p><text class="section-title">板块分区</text></p>
+		<view class="category-container">
+		<view 
+        v-for="(category, index) in categories" 
+        :key="index" 
+        class="category-item"
+        :class="{ 'category-active': postType === category }"
+        @click="selectCategory(category)"
+      >
+        {{ category }}
+		</view>
+		</view>
     </view>
-    <!-- 分区的弹窗 -->
-   
-			
-    <!-- 弹出内容 -->
-    <uni-popup ref="popupRef" style="width: 80%;" background-color="#fff" @change="change">
-      <view class="popup-content">
-        <button class="popup-btn" @click="selectOption('日常活动')">日常活动</button>
-        <button class="popup-btn" @click="selectOption('旅游攻略')">旅游攻略</button>
-        <button class="popup-btn" @click="selectOption('旅游分享')">旅游分享</button>
-        <button class="popup-btn" @click="selectOption('分享生活')">分享生活</button>
-      </view>
-  </uni-popup>
+    
+    
 
-    <view class="postContent">
-      <textarea placeholder="分享你的旅游感受~" v-model="content" maxlength="1200"></textarea>
+    <view class="post-content">
+      <textarea class="post-content-textarea" placeholder="分享你的旅游感受~" v-model="content" maxlength="1200"></textarea>
     </view>
-    <view class="postImage">
-      <view class="example-body">
-        <uni-file-picker @change="handleFileUpload" limit="9" title="最多选择9张图片"></uni-file-picker>
+    
+    <view class="post-image">
+      <view class="image-container">
+        <view 
+          v-for="(image, index) in uploadedFiles" 
+          :key="index" 
+          class="image-item"
+        >
+          <image class="image-item-image" :src="image" mode="aspectFill"></image>
+          <button class="delete-btn" @click="deleteImage(index)">x</button>
+        </view>
+        <view v-if="uploadedFiles.length < 9" class="add-image" @click="chooseImage">
+          <text class="add-icon">+</text>
+        </view>
       </view>
     </view>
-    <button type="primary" class="postButton">发布</button>
+    
+    <button type="primary" class="post-button" @click="createPost">发布</button>
   </view>
 </template>
 
-<script>
-import { defineComponent, ref } from 'vue';
+<script setup>
+import { ref } from 'vue';
+import { useUserStore } from '@/store/modules/user';
 
-export default defineComponent({
-  setup() {
-    const title = ref('');
-    const content = ref('');
-    const type = ref('center');
-    const popupRef = ref(null);
-    const postType = ref('');
-    
-    const handleFileUpload = (event) => {
-      console.log(event.detail);
-    };
+const userStore = useUserStore();
+const title = ref('');
+const content = ref('');
+const postType = ref('');
+const uploadedFiles = ref([]);
+const baseurl = 'https://island.zhangshuiyi.com'; 
+const categories = ['日常活动', '旅游攻略', '旅游分享', '分享生活'];
 
-    const change = (e) => {
-      console.log('当前模式：' + e.type + ',状态：' + e.show);
-    };
-    const selectOption = (option) => {
-      type.value = option.value;
-      console.log('选择了:', option);
-      postType.value = option;
-      // 这里可以添加选择后的处理逻辑
-      popupRef.value?.close(); // 选择后关闭弹窗
-    };
-
-    const toggle = (popupType) => {
-      type.value = popupType;
-      popupRef.value?.open(popupType);
-    };
-
-    return {
-      title,
-      content,
-      type,
-      popupRef,
-      handleFileUpload,
-      toggle,
-      change,
-      selectOption
-    };
-  
+const hasToken = () => {
+  if (!userStore.token) {
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'none',
+      duration: 1500
+    });
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+    return false;
   }
-});
+  return true;
+};
+
+const selectCategory = (category) => {
+  postType.value = category;
+};
+
+const chooseImage = async () => {
+  if (!hasToken()) return;
+
+  try {
+    const { tempFilePaths } = await uni.chooseImage({
+      count: 9 - uploadedFiles.value.length,
+      sizeType: ['original', 'compressed'],
+      sourceType: ['album', 'camera']
+    });
+    tempFilePaths.forEach((path) => {
+      uploadImage(path);
+    });
+  } catch (err) {
+    console.error('选择图片失败:', err);
+    uni.showToast({
+      title: '选择图片失败',
+      icon: 'none'
+    });
+  }
+};
+
+const uploadImage = (path) => {
+  return new Promise((resolve, reject) => {
+    const token = userStore.token;
+
+    if (!token) {
+      uni.showToast({
+        title: '未获取到认证信息，请重新登录',
+        icon: 'none'
+      });
+      reject('未获取到认证信息');
+      return;
+    }
+
+    uni.uploadFile({
+      url: `${baseurl}/island/posts/uploadImage`,
+      filePath: path,
+      name: 'file',
+      header: {
+        'X-Access-Token': userStore.token
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          try {
+            const data = JSON.parse(res.data);
+            if (data.success) {
+              const imageUrl = data.result.url;
+              uploadedFiles.value.push(imageUrl);
+              resolve(imageUrl);
+            } else {
+              uni.showToast({
+                title: data.message || '图片上传失败',
+                icon: 'none'
+              });
+              reject(data.message);
+            }
+          } catch (e) {
+            console.error('解析响应数据失败:', e);
+            uni.showToast({
+              title: '图片上传失败',
+              icon: 'none'
+            });
+            reject(e);
+          }
+        } else {
+          uni.showToast({
+            title: `上传失败，状态码: ${res.statusCode}`,
+            icon: 'none'
+          });
+          reject(res.statusCode);
+        }
+      },
+      fail: (err) => {
+        console.error('图片上传失败:', err);
+        uni.showToast({
+          title: '图片上传失败',
+          icon: 'none'
+        });
+        reject(err);
+      }
+    });
+  });
+};
+
+const deleteImage = (index) => {
+  uploadedFiles.value.splice(index, 1);
+};
+
+const createPost = async () => {
+  if (!hasToken()) return;
+
+  try {
+    if (!title.value.trim()) {
+      uni.showToast({
+        title: '请输入标题',
+        icon: 'none'
+      });
+      return;
+    }
+    if (!postType.value.trim()) {
+      uni.showToast({
+        title: '请选择板块分区',
+        icon: 'none'
+      });
+      return;
+    }
+    if (!content.value.trim()) {
+      uni.showToast({
+        title: '请输入内容',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const postDto = {
+      area: postType.value,
+      content: content.value,
+      images: uploadedFiles.value,
+      title: title.value,
+      userId: userStore.userId
+    };
+
+    try {
+      const res = await uni.request({
+        url: `${baseurl}/island/posts/createPost`,
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': userStore.token
+        },
+        data: JSON.stringify(postDto)
+      });
+
+      if (res[1] && res[1].statusCode === 200 && res[1].data.success) {
+        uni.showToast({
+          title: '帖子创建成功',
+          icon: 'success'
+        });
+
+        title.value = '';
+        content.value = '';
+        postType.value = '';
+        uploadedFiles.value = [];
+
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/ticket/ticketPoints'
+          });
+        }, 1500);
+      } else {
+        uni.showToast({
+          title: '帖子创建失败: ' + (res[1]?.data?.message || `状态码: ${res[1]?.statusCode}` || '未知错误'),
+          icon: 'none'
+        });
+      }
+    } catch (err) {
+      uni.showToast({
+        title: '请求失败: ' + (err.errMsg || '未知错误'),
+        icon: 'none'
+      });
+      console.error('请求失败:', err);
+    }
+  } catch (err) {
+    uni.showToast({
+      title: '创建帖子失败: ' + err.message,
+      icon: 'none'
+    });
+    console.error('创建帖子失败:', err);
+  }
+};
 </script>
 
-
-<style lang="scss">
-.page{
-  background-color: #f8f8f8;
-  height: 100vh;
-}
+<style scoped>
 .container {
-  display: flex;
-	flex-direction: column;
-  padding:20px;
+  padding: 20px;
   background-color: #f8f8f8;
-  position: relative;
-  height: 0vh;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.postTitle {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: solid 1px #ccc;
-  margin: auto;
-  border-radius: 10px;
-  width: 80%;
-  background-color: #ffff;
+.post-title {
   margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.post-title-input {
+  width: 100%;
   height: 40px;
+  font-size: 16px;
+  line-height: 40px;
 }
 
 .section {
-  display: flex;
+  margin-bottom: 20px;
+  padding: 10px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: solid 1px #ccc;
-  margin: auto;
-  border-radius: 10px;
-  width: 80%;
-  height: 40px;
-  margin-bottom: 20px;
-  background-color: #fff;
 }
 
 .section-title {
   font-size: 16px;
+  font-weight: 500;
+  padding-bottom: 10px;
+}
+
+.category-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 15px;
+}
+
+.category-item {
+  padding: 8px 10px;
+  border-radius: 20px;
+  background-color: #fff;
+  color: #666;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-active {
+  background-color: #e6f3ff;
+  color: #007aff;
   font-weight: bold;
 }
 
-.section-subtitle {
-  font-size: 14px;
-  color: #666;
-}
-.popup-content {
-  padding: 20px;
-  
-  background-color: #fff;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 15px;
-  width: 80%;
-}
-
-.popup-btn {
-  padding: 12px;
-  color: black;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.postContent {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: solid 1px #ccc;
-  margin: auto;
-  border-radius: 10px;
-  width: 80%;
-  background-color: #fff;
+.post-content {
   margin-bottom: 20px;
-}
-
-.postImage {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: solid 1px #ccc;
-  margin: auto;
-  border-radius: 10px;
-  width: 80%;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   background-color: #fff;
-  height: 200px;
 }
 
-.example-body {
-  padding: 10px;
+.post-content-textarea {
+  width: 100%;
+  min-height: 200px;
+  font-size: 15px;
+  line-height: 1.5;
 }
-.postButton {
-  position: fixed; /* 固定定位 */
-  bottom: 20px; /* 距离底部20px */
-  left: 50%; /* 水平居中 */
-  transform: translateX(-50%); /* 精确居中 */
-  width: 80%;
-  padding: 10px;
-  background-color: #007aff; /* 添加背景色 */
-  color: white; /* 文字颜色 */
+
+.post-image {
+  margin-bottom: 80px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.image-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.image-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.image-item-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.delete-btn {
+  position: absolute;
+  width: 25%;
+  height: 25px;
+  line-height: 12px;
+  top: 5px;
+  right: 5px;
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 50%;
+  font-size: 12px;
+}
 
+.add-image {
+  width: 100px;
+  height: 100px;
+  background-color: #f8f8f8;
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
 
+.add-icon {
+  font-size: 40px;
+  color: #999;
+}
 
+.post-button {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 500px;
+  height: 48px;
+  line-height: 48px;
+  background-color: #007aff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
 }
 </style>

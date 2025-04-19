@@ -307,5 +307,8 @@
 				"pagePath": "pages/my/my"
 			}
 		]
+	},
+	 "usingComponents": {
+	    "custom-tab-bar": "/components/custom-tab-bar/index"
 	}
 }

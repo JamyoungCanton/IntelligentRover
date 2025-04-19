@@ -1,6 +1,12 @@
 <template>
   <view class="page">
-
+<!-- 顶部退出按钮 -->
+    <view class="top-bar">
+      <view class="exit-button" @click="handleLogout">
+        <uni-icons type="arrow-left" size="24" color="#3B82F6"/>
+        <text class="exit-text">退出</text>
+      </view>
+    </view>
     <view class="content">
       <view class="card">
         <view class="card-header">
@@ -167,6 +173,13 @@ const handleConfirmPayment = () => {
     url: '/pages/pay_success/pay_success'
   });
 };
+// 退出
+const handleLogout = () => {
+  uni.removeStorageSync('userToken'); 
+  uni.navigateTo({
+    url: '/pages/attractionGuide/attractionGuide' 
+  });
+};
 </script>
 
 <style>
@@ -181,8 +194,24 @@ page {
   height: 100%;
   background-color: #ffffff;
 }
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20rpx;
+  background-color: #ffffff;
+  margin-top: 30px;
+}
+.exit-button {
+  display: flex;
+  align-items: center;
+}
 
-
+.exit-text {
+  margin-left: 10rpx;
+  font-size: 28rpx;
+  color: #3B82F6;
+}
 .content {
   flex: 1;
   padding: 32rpx;
