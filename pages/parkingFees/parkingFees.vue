@@ -3,52 +3,43 @@
     <!-- 导航栏 -->
     <view class="nav-bar" :style="{ paddingTop: safeAreaInsets.top ? safeAreaInsets.top + 'px' : '0px' }">
       <uni-icons @click="goBack" type="back" size="24" color="#333333"></uni-icons>
-      <text class="nav-title">交通指南</text>
+      <text class="nav-title">停车收费</text>
       <uni-icons type="search" size="24" color="#333333"></uni-icons>
     </view>
 
     <!-- 主内容区 -->
-    <scroll-view class="main-content" scroll-y>
+    <scroll-view class="main-content" scroll-y >
       <!-- 车牌输入卡片 -->
       <view class="card">
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
-          <input type="text" class="province-input" v-model="plateProvince" placeholder="粤" maxlength="1" />
+         
           <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号" maxlength="6" />
-          <view class="change-btn">
-            <uni-icons type="loop" size="24" color="#666666"></uni-icons>
-          </view>
+          <button @click="getParkingDeatil" class="change-btn">
+            查询
+          </button>
         </view>
-
-        <scroll-view class="history-plates" scroll-x>
-          <view class="label">
-            <text>我的车牌</text>
-          </view>
-          <view v-for="(plate, index) in historyPlates" :key="index" :class="['plate-item', { active: plate.active }]">
-            {{ plate.text }}
-          </view>
-        </scroll-view>
       </view>
 
       <!-- 停车信息卡片 -->
       <view class="card">
         <view class="info-row">
           <text class="info-label">当前停车地点</text>
-          <text class="info-value">万山群岛游客中心停车场</text>
+          <text class="info-value">{{ parkingInfo.parkingLocation }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">入场时间</text>
-          <text class="info-value">2024-01-20 09:30</text>
+          <text class="info-value">{{ parkingInfo.entryTime }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">已停车时长</text>
-          <text class="info-value">2 小时 30 分钟</text>
+          <text class="info-value">{{ parkingInfo.parkingDuration }} 分钟</text>
         </view>
         <view class="info-row">
           <text class="info-label">应付金额</text>
-          <text class="price">¥15.00</text>
+          <text class="price">¥{{ parkingInfo.amountPayable }}</text>
         </view>
-        <text class="fee-standard">收费标准：首 2 小时 10 元，之后每小时 5 元</text>
+        <text class="fee-standard">收费标准：{{ parkingInfo.rateDescription }}</text>
       </view>
 
       <!-- 支付方式卡片 -->
@@ -70,10 +61,10 @@
         <view class="payStanding">
           <text class="PayStandingTitle">收费标准</text>
         </view>
-        <view class="payStandingContent">
-          <text class="standingItem">1.首2小时内10元</text>
-          <text class="standingItem">2.超出时间段每小时收5元</text>
-          <text class="standingItem">3.24小时封顶50元</text>
+        <view class="payStandingContent"  >
+          <text class="standingItem">1.{{ parkingInfo.rateDescriptionList[0] }}</text>
+          <text class="standingItem">2.{{ parkingInfo.rateDescriptionList[1] }}</text>
+          <text class="standingItem">3.24{{ parkingInfo.rateDescriptionList[2] }}</text>
         </view>
       </view>
 
@@ -81,24 +72,26 @@
 
     <!-- 底部支付栏 -->
     <view class="bottom-bar">
-      <button class="pay-btn" @click="onPayClick">立即支付 ￥15.00</button>
+      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥15.00</button>
     </view>
 
 
   </view>
 </template>
 
-<script lang="ts" setup>
+<script  setup>
 import { ref } from 'vue';
+import { useUserStore } from '@/store/modules/user';
+
+const userStore = useUserStore();
 
 const plateProvince = ref('');
 const plateNumber = ref('');
 const selectedPayment = ref('wechat');
+const parkingInfo = ref();
+const rateDescriptionList = ref([]);
 
-const historyPlates = ref([
-  { text: '粤 A12345', active: true },
-  { text: '粤 B67890', active: false }
-]);
+
 
 const paymentMethods = ref([
   { name: '微信支付', icon: '/static/parkingFees/weixin.png', color: '#07C160', value: 'wechat' },
@@ -110,23 +103,122 @@ const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets || { top: 0, botto
 
 // 返回上一页
 const goBack = () => {
-  uni.navigateBack()
+  uni.switchTab({ url: '/pages/index/index' })
 }
 
-const onHistoryClick = () => {
-  // 处理历史记录点击
-};
+const getParkingDeatil = () => {
+  if (!plateNumber.value) {
+    uni.showModal({
+      title: '请输入车牌号',
+      content: '',
+      showCancel: true,
+      cancelText: '取消',
+      confirmText: '确定',
+    });
+    return;
 
-const onHelpClick = () => {
-  // 处理帮助点击
-};
+  }
+  // 处理车牌输入逻辑
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/parking/ilParkingRecords/queryByCarNum',
+    method: 'GET',
+    header:{
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data:{carNum:plateNumber.value},
+    success:(res)=>{
+      console.log(res)
+      if(res.data.code === 401){
+        uni.showModal({
+          title: '请重新登录',
+          content: '',
+          showCancel: false,
+          confirmText: '确定',
+          success: (res) => {
+            if (res.confirm) {
+              uni.navigateTo({ url: '/pages/login/login' });
+            }
+          },
+        });
+      }
+      else if (res.data.result && res.data.result.length > 0) {
+        const result = res.data.result[0];
+        parkingInfo.value = result;
 
-const onServiceClick = () => {
-  // 处理客服点击
-};
-
-const onPayClick = () => {
+        // 按逗号分隔 rateDescription
+        parkingInfo.value.rateDescriptionList = result.rateDescription.split('，'); 
+        // 注意：这里使用的是中文逗号
+        rateDescriptionList.value = parkingInfo.value.rateDescriptionList 
+      } else {
+        uni.showToast({
+          title: '未找到停车信息',
+          icon: 'none',
+        });
+      }
+      
+    },
+  })
+}
+const onPayClick = (parking) => {
+  console.log(parking.id);
+  
+  const orderData = ref({
+contract: {
+  contractName: userStore.userInfo.realname || '',
+  contractPhone: userStore.userInfo.phone || ''
+},
+items: [
+  {
+    bookInfo: {
+      date: new Date().toISOString().split('T')[0], // 添加默认日期
+      fullname: userStore.userInfo.realname || '',
+      idCardNo: userStore.userInfo.idCardNo || '',
+      idCardType: 'ID_CARD',
+      schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+    },
+    productId: parking.id, // 初始为空字符串
+    productType: "Parking",
+    quantity: 1
+  }
+]
+})
   // 处理支付点击
+  uni.showModal({
+    title: '支付',
+    content: '是否确认支付？',
+    showCancel: true,
+    cancelText: '取消',
+    confirmText: '确定',
+    success: (res) => {
+      if (res.confirm) {
+        // 处理支付逻辑
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+          method: 'POST',
+          header:{
+            'X-Access-Token': userStore.token,
+            'Content-Type': 'application/json'
+          },
+          data:orderData.value,
+          success:(success)=>{
+            console.log(success);
+            
+            if(success.data.code === 200){
+              uni.showToast({
+              title: '支付成功',
+              icon: 'none',
+             });
+             uni.navigateTo({
+              url: '/pages/pay_success/pay_success'
+            });
+            }
+          },
+        })
+       
+      }
+    }
+  })
 };
 </script>
 
@@ -184,6 +276,7 @@ page {
   display: flex;
   gap: 16rpx;
   margin-bottom: 32rpx;
+  margin-top: 10px;
 }
 
 .province-input {
@@ -209,11 +302,15 @@ page {
 .change-btn {
   width: 88rpx;
   height: 88rpx;
-  background-color: #f5f5f5;
+  background-color: #1e88e5;
   border-radius: 8rpx;
   display: flex;
   align-items: center;
+  width: 28%;
   justify-content: center;
+  font-size: 20px;
+  font-weight: 400;
+  color: #ffffff;
 }
 
 .history-plates {
