@@ -3,35 +3,26 @@
     <view class="post-title">
       <input class="post-title-input" type="text" placeholder="请输入标题..." v-model="title" />
     </view>
-    
+
     <view class="section">
       <p><text class="section-title">板块分区</text></p>
-		<view class="category-container">
-		<view 
-        v-for="(category, index) in categories" 
-        :key="index" 
-        class="category-item"
-        :class="{ 'category-active': postType === category }"
-        @click="selectCategory(category)"
-      >
-        {{ category }}
-		</view>
-		</view>
+      <view class="category-container">
+        <view v-for="(category, index) in categories" :key="index" class="category-item"
+          :class="{ 'category-active': postType === category }" @click="selectCategory(category)">
+          {{ category }}
+        </view>
+      </view>
     </view>
-    
-    
+
+
 
     <view class="post-content">
       <textarea class="post-content-textarea" placeholder="分享你的旅游感受~" v-model="content" maxlength="1200"></textarea>
     </view>
-    
+
     <view class="post-image">
       <view class="image-container">
-        <view 
-          v-for="(image, index) in uploadedFiles" 
-          :key="index" 
-          class="image-item"
-        >
+        <view v-for="(image, index) in uploadedFiles" :key="index" class="image-item">
           <image class="image-item-image" :src="image" mode="aspectFill"></image>
           <button class="delete-btn" @click="deleteImage(index)">x</button>
         </view>
@@ -40,7 +31,7 @@
         </view>
       </view>
     </view>
-    
+
     <button type="primary" class="post-button" @click="createPost">发布</button>
   </view>
 </template>
@@ -54,7 +45,7 @@ const title = ref('');
 const content = ref('');
 const postType = ref('');
 const uploadedFiles = ref([]);
-const baseurl = 'https://island.zhangshuiyi.com'; 
+const baseurl = 'https://island.zhangshuiyi.com';
 const categories = ['日常活动', '旅游攻略', '旅游分享', '分享生活'];
 
 const hasToken = () => {
@@ -166,88 +157,70 @@ const deleteImage = (index) => {
   uploadedFiles.value.splice(index, 1);
 };
 
-const createPost = async () => {
+
+
+const createPost = () => {
   if (!hasToken()) return;
 
-  try {
-    if (!title.value.trim()) {
-      uni.showToast({
-        title: '请输入标题',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!postType.value.trim()) {
-      uni.showToast({
-        title: '请选择板块分区',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!content.value.trim()) {
-      uni.showToast({
-        title: '请输入内容',
-        icon: 'none'
-      });
-      return;
-    }
-
-    const postDto = {
-      area: postType.value,
-      content: content.value,
-      images: uploadedFiles.value,
-      title: title.value,
-      userId: userStore.userId
-    };
-
-    try {
-      const res = await uni.request({
-        url: `${baseurl}/island/posts/createPost`,
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Access-Token': userStore.token
-        },
-        data: JSON.stringify(postDto)
-      });
-
-      if (res[1] && res[1].statusCode === 200 && res[1].data.success) {
-        uni.showToast({
-          title: '帖子创建成功',
-          icon: 'success'
-        });
-
-        title.value = '';
-        content.value = '';
-        postType.value = '';
-        uploadedFiles.value = [];
-
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/ticket/ticketPoints'
-          });
-        }, 1500);
-      } else {
-        uni.showToast({
-          title: '帖子创建失败: ' + (res[1]?.data?.message || `状态码: ${res[1]?.statusCode}` || '未知错误'),
-          icon: 'none'
-        });
-      }
-    } catch (err) {
-      uni.showToast({
-        title: '请求失败: ' + (err.errMsg || '未知错误'),
-        icon: 'none'
-      });
-      console.error('请求失败:', err);
-    }
-  } catch (err) {
+  if (!title.value.trim()) {
     uni.showToast({
-      title: '创建帖子失败: ' + err.message,
+      title: '请输入标题',
       icon: 'none'
     });
-    console.error('创建帖子失败:', err);
+    return;
   }
-};
+  if (!postType.value.trim()) {
+    uni.showToast({
+      title: '请选择板块分区',
+      icon: 'none'
+    });
+    return;
+  }
+  if (!content.value.trim()) {
+    uni.showToast({
+      title: '请输入内容',
+      icon: 'none'
+    });
+    return;
+  }
+
+  const postDto = {
+    // area: postType.value,
+    content: content.value,
+    fatherId: "",
+    // images: uploadedFiles.value,
+    // title: title.value,
+    postId: userStore.userInfo.id,
+    receiverId: "",
+    repliedCommentId: ""
+  };
+
+  console.log(postDto)
+
+  uni.request({
+    url: `${baseurl}/island/posts/createPost`,
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token || ''
+    },
+    data: postDto,
+    success: (res) => {
+      console.log("创建帖子成功，响应数据:", res.data);
+    },
+    fail: (err) => {
+      // 在控制台打印错误信息
+      console.error('创建帖子失败:', err);
+
+      uni.showToast({
+        title: '网络错误，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  })
+
+}
 </script>
 
 <style scoped>
