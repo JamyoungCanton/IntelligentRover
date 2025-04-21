@@ -5,51 +5,46 @@
       <image class="header-image" src="https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png" mode="aspectFill"></image>
     </view>
 
-    <!-- 标题和价格区域 -->
-    <view class="title-container">
-      <view class="title">{{ productDetail.title }}</view>
-      <view class="subtitle">{{ productDetail.subtitle }}</view>
-      <view class="price-container">
-        <text class="price">¥{{ productDetail.price }}</text>
-        <text class="original-price">¥{{ productDetail.originalPrice }}</text>
-      </view>
-    </view>
-
-    <!-- 功能按钮区域 -->
-    <view class="action-buttons">
-      <view class="action-button" @click="handleAction('favorite')">
-        <image src="/static/daytravelDetail/email.png" class="three"></image>
-        <text> 专业教练</text>
-      </view>
-      <view class="action-button" @click="handleAction('share')">
-        <image src="/static/daytravelDetail/food.png" class="three"></image>
-        <text>海鲜午餐</text>
-      </view>
-      <view class="action-button" @click="handleAction('service')">
-        <image src="/static/daytravelDetail/save.png" class="three"></image>
-        <text>旅游保险</text>
-      </view>
-    </view>
-
-    <!-- 日期选择区域 -->
-    <view class="section-container date-selection">
-      <view class="section-title">出行日期选择</view>
-      <view class="date-grid">
-        <view
-          class="date-item"
-          v-for="(item, index) in availableDates"
-          :key="index"
-          :class="{ 'date-selected': selectedDateIndex === index }"
-          @click="selectDate(index)"
-        >
-          <text class="date-day">{{ item.day }}</text>
-          <text class="date-week">{{ item.weekday }}</text>
-		  <text class="date-price">{{ item.price }}</text>
+     <!-- 标题和价格区域 -->
+        <view class="title-container">
+          <view class="title">{{ productDetail.title }}</view>
+          <view class="subtitle">{{ productDetail.subtitle }}</view>
+          <view class="price-container">
+            <text class="price">¥{{ productDetail.price }}</text>
+            <text class="original-price">¥{{ productDetail.originalPrice }}</text>
+          </view>
         </view>
-      </view>
-    </view>
-
-    <!-- 行程安排部分 -->
+    
+        <!-- 行程亮点区域 -->
+        <view class="section-container">
+          <view class="section-title">行程亮点</view>
+          <view class="highlight-list">
+            <view v-for="(item, index) in highlights" :key="index" class="highlight-item">
+              <image :src="getHighlightIcon(item.icon)" class="highlight-icon"></image>
+              <text class="highlight-text">{{ item.text }}</text>
+            </view>
+          </view>
+        </view>
+    
+        <!-- 日期选择区域 -->
+        <view class="section-container date-selection">
+          <view class="section-title">出行日期选择</view>
+          <view class="date-grid">
+            <view
+              class="date-item"
+              v-for="(item, index) in availableDates"
+              :key="index"
+              :class="{ 'date-selected': selectedDateIndex === index }"
+              @click="selectDate(index)"
+            >
+              <text class="date-day">{{ item.day }}</text>
+              <text class="date-week">{{ item.weekday }}</text>
+              <text class="date-price">{{ item.price }}</text>
+            </view>
+          </view>
+        </view>
+    
+        <!-- 行程安排部分 -->
         <view class="schedule-section">
           <view class="section-title">行程安排</view>
           <view class="timeline">
@@ -69,78 +64,79 @@
         <!-- 费用说明部分 -->
         <view class="usage-section">
           <view class="section-title">费用说明</view>
-		  <view style="color: color: #333;font-size: 17px;">费用包含</view>
+          <view style="color: #333; font-size: 17px;">费用包含</view>
           <view class="usage-list">
             <view v-for="(item, index) in usageList" :key="index" class="usage-item">
               <view class="dot" />
               <text>{{ item }}</text>
             </view>
           </view>
-		  <!-- 费用不含 -->
-		  <view style="color: color: #333;font-size: 17px;">费用不含</view>
-		  <view class="usage-list">
-		    <view v-for="(item, index) in nousageList" :key="index" class="usage-item">
-		      <view class="dot" />
-		      <text>{{ item }}</text>
-		    </view>
-		  </view>
         </view>
-
-    <!-- 用户评论区域 -->
-    <view class="section-container" v-if="reviews.length > 0">
-	<view class="findAll">查看全部</view>
-      <view class="section-title">用户点评</view>
-      <view class="comment-list">
-        <view class="comment-item" v-for="(review, index) in reviews" :key="index">
-          <view class="comment-header">
-            <image class="user-avatar" :src="review.avatar" mode="aspectFill"></image>
-            <view class="user-info">
-              <text class="user-name">{{ review.username }}</text>
-              <view class="rating">
-                <view
-                  class="iconfont star-icon"
-                  v-for="star in 5"
-                  :key="star"
-                ><image src="/static/dayTravel/star.png" class="starimg"></image></view>
+    
+        <!-- 预订须知部分 -->
+        <view class="section-container">
+          <view class="section-title">预订须知</view>
+          <view class="notes-list">
+            <view v-for="(item, index) in notesList" :key="index" class="notes-item">
+              <view class="notes-content"/>{{ item.content }}</view>
+          </view>
+        </view>
+    
+        <!-- 用户评论区域 -->
+        <view class="section-container" v-if="reviews.length > 0">
+          <view class="findAll">查看全部</view>
+          <view class="section-title">用户点评</view>
+          <view class="comment-list">
+            <view class="comment-item" v-for="(review, index) in reviews" :key="index">
+              <view class="comment-header">
+                <image class="user-avatar" :src="review.avatar" mode="aspectFill"></image>
+                <view class="user-info">
+                  <text class="user-name">{{ review.username }}</text>
+                  <view class="rating">
+                    <view
+                      class="iconfont star-icon"
+                      v-for="star in 5"
+                      :key="star"
+                    ><image src="/static/dayTravel/star.png" class="starimg"></image></view>
+                  </view>
+                </view>
+              </view>
+              <view class="comment-content">
+                {{ review.content }}
               </view>
             </view>
           </view>
-          <view class="comment-content">
-            {{ review.content }}
+        </view>
+    
+        <!-- 相关推荐 -->
+        <view class="section-container" v-if="recommendations.length > 0">
+          <view class="section-title">相关推荐</view>
+          <view class="recommendation-list">
+            <view
+              class="recommendation-item"
+              v-for="(item, index) in recommendations"
+              :key="index"
+              @click="navigateToProduct(item.id)"
+            >
+              <image class="recommendation-image" :src="item.image" mode="aspectFill"></image>
+              <view class="recommendation-info">
+                <text class="recommendation-title">{{ item.title }}</text>
+                <text class="recommendation-price">¥{{ item.price }}</text>
+              </view>
+            </view>
           </view>
         </view>
-      </view>
-    </view>
-
-    <!-- 相关推荐 -->
-    <view class="section-container" v-if="recommendations.length > 0">
-      <view class="section-title">相关推荐</view>
-      <view class="recommendation-list">
-        <view
-          class="recommendation-item"
-          v-for="(item, index) in recommendations"
-          :key="index"
-          @click="navigateToProduct(item.id)"
-        >
-          <image class="recommendation-image" :src="item.image" mode="aspectFill"></image>
-          <view class="recommendation-info">
-            <text class="recommendation-title">{{ item.title }}</text>
-            <text class="recommendation-price">¥{{ item.price }}</text>
+    
+        <!-- 底部购买按钮 -->
+        <view class="bottom-bar">
+          <view class="bottom-price">
+            <text class="current-price">¥{{ productDetail.price }}</text>
+            <text class="price-desc">起/人</text>
           </view>
+          <view class="buy-button" @click="handleBooking">立即预订</view>
         </view>
       </view>
-    </view>
-
-    <!-- 底部购买按钮 -->
-    <view class="bottom-bar">
-      <view class="bottom-price">
-        <text class="current-price">¥{{ productDetail.price }}</text>
-        <text class="price-desc">起/人</text>
-      </view>
-      <view class="buy-button" @click="handleBooking">立即预订</view>
-    </view>
-  </view>
-</template>
+    </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
@@ -153,37 +149,17 @@ interface ProductDetail {
   coverImage: string;
   price: number;
   originalPrice: number;
-  features: string[];
-  description?: string;
-  inclusions?: string[];
-  exclusions?: string[];
 }
 
-// 定义评论数据结构
-interface Review {
-  id: string | number;
-  username: string;
-  avatar: string;
-  rating: number;
+// 定义行程亮点数据结构
+interface Highlight {
+  icon: string;
+  text: string;
+}
+
+// 定义预订须知数据结构
+interface Note {
   content: string;
-  date: string;
-}
-
-// 定义推荐产品数据结构
-interface RecommendedProduct {
-  id: string | number;
-  title: string;
-  image: string;
-  price: number;
-}
-
-// 定义日期选择数据结构
-interface DateOption {
-  day: string;
-  weekday: string;
-  date: string; // 完整日期，用于API传参
-  available: boolean;
-  price?: number; // 不同日期可能有不同价格
 }
 
 // 产品详情
@@ -193,22 +169,23 @@ const productDetail = reactive<ProductDetail>({
   subtitle: '含接送机/可拼车/中文导游',
   coverImage: '/static/images/beach.jpg',
   price: 799,
-  originalPrice: 999,
-  features: [
-    '专业领队全程陪同',
-    '无购物无自费安排',
-    '一价全包无隐形消费',
-    '赠送海景下午茶'
-  ]
+  originalPrice: 999
 });
 
+// 行程亮点
+const highlights = ref<Highlight[]>([
+  { icon: '/static/daytravelDetail/save.png', text: '绝美海岸线，打卡绝佳地点' },
+  { icon: '/static/daytravelDetail/email.png', text: '专业导游，深度讲解景点文化' },
+  { icon: '/static/daytravelDetail/food.png', text: '特色海鲜餐，品尝当地美食' }
+]);
+
 // 可选日期
-const availableDates = ref<DateOption[]>([
-  { day: '14', weekday: '周一', date: '2025-01-14', price: 799, available: true },
-  { day: '15', weekday: '周二', date: '2025-01-15', price: 799,available: true },
-  { day: '16', weekday: '周三', date: '2025-01-16', price: 799,available: true },
-  { day: '17', weekday: '周四', date: '2025-01-17', price: 799,available: true },
-  { day: '18', weekday: '周五', date: '2025-01-18', price: 799,available: true },
+const availableDates = ref([
+  { day: '14', weekday: '周一', date: '2025-01-14', price: '¥799', available: true },
+  { day: '15', weekday: '周二', date: '2025-01-15', price: '¥799', available: true },
+  { day: '16', weekday: '周三', date: '2025-01-16', price: '¥799', available: true },
+  { day: '17', weekday: '周四', date: '2025-01-17', price: '¥799', available: true },
+  { day: '18', weekday: '周五', date: '2025-01-18', price: '¥799', available: true },
 ]);
 
 // 行程安排数据
@@ -224,22 +201,20 @@ const scheduleList = ref([
 
 // 费用说明数据
 const usageList = ref([
-  '费用门票',
-  '专业接待',
-  '安排住宿',
-  '海鲜午餐',
-  '景点咨询'
+  '专业教练指导', '器材租赁费用', '海鲜午餐'
 ]);
 
-// 费用说明数据
-const nousageList = ref([
-  '个人消费',
-  '保险服务',
-  '小费'
+
+// 预订须知数据
+const notesList = ref<Note[]>([
+  { content: '提前1天预订' },
+  { content: '最少2人起订' },
+  {  content: '出发前24小时可免费取消' },
+  { content: '儿童1.2米以下免费' }
 ]);
 
 // 用户评论
-const reviews = ref<Review[]>([
+const reviews = ref([
   {
     id: 1,
     username: '李小姐',
@@ -267,7 +242,7 @@ const reviews = ref<Review[]>([
 ]);
 
 // 相关推荐
-const recommendations = ref<RecommendedProduct[]>([
+const recommendations = ref([
   {
     id: 2,
     title: '三亚海岛度假5日游',
@@ -287,7 +262,7 @@ const selectedDateIndex = ref(0);
 
 // 页面加载时获取数据
 onMounted(() => {
-  // 模拟从API获取数据
+  // 实际项目中，这里应该是一个API请求
   fetchProductDetail();
   fetchAvailableDates();
   fetchReviews();
@@ -297,61 +272,24 @@ onMounted(() => {
 // 获取产品详情
 const fetchProductDetail = () => {
   // 实际项目中，这里应该是一个API请求
-  // const productId = route.params.id;
-  // uni.request({
-  //   url: `https://api.example.com/products/${productId}`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     Object.assign(productDetail, res.data);
-  //   }
-  // });
-
-  // 模拟数据已经在上面定义
   console.log('获取产品详情成功');
 };
 
 // 获取可用日期
 const fetchAvailableDates = () => {
   // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/dates`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     availableDates.value = res.data;
-  //   }
-  // });
-
-  // 模拟数据已经在上面定义
   console.log('获取可用日期成功');
 };
 
 // 获取评论
 const fetchReviews = () => {
   // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/reviews`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     reviews.value = res.data;
-  //   }
-  // });
-
-  // 模拟数据已经在上面定义
   console.log('获取评论成功');
 };
 
 // 获取推荐产品
 const fetchRecommendations = () => {
   // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/recommendations`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     recommendations.value = res.data;
-  //   }
-  // });
-
-  // 模拟数据已经在上面定义
   console.log('获取推荐产品成功');
 };
 
@@ -361,48 +299,9 @@ const selectDate = (index: number) => {
   console.log('选择日期:', availableDates.value[index].date);
 };
 
-// 处理功能按钮点击
-const handleAction = (action: string) => {
-  console.log('点击按钮:', action);
-  switch (action) {
-    case 'favorite':
-      // 处理收藏逻辑
-      uni.showToast({
-        title: '收藏成功',
-        icon: 'success'
-      });
-      break;
-    case 'share':
-      // 处理分享逻辑
-      uni.showShareMenu({
-        withShareTicket: true
-      });
-      break;
-    case 'service':
-      // 跳转至客服页面
-      uni.showToast({
-        title: '正在连接客服',
-        icon: 'loading'
-      });
-      break;
-  }
-};
-
-// 跳转到其他产品详情
-const navigateToProduct = (productId: string | number) => {
-  console.log('跳转到产品:', productId);
-  uni.navigateTo({
-    url: `/pages/index/index?id=${productId}`
-  });
-};
-
-// 处理预订
-const handleBooking = () => {
-  console.log('立即预订，选择的日期:', availableDates.value[selectedDateIndex.value].date);
-  // 跳转到预订页面
-  uni.navigateTo({
-    url: `/pages/booking/index?productId=${productDetail.id}&date=${availableDates.value[selectedDateIndex.value].date}`
-  });
+// 获取行程亮点图标
+const getHighlightIcon = (iconPath: string) => {
+  return iconPath;
 };
 </script>
 
@@ -416,9 +315,9 @@ const handleBooking = () => {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.left{
-	width: 25px;
-	height: 25px;
+.left {
+  width: 25px;
+  height: 25px;
 }
 
 .container {
@@ -479,10 +378,10 @@ const handleBooking = () => {
   color: #666;
   margin-bottom: 20rpx;
 }
-	
-.three{
-	width: 30px;
-	height: 30px;
+
+.three {
+  width: 30px;
+  height: 30px;
 }
 
 .price-container {
@@ -546,9 +445,9 @@ const handleBooking = () => {
   margin-bottom: 20rpx;
 }
 
-.findAll{
-	float: right;
-	color: #8ba6ef;
+.findAll {
+  float: right;
+  color: #8ba6ef;
 }
 
 .date-grid {
@@ -582,6 +481,7 @@ const handleBooking = () => {
   color: #666;
   margin-top: 5rpx;
 }
+
 .date-price {
   font-size: 24rpx;
   color: #1471c7;
@@ -677,6 +577,53 @@ const handleBooking = () => {
   margin-right: 8px;
   flex-shrink: 0;
 }
+
+/* 行程亮点样式 */
+.highlight-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+
+.highlight-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+}
+
+.highlight-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 预订须知样式 */
+.notes-list {
+  margin-top: 10px;
+}
+
+.notes-item {
+  margin-bottom: 15px;
+}
+
+.notes-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.notes-content {
+  font-size: 14px;
+  color: #666;
+}
+
 /* 用户评论区域 */
 .comment-list {
   display: flex;
@@ -722,7 +669,7 @@ const handleBooking = () => {
   margin-right: 5rpx;
 }
 
-.starimg{
+.starimg {
   width: 17px;
   height: 17px;
 }

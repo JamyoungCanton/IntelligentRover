@@ -115,7 +115,7 @@ const uploadImage = (path) => {
           try {
             const data = JSON.parse(res.data);
             if (data.success) {
-              const imageUrl = data.result.url;
+              const imageUrl = data.result;
               uploadedFiles.value.push(imageUrl);
               resolve(imageUrl);
             } else {
@@ -185,13 +185,11 @@ const createPost = () => {
   }
 
   const postDto = {
-    // area: postType.value,
+    area: postType.value,
     content: content.value,
-    fatherId: "",
-    // images: uploadedFiles.value,
-    // title: title.value,
+    images: uploadedFiles.value,
+    title: title.value,
     postId: userStore.userInfo.id,
-    receiverId: "",
     repliedCommentId: ""
   };
 

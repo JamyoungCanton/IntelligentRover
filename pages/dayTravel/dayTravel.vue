@@ -75,42 +75,43 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useUserStore } from '@/store/modules/user';
+
+const baseurl = 'https://island.zhangshuiyi.com';
 
 // 用户认证检查
 const hasToken = () => {
   if (userStore.token === '') {
     uni.showToast({
       title: '未登录,请先登录',
-      icon: 'false',
+      icon: 'none',
       duration: 1500
-    })
+    });
     setTimeout(() => {
       uni.navigateTo({
         url: '/pages/login/login'
       });
     }, 500);
+    return false;
   }
-}
+  return true;
+};
 
 const activeTab = ref('all');
 const sortType = ref('');
+const showFilter = ref(false); // 控制筛选面板的显示隐藏
+const userStore = useUserStore();
+
+// 定义标签页数据
 const tabs = ref([
-  { name: '全部', value: 'all', imagetabs: '/static/dayTravel/all.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'} },
-  { name: '海滩休闲', value: 'beach', imagetabs: '/static/dayTravel/travel.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
-  { name: '水上运动', value: 'water', imagetabs: '/static/dayTravel/swim.png', imgtabStyle: {width: '15px', height: '15px', objectFit: 'contain'}},
-  { name: '文化体验', value: 'culture', imagetabs: '/static/dayTravel/culture.png', imgtabStyle: {width: '13px', height: '13px', objectFit: 'contain'}},
-  { name: '美食', value: 'food', imagetabs: '/static/dayTravel/food.png', imgtabStyle: {width: '18px', height: '18px', objectFit: 'contain'}}
+  { name: '全部', value: 'all', type: 1, imagetabs: '/static/dayTravel/all.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
+  { name: '海滩休闲', value: 'beach', type: 2, imagetabs: '/static/dayTravel/travel.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
+  { name: '水上运动', value: 'water', type: 3, imagetabs: '/static/dayTravel/swim.png', imgtabStyle: { width: '15px', height: '15px', objectFit: 'contain' } },
+  { name: '文化体验', value: 'culture', type: 4, imagetabs: '/static/dayTravel/culture.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
+  { name: '美食', value: 'food', type: 5, imagetabs: '/static/dayTravel/food.png', imgtabStyle: { width: '18px', height: '18px', objectFit: 'contain' } }
 ]);
 
-// tabs value 字符串与接口 type 数字映射表
-tabs.value.forEach((tab) => {
-  if(tab.value === 'all') tab.type = 0;
-  else if(tab.value === 'beach') tab.type = 2;
-  else if(tab.value === 'water') tab.type = 3;
-  else if(tab.value === 'culture') tab.type = 4;
-  else if(tab.value === 'food') tab.type = 5;
-});
-
+// 轮播图数据
 const carouselItems = ref([
   {
     image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
@@ -126,149 +127,90 @@ const carouselItems = ref([
   }
 ]);
 
-const spots = ref([
-  {
-    id: 1,
-    name: '蓝湾浮潜体验',
-    rating: 4.9,
-    desc: '浮潜装备 · 专业教练 · 午餐',
-    price: 299,
-    sales: 1234,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/7af902439b584760a186a7e0ed33742b.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 2,
-    name: '海滩BBQ派对',
-    rating: 4.8,
-    desc: '烧烤套餐 · 沙滩椅 · 饮品',
-    price: 399,
-    sales: 890,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/0c2edc5b674e44009b09348604405883.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 3,
-    name: '日落帆船巡游',
-    rating: 4.9,
-    desc: '帆船体验 · 香槟 · 晚餐',
-    price: 599,
-    sales: 678,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/6cd868d202854bc496a4f29e9b35c108.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 4,
-    name: '珊瑚礁探索',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/608bf9566ace40008c5868900accaa1b.png',
-	imagestar: '/static/dayTravel/star.png',
-	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 5,
-    name: '海滩探险',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png',
-  	imagestar: '/static/dayTravel/star.png',
-  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  },
-  {
-    id: 6,
-    name: '海边石林',
-    rating: 4.7,
-    desc: '潜水装备 · 专业向导 · 水下相机',
-    price: 349,
-    sales: 432,
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/c035c810b715403097a091bb712c127e.jpg',
-  	imagestar: '/static/dayTravel/star.png',
-  	starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-  }
-]);
+// 套餐列表数据
+const spots = ref([]);
 
-
-// 拉取后端套餐数据
 const fetchSpots = async () => {
   const tabObj = tabs.value.find(t => t.value === activeTab.value);
-  const type = tabObj ? tabObj.type : 0;
+  const type = tabObj ? tabObj.type : 1; // 默认值为 1
   try {
-    uni.request({
-      url: '/island/il-package/list',
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/il-package/list',
       method: 'POST',
-      data: { type },
+      data: JSON.stringify({ type }),
       header: {
-        'X-Access-Token': userStore.token,
-        'Content-Type': 'application/json'
-      },
-      success: res => {
-        if (res.statusCode === 200 && res.data && res.data.success) {
-          spots.value = (res.data.result || []).map(item => ({
-            id: item.id,
-            name: item.packname || item.title,
-            rating: item.score || 0,
-            desc: (item.tags || '').replace(/,/g, ' · '),
-            price: Number(item.price),
-            sales: item.soldSum,
-            image: (item.images && item.images[0]) ? item.images[0].url : '',
-            imagestar: '/static/dayTravel/star.png',
-            starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
-          }));
-        } else {
-          uni.showToast({ title: '套餐获取失败！', icon: 'none' });
-        }
-      },
-      fail: () => {
-        uni.showToast({ title: '套餐获取失败！', icon: 'none' });
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token || ''
       }
-    })
+    });
+
+    console.log("接口返回的数据：", res[1]);
+
+    if (Array.isArray(res) && res.length > 1 && res[1].statusCode === 200 && res[1].data && res[1].data.success) {
+      const spotList = res[1].data.result || [];
+      spots.value = spotList.map(item => {
+        return {
+          id: item.id || '',
+          name: item.packname || '',
+          rating: item.score || 0,
+          desc: (item.tags || '').replace(/,/g, ' · '),
+          price: item.price ? parseFloat(item.price) : 0,
+          sales: item.soldSum || 0,
+          image: (item.images && item.images[0] && item.images[0].url) || '/static/default.png',
+          imagestar: '/static/dayTravel/star.png',
+          starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
+        };
+      });
+    } else {
+      uni.showToast({ title: '套餐获取失败！', icon: 'none' });
+    }
   } catch (err) {
+    console.error('请求失败：', err.message);
     uni.showToast({ title: '网络异常', icon: 'none' });
   }
 };
 
-// tab切换
+// tab 切换
 const setActive = (tab) => {
   activeTab.value = tab;
   fetchSpots();
 };
 
+// 筛选面板显示隐藏切换
 const toggleFilter = () => {
   showFilter.value = !showFilter.value;
 };
 
+// 设置排序方式
 const setSort = (type) => {
   sortType.value = type;
 };
 
+// 排序后的套餐列表
 const sortedSpots = computed(() => {
   let sorted = [...spots.value];
   if (sortType.value === 'price') {
-    sorted = sorted.sort((a, b) => a.price - b.price);
+    sorted = sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
   } else if (sortType.value === 'sales') {
-    sorted = sorted.sort((a, b) => b.sales - a.sales);
+    sorted = sorted.sort((a, b) => (b.sales || 0) - (a.sales || 0));
   } else if (sortType.value === 'rating') {
-    sorted = sorted.sort((a, b) => b.rating - a.rating);
+    sorted = sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   }
   return sorted;
 });
 
+// 跳转到套餐详情页
 const goAttraction = (id) => {
   uni.navigateTo({
-    url: `/pages/dayTravelDetail/dayTravelDetail`
+    url: `/pages/dayTravelDetail/dayTravelDetail?id=${id}`
   });
 };
 
+// 页面加载时执行
 onMounted(() => {
-  hasToken();
+  if (!hasToken()) {
+    return;
+  }
   fetchSpots();
 });
 </script>
