@@ -128,7 +128,6 @@ const getParkingDeatil = () => {
     },
     data:{carNum:plateNumber.value},
     success:(res)=>{
-      console.log(res)
       if(res.data.code === 401){
         uni.showModal({
           title: '请重新登录',

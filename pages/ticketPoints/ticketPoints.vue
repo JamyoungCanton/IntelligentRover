@@ -14,155 +14,154 @@
       </scroll-view>
     </view>
     <view class="postContent">
-      <view class="postItem" @click="navigateToPostDetail">
+      <view class="postItem" @click="navigateToPostDetail(item.id)" v-for="(item, index) in postList" :key="index">
         <view class="postHeader">
           <image class="itemava"
             src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
             mode="scaleToFill"
           />
-          <text class="itemname">blulu</text>
+          <text class="itemname">{{ item.userVO.username}}</text>
           <text class="itemlv">lv3</text>
         </view>
         <view class="postTitle">
-          <text>《夏日海岛游攻略》:清新一夏，等你来</text>
+          <text>{{ item.title }}</text>
         </view>
         <view class="postP">
-          <p>这次东澳岛之行，让我彻底爱上了这片神奇的土地。它不仅让我放松了身心，更让我感受到了大自然的神奇魅力。东澳岛，真是一个让人来了就不想离开的地方，我期待着下次再来!</p>
+          <p>{{ item.content }}</p>
         </view>
-        <view class="postImage">
+        <view class="postImage" >
           <image
-            src="https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg"
+          v-for="(img,index) in item.images" :key="index"
+            :src="img.url"
             mode="scaleToFill"
+            :style="getImageStyle(item.images.length, index)"
           />
         </view>
         <view class="item-bottom">
           <view class="item-bottom-left">
-            <view class="left-data">4-17·41分钟前·日常交流</view>
+            <view class="left-data">4-17·41分钟前·{{ item.area }}</view>
           </view>
          <view class="item-bottom-right">
             <view class="right-data">
               <uni-icons type="heart" size="16" color="#666"></uni-icons>
-              <text class="data-detail">23</text>
+              <text class="data-detail">{{ item.likes }}</text>
               <uni-icons type="star" size="16" color="#666"></uni-icons>
-              <text class="data-detail">3</text>
+              <text class="data-detail">{{ item.focus }}</text>
               <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text class="data-detail">2</text>
+              <text class="data-detail">{{ item.comments }}</text>
             </view>
           </view>
         </view>
       </view>
-      <view class="postItem">
-        <view class="postHeader">
-          <image class="itemava"
-            src="/static/hotel-attctive/ava.png "
-            mode="scaleToFill"
-          />
-          <text class="itemname">啊嘞啊嘞</text>
-          <text class="itemlv">lv2</text>
-        </view>
-        <view class="postTitle">
-          <text>《海岛美食大搜罗》：东澳岛的味蕾之旅</text>
-        </view>
-        <view class="postP">
-          <p>东澳岛不仅风景优美，美食也是一大亮点。新鲜的海鲜、特色的海岛小吃，每一口都让人回味无穷。在这里，你可以品尝到刚刚捕捞上岸的鱼虾蟹贝，搭配上当地特色的烹饪方式，简直是味蕾的盛宴。</p>
-        </view>
-        <view class="postImage">
-          <image
-            src="https://wlmtsys.com:9000/travel/f17.jpg"
-            mode="scaleToFill"
-          />
-        </view>
-        <view class="item-bottom">
-          <view class="item-bottom-left">
-            <view class="left-data">4-17·41分钟前·日常交流</view>
-          </view>
-         <view class="item-bottom-right">
-            <view class="right-data">
-              <uni-icons type="heart" size="16" color="#666"></uni-icons>
-              <text class="data-detail">11</text>
-              <uni-icons type="star" size="16" color="#666"></uni-icons>
-              <text class="data-detail">2</text>
-              <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text class="data-detail">9</text>
-            </view>
-          </view>
-        </view>
-      </view>
-      <view class="postItem">
-        <view class="postHeader">
-          <image class="itemava"
-            src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
-            mode="scaleToFill"
-          />
-          <text class="itemname">blulu</text>
-          <text class="itemlv">lv3</text>
-        </view>
-        <view class="postTitle">
-          <text>《东澳岛徒步指南》：探索海岛的隐秘角落</text>
-        </view>
-        <view class="postP">
-          <p>如果你喜欢徒步探险，东澳岛绝对是一个不可错过的地方。这里有许多隐藏在山林和海岸之间的徒步路线，可以让你近距离接触自然，欣赏到海岛的另一面。无论是沿着海岸线漫步，还是深入山林探索，你都能发现许多意想不到的美景，比如隐秘的海滩、清澈的山泉和古老的渔村。带上你的背包，穿上舒适的鞋子，开始你的徒步之旅吧！</p>
-        </view>
-        <view class="postImage">
-          <image
-            src="https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg"
-            mode="scaleToFill"
-          />
-        </view>
-        <view class="item-bottom">
-          <view class="item-bottom-left">
-            <view class="left-data">4-17·41分钟前·日常交流</view>
-          </view>
-         <view class="item-bottom-right">
-            <view class="right-data">
-              <uni-icons type="heart" size="16" color="#666"></uni-icons>
-              <text class="data-detail">23</text>
-              <uni-icons type="star" size="16" color="#666"></uni-icons>
-              <text class="data-detail">3</text>
-              <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text class="data-detail">7</text>
-            </view>
-          </view>
-        </view>
-        
-      </view>
+     
     </view>
   </view>
 </template>
 
-<script>
-import { ref } from 'vue';
+<script setup>
+import { ref ,onMounted} from 'vue';
+import { useUserStore } from '@/store/modules/user';
 
-export default {
-  setup() {
-    const typeList = ref([
-      { label: '全部', value: 'all' },
-      { label: '日常活动', value: 'daily' },
-      { label: '旅游攻略', value: 'strategy' },
-      { label: '旅游分享', value: 'share' },
-      { label: '分享生活', value: 'life' }
-    ]);
-    
-    const activeType = ref('all');
-    
-    const selectType = (type) => {
-      activeType.value = type;
-      // 这里可以添加选择类型后的逻辑
-    };
-    const navigateToPostDetail = () => {
-      uni.navigateTo({
-        url: '/pages/post/postDetail'
-      });
-    };
-    
-    return {
-      typeList,
-      activeType,
-      selectType,
-      navigateToPostDetail
-    };
+const userStore = useUserStore();
+
+const typeList = ref([
+  { label: '全部', value: 'all' },
+  { label: '日常活动', value: 'daily' },
+  { label: '旅游攻略', value: 'strategy' },
+  { label: '旅游分享', value: 'share' },
+  { label: '分享生活', value: 'life' }
+]);
+
+const activeType = ref('all');
+
+const selectType = (type) => {
+  activeType.value = type;
+  // 这里可以添加选择类型后的逻辑
+};
+
+const getImageStyle = (imageCount, index) => {
+  if (imageCount === 1) {
+    return { width: '100%', height: '200px' }; // 单张图片全宽显示
+  } else if (imageCount === 2) {
+    return { width: '48%', height: '200px' }; // 两张图片并排显示
+  } else if (imageCount === 3) {
+    return { width: '32%', height: '120px' }; // 三张图片并排显示
+  } else if (imageCount === 4) {
+    return { width: '48%', height: '160px' }; // 四张图片并排显示
+  } else {
+    return { width: '32%', height: '120px' }; // 其他情况默认显示三张图片并排
   }
 };
+
+const navigateToPostDetail = (id) => {
+  console.log('点击了帖子', id);
+  uni.navigateTo({
+    url: `/pages/post/postDetail?id=${id}`
+  });
+};
+
+onMounted(() => {
+  getPostLst();
+});
+
+const postList = ref([]);
+// 获取帖子信息
+const getPostLst = () => {
+  uni.request({
+      url: 'https://island.zhangshuiyi.com/island/posts/page',
+      method: 'GET',
+      header:{
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data:{
+        isAsc: true,
+        order:1,
+        pageNo: 1,
+        pageSize: 50
+        // sortBy: 'id'
+      },
+      success: (res) => {
+        if(res.data.code === 401){
+          uni.showModal({
+            title: '请重新登录',
+            content: '',
+            showCancel: false,
+            confirmText: '确定',
+            success: (res) => {
+              if (res.confirm) {
+                uni.navigateTo({ url: '/pages/login/login' });
+              }
+            },
+          });
+        }
+        
+        else if (res.statusCode === 200) {
+          console.log('获取到的帖子信息:', res.data);
+          
+          // 处理获取到的帖子信息
+          postList.value = res.data.result.list;
+          console.log('处理后的帖子信息:', postList.value);
+          
+        } else {
+          console.error('获取帖子信息失败，状态码:', res.data.code);
+          uni.showToast({
+            title: '获取帖子信息失败',
+            icon: 'none'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('请求出错:', err);
+        uni.showToast({
+          title: '网络请求出错',
+          icon: 'none'
+        });
+      }
+  })
+}  
+    
+  
 </script>
 
 <style lang="scss">
@@ -241,6 +240,7 @@ export default {
   border-radius: 8px;
 }
 .postTitle{
+  margin-left: 15px;
   font-size: 18px;
   font-weight: 500;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
@@ -255,18 +255,15 @@ export default {
 }
 
 .postImage{
-  width: 100%;
-  height: 200px;
-  margin-top: 10px ;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 10px;
+  width: 100%; /* 确保容器宽度为 100% */
 }
 .postImage image{
-  height: 100%;
-  justify-content: center;
-  align-content: center;
-  border-radius: 15px;
+  border-radius: 5px;
+  margin-bottom: 10px; /* 图片之间的间距 */
 }
 .item-bottom{
   display: flex;

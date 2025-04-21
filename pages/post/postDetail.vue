@@ -100,21 +100,19 @@
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      post: {
-        images: [
-          {
-            id: 1,
-            url: "https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg  ",
-          },
-        ],
-      },
-    };
-  },
-};
+<script setup>
+import { ref } from 'vue';
+
+
+const post = ref({
+  images: [
+    {
+      id: 1,
+      url: "https://ai-public.mastergo.com/ai/img_res/8b2e19990586b743036f49f399c57074.jpg",
+    },
+  ]
+});
+
 </script>
 
 <style lang="scss" scoped>
