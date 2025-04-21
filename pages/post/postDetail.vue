@@ -81,17 +81,17 @@
         <input class="bar-input" placeholder="说点什么..."/>
       </view>
       <view class="bar-icon-deta">
-        <view class="bar-item">
-          <uni-icons type="heart" size="24" color="#666"></uni-icons>
+        <view class="bar-item" @click="addLikes">
+          <uni-icons type="heart" size="24" :color="postDetailList.liked ? '#ff0000' : '#666'"></uni-icons>
           <text class="data-detail">{{ postDetailList.likes }}</text>
         </view>
         
         <view class="bar-item">
-          <uni-icons type="star" size="24" color="#666"></uni-icons>
+          <uni-icons type="star" size="24" color="#666" ></uni-icons>
           <text class="data-detail">{{ postDetailList.collect }}</text>
         </view>
         <view class="bar-item">
-          <uni-icons type="chat" size="24" color="#666"></uni-icons>
+          <uni-icons type="chat" size="24" color="#666" ></uni-icons>
           <text class="data-detail">{{ postDetailList.comments }}</text>
         </view>
       </view>
@@ -152,6 +152,40 @@ const getPostList = async () => {
 
   }
 }
+
+// 点赞
+const addLikes = async () => {
+  let operation = ref(0);
+    if (postDetailList.value.liked === false) {
+      operation.value = 1;
+    } else {
+      operation.value = 0;
+    }
+  console.log(operation.value);
+
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/like',
+    method: 'POST',
+    data: {
+      // 	1 点赞 --- 0 取消点赞
+      operation: operation.value,
+      postsId: postId.value.id,
+      type: 0
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    }
+  })
+  console.log(res.data);
+  if (res.data.code === 200) {
+    operation.value = 0;
+    postDetailList.value.liked = !postDetailList.value.liked;
+    postDetailList.value.likes = postDetailList.value.liked ? postDetailList.value.likes + 1 : postDetailList.value.likes - 1;
+  }
+}
+
+
 
 </script>
 
