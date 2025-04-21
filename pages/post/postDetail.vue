@@ -18,19 +18,19 @@
     <!-- 帖子内容 -->
     <view class="post-content">
       <swiper v-if="post.images && post.images.length > 0" indicator-dots autoplay circular>
-        <swiper-item v-for="item in post.images" :key="item.id">
+        <swiper-item v-for="item in postDetailList.images" :key="item.id">
           <image :src="item.url" mode="aspectFill" />
         </swiper-item>
       </swiper>
-      <view class="app-title">《夏日海岛游攻略》:清新一夏，等你来</view>
+      <view class="app-title">{{ postDetailList.title}}</view>
       <view class="app-content">
-        这次东澳岛之行，让我彻底爱上了这片神奇的土地。它不仅让我放松了身心，更让我感受到了大自然的神奇魅力。东澳岛，真是一个让人来了就不想离开的地方，我期待着下次再来!
+        {{ postDetailList.content }}
       </view>
       <view class="tags">
-        <view class="tag">#日常交流</view>
+        <view class="tag">#{{ postDetailList.area }}</view>
       </view>
       <view class="info">
-        <view class="time">4-17·41分钟前</view>
+        <view class="time">{{ postDetailList.updateTime }}</view>
         <view class="location">广东</view>
       </view>
     </view>
@@ -40,7 +40,7 @@
       <view class="comment-bar">
         <view class="bar">
           <uni-icons type="chat" size="20" color="#666"></uni-icons>
-          <text class="bar-text">总共2条评论</text>
+          <text class="bar-text">总共{{ postDetailList.comments }}条评论</text>
         </view>
       </view>
       <view class="comment-list">
@@ -83,16 +83,16 @@
       <view class="bar-icon-deta">
         <view class="bar-item">
           <uni-icons type="heart" size="24" color="#666"></uni-icons>
-          <text class="data-detail">23</text>
+          <text class="data-detail">{{ postDetailList.likes }}</text>
         </view>
         
         <view class="bar-item">
           <uni-icons type="star" size="24" color="#666"></uni-icons>
-          <text class="data-detail">3</text>
+          <text class="data-detail">{{ postDetailList.collect }}</text>
         </view>
         <view class="bar-item">
           <uni-icons type="chat" size="24" color="#666"></uni-icons>
-          <text class="data-detail">7</text>
+          <text class="data-detail">{{ postDetailList.comments }}</text>
         </view>
       </view>
       
@@ -101,8 +101,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { onLoad } from '@dcloudio/uni-app'
+import { useUserStore } from '@/store/modules/user';
 
+const userStore = useUserStore();
 
 const post = ref({
   images: [
@@ -112,6 +115,43 @@ const post = ref({
     },
   ]
 });
+const postId = ref(null);
+const postDetailList = ref([]);
+// 获取接收过来的id
+onLoad((options) => {
+  postId.value = options;
+  console.log( "接受到的id",postId.value);
+})
+
+// 根据id获取帖子信息
+onMounted(() => {
+  getPostList()
+})
+
+const getPostList = async () => {
+  console.log(postId.value);
+  console.log(userStore.token);
+  
+  
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/postDetail',
+    method: 'GET',
+    data: {
+      id: postId.value.id
+    },
+    header: {
+      'Content-Type': 'x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    }
+  })
+  console.log(res.data);
+  
+  if (res.data.code === 200) {
+    postDetailList.value = res.data.result;
+    console.log("获取到的帖子信息", postDetailList.value);
+
+  }
+}
 
 </script>
 

@@ -14,7 +14,7 @@
       </scroll-view>
     </view>
     <view class="postContent">
-      <view class="postItem" @click="navigateToPostDetail(item.id)" v-for="(item, index) in postList" :key="index">
+      <view class="postItem"  v-for="(item, index) in postList" :key="index"  @click="navigateToPostDetail(item)">
         <view class="postHeader">
           <image class="itemava"
             src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
@@ -93,10 +93,10 @@ const getImageStyle = (imageCount, index) => {
   }
 };
 
-const navigateToPostDetail = (id) => {
-  console.log('点击了帖子', id);
+const navigateToPostDetail = (post) => {
+  console.log('点击了帖子', post.id);
   uni.navigateTo({
-    url: `/pages/post/postDetail?id=${id}`
+    url: `/pages/post/postDetail?id=${post.id}`
   });
 };
 
