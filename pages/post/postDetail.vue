@@ -40,32 +40,35 @@
       <view class="comment-bar">
         <view class="bar">
           <uni-icons type="chat" size="20" color="#666"></uni-icons>
-          <text class="bar-text">总共{{ postDetailList.comments }}条评论</text>
+          <text class="bar-text">总共{{ commentCount }}条评论</text>
         </view>
       </view>
       <view class="comment-list">
-        <view class="comment-item">
-          <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg  " mode="scaleToFill" />
+        <view class="comment-item" v-for="(item) in commentList" :key="item.id">
+          <image class="avatar" src="/static/hotel-attctive/ava.png " mode="scaleToFill" />
           <view class="comment-content">
             <view class="info">
-              <text class="name">blulu</text>
+              <text class="name">{{item.userVO.username}}</text>
               <text class="desc">lv3</text>
             </view>
-            <view class="content">哇好漂亮啊，下次我也要去</view>
+            <view class="content">{{ item.content}}</view>
             <view class="time">26分钟前</view>
-          </view>
-        </view>
-        <view class="comment-item">
-          <image class="avatar" src="/static/hotel-attctive/ava.png  " mode="scaleToFill" />
-          <view class="comment-content">
-            <view class="info">
-              <text class="name">阿勒啊嘞</text>
-              <text class="desc">lv2</text>
+            <view class="sub-comment-item" v-for="(sub) in item.children" :key="sub.id">
+              <view class="sub-comment-header">
+                <view class="sub-header-left">
+                  <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg" mode="scaleToFill" />
+                  <text class="name">{{ sub.userVO.username }}</text>
+                </view>
+               
+                <text class="time">20分钟前</text>
+              </view>
+              <view class="comment-content">
+                <view class="content">{{ sub.content }}</view>
+              </view>
             </view>
-            <view class="content">去东澳岛需要注意什么吗，我计划下周去</view>
-            <view class="time">38分钟前</view>
           </view>
         </view>
+      
       </view>
     </view>
 
@@ -120,17 +123,18 @@ const postDetailList = ref([]);
 // 获取接收过来的id
 onLoad((options) => {
   postId.value = options;
-  console.log( "接受到的id",postId.value);
+
 })
 
 // 根据id获取帖子信息
 onMounted(() => {
-  getPostList()
+  getPostList(),
+  getCommentCount(),
+  getCommentList()
 })
 
 const getPostList = async () => {
-  console.log(postId.value);
-  console.log(userStore.token);
+
   
   
   const res = await uni.request({
@@ -144,12 +148,10 @@ const getPostList = async () => {
       'X-Access-Token': userStore.token
     }
   })
-  console.log(res.data);
+
   
   if (res.data.code === 200) {
     postDetailList.value = res.data.result;
-    console.log("获取到的帖子信息", postDetailList.value);
-
   }
 }
 
@@ -161,7 +163,7 @@ const addLikes = async () => {
     } else {
       operation.value = 0;
     }
-  console.log(operation.value);
+
 
   const res = await uni.request({
     url: 'https://island.zhangshuiyi.com/island/posts/like',
@@ -177,7 +179,7 @@ const addLikes = async () => {
       'X-Access-Token': userStore.token
     }
   })
-  console.log(res.data);
+
   if (res.data.code === 200) {
     operation.value = 0;
     postDetailList.value.liked = !postDetailList.value.liked;
@@ -185,6 +187,50 @@ const addLikes = async () => {
   }
 }
 
+// 获取评论个数
+const commentCount = ref(0)
+const getCommentCount = async () => {
+  const res = await uni.request({
+    url:`https://island.zhangshuiyi.com/island/comments/count/${postId.value.id}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    
+  })
+  if (res.data.code === 200) {
+    commentCount.value = res.data.result;
+  }
+  else{
+    // 弹出错误信息
+    uni.showToast({
+      title: res.data.message,
+      icon: 'none',
+      duration: 2000
+    })
+  }
+}
+
+
+// 获取评论列表
+const commentList = ref([])
+const getCommentList = async () => {
+  const res = await uni.request({
+    url:`https://island.zhangshuiyi.com/island/comments/${postId.value.id}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    }
+  })
+  if (res.data.code === 200) {
+    commentList.value = res.data.result;
+    console.log(commentList.value);
+    
+
+  }
+}
 
 
 </script>
@@ -192,6 +238,7 @@ const addLikes = async () => {
 <style lang="scss" scoped>
 page {
   background-color: #fff !important;
+  height: 100vh;
 }
 
 .app-container {
@@ -320,6 +367,7 @@ page {
 
 .comment-area {
   margin-top: 20rpx;
+  
 
   .comment-bar {
     display: flex;
@@ -358,6 +406,55 @@ page {
         image {
           width: 100%;
           height: 100%;
+        }
+
+
+      }
+
+      .sub-comment-item {
+        margin-left: 28rpx; 
+        padding: 5rpx 0; 
+        border-left: 2rpx dashed #ccc; 
+        background-color: #f9f9f9;
+        border-radius: 10rpx; 
+
+        .sub-comment-header {
+          display: flex;
+          align-items: center;
+          align-content: center;
+          justify-content: space-between; 
+          margin-bottom: 5rpx;
+
+          .sub-header-left {
+            display: flex;
+            align-items: center;
+            align-content: center;
+          }
+
+          .avatar {
+            width: 50rpx; /* 子评论头像尺寸略小 */
+            height: 50rpx;
+            border-radius: 25rpx;
+            margin-right: 10rpx;
+          }
+
+          .name {
+            font-size: 26rpx; /* 子评论用户名字体大小略小 */
+            color: #555; /* 字体颜色稍暗 */
+          }
+
+          .time {
+            font-size: 22rpx; /* 子评论时间字体大小略小 */
+            color: #999;
+            margin-right: 10px;
+          }
+        }
+
+        .comment-content {
+          .content {
+            font-size: 26rpx; /* 子评论内容字体大小略小 */
+            color: #666; /* 字体颜色稍暗 */
+          }
         }
       }
 

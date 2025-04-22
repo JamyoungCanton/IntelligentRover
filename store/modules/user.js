@@ -26,7 +26,7 @@ export const useUserStore = defineStore('user', () => {
       getItem(key) {
         try {
           const value = uni.getStorageSync(key);
-          console.log(`Getting item from storage: ${key}, value:`, value);
+          // console.log(`Getting item from storage: ${key}, value:`, value);
           return value;
         } catch (error) {
           console.error(`Error getting item from storage: ${key}, error:`, error);
