@@ -81,7 +81,7 @@
             mode="scaleToFill"
           />
         </view>
-        <input class="bar-input" placeholder="说点什么..."/>
+        <input @click="showEditComment" class="bar-input" placeholder="说点什么..."/>
       </view>
       <view class="bar-icon-deta">
         <view class="bar-item" @click="addLikes">
@@ -93,13 +93,27 @@
           <uni-icons type="star" size="24" color="#666" ></uni-icons>
           <text class="data-detail">{{ postDetailList.collect }}</text>
         </view>
-        <view class="bar-item">
+        <view class="bar-item" @click="showEditComment">
           <uni-icons type="chat" size="24" color="#666" ></uni-icons>
           <text class="data-detail">{{ postDetailList.comments }}</text>
         </view>
       </view>
       
     </view>
+
+    <!-- 评论框 -->
+    <uni-popup ref="popup" background-color="#fff" @change="change" type="bottom" >
+      <view class="popup-content" :class="{ 'popup-height': type === 'left' || type === 'right' }">
+        <view class="input-send-container">
+          <input 
+            v-model="commentContent" 
+            class="popup-input" 
+            placeholder="请发表你的看法吧~"
+          />
+          <button @click="sendComment" class="send-btn">发送</button>
+        </view>
+      </view>
+    </uni-popup>
   </view>
 </template>
 
@@ -109,6 +123,13 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
+
+const popup = ref(null);
+const showEditComment = () => {
+  if (popup.value) {
+    popup.value.open();
+  }
+};
 
 const post = ref({
   images: [
@@ -134,9 +155,6 @@ onMounted(() => {
 })
 
 const getPostList = async () => {
-
-  
-  
   const res = await uni.request({
     url: 'https://island.zhangshuiyi.com/island/posts/postDetail',
     method: 'GET',
@@ -226,10 +244,41 @@ const getCommentList = async () => {
   })
   if (res.data.code === 200) {
     commentList.value = res.data.result;
-    console.log(commentList.value);
+    // console.log(commentList.value);
     
 
   }
+}
+
+// 发送评论
+const commentContent = ref('');
+const sendComment = async () => {
+  console.log(postId.value.id);
+  console.log(commentContent.value);
+  
+  
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/comments/save',
+    method: 'POST',
+    data: {
+      content: commentContent.value,
+      postId: postId.value.id,
+      fatherId: '',
+      receiverId: '',
+      repliedCommentId:'',
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    }
+    
+  })
+  console.log(res.data);
+  console.log(commentContent.value);
+  
+  getCommentList()
+  getCommentCount()
+  
 }
 
 
@@ -560,9 +609,41 @@ page {
     height: 100%;
     justify-content: center;
   }
-  
 
   
 }
 
+
+.popup-content {
+  padding: 20rpx;
+  background-color: white;
+  border-top-left-radius: 80rpx;
+  border-top-right-radius: 80rpx;
+  
+}
+
+.input-send-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+  margin-bottom: 10px;
+}
+
+.popup-input {
+  width: 60%;
+  margin-right: 20rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  height: 80rpx;
+}
+
+.send-btn {
+  width: 30%;
+  white-space: nowrap;
+  background-color: #007aff;
+  color: white;
+  border-radius: 8rpx;
+  padding: 10rpx 20rpx;
+}
 </style>
