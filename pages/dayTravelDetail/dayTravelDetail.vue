@@ -2,32 +2,26 @@
   <view class="container">
     <!-- 顶部图片区域 -->
     <view class="header-image-container">
-      <image class="header-image" src="https://wlmtsys.com:9000/wlmtsys/2025/04/17/df79d846c28b4b4c8943147884fd8667.png" mode="aspectFill"></image>
+      <image class="header-image" :src="productDetail.coverImage || '/static/daytravelDetail/man.png'" mode="aspectFill"></image>
     </view>
 
     <!-- 标题和价格区域 -->
     <view class="title-container">
-      <view class="title">{{ productDetail.title }}</view>
-      <view class="subtitle">{{ productDetail.subtitle }}</view>
+      <view class="title">{{ productDetail.title || '加载中...' }}</view>
+      <view class="subtitle">{{ productDetail.subtitle || '加载中...' }}</view>
       <view class="price-container">
-        <text class="price">¥{{ productDetail.price }}</text>
-        <text class="original-price">¥{{ productDetail.originalPrice }}</text>
+        <text class="price">¥{{ productDetail.price || 0 }}</text>
       </view>
     </view>
 
-    <!-- 功能按钮区域 -->
-    <view class="action-buttons">
-      <view class="action-button" @click="handleAction('favorite')">
-        <image src="/static/daytravelDetail/email.png" class="three"></image>
-        <text> 专业教练</text>
-      </view>
-      <view class="action-button" @click="handleAction('share')">
-        <image src="/static/daytravelDetail/food.png" class="three"></image>
-        <text>海鲜午餐</text>
-      </view>
-      <view class="action-button" @click="handleAction('service')">
-        <image src="/static/daytravelDetail/save.png" class="three"></image>
-        <text>旅游保险</text>
+    <!-- 行程亮点区域 -->
+    <view class="section-container">
+      <view class="section-title">行程亮点</view>
+      <view class="highlight-list">
+        <view v-for="(item, index) in highlights" :key="index" class="highlight-item">
+          <image :src="getHighlightIcon(item.icon)" class="highlight-icon"></image>
+          <text class="highlight-text">{{ item.text }}</text>
+        </view>
       </view>
     </view>
 
@@ -44,51 +38,35 @@
         >
           <text class="date-day">{{ item.day }}</text>
           <text class="date-week">{{ item.weekday }}</text>
-		  <text class="date-price">{{ item.price }}</text>
+          <text class="date-price">{{ item.price }}</text>
         </view>
       </view>
     </view>
 
-    <!-- 行程安排部分 -->
-        <view class="schedule-section">
-          <view class="section-title">行程安排</view>
-          <view class="timeline">
-            <view v-for="(item, index) in scheduleList" :key="index" class="timeline-item">
-              <view class="time-point">
-                <view class="circle" />
-                <view v-if="index !== scheduleList.length - 1" class="line" />
-              </view>
-              <view class="time-content">
-                <view class="time">{{ item.time }}</view>
-                <view class="content">{{ item.content }}</view>
-              </view>
-            </view>
-          </view>
+    <!-- 费用说明部分 -->
+    <view class="usage-section">
+      <view class="section-title">费用说明</view>
+      <view style="color: #333; font-size: 17px;">费用包含</view>
+      <view class="usage-list">
+        <view v-for="(item, index) in usageList" :key="index" class="usage-item">
+          <view class="dot" />
+          <text>{{ item }}</text>
         </view>
-    
-        <!-- 费用说明部分 -->
-        <view class="usage-section">
-          <view class="section-title">费用说明</view>
-		  <view style="color: color: #333;font-size: 17px;">费用包含</view>
-          <view class="usage-list">
-            <view v-for="(item, index) in usageList" :key="index" class="usage-item">
-              <view class="dot" />
-              <text>{{ item }}</text>
-            </view>
-          </view>
-		  <!-- 费用不含 -->
-		  <view style="color: color: #333;font-size: 17px;">费用不含</view>
-		  <view class="usage-list">
-		    <view v-for="(item, index) in nousageList" :key="index" class="usage-item">
-		      <view class="dot" />
-		      <text>{{ item }}</text>
-		    </view>
-		  </view>
+      </view>
+    </view>
+
+    <!-- 预订须知部分 -->
+    <view class="section-container">
+      <view class="section-title">预订须知</view>
+      <view class="notes-list">
+        <view v-for="(item, index) in notesList" :key="index" class="notes-item">
+          <view class="notes-content">{{ item.content }}</view>
         </view>
+      </view>
+    </view>
 
     <!-- 用户评论区域 -->
-    <view class="section-container" v-if="reviews.length > 0">
-	<view class="findAll">查看全部</view>
+    <view class="section-container" v-if="reviews.length > 0" style="margin-top: 5px;">
       <view class="section-title">用户点评</view>
       <view class="comment-list">
         <view class="comment-item" v-for="(review, index) in reviews" :key="index">
@@ -101,7 +79,9 @@
                   class="iconfont star-icon"
                   v-for="star in 5"
                   :key="star"
-                ><image src="/static/dayTravel/star.png" class="starimg"></image></view>
+                >
+                  <image src="/static/dayTravel/star.png" class="starimg"></image>
+                </view>
               </view>
             </view>
           </view>
@@ -112,29 +92,10 @@
       </view>
     </view>
 
-    <!-- 相关推荐 -->
-    <view class="section-container" v-if="recommendations.length > 0">
-      <view class="section-title">相关推荐</view>
-      <view class="recommendation-list">
-        <view
-          class="recommendation-item"
-          v-for="(item, index) in recommendations"
-          :key="index"
-          @click="navigateToProduct(item.id)"
-        >
-          <image class="recommendation-image" :src="item.image" mode="aspectFill"></image>
-          <view class="recommendation-info">
-            <text class="recommendation-title">{{ item.title }}</text>
-            <text class="recommendation-price">¥{{ item.price }}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 底部购买按钮 -->
     <view class="bottom-bar">
       <view class="bottom-price">
-        <text class="current-price">¥{{ productDetail.price }}</text>
+        <text class="current-price">¥{{ productDetail.price || 0 }}</text>
         <text class="price-desc">起/人</text>
       </view>
       <view class="buy-button" @click="handleBooking">立即预订</view>
@@ -143,7 +104,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
+import { useUserStore } from '@/store/modules/user';
+
+const userStore = useUserStore();
 
 // 定义产品详情数据结构
 interface ProductDetail {
@@ -153,206 +118,136 @@ interface ProductDetail {
   coverImage: string;
   price: number;
   originalPrice: number;
-  features: string[];
-  description?: string;
-  inclusions?: string[];
-  exclusions?: string[];
 }
 
-// 定义评论数据结构
-interface Review {
-  id: string | number;
-  username: string;
-  avatar: string;
-  rating: number;
+// 定义行程亮点数据结构
+interface Highlight {
+  icon: string;
+  text: string;
+}
+
+// 定义预订须知数据结构
+interface Note {
   content: string;
-  date: string;
 }
 
-// 定义推荐产品数据结构
-interface RecommendedProduct {
-  id: string | number;
-  title: string;
-  image: string;
-  price: number;
-}
-
-// 定义日期选择数据结构
-interface DateOption {
-  day: string;
-  weekday: string;
-  date: string; // 完整日期，用于API传参
-  available: boolean;
-  price?: number; // 不同日期可能有不同价格
+// 定义用户评论数据结构
+interface Review {
+  avatar: string;
+  username: string;
+  content: string;
 }
 
 // 产品详情
 const productDetail = reactive<ProductDetail>({
-  id: 1,
-  title: '三亚一日海景双享套餐',
-  subtitle: '含接送机/可拼车/中文导游',
-  coverImage: '/static/images/beach.jpg',
-  price: 799,
-  originalPrice: 999,
-  features: [
-    '专业领队全程陪同',
-    '无购物无自费安排',
-    '一价全包无隐形消费',
-    '赠送海景下午茶'
-  ]
+  id: '',
+  title: '',
+  subtitle: '',
+  coverImage: '',
+  price: 0,
+  originalPrice: 0
 });
 
+// 行程亮点
+const highlights = ref<Highlight[]>([]);
+
 // 可选日期
-const availableDates = ref<DateOption[]>([
-  { day: '14', weekday: '周一', date: '2025-01-14', price: 799, available: true },
-  { day: '15', weekday: '周二', date: '2025-01-15', price: 799,available: true },
-  { day: '16', weekday: '周三', date: '2025-01-16', price: 799,available: true },
-  { day: '17', weekday: '周四', date: '2025-01-17', price: 799,available: true },
-  { day: '18', weekday: '周五', date: '2025-01-18', price: 799,available: true },
-]);
-
-// 行程安排数据
-const scheduleList = ref([
-  { time: '08:30', content: '酒店集合出发' },
-  { time: '09:30', content: '抵达海南，清蓝慧村' },
-  { time: '10:00', content: '快艇深海体验' },
-  { time: '12:00', content: '海鲜特色午餐' },
-  { time: '14:00', content: '海底世界体验' },
-  { time: '16:00', content: '自由活动，拍照' },
-  { time: '17:00', content: '返程' }
-]);
+const availableDates = ref([]);
 
 // 费用说明数据
-const usageList = ref([
-  '费用门票',
-  '专业接待',
-  '安排住宿',
-  '海鲜午餐',
-  '景点咨询'
-]);
+const usageList = ref([]);
 
-// 费用说明数据
-const nousageList = ref([
-  '个人消费',
-  '保险服务',
-  '小费'
-]);
+// 预订须知数据
+const notesList = ref<Note[]>([]);
 
-// 用户评论
+// 用户评论（写死的数据）
 const reviews = ref<Review[]>([
   {
-    id: 1,
-    username: '李小姐',
     avatar: '/static/daytravelDetail/man.png',
-    rating: 5,
-    content: '教练很专业，海鲜午餐很新鲜，整体体验非常棒！',
-    date: '2024-01-15'
+    username: '用户1',
+    content: '非常喜欢这个行程，景色很美，导游也很专业！'
   },
   {
-    id: 2,
-    username: '张先生',
     avatar: '/static/daytravelDetail/man.png',
-    rating: 5,
-    content: '海底漫步太神奇了，第一次体验这么特别的项目。',
-    date: '2024-01-14'
-  },
-  {
-    id: 3,
-    username: '王小姐',
-    avatar: '/static/daytravelDetail/man.png',
-    rating: 4,
-    content: '整体不错，就是集合时间有点早。午餐很丰盛！',
-    date: '2024-01-13'
-  }
-]);
-
-// 相关推荐
-const recommendations = ref<RecommendedProduct[]>([
-  {
-    id: 2,
-    title: '三亚海岛度假5日游',
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f05760d6c1e146b7bb07bc32c5b47d2b.png',
-    price: 799
-  },
-  {
-    id: 3,
-    title: '海南热带丛林探险',
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/072f4bac0fa6481f9390c8145e356f22.png',
-    price: 999
+    username: '用户2',
+    content: '性价比很高，推荐给大家！'
   }
 ]);
 
 // 当前选中的日期索引
 const selectedDateIndex = ref(0);
 
+// 套餐id
+const packageId = ref('');
+
 // 页面加载时获取数据
-onMounted(() => {
-  // 模拟从API获取数据
-  fetchProductDetail();
-  fetchAvailableDates();
-  fetchReviews();
-  fetchRecommendations();
+onLoad((options) => {
+  if (options.id) {
+    packageId.value = options.id;
+    fetchProductDetail();
+  }
 });
 
 // 获取产品详情
-const fetchProductDetail = () => {
-  // 实际项目中，这里应该是一个API请求
-  // const productId = route.params.id;
-  // uni.request({
-  //   url: `https://api.example.com/products/${productId}`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     Object.assign(productDetail, res.data);
-  //   }
-  // });
+const fetchProductDetail = async () => {
+  try {
+    const res = await uni.request({
+      url: `https://island.zhangshuiyi.com/island/il-package/get/${packageId.value}`,
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token || ''
+      }
+    });
 
-  // 模拟数据已经在上面定义
-  console.log('获取产品详情成功');
-};
+    // 检查请求是否成功
+    if (res.statusCode === 200 && res.data && res.data) {
+      const data = res.data.result;
 
-// 获取可用日期
-const fetchAvailableDates = () => {
-  // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/dates`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     availableDates.value = res.data;
-  //   }
-  // });
+      // 更新产品详情
+      productDetail.id = data.id;
+      productDetail.title = data.title;
+      productDetail.subtitle = data.packname;
+      productDetail.coverImage = data.images && data.images[0] && data.images[0].url ? data.images[0].url.replace(/<[^>]+>/g, '') : '/static/daytravelDetail/man.png';
+      productDetail.price = parseFloat(data.price);
+      productDetail.originalPrice = parseFloat(data.priceDesc.split(',')[0]) || 0;
 
-  // 模拟数据已经在上面定义
-  console.log('获取可用日期成功');
-};
+      // 更新行程亮点
+      highlights.value = data.ilPackageHeightlightList.map(item => {
+        return {
+          icon: item.icon,
+          text: item.content
+        };
+      });
 
-// 获取评论
-const fetchReviews = () => {
-  // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/reviews`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     reviews.value = res.data;
-  //   }
-  // });
+      // 更新可选日期
+      availableDates.value = data.ilPackageDepartList.map(item => {
+        return {
+          day: item.departDate.split('-')[2],
+          weekday: item.xingqi,
+          date: item.departDate,
+          price: item.price,
+          available: true
+        };
+      });
 
-  // 模拟数据已经在上面定义
-  console.log('获取评论成功');
-};
+      // 更新费用说明
+      usageList.value = data.priceDesc.split(',');
 
-// 获取推荐产品
-const fetchRecommendations = () => {
-  // 实际项目中，这里应该是一个API请求
-  // uni.request({
-  //   url: `https://api.example.com/products/${productDetail.id}/recommendations`,
-  //   method: 'GET',
-  //   success: (res) => {
-  //     recommendations.value = res.data;
-  //   }
-  // });
+      // 更新预订须知
+      notesList.value = data.notice.split(',').map(item => {
+        return { content: item };
+      });
 
-  // 模拟数据已经在上面定义
-  console.log('获取推荐产品成功');
+      console.log('获取产品详情成功');
+    } else {
+      console.error("接口返回错误：", res.data || res.data);
+      uni.showToast({ title: '获取产品详情失败！', icon: 'none' });
+    }
+  } catch (err) {
+    console.error('请求失败：', err.message);
+    uni.showToast({ title: '网络异常', icon: 'none' });
+  }
 };
 
 // 选择日期
@@ -361,49 +256,89 @@ const selectDate = (index: number) => {
   console.log('选择日期:', availableDates.value[index].date);
 };
 
-// 处理功能按钮点击
-const handleAction = (action: string) => {
-  console.log('点击按钮:', action);
-  switch (action) {
-    case 'favorite':
-      // 处理收藏逻辑
-      uni.showToast({
-        title: '收藏成功',
-        icon: 'success'
-      });
-      break;
-    case 'share':
-      // 处理分享逻辑
-      uni.showShareMenu({
-        withShareTicket: true
-      });
-      break;
-    case 'service':
-      // 跳转至客服页面
-      uni.showToast({
-        title: '正在连接客服',
-        icon: 'loading'
-      });
-      break;
-  }
+// 获取行程亮点图标
+const getHighlightIcon = (iconPath: string) => {
+  return iconPath;
 };
 
-// 跳转到其他产品详情
-const navigateToProduct = (productId: string | number) => {
-  console.log('跳转到产品:', productId);
-  uni.navigateTo({
-    url: `/pages/index/index?id=${productId}`
+// 创建订单
+const createOrder = () => {
+  // 使用用户信息填充联系人信息
+  const contract = {
+    contractName: userStore.userInfo.realname || '',
+    contractPhone: userStore.userInfo.phone || ''
+  };
+
+  // 获取选中的日期
+  const selectedDate = availableDates.value[selectedDateIndex.value].date;
+
+  // 构建订单项
+  const items = [
+    {
+      bookInfo: {
+        date: selectedDate,
+        fullname: userStore.userInfo.realname || '',
+        idCardNo: userStore.userInfo.idCardNo || '',
+        idCardType: 'ID_CARD',
+        schedule: selectedDate
+      },
+      productId: productDetail.id.toString(), // 使用产品详情中的ID
+      productType: "OneDay",
+      quantity: 1
+    }
+  ];
+
+  // 构建请求数据
+  const orderData = {
+    contract,
+    items
+  };
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: orderData,
+    success: (res) => {
+      console.log(res.data);
+      
+      if (res.data.code === 200 && res.data.success) {
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        // 可以跳转到订单详情页或其他页面
+        // uni.navigateTo({ url: `/pages/orderDetail/orderDetail?id=${res.data.result.id}` });
+      } else {
+        uni.showToast({
+          title: res.data.message || '订单创建失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('创建订单失败', err);
+      uni.showToast({
+        title: '创建订单失败，请稍后重试',
+        icon: 'none'
+      });
+    }
   });
 };
 
 // 处理预订
 const handleBooking = () => {
-  console.log('立即预订，选择的日期:', availableDates.value[selectedDateIndex.value].date);
-  // 跳转到预订页面
-  uni.navigateTo({
-    url: `/pages/booking/index?productId=${productDetail.id}&date=${availableDates.value[selectedDateIndex.value].date}`
-  });
+  if (!userStore.token) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    return;
+  }
+  createOrder();
 };
+
 </script>
 
 <style>
@@ -416,9 +351,9 @@ const handleBooking = () => {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.left{
-	width: 25px;
-	height: 25px;
+.left {
+  width: 25px;
+  height: 25px;
 }
 
 .container {
@@ -479,10 +414,10 @@ const handleBooking = () => {
   color: #666;
   margin-bottom: 20rpx;
 }
-	
-.three{
-	width: 30px;
-	height: 30px;
+
+.three {
+  width: 30px;
+  height: 30px;
 }
 
 .price-container {
@@ -535,7 +470,8 @@ const handleBooking = () => {
 /* 日期选择区域 */
 .section-container {
   background-color: #fff;
-  padding: 30rpx;
+  padding: 25rpx;
+  margin-top: 5px;
 }
 
 .section-title {
@@ -543,12 +479,12 @@ const handleBooking = () => {
   font-weight: bold;
   color: #333;
   margin-top: 5rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 15rpx;
 }
 
-.findAll{
-	float: right;
-	color: #8ba6ef;
+.findAll {
+  float: right;
+  color: #8ba6ef;
 }
 
 .date-grid {
@@ -582,6 +518,7 @@ const handleBooking = () => {
   color: #666;
   margin-top: 5rpx;
 }
+
 .date-price {
   font-size: 24rpx;
   color: #1471c7;
@@ -653,7 +590,6 @@ const handleBooking = () => {
   background-color: #ffffff;
   padding-bottom: 20px;
   margin-left: 10px;
-  margin-bottom: 10px;
   border-bottom: 1px solid #f8f8f9;
   border-top: 1px solid #f8f8f9;
 }
@@ -677,6 +613,53 @@ const handleBooking = () => {
   margin-right: 8px;
   flex-shrink: 0;
 }
+
+/* 行程亮点样式 */
+.highlight-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+
+.highlight-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+}
+
+.highlight-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 预订须知样式 */
+.notes-list {
+  margin-top: 10px;
+}
+
+.notes-item {
+  margin-bottom: 15px;
+}
+
+.notes-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.notes-content {
+  font-size: 14px;
+  color: #666;
+}
+
 /* 用户评论区域 */
 .comment-list {
   display: flex;
@@ -722,7 +705,7 @@ const handleBooking = () => {
   margin-right: 5rpx;
 }
 
-.starimg{
+.starimg {
   width: 17px;
   height: 17px;
 }

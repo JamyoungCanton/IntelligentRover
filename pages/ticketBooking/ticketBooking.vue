@@ -12,14 +12,14 @@
         <view class="location-row">
           <view class="location-item">
             <text class="label">出发地</text>
-            <input class="value" v-model="fromLocation" placeholder="请输入出发地" />
+            <input class="value" v-model="fromLocation" placeholder="出发地如:东澳岛" />
           </view>
           <view class="exchange-btn">
             <uni-icons type="loop" size="20" color="#0066CC" @click="swapLocations" />
           </view>
           <view class="location-item align-right">
             <text class="label">目的地</text>
-            <input class="value" v-model="toLocation" placeholder="请输入目的地" />
+            <input class="value" v-model="toLocation" placeholder="目的地如:万山岛" />
           </view>
         </view>
         
