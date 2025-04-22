@@ -9,7 +9,7 @@
           </view>
         </swiper-item>
       </swiper>
-	  <view class="carousel-text">
+      <view class="carousel-text">
         <text class="title">一日畅游</text>
         <p><text class="subtitle">欢乐无限 · 欢迎来到海岛一日游</text></p>
       </view>
@@ -25,7 +25,7 @@
           :class="{ active: activeTab === tab.value }"
           @click="setActive(tab.value)"
         >
-			<image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
+          <image :src="tab.imagetabs" :style="tab.imgtabStyle"></image>
           {{ tab.name }}
         </view>
       </scroll-view>
@@ -133,9 +133,10 @@ const spots = ref([]);
 const fetchSpots = async () => {
   const tabObj = tabs.value.find(t => t.value === activeTab.value);
   const type = tabObj ? tabObj.type : 1; // 默认值为 1
+  console.log(type);
   try {
     const res = await uni.request({
-      url: 'https://island.zhangshuiyi.com/island/il-package/list',
+      url: `${baseurl}/island/il-package/list`,
       method: 'POST',
       data: JSON.stringify({ type }),
       header: {
@@ -144,10 +145,10 @@ const fetchSpots = async () => {
       }
     });
 
-    console.log("接口返回的数据：", res[1]);
+    console.log("接口返回的数据：", res);
 
-    if (Array.isArray(res) && res.length > 1 && res[1].statusCode === 200 && res[1].data && res[1].data.success) {
-      const spotList = res[1].data.result || [];
+    if (res.statusCode === 200 && res.data && res.data.success) {
+      const spotList = res.data.result || [];
       spots.value = spotList.map(item => {
         return {
           id: item.id || '',
@@ -371,7 +372,7 @@ onMounted(() => {
 }
 
 .rating {
-	width: 40px;
+	width: 30px;
 	height: 25px;
 	line-height: 25px;
 	font-size: 15px;
@@ -383,6 +384,7 @@ onMounted(() => {
 	right: 2px;
 	bottom: 15px;
 	color: #FFFFFF;
+	padding-left: 5px;
 }
 
 .spot-desc {
