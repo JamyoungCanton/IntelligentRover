@@ -12,11 +12,11 @@
                 </view>
                 <view v-else class="tab">
                     <uni-icons
-                        :type="item.icon"
-                        size="30"
-                        :color="activeTab === index? themeColor : '#999'"
+                      :type="item.icon"
+                      size="30"
+                      :color="activeTab === index ? themeColor : '#999'"
                     ></uni-icons>
-                    <view :class="activeTab === index? 'tab-active' : ''">{{ item.name }}</view>
+                    <view :class="activeTab === index ? 'tab-active' : ''">{{ item.name }}</view>
                 </view>
             </view>
         </view>

@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <img :src="hotelData.imageUrl" alt="">
+      <img src="https://wlmtsys.com:9000/wlmtsys/2025/04/22/01b4e40e018145a3b7926e46fa939a65.png"  style="width: 100%;"alt="">
       <view class="title-name">
         <text class="title">{{ hotelData.name }}</text>
         <view class="rating">
@@ -10,7 +10,6 @@
         </view>
       </view>
       <view class="address">
-        <text>📍 {{ hotelData.address }}</text>
       </view>
       <view class="tags">
         <text class="tag">餐饮</text>
@@ -111,7 +110,7 @@
       <view class="review-item">
         <div class="comheader">
           <div class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png" alt="">
+            <img src="/static/hotel-attctive/ava.png" style="width: 50px;height: 50px; margin-right: 5px;" alt="">
             <div class="name-rating">
               <text class="date">张女士</text>
               <text class="rating">★★★★★</text>
@@ -124,7 +123,7 @@
       <view class="review-item">
         <view class="comheader">
           <view class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png "  alt="">
+            <img src="/static/hotel-attctive/ava.png "   style="width: 50px;height: 50px; margin-right: 5px;" alt="">
             <view class="name-rating">
               <text class="date">黄女士</text>
               <text class="rating">★★★★</text>

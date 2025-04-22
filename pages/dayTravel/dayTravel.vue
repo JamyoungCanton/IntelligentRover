@@ -105,8 +105,8 @@ const userStore = useUserStore();
 // 定义标签页数据
 const tabs = ref([
   { name: '全部', value: 'all', type: 1, imagetabs: '/static/dayTravel/all.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
-  { name: '海滩休闲', value: 'beach', type: 2, imagetabs: '/static/dayTravel/travel.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
-  { name: '水上运动', value: 'water', type: 3, imagetabs: '/static/dayTravel/swim.png', imgtabStyle: { width: '15px', height: '15px', objectFit: 'contain' } },
+  { name: '休闲', value: 'beach', type: 2, imagetabs: '/static/dayTravel/travel.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
+  { name: '运动', value: 'water', type: 3, imagetabs: '/static/dayTravel/swim.png', imgtabStyle: { width: '15px', height: '15px', objectFit: 'contain' } },
   { name: '文化体验', value: 'culture', type: 4, imagetabs: '/static/dayTravel/culture.png', imgtabStyle: { width: '13px', height: '13px', objectFit: 'contain' } },
   { name: '美食', value: 'food', type: 5, imagetabs: '/static/dayTravel/food.png', imgtabStyle: { width: '18px', height: '18px', objectFit: 'contain' } }
 ]);
@@ -132,13 +132,19 @@ const spots = ref([]);
 
 const fetchSpots = async () => {
   const tabObj = tabs.value.find(t => t.value === activeTab.value);
-  const type = tabObj ? tabObj.type : 1; // 默认值为 1
+  let type = tabObj ? tabObj.type : 1; // 默认值为 1
+
+  // 如果是 "全部" 类型，则不传递 type 参数
+  if (activeTab.value === 'all') {
+    type = null; // 或者 type = [1, 2, 3, 4, 5]; 如果后端支持传数组
+  }
+
   console.log(type);
   try {
     const res = await uni.request({
       url: `${baseurl}/island/il-package/list`,
       method: 'POST',
-      data: JSON.stringify({ type }),
+      data: JSON.stringify({ type }), // 如果 type 是 null，后端需要处理这种情况
       header: {
         'Content-Type': 'application/json',
         'X-Access-Token': userStore.token || ''
