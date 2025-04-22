@@ -164,6 +164,8 @@
 				<image src="/static/chat/send.png"></image>
 			</view>
 		</view>
+
+		<view class="blank"></view>
 		<Tabbar />
 
 		<!-- 提示框 -->
@@ -1337,9 +1339,12 @@ onMounted(() => {
 	padding: 8px 12px;
 	background-color: #ffffff;
 	border-top: 1px solid #eeeeee;
-	position: relative;
-	bottom: 65px;
-	/* z-index: 1005; */
+	position: fixed;
+	bottom: 80px;
+	/* Tabbar高度 */
+	left: 0;
+	right: 0;
+	z-index: 100;
 }
 
 .message-input {
@@ -1464,5 +1469,11 @@ onMounted(() => {
 	font-size: 16px;
 	cursor: pointer;
 	margin-top: 10px;
+}
+
+/* 占位的 */
+.blank {
+	height: 100rpx;
+	/* 与Tabbar高度一致，使用rpx单位 */
 }
 </style>
