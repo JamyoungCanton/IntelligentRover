@@ -80,7 +80,7 @@
                   v-for="star in 5"
                   :key="star"
                 >
-                  <image src="/static/dayTravel/star.png" class="starimg"></image>
+                  <image src="https://wlmtsys.com:9000/travel/star.png" class="starimg"></image>
                 </view>
               </view>
             </view>

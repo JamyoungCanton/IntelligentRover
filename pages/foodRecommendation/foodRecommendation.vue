@@ -1,8 +1,13 @@
 <template>
   <view class="container">
     <!-- 头部导航栏 -->
-    <view class="header">
-      <text class="header-title">美食推荐</text>
+    <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
+      <view class="header-content">
+        <view class="back-icon">
+          <uni-icons type="back" size="24" color="#333" @click="goBack"></uni-icons>
+        </view>
+        <text class="header-title">美食推荐</text>
+      </view>
       <view class="search-box">
         <input type="text" v-model="searchKeyword" placeholder="搜索餐厅" class="search-input" @input="onSearchInput" />
         <uni-icons type="search" size="24" color="#333" @click="onSearch" />
@@ -93,6 +98,8 @@ import { ref, computed, watch } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 
+const safeAreaInsets = ref({});
+const statusBarHeight = ref(0);
 const currentTab = ref(0);
 const filterTags = ref([
   { name: '全部', active: true, type: 'all' },
@@ -374,6 +381,9 @@ const onBooking = (restaurant) => {
 };
 
 onMounted(() => {
+  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
+  statusBarHeight.value = sbHeight;
+  safeAreaInsets.value = insets;
   // 获取数据
   hasToken();
   getFoodList();
@@ -436,14 +446,23 @@ page {
   top: 0;
   left: 0;
   right: 0;
-  height: 88rpx;
   background: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 0 32rpx;
   border-bottom: 1px solid #f5f5f5;
   z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  position: relative;
+}
+
+.back-icon {
+  position: absolute;
+  left: 0;
 }
 
 .search-box {
@@ -452,8 +471,7 @@ page {
   background-color: #F5F5F5;
   border-radius: 32rpx;
   padding: 8rpx 16rpx;
-  flex: 1;
-  margin-left: 20rpx;
+  margin: 16rpx 0;
 }
 
 .search-input {
@@ -468,6 +486,7 @@ page {
   font-size: 16px;
   font-weight: 500;
   color: #333333;
+  text-align: center;
 }
 
 .main {
