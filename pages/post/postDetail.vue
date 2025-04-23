@@ -17,7 +17,7 @@
 
     <!-- 帖子内容 -->
     <view class="post-content">
-      <swiper v-if="post.images && post.images.length > 0" indicator-dots autoplay circular>
+      <swiper v-if="postDetailList.images && postDetailList.images.length > 0" indicator-dots autoplay circular>
         <swiper-item v-for="item in postDetailList.images" :key="item.id">
           <image :src="item.url" mode="aspectFill" />
         </swiper-item>
@@ -44,7 +44,9 @@
         </view>
       </view>
       <view class="comment-list">
-        <view class="comment-item" v-for="(item) in commentList" :key="item.id">
+        <!-- 评论项 -->
+
+        <view class="comment-item" @click="showSubPopup(item,$event)" v-for="(item) in commentList" :key="item.id">
           <image class="avatar" src="/static/hotel-attctive/ava.png " mode="scaleToFill" />
           <view class="comment-content">
             <view class="info">
@@ -52,15 +54,16 @@
               <text class="desc">lv3</text>
             </view>
             <view class="content">{{ item.content}}</view>
-            <view class="time">26分钟前</view>
-            <view class="sub-comment-item" v-for="(sub) in item.children" :key="sub.id">
+            <view class="time">{{ formatRelativeTime(item.createTime) }}</view>
+
+            <!-- 子评论 -->
+            <view class="sub-comment-item" @click="showSubPopup(sub,$event)"  v-for="(sub) in item.children" :key="sub.id">
               <view class="sub-comment-header">
                 <view class="sub-header-left">
                   <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg" mode="scaleToFill" />
                   <text class="name">{{ sub.userVO.username }}</text>
                 </view>
-               
-                <text class="time">20分钟前</text>
+                <text class="time">{{ formatRelativeTime(sub.createTime) }}</text>
               </view>
               <view class="comment-content">
                 <view class="content">{{ sub.content }}</view>
@@ -102,7 +105,7 @@
     </view>
 
     <!-- 评论框 -->
-    <uni-popup ref="popup" background-color="#fff" @change="change" type="bottom" >
+    <uni-popup ref="popup" background-color="#fff" type="bottom" >
       <view class="popup-content" :class="{ 'popup-height': type === 'left' || type === 'right' }">
         <view class="input-send-container">
           <input 
@@ -114,6 +117,23 @@
         </view>
       </view>
     </uni-popup>
+
+    <!-- 子评论弹窗 -->
+    <uni-popup ref="subPopup" background-color="#fff"  type="bottom" >
+      <view class="popup-content" :class="{ 'popup-height': type === 'left' || type === 'right' }">
+        <view class="sub-select-opration">
+          <view class="sub-userInfo">
+            <text class="sub-username-comment">@test good</text>
+          </view>
+          <button class="sub-btn" @click="showEditComment">回复</button>
+          <button class="sub-btn">复制</button>
+          <button class="sub-btn">删除</button>
+          <button class="sub-btn" @click="closeSubPopup">取消</button>
+        </view>
+
+      </view>
+          
+    </uni-popup>
   </view>
 </template>
 
@@ -124,10 +144,71 @@ import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
 
+const type = ref('');
+
+
+// 时间转换函数
+const formatRelativeTime = (time) => {
+  const currentTime = new Date();
+  const targetTime = new Date(time);
+  const diff = currentTime - targetTime;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+
+  if (diff < minute) {
+    return '刚刚';
+  } else if (diff < hour) {
+    return Math.floor(diff / minute) + '分钟前';
+  } else if (diff < day) {
+    return Math.floor(diff / hour) + '小时前';
+  } else if (diff < week) {
+    return Math.floor(diff / day) + '天前';
+  } else if (diff < month) {
+    return Math.floor(diff / week) + '周前';
+  } else {
+    return Math.floor(diff / month) + '个月前';
+  }
+};
+
+
 const popup = ref(null);
+
+// 评论内容
 const showEditComment = () => {
+  if (subPopup.value) {
+    subPopup.value.close();
+  }
   if (popup.value) {
     popup.value.open();
+  }
+};
+
+
+const subPopup = ref(null);
+// 当前评论id
+const currentCommentId = ref(null);
+// 当前评论的父id
+const currentParentId = ref(null);
+// 子评论弹窗
+const showSubPopup = (item,event) => {
+  event.stopPropagation(); 
+  currentCommentId.value = item.id;
+  currentParentId.value = item.fatherId;
+  console.log('当前评论id:', currentCommentId.value);
+  console.log('当前评论的父id:', currentParentId.value)  
+
+  if (subPopup.value) {
+    subPopup.value.open();
+  }
+};
+
+// 关闭弹窗
+const closeSubPopup = () => {
+  if (subPopup.value) {
+    subPopup.value.close();
   }
 };
 
@@ -166,8 +247,6 @@ const getPostList = async () => {
       'X-Access-Token': userStore.token
     }
   })
-
-  
   if (res.data.code === 200) {
     postDetailList.value = res.data.result;
   }
@@ -234,6 +313,7 @@ const getCommentCount = async () => {
 // 获取评论列表
 const commentList = ref([])
 const getCommentList = async () => {
+  
   const res = await uni.request({
     url:`https://island.zhangshuiyi.com/island/comments/${postId.value.id}`,
     method: 'GET',
@@ -242,9 +322,11 @@ const getCommentList = async () => {
       'X-Access-Token': userStore.token
     }
   })
+  console.log(res.data);
+  
   if (res.data.code === 200) {
     commentList.value = res.data.result;
-    // console.log(commentList.value);
+    console.log(commentList.value);
     
 
   }
@@ -263,8 +345,8 @@ const sendComment = async () => {
     data: {
       content: commentContent.value,
       postId: postId.value.id,
-      fatherId: '',
-      receiverId: '',
+      fatherId: currentCommentId.value || '',
+      receiverId: currentCommentId.value,
       repliedCommentId:'',
     },
     header: {
@@ -278,6 +360,12 @@ const sendComment = async () => {
   
   getCommentList()
   getCommentCount()
+  // 关闭弹窗
+  // 情况内容
+  commentContent.value = '';
+  if (popup.value) {
+    popup.value.close();
+  }
   
 }
 
@@ -645,5 +733,34 @@ page {
   color: white;
   border-radius: 8rpx;
   padding: 10rpx 20rpx;
+}
+
+// 子弹窗
+.sub-select-opration{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+}
+.sub-userInfo{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 20rpx;
+  border-bottom:  #d0cbcb solid 1rpx;
+}
+.sub-btn{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: 20rpx;
+  background-color: #fff;
+  // 去除边框线
+  border: none;
 }
 </style>

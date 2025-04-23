@@ -306,7 +306,7 @@ const navigateTo = (destination) => {
     '酒店住宿': '/pages/hotelBooking/hotelBooking',
     '停车收费': '/pages/parkingFees/parkingFees',
     '一日畅游': '/pages/dayTravel/dayTravel',
-    '社区互动': '/pages/post/postDetail',
+    '社区互动': '/pages/ticketPoints/ticketPoints',
     '更多服务': '/pages/moreServices/moreServices'
   };
   uni.navigateTo({
