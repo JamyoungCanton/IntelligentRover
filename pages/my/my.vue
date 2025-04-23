@@ -98,7 +98,8 @@ const userStore = useUserStore();
 const gridItems = ref([
   {
     img: 'https://wlmtsys.com:9000/travel/collectItinerary.png',
-    text: '收藏行程'
+    text: '收藏帖子',
+    onClick: 'goCollectPost'
   },
   {
     img: 'https://wlmtsys.com:9000/travel/historyOrder.png',
@@ -151,6 +152,11 @@ const gohisorder = () => {
 const handleGridItemClick = (item) => {
   if (item.onClick === 'gohisorder') {
     gohisorder();
+  }
+  if (item.onClick === 'goCollectPost') {
+    uni.navigateTo({
+      url: '/pages/post/collectedPost',
+    })
   }
 }
 // 退出登录页

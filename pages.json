@@ -267,7 +267,6 @@
 				"navigationBarTitleText": "创建活动"
 			}
 		},
-
 		{
 			"path": "pages/post/postDetail",
 			"style": {
@@ -275,10 +274,15 @@
 			}
 		},
 		{
-			"path" : "pages/historical-Orders/historical-Orders",
-			"style" : 
-			{
-				"navigationBarTitleText" : "历史订单"
+			"path": "pages/historical-Orders/historical-Orders",
+			"style": {
+				"navigationBarTitleText": "历史订单"
+			}
+		},
+		{
+			"path": "pages/post/collectedPost",
+			"style": {
+				"navigationBarTitleText": "收藏帖子"
 			}
 		}
 	],
