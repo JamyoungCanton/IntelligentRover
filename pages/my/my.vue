@@ -26,11 +26,11 @@
       </view>
 
       <view class="grid-container">
-        <view class="grid-item" v-for="(item, index) in gridItems" :key="index">
-          <view class="grid-icon">
-            <image :src="item.img" mode="aspectFit" :style="item.Style" />
-          </view>
-          <text class="grid-text">{{ item.text }}</text>
+        <view class="grid-item" v-for="(item, index) in gridItems" :key="index" @tap="handleGridItemClick(item)">
+            <view class="grid-icon">
+                  <image :src="item.img" mode="aspectFit" :style="item.Style" />
+            </view>
+            <text class="grid-text">{{ item.text }}</text>
         </view>
       </view>
 
@@ -104,7 +104,8 @@ const gridItems = ref([
   },
   {
     img: 'https://wlmtsys.com:9000/travel/historyOrder.png',
-    text: '历史订单'
+    text: '历史订单',
+	onClick: 'gohisorder'
   },
   {
     img: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
@@ -143,8 +144,17 @@ onMounted(() => {
 });
 
 
-
-
+// 跳转历史订单
+const gohisorder = () => {
+  uni.navigateTo({
+    url:'/pages/historical-Orders/historical-Orders',
+  })
+}
+const handleGridItemClick = (item) => {
+  if (item.onClick === 'gohisorder') {
+    gohisorder();
+  }
+}
 // 退出登录页
 const goLoginOut = () => {
   uni.navigateTo({url:'/pages/loginOut/loginOut'})

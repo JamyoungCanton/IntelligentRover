@@ -444,7 +444,7 @@ onMounted(() => {
 }
 
 .status, .cabin-price {
-  font-size: 24rpx;
+  font-size: 30rpx;
   padding: 5rpx 15rpx;
   border-radius: 50rpx;
 }

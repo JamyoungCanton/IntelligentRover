@@ -277,6 +277,13 @@
 			"style": {
 				"navigationBarTitleText": "帖子详情"
 			}
+		},
+		{
+			"path" : "pages/historical-Orders/historical-Orders",
+			"style" : 
+			{
+				"navigationBarTitleText" : "历史订单"
+			}
 		}
 	],
 	"globalStyle": {

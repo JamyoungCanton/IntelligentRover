@@ -14,7 +14,7 @@
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
          
-          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号" maxlength="6" />
+          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号如:粤C45678" maxlength="6" />
           <button @click="getParkingDeatil" class="change-btn">
             查询
           </button>
@@ -61,10 +61,10 @@
         <view class="payStanding">
           <text class="PayStandingTitle">收费标准</text>
         </view>
-        <view class="payStandingContent"  >
-          <text class="standingItem">1.{{ parkingInfo.rateDescriptionList[0] }}</text>
-          <text class="standingItem">2.{{ parkingInfo.rateDescriptionList[1] }}</text>
-          <text class="standingItem">3.24{{ parkingInfo.rateDescriptionList[2] }}</text>
+        <view class="payStandingContent">
+          <block v-for="(item, index) in parkingInfo.rateDescriptionList" :key="index">
+            <text class="standingItem">{{ index + 1 }}. {{ item }}</text>
+          </block>
         </view>
       </view>
 
@@ -88,8 +88,16 @@ const userStore = useUserStore();
 const plateProvince = ref('');
 const plateNumber = ref('');
 const selectedPayment = ref('wechat');
-const parkingInfo = ref();
+const parkingInfo = ref({
+  parkingLocation: '',
+  entryTime: '',
+  parkingDuration: 0,
+  amountPayable: 0,
+  rateDescription: '',
+  rateDescriptionList: []
+});
 const rateDescriptionList = ref([]);
+
 
 
 
@@ -122,12 +130,14 @@ const getParkingDeatil = () => {
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/parking/ilParkingRecords/queryByCarNum',
     method: 'GET',
-    header:{
+    header: {
       'X-Access-Token': userStore.token,
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    data:{carNum:plateNumber.value},
-    success:(res)=>{
+    data: {
+      carNum: plateNumber.value
+    },
+    success: (res) => {
       if(res.data.code === 401){
         uni.showModal({
           title: '请重新登录',

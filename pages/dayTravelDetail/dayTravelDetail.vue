@@ -619,6 +619,8 @@ const handleBooking = () => {
   display: flex;
   flex-wrap: wrap;
   margin-top: 10px;
+  align-items: center;
+  margin-left: 30px;
 }
 
 .highlight-item {
@@ -626,12 +628,19 @@ const handleBooking = () => {
   align-items: center;
   margin-right: 20px;
   margin-bottom: 10px;
+  flex-direction: column;
+  background-color: #eff6ff;
+  width: 27%;
+  height: 65px;
+  padding-top: 10px;
+  border-radius: 10px;
+  font-size: 10px;
 }
 
 .highlight-icon {
   width: 30px;
   height: 30px;
-  margin-right: 8px;
+  align-items: center;
 }
 
 .highlight-text {

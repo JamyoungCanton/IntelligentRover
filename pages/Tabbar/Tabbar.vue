@@ -31,13 +31,6 @@
                     <view class="popup-desc">分享你的桌游故事和精彩瞬间</view>
                     </view>
                 </view>
-                <view class="popup-button" @click="toCreateActivity">
-                    <uni-icons type="account" size="24" :color="themeColor"></uni-icons>
-                    <view class="popup-text">
-                    <view class="popup-title">发布活动</view>
-                    <view class="popup-desc">组织桌游聚会，创造难忘时刻</view>
-                    </view>
-                </view>
                 </view>
             </view>
             </view>
@@ -118,10 +111,6 @@ const toCreatePost = () => {
   showPopup.value = false
 }
 
-const toCreateActivity = () => {
-  uni.navigateTo({ url: '/pages/post/createActivity' })
-  showPopup.value = false
-}
 </script>
 
 <style scoped>

@@ -267,7 +267,7 @@ onMounted(() => {
 .exchange-btn {
   display: flex;
   align-items: center;
-  margin: 0 10px;
+  margin: 15px 15px 0px 10px;
 }
 
 .date-row {
