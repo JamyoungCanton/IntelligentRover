@@ -6,14 +6,7 @@
     </view>
 
     <view class="login-form">
-      <button class="wechat-btn" @click="handleWechatLogin">
-        <uni-icons type="weixin" size="24" color="#ffffff" />
-        <text class="btn-text">微信一键登录</text>
-      </button>
-
-      <view class="divider">
-        <text class="divider-text">或</text>
-      </view>
+      
 
       <view class="phone-login">
         <view class="input-group">
@@ -68,12 +61,6 @@
         <text class="action-link" @tap="handleForgetPassword">忘记密码</text>
       </view>
 
-      <view class="guest-login">
-        <button class="guest-btn" @tap="handleGuestLogin">
-          <uni-icons type="person" size="20" color="#666666" />
-          <text class="btn-text">游客模式</text>
-        </button>
-      </view>
     </view>
   </view>
 </template>
@@ -307,20 +294,7 @@ page {
   flex-direction: column;
 }
 
-.divider {
-  position: relative;
-  text-align: center;
-  margin: 60rpx 0;
-}
 
-.divider-text {
-  background-color: #f8f8f8;
-  padding: 0 30rpx;
-  color: #999999;
-  position: relative;
-  z-index: 1;
-  font-size: 14px;
-}
 
 .divider::after {
   content: '';
@@ -370,11 +344,7 @@ button {
   height: 104rpx;
 }
 
-.wechat-btn {
-  background-color: #07c160;
-  color: #ffffff;
-  width: 100%;
-}
+
 
 .code-btn {
   flex-shrink: 0;
@@ -390,9 +360,7 @@ button {
   margin-top: 40rpx;
 }
 
-.btn-text {
-  margin-left: 10rpx;
-}
+
 
 .actions {
   display: flex;

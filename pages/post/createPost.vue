@@ -205,6 +205,10 @@ const createPost = () => {
     data: postDto,
     success: (res) => {
       console.log("创建帖子成功，响应数据:", res.data);
+      // 跳转到帖子页面
+      uni.switchTab({
+        url: '/pages/ticketPoints/ticketPoints'
+      });
     },
     fail: (err) => {
       // 在控制台打印错误信息

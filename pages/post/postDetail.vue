@@ -98,7 +98,7 @@
         </view>
         <view class="bar-item" @click="showEditComment">
           <uni-icons type="chat" size="24" color="#666" ></uni-icons>
-          <text class="data-detail">{{ postDetailList.comments }}</text>
+          <text class="data-detail"> {{ commentCount }} </text>
         </view>
       </view>
       
@@ -123,7 +123,7 @@
       <view class="popup-content" :class="{ 'popup-height': type === 'left' || type === 'right' }">
         <view class="sub-select-opration">
           <view class="sub-userInfo">
-            <text class="sub-username-comment">@test good</text>
+            <text class="sub-username-comment">@{{ currentUserName }} {{ currentContent }}</text>
           </view>
           <button class="sub-btn" @click="showEditComment">回复</button>
           <button class="sub-btn">复制</button>
@@ -191,13 +191,16 @@ const showEditComment = () => {
 const subPopup = ref(null);
 // 当前评论id
 const currentCommentId = ref(null);
-// 当前评论的父id
 const currentParentId = ref(null);
+const currentUserName = ref(null);
+const currentContent = ref('');
 // 子评论弹窗
 const showSubPopup = (item,event) => {
   event.stopPropagation(); 
   currentCommentId.value = item.id;
   currentParentId.value = item.fatherId;
+  currentUserName.value = item.userVO.username;
+  currentContent.value = item.content;
   console.log('当前评论id:', currentCommentId.value);
   console.log('当前评论的父id:', currentParentId.value)  
 
@@ -385,7 +388,7 @@ page {
 
 .author-info {
   position: sticky;
-  top: 0;
+  top: 45px;
   z-index: 999;
   display: flex;
   align-items: center;

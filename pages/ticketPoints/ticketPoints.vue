@@ -39,7 +39,7 @@
         </view>
         <view class="item-bottom">
           <view class="item-bottom-left">
-            <view class="left-data">4-17·41分钟前·{{ item.area }}</view>
+            <view class="left-data">{{ item.createTime}}·41分钟前·{{ item.area }}</view>
           </view>
          <view class="item-bottom-right">
             <view class="right-data">
@@ -56,6 +56,7 @@
      
     </view>
     <Tabbar /> 
+    <view class="floating-plus-button" @click="goToCreatePost">+</view>
   </view>
 </template>
 
@@ -63,6 +64,7 @@
 import { ref ,onMounted} from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
+import { onShow } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
 
@@ -79,6 +81,7 @@ const activeType = ref('all');
 const selectType = (type) => {
   activeType.value = type;
   // 这里可以添加选择类型后的逻辑
+  // 根据贴字的类型进行筛选
 };
 
 const getImageStyle = (imageCount, index) => {
@@ -95,6 +98,12 @@ const getImageStyle = (imageCount, index) => {
   }
 };
 
+const goToCreatePost = () => {
+  uni.navigateTo({
+    url: '/pages/post/createPost'
+  });
+};
+
 const navigateToPostDetail = (post) => {
   console.log('点击了帖子', post.id);
   uni.navigateTo({
@@ -102,7 +111,7 @@ const navigateToPostDetail = (post) => {
   });
 };
 
-onMounted(() => {
+onShow(() => {
   getPostLst();
 });
 
@@ -303,5 +312,22 @@ const getPostLst = () => {
 }
 .data-detail{
   margin-right: 8px;
+}
+
+/* 悬浮加号按钮样式 */
+.floating-plus-button {
+  position: fixed;
+  right: 35px;
+  top: 130px;
+  width: 50px;
+  height: 50px;
+  background-color: #007AFF;
+  border-radius: 50%;
+  color: white;
+  font-size: 48px;
+  text-align: center;
+  line-height: 45px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
 }
 </style>

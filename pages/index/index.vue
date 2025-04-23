@@ -309,9 +309,17 @@ const navigateTo = (destination) => {
     '社区互动': '/pages/ticketPoints/ticketPoints',
     '更多服务': '/pages/moreServices/moreServices'
   };
-  uni.navigateTo({
-    url: routes[destination]
-  });
+  if (destination === '社区互动') {
+    // 如果是社区互动页面，使用 uni.switchTab
+    uni.switchTab({
+      url: routes[destination]
+    });
+  } else {
+    // 其他页面使用 uni.navigateTo
+    uni.navigateTo({
+      url: routes[destination]
+    });
+  }
 };
 
 const navigateToActivity = (id) => {

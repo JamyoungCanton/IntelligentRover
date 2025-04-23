@@ -90,7 +90,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { onMounted } from 'vue';
+import { onShow} from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user.js';
 import Tabbar from '../Tabbar/Tabbar.vue';
 const userStore = useUserStore();
@@ -126,7 +126,7 @@ const goLogin = () => {
 
 // 获取store当中的userInfo
 const userInfo = ref(null);
-onMounted(() => {
+onShow(() => {
   userInfo.value = userStore.userInfo;
   // console.log(userInfo.value);
 
@@ -135,7 +135,7 @@ onMounted(() => {
 
 // 获取store当中的token
 const token = ref(null);
-onMounted(() => {
+onShow(() => {
   token.value = userStore.token;
   // console.log(token.value);
 
