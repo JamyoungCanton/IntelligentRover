@@ -92,8 +92,8 @@
           <text class="data-detail">{{ postDetailList.likes }}</text>
         </view>
         
-        <view class="bar-item">
-          <uni-icons type="star" size="24" color="#666" ></uni-icons>
+        <view class="bar-item" @click="addCollect">
+          <uni-icons type="star" size="24" :color="postDetailList.collected ? '#ff0000' : '#666'" ></uni-icons>
           <text class="data-detail">{{ postDetailList.collect }}</text>
         </view>
         <view class="bar-item" @click="showEditComment">
@@ -142,6 +142,7 @@
 import { ref, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
+import { add } from 'lodash';
 
 const userStore = useUserStore();
 
@@ -285,6 +286,38 @@ const addLikes = async () => {
     operation.value = 0;
     postDetailList.value.liked = !postDetailList.value.liked;
     postDetailList.value.likes = postDetailList.value.liked ? postDetailList.value.likes + 1 : postDetailList.value.likes - 1;
+  }
+}
+
+// 收藏
+const addCollect = async () => {
+  let operation = ref(0);
+    if (postDetailList.value.collected === false) {
+      operation.value = 1;
+    } else {
+      operation.value = 0;
+    }
+
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/collect',
+    method: 'POST',
+    data: {
+      // 	1 收藏 --- 0 取消收藏
+      operation: operation.value,
+      postsId: postId.value.id,
+      type: 0
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    }
+  })
+  if (res.data.code === 200) {
+    console.log(res.data);
+    
+    operation.value = 0;
+    postDetailList.value.collected =!postDetailList.value.collected;
+    postDetailList.value.collect = postDetailList.value.collected? postDetailList.value.collect + 1 : postDetailList.value.collect - 1;
   }
 }
 
