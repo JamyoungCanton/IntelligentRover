@@ -552,11 +552,11 @@ const selectCategory = (category) => {
 			break;
 	}
 
-    //
+	//
 	AIAnswerThinking(fullContent)
 
 	// 模拟AI回复
-	// callAIInterface2(chatMessages[chatMessages.length - 1].content);
+	// callAIInterface(chatMessages[chatMessages.length - 1].content);
 };
 
 const getCategoryName = (categoryId) => {
@@ -591,7 +591,32 @@ const sendMessage = () => {
 	inputMessage.value = "";
 	scrollToLatestMessage();
 
-	callAIInterface2(chatMessages[chatMessages.length - 1].content);
+	console.log("最新消息:", chatMessages[chatMessages.length - 1].content)
+
+
+	// 判断上一条消息是否存在，初始的时候chatMessages.length为0
+	if (chatMessages.length > 1) {  // 存在上一条消息
+		let lastMessage = chatMessages[chatMessages.length - 2].content
+		console.log("上一条消息:", lastMessage)
+		// 将 Proxy 转换为普通数组
+		const normalArray = Array.from(lastMessage);
+		// 将每个对象转换为字符串形式
+		const stringifiedObjects = normalArray.map(item => {
+			return JSON.stringify(item);
+		});
+		// 将所有字符串连接成一个字符串
+		const resultString = stringifiedObjects.join(',');
+
+		console.log("上一条消息转String后的结果:",resultString);
+		// 将上一条消息转String后的结果传递给AI接口作为参数
+		callAIInterface2(chatMessages[chatMessages.length - 1].content, resultString);
+
+
+	} else {  // 不存在上一条消息
+		console.log("不存在上一条消息")
+		// 直接调用AI接口
+		callAIInterface(chatMessages[chatMessages.length - 1].content);
+	}
 };
 
 // 在sendMessage中使用此方法会让ai回复一个正在思考中...
@@ -770,7 +795,8 @@ const onScroll = (e) => {
 	lastScrollTop.value = currentScrollTop;
 };
 
-const callAIInterface2 = async (userQuery, retryCount = 0) => {
+// 企业写的接口调用
+const callAIInterface = async (userQuery, retryCount = 0) => {
 	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
 	const data = {
 		conversation_id: '',
@@ -830,6 +856,70 @@ const callAIInterface2 = async (userQuery, retryCount = 0) => {
 		}
 	}
 };
+
+// 在企业的基础上，需要传递上一次AI返回的数据
+const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
+	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
+	const data = {
+		conversation_id: '',
+		inputs: {
+			original_intention: '',
+			recommended_plan: lastMessage
+		},
+		query: userQuery,
+		webMode: ''
+	};
+
+	const body = JSON.stringify(data); // Body 参数
+	console.log("AI接口函数2，请求数据：", body);
+
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: {
+			'X-Access-Token': token.value,
+			'Content-Type': 'application/json', // 必须与 Body 格式匹配
+		},
+		body: body, // 可以是字符串、FormData、Blob 等
+	});
+
+	const reader = response.body.getReader();
+	const decoder = new TextDecoder();
+
+	let str = '';
+	while (true) {
+		const { value } = await reader.read();
+		const chunk = decoder.decode(value);
+		str += chunk;
+		if (chunk.indexOf('message_end') != -1) {
+			console.log("================= 接收结束 开始处理 ===============");
+			const chunks = str.split('data:');
+			let wantData = '';
+			for (let i = 0; i < chunks.length; i++) {
+				if (chunks[i].indexOf('workflow_finished') != -1) {
+					const jsonData = JSON.parse(chunks[i]);
+					const answer = jsonData.data.outputs.answer;
+					if (answer) {
+						const decodedAnswer = JSON.parse((answer));
+						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
+
+						const aiMessage = {
+							type: 'ai',
+							content: decodedAnswer
+						};
+						chatMessages.push(aiMessage);
+						console.log("chatMessages =>", chatMessages);
+						scrollToLatestMessage();
+					}
+					break;
+				}
+			}
+			console.log("chunks 数组 =>", chunks);
+			console.log("================= 接收结束 处理完成开始渲染 ===============");
+			break;
+		}
+	}
+};
+
 
 onMounted(() => {
 	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
