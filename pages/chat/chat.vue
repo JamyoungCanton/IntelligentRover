@@ -552,8 +552,11 @@ const selectCategory = (category) => {
 			break;
 	}
 
+    //
+	AIAnswerThinking(fullContent)
+
 	// 模拟AI回复
-	callAIInterface2(chatMessages[chatMessages.length - 1].content);
+	// callAIInterface2(chatMessages[chatMessages.length - 1].content);
 };
 
 const getCategoryName = (categoryId) => {

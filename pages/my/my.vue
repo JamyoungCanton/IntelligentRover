@@ -1,4 +1,3 @@
-
 <template>
   <view class="page">
     <scroll-view class="content" scroll-y>
@@ -7,7 +6,7 @@
         <view class="avatar-container">
           <image class="avatar" :src="userInfo.avatar" />
         </view>
-        <view class="user-detail" >
+        <view class="user-detail">
           <text class="username">{{ userInfo.username }}</text>
           <text class="phone">{{ userInfo.phone }}</text>
         </view>
@@ -19,9 +18,8 @@
           <image class="avatar" src="/static/my/noLogin.png" />
         </view>
         <view class="user-detail" @tap="goLogin()">
-          <text class="username" 
-          style="font-size: 38rpx; color: #354972; margin-left: 40rpx; ">
-          去登录</text>
+          <text class="username" style="font-size: 38rpx; color: #354972; margin-left: 40rpx; ">
+            去登录</text>
         </view>
       </view>
 
@@ -76,7 +74,7 @@
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
-        <view class="menu-item"  >
+        <view class="menu-item">
           <view class="menu-left">
             <uni-icons type="info" size="18" color="#3B82F6" />
             <text class="menu-text">关于我们</text>
@@ -86,11 +84,11 @@
       </view>
     </scroll-view>
     <Tabbar />
-    
+
   </view>
 </template>
 
-<script  setup>
+<script setup>
 import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user.js';
@@ -120,7 +118,7 @@ const gridItems = ref([
 // 跳转登录页
 const goLogin = () => {
   uni.navigateTo({
-    url:'/pages/login/login',
+    url: '/pages/login/login',
   })
 }
 
@@ -131,7 +129,7 @@ const userInfo = ref(null);
 onMounted(() => {
   userInfo.value = userStore.userInfo;
   // console.log(userInfo.value);
-  
+
 });
 
 
@@ -140,7 +138,7 @@ const token = ref(null);
 onMounted(() => {
   token.value = userStore.token;
   // console.log(token.value);
-  
+
 });
 
 
@@ -157,8 +155,8 @@ const handleGridItemClick = (item) => {
 }
 // 退出登录页
 const goLoginOut = () => {
-  uni.navigateTo({url:'/pages/loginOut/loginOut'})
-  }
+  uni.navigateTo({ url: '/pages/loginOut/loginOut' })
+}
 
 </script>
 
@@ -282,7 +280,4 @@ page {
 .border-bottom {
   border-bottom: 1px solid #F5F5F5;
 }
-
-
 </style>
-

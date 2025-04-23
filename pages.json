@@ -103,7 +103,8 @@
 		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -295,7 +296,7 @@
 	"tabBar": {
 		"color": "#333333",
 		"selectedColor": "#007AFF",
-		"height":"0px",
+		"height": "0px",
 		"custom": true,
 		"list": [
 			{
@@ -315,7 +316,7 @@
 			}
 		]
 	},
-	 "usingComponents": {
-	    "custom-tab-bar": "/components/custom-tab-bar/index"
+	"usingComponents": {
+		"custom-tab-bar": "/components/custom-tab-bar/index"
 	}
 }
