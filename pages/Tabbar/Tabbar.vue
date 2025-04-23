@@ -1,232 +1,231 @@
 <template>
-    <view>
-        <view class="tabbar">
-            <view
+    <view class="tab-block">
+        <ul
+            class='tab-list flex flex-center'
+            :class="showMiddleButton === true?'tab-list-middle':'tab-list-default'"
+        >
+            <li
                 v-for="(item, index) in tabList"
+                :class="'list-item flex flex-column flex-middle ' + item.middleClass"
+                @click="handlePush(item, index)"
                 :key="index"
-                @click="switchTab(item.url, index)"
-                :class="activeTab === index? 'tab-active' : ''"
             >
-                <view class="plus" v-if="index == 2">
-                    <uni-icons type="chat" size="28" color="#fff"></uni-icons>
+                <view class="item-img-box">
+                    <image
+                        class="item-img"
+                        :src="tabIndex == index ? item.selectedIconPath : item.iconPath"
+                    />
                 </view>
-                <view v-else class="tab">
-                    <uni-icons
-                      :type="item.icon"
-                      size="30"
-                      :color="activeTab === index ? themeColor : '#999'"
-                    ></uni-icons>
-                    <view :class="activeTab === index ? 'tab-active' : ''">{{ item.name }}</view>
+                <view class="item-text font-20 color-black"
+                    :class="{ specialColor: tabIndex == index}"
+                >
+                    {{item.text}}
                 </view>
-            </view>
-        </view>
-        <!-- 弹出层 -->
-        <view class="popup-mask" v-if="showPopup" @click="showPopup = false">
-            <view class="popup-content" @click.stop>
-                <view class="popup-wrapper">
-                <view class="popup-button" @click="toCreatePost">
-                    <uni-icons type="file-text" size="24" :color="themeColor"></uni-icons>
-                    <view class="popup-text">
-                    <view class="popup-title">发布帖子</view>
-                    <view class="popup-desc">分享你的桌游故事和精彩瞬间</view>
-                    </view>
-                </view>
-                </view>
-            </view>
-            </view>
-        <u-gap height="100"></u-gap>
+            </li>
+        </ul>
+
+        <!-- 兼容iPhonex下面的小黑条 -->
+        <view class="tab-bar" v-show="showTabBar === true"></view>
     </view>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, onMounted, computed, defineEmits } from 'vue';
 
 const props = defineProps({
-    active: {
+    tabIndex: { // 当前选中的tab项
         type: Number,
-        default: 0 // 默认高亮第一个 tab
+        default: 0
     }
 });
 
-const activeTab = ref(props.active); // 绑定当前激活的 tab 索引
+const emits = defineEmits(['update:tabIndex']);
 
 const tabList = ref([
     {
-        name: '首页',
-        url: '/pages/index/index',
-        icon: 'home',
-        active: false
+        iconPath: '/static/index/底部-首页-未选.svg',
+        selectedIconPath: '/static/index/底部-首页-选.svg',
+        text: '首页',
+        pagePath: '/pages/index/index',
+        middleClass: ''
     },
     {
-        name: '社交',
-        url: '/pages/itinerary/itinerary',
-        icon: 'list',
-        active: false
+        iconPath: '/static/index/底部-首页-未选.svg',
+        selectedIconPath: '/static/index/底部-首页-选.svg',
+        text: '社交',
+        pagePath: '/pages/ticketPoints/ticketPoints',
+        middleClass: ''
     },
     {
-        name: '',
-        url: '/pages/chat/chat',
-        icon: 'chatbubble',
-        active: false
+        iconPath: '/static/index/LOGO.png',
+        selectedIconPath: '/static/index/LOGO.png',
+        text: '聊天',
+        pagePath: '/pages/chat/chat',
+        middleClass: ''
     },
     {
-        name: '订单',
-        url: '/pages/order/order',
-        icon: 'cart',
-        active: false
+        iconPath: '/static/index/底部-订单-未选.svg',
+        selectedIconPath: '/static/index/底部-订单-选.svg',
+        text: '订单',
+        pagePath: '/pages/order/order',
+        middleClass: ''
     },
     {
-        name: '我的',
-        url: '/pages/my/my',
-        icon: 'person',
-        active: false
+        iconPath: '/static/index/底部-我的-未选.svg',
+        selectedIconPath: '/static/index/底部-我的-选.svg',
+        text: '我的',
+        pagePath: '/pages/my/my',
+        middleClass: ''
     }
 ]);
 
-const themeColor = '#007aff'; // 高亮颜色设置为蓝色
+const showTabBar = ref(false);
+const showMiddleButton = ref(false);
 
-// 监听 props.active 的变化
-watch(() => props.active, (newVal) => {
-    activeTab.value = newVal;
+const getHeight = computed(() => {
+    return Number(props.height);
 });
 
-const showPopup = ref(false) // 控制弹窗显示
+const setTabBar = () => {
+    let tabLength = tabList.value.length;
+    if (tabLength % 2) {
+        showMiddleButton.value = true;
+        // 向上取整
+        let middleIndex = Math.floor(tabLength / 2);
+        // 给中间的添加mid-button
+        tabList.value[middleIndex].middleClass = 'mid-button';
+    }
+};
 
-const switchTab = (url, index) => {
-  if (index === 1) { // 行程是第二个tab项(index=1)
-    showPopup.value = true
-  } else {
-    const prevActiveTab = activeTab.value;
-    activeTab.value = index;
-    nextTick(() => {
-      uni.switchTab({ url })
-    })
-  }
-}
+const handlePush = (item, index) => {
+    uni.switchTab({
+        url: item.pagePath
+    });
+    emits('update:tabIndex', index);
+};
 
+const getSystemInfo = () => {
+    // 获取系统信息
+    uni.getSystemInfo({
+        success: (res) => {
+            // X及以上的异形屏top为44，非异形屏为20
+            if (res.safeArea.top > 20) {
+                showTabBar.value = true;
+            }
+        }
+    });
+};
 
-
-const toCreatePost = () => {
-  uni.navigateTo({ url: '/pages/post/createPost' })
-  showPopup.value = false
-}
-
+onMounted(() => {
+    getSystemInfo();
+    setTabBar();
+});
 </script>
 
-<style scoped>
-.tabbar {
-    background-color: #f3f4fa;
-    width: 100%;
-    height: 100rpx;
+<style lang="scss">
+.specialColor{
+    color: rgb(229, 113, 1);
+}
+.flex {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.flex-center {
+    align-items: center;
+    justify-content: center;
+    & > * {
+        margin: 0;
+    }
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-middle {
+    align-items: center;
+}
+.font-20 {
+    font-size: 20rpx;
+}
+.tab-block {
     position: fixed;
     bottom: 0;
     left: 0;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-    padding: 15rpx 0;
-    display: flex;
-    justify-content: space-around;
     z-index: 999;
-}
+    background-size: contain;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    .tab-list{
+        height:100rpx;
+    }
+    .tab-list-default{
+        background-color: #FFFFFF;
+        border-top: 1px #dddddd solid;
+        margin: 0;
+        padding: 0;
+    }
+    .tab-list-middle {
+        position: relative;
+        background: url('https://res.paquapp.com/popmartvip/home/nav_bar_bg_2x.png') no-repeat center center;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+    }
+    .list-item {
+        flex: 1;
+        .item-img-box {
+            width: 44rpx;
+            height: 42rpx;
+            margin-bottom: 9rpx;
+            position: relative;
+            overflow: hidden;
+        }
 
-.tab {
-    display: flex;
-    flex-direction: column;
-    font-size: 24rpx;
-    align-items: center;
-    width: 80rpx;
-}
+        .item-img {
+            width: 44rpx;
+            height: 42rpx;
+            object-fit: contain;
+        }
+        .item-text {
+            font-size: 20rpx;
+            width: auto;
+            text-align: center;
+        }
+    }
 
-.tab-active {
-    color: #007aff; /* 直接使用颜色值 */
-}
+    .mid-button {
+        position: relative;
 
-.plus {
-    width: 80rpx;
-    height: 80rpx;
-    color: #007aff; /* 直接使用颜色值 */
-    background-color: #007aff;
-    border-radius: 30rpx;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: auto 25rpx;
-}
+        .item-img-box {
+            width: 106rpx;
+            height: 106rpx;
+            margin-bottom: 9rpx;
+            position: absolute;
+            z-index: 1002;
+            top: -104rpx;
+        }
 
-.plus:active {
-    background-color: #0056b3; /* 可以自定义按下后的颜色 */
-}
+        .item-img {
+            width: 106rpx;
+            height: 106rpx;
+            background-color: #fff;
+            border-radius: 50%;
+        }
 
-.popup-wrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 20rpx;
-    padding-top: 50rpx;
-}
+        .item-text {
+            font-size: 20rpx;
+            position: absolute;
+            z-index: 1002;
+            bottom: -40rpx;
+        }
+    }
 
-.popup-button {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20rpx;
-    border-radius: 25rpx;
-    padding: 20rpx 40rpx;
-    background-color: #fff;
-    box-shadow: 0 3px 9px #eee;
-    transition: all 0.1s;
+    .tab-bar {
+        height: 30rpx;
+        background-color: #FFFFFF;
+    }
 }
-
-.popup-button:active {
-    background-color: #eee;
-}
-
-.popup-button image {
-    width: 48rpx;
-    height: 48rpx;
-}
-
-.popup-text {
-    margin-left: 20rpx;
-}
-
-.popup-title {
-    font-size: 28rpx;
-    font-weight: bold;
-}
-
-.popup-desc {
-    font-size: 24rpx;
-    color: #999;
-}
-.popup-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
-}
-
-.popup-content {
-  width: 100%;
-  background-color: #fff;
-  border-radius: 16rpx 16rpx 0 0;
-  padding-bottom: env(safe-area-inset-bottom);
-  animation: popup-show 0.3s ease;
-}
-
-@keyframes popup-show {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-</style>
+</style>    

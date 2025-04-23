@@ -55,12 +55,14 @@
       </view>
      
     </view>
+    <Tabbar /> 
   </view>
 </template>
 
 <script setup>
 import { ref ,onMounted} from 'vue';
 import { useUserStore } from '@/store/modules/user';
+import Tabbar from '../Tabbar/Tabbar.vue';
 
 const userStore = useUserStore();
 
@@ -169,9 +171,13 @@ const getPostLst = () => {
   background-color: rgb(248, 248, 248);
 }
 .postTypeSelect {
+  position: fixed; /* 设置为固定定位 */
+  left: 0;
+  width: 100%; /* 宽度占满整个屏幕 */
+  z-index: 1000; /* 确保它在其他内容之上 */
   padding: 15px;
   background-color: #fff;
-
+  // box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影以增强视觉效果 */
 }
 
 .type-scroll {
@@ -199,6 +205,9 @@ const getPostLst = () => {
 }
 
 .postContent {
+
+  padding-top: 60px; /* 根据 .postTypeSelect 的实际高度调整 */
+
   display: flex;
   flex-direction: column;
   align-items: center; /* 添加这行使内容居中 */
