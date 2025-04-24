@@ -24,10 +24,10 @@
         </swiper-item>
       </swiper>
 
-      <!-- <view class="logo"> -->
-      <!-- <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image> -->
-      <!-- <text class="logo-text">海岛智游侠</text> -->
-      <!-- </view> -->
+      <!-- <view class="logo">
+      <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image>
+      <text class="logo-text">海岛智游侠</text>
+      </view> -->
     </view>
 
     <!-- 主要内容区 -->

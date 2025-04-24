@@ -607,7 +607,7 @@ const sendMessage = () => {
 		// 将所有字符串连接成一个字符串
 		const resultString = stringifiedObjects.join(',');
 
-		console.log("上一条消息转String后的结果:",resultString);
+		console.log("上一条消息转String后的结果:", resultString);
 		// 将上一条消息转String后的结果传递给AI接口作为参数
 		callAIInterface2(chatMessages[chatMessages.length - 1].content, resultString);
 
@@ -624,24 +624,24 @@ const AIAnswerThinking = function (fullContent) {
 	// 创建一个空的AI消息
 	const aiMessage = {
 		type: "ai",
-		content: "正在思考中...", // 初始文本，带点
+		content: Array.isArray(fullContent)
+			? fullContent.map(item => ({
+				type: item.type || 'text',
+				id: item.id || '',
+				content: ''
+			}))
+			: [{ type: 'text', content: '' }],
 		id: Date.now(),
-		thinking: true, // 标记是否为思考状态
-		startTime: Date.now(), // 记录开始时间
+		thinking: false,
+		typing: true
 	};
-	// chatMessages.push(aiMessage);
-	aiMessage.thinking = false;
 
-	// 响应数据
-	aiMessage.content = fullContent;
-	aiMessage.typing = true; // 标记正在打字中
+	// 添加到消息列表
+	const messageIndex = chatMessages.push(aiMessage) - 1;
 
-	// 直接输出到ai回复框中
-	chatMessages.push(aiMessage);
+	// 使用打字机效果显示内容
+	typewriterEffect(chatMessages[messageIndex], fullContent);
 
-	// 立即触发视图更新
-	globalUpdateKey.value = Date.now();
-	updateCounter.value++;
 
 	// 确保消息框立即可见
 	nextTick(() => {
@@ -649,52 +649,81 @@ const AIAnswerThinking = function (fullContent) {
 	});
 };
 
-// 实现打字机效果的函数
-const typewriterEffect = (
-	message,
-	fullContent,
-	index = 0,
-	charIndex = 0,
-	delay = 30
-) => {
-	// 如果已经完成所有段落，结束递归
-	if (index >= fullContent.length) {
-		return;
-	}
+// 优化后的打字机效果函数（解决抖动问题）
+let isTypingScroll = false;
+let lastContentHeight = 0;
+let scrollAnimationFrame = null;
 
-	const currentItem = fullContent[index];
-	const fullText = currentItem.content;
+const typewriterEffect = (message, fullContent, delay = 30) => {
+	// 标准化输入内容
+	const contentArray = Array.isArray(fullContent)
+		? fullContent
+		: [{ type: 'text', content: String(fullContent) }];
 
-	// 如果是新段落，初始化为空字符串
-	if (charIndex === 0) {
-		if (!message.content[index]) {
-			message.content[index] = {
-				type: currentItem.type,
-				id: currentItem.id || "",
-				content: "",
-			};
+	// 初始化消息内容
+	message.content = contentArray.map(item => ({
+		type: item.type || 'text',
+		id: item.id || '',
+		content: ''
+	}));
+
+	let currentIndex = 0;
+	let currentChar = 0;
+	let lastScrollTime = 0;
+
+	const typeNext = () => {
+		if (currentIndex >= contentArray.length) {
+			message.typing = false;
+			isTypingScroll = false;
+			// 最终确保滚动到底部
+			requestAnimationFrame(() => {
+				scrollToBottom();
+			});
+			return;
 		}
-	}
 
-	// 如果当前段落还没打完
-	if (charIndex < fullText.length) {
-		// 添加下一个字符
-		message.content[index].content = fullText.substring(0, charIndex + 1);
-		updateCounter.value++;
+		const currentItem = contentArray[currentIndex];
+		const text = currentItem.content || '';
 
-		// 安排下一个字符
-		setTimeout(() => {
-			typewriterEffect(message, fullContent, index, charIndex + 1, delay);
-		}, delay);
-	} else {
-		// 当前段落打完，移到下一段
-		setTimeout(() => {
-			typewriterEffect(message, fullContent, index + 1, 0, delay);
-		}, delay * 10); // 段落之间停顿更长
-	}
+		if (currentChar < text.length) {
+			message.content[currentIndex].content = text.substring(0, currentChar + 1);
+			currentChar++;
+			updateCounter.value++;
 
-	// 确保滚动到最新消息
-	scrollToBottom();
+			// 只在内容高度变化超过50px时才触发全局更新
+			const query = uni.createSelectorQuery();
+			query.select('.chat-container').boundingClientRect(data => {
+				if (data && Math.abs(data.height - lastContentHeight) > 50) {
+					globalUpdateKey.value = Date.now();
+					lastContentHeight = data.height;
+				}
+			}).exec();
+
+			// 使用requestAnimationFrame优化滚动性能
+			if (scrollAnimationFrame) {
+				cancelAnimationFrame(scrollAnimationFrame);
+			}
+			scrollAnimationFrame = requestAnimationFrame(() => {
+				const now = Date.now();
+				if (!isTypingScroll || now - lastScrollTime > 150) { // 延长节流时间到150ms
+					isTypingScroll = true;
+					lastScrollTime = now;
+					scrollToBottom();
+				}
+			});
+
+			setTimeout(typeNext, delay);
+		} else {
+			currentIndex++;
+			currentChar = 0;
+			setTimeout(typeNext, delay * 3);
+		}
+	};
+
+	// 开始打字效果
+	message.typing = true;
+	isTypingScroll = true;
+	typeNext();
 };
 
 const scrollToLatestMessage = () => {
@@ -707,31 +736,21 @@ const scrollToBottom = () => {
 		return;
 	}
 
-	const query = uni.createSelectorQuery();
-	query
-		.select(".chat-container")
-		.boundingClientRect((data) => {
-			if (data) {
-				viewportHeight.value = data.height;
-
-				const messageQuery = uni.createSelectorQuery();
-				messageQuery
-					.selectAll(".message")
-					.boundingClientRect((messages) => {
-						if (messages && messages.length > 0) {
-							contentHeight.value = messages.reduce(
-								(sum, msg) => sum + msg.height,
-								0
-							);
-
-							scrollTop.value = contentHeight.value;
-							lastScrollTop.value = contentHeight.value;
-						}
-					})
-					.exec();
-			}
-		})
-		.exec();
+	// 使用更平滑的滚动方式
+	uni.pageScrollTo({
+		scrollTop: 999999, // 足够大的值确保滚动到底部
+		duration: 200, // 平滑滚动动画
+		selector: '.chat-container',
+		fail: () => {
+			// 备用方案
+			const query = uni.createSelectorQuery();
+			query.select('.chat-container').boundingClientRect(rect => {
+				if (rect) {
+					scrollTop.value = rect.height;
+				}
+			}).exec();
+		}
+	});
 };
 
 const goBack = () => {
@@ -839,12 +858,23 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 						const decodedAnswer = JSON.parse((answer));
 						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
+						// 先创建空消息对象
 						const aiMessage = {
 							type: 'ai',
-							content: decodedAnswer
+							content: Array.isArray(decodedAnswer)
+								? decodedAnswer.map(item => ({
+									type: item.type,
+									id: item.id || '',
+									content: ''
+								}))
+								: [{ type: 'text', content: '' }],
+							typing: true
 						};
-						chatMessages.push(aiMessage);
+						// 添加到消息列表
+						const messageIndex = chatMessages.push(aiMessage) - 1;
 						console.log("chatMessages =>", chatMessages);
+						// 使用打字机效果填充内容
+						typewriterEffect(chatMessages[messageIndex], decodedAnswer);
 						scrollToLatestMessage();
 					}
 					break;
@@ -902,12 +932,23 @@ const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
 						const decodedAnswer = JSON.parse((answer));
 						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
+						// 先创建空消息对象
 						const aiMessage = {
 							type: 'ai',
-							content: decodedAnswer
+							content: Array.isArray(decodedAnswer)
+								? decodedAnswer.map(item => ({
+									type: item.type,
+									id: item.id || '',
+									content: ''
+								}))
+								: [{ type: 'text', content: '' }],
+							typing: true
 						};
-						chatMessages.push(aiMessage);
+						// 添加到消息列表
+						const messageIndex = chatMessages.push(aiMessage) - 1;
 						console.log("chatMessages =>", chatMessages);
+						// 使用打字机效果填充内容
+						typewriterEffect(chatMessages[messageIndex], decodedAnswer);
 						scrollToLatestMessage();
 					}
 					break;
