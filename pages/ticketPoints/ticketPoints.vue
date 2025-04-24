@@ -39,7 +39,7 @@
         </view>
         <view class="item-bottom">
           <view class="item-bottom-left">
-            <view class="left-data">{{ item.createTime}}·41分钟前·{{ item.area }}</view>
+            <view class="left-data">{{ formatCreateTime(item.createTime) }}·{{ item.area }}</view>
           </view>
          <view class="item-bottom-right">
             <view class="right-data">
@@ -95,6 +95,32 @@ const getImageStyle = (imageCount, index) => {
     return { width: '48%', height: '160px' }; // 四张图片并排显示
   } else {
     return { width: '32%', height: '120px' }; // 其他情况默认显示三张图片并排
+  }
+};
+
+// 去掉 createTime 中的秒
+const formatCreateTime = (time) => {
+  if (!time) return '';
+  return time.slice(0, 16);
+};
+
+// 计算时间间隔并返回描述
+const getTimeAgo = (time) => {
+  const now = new Date();
+  const postTime = new Date(time);
+  const diff = now - postTime;
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days > 0) {
+    return `${days}天前`;
+  } else if (hours > 0) {
+    return `${hours}小时前`;
+  } else if (minutes > 0) {
+    return `${minutes}分钟前`;
+  } else {
+    return '刚刚';
   }
 };
 
