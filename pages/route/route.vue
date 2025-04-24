@@ -6,9 +6,9 @@
       </view>
       <text class="title">{{ texts.title }}</text>
     </view>
-    
+
     <image :src="assets.banner" class="banner"></image>
-    
+
     <view class="route-info">
       <text class="route-name">{{ texts.routeName }}</text>
       <text class="route-desc">{{ texts.routeDesc }}</text>
@@ -19,7 +19,7 @@
       <view class="features">
         <text class="feature" v-for="(feature, index) in features" :key="index">{{ feature }}</text>
       </view>
-      
+
       <view class="route-details">
         <view class="section schedule-section">
           <text class="section-title">{{ texts.scheduleTitle }}</text>
@@ -35,7 +35,7 @@
             <view class="schedule-line"></view>
           </view>
         </view>
-        
+
         <view class="section">
           <text class="section-title">{{ texts.costTitle }}</text>
           <view class="cost-section">
@@ -51,7 +51,7 @@
             </view>
           </view>
         </view>
-        
+
         <view class="section">
           <text class="section-title">{{ texts.notesTitle }}</text>
           <view class="notes-list">
@@ -59,7 +59,7 @@
           </view>
         </view>
       </view>
-      
+
       <view class="action-buttons">
         <view class="total-price">
           <text class="total-label">{{ priceInfo.totalLabel }}</text>
@@ -77,7 +77,7 @@
 export default {
   data() {
     return {
-	  safeArea: { top: 0, bottom: 0 },
+      safeArea: { top: 0, bottom: 0 },
       // 文本内容
       texts: {
         title: '浪漫双岛游',
@@ -131,8 +131,8 @@ export default {
       }
     };
   },
-  onLoad(){
-	  this.getSafeAreaInfo();
+  onLoad() {
+    this.getSafeAreaInfo();
   },
   methods: {
     goBack() {
@@ -143,7 +143,7 @@ export default {
         url: '/pages/routeRegistration/routeRegistration'
       });
     },
-	getSafeAreaInfo() {
+    getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
       this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }
@@ -211,7 +211,9 @@ export default {
 
 .price {
   font-size: 24px;
+  /* 钱的颜色 */
   color: #007AFF;
+  color: rgb(255, 105, 5);
   font-weight: bold;
 }
 
@@ -340,7 +342,9 @@ export default {
 .total-value {
   font-size: 18px;
   font-weight: bold;
+  /* 钱的颜色 */
   color: #007AFF;
+  color: rgb(255, 105, 5);
 }
 
 .register-btn {

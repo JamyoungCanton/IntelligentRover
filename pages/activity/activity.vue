@@ -325,9 +325,12 @@ onShow(() => {
   margin-bottom: 10px;
 }
 
+
 .price {
   font-size: 24px;
+  /* 钱的颜色 */
   color: #007AFF;
+  color: rgb(255, 105, 5);
   font-weight: bold;
 }
 
@@ -506,7 +509,9 @@ onShow(() => {
 
 .price-value {
   font-size: 20px;
+  /* 钱的颜色 */
   color: #007AFF;
+  color: rgb(255, 105, 5);
   font-weight: bold;
 }
 

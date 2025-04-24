@@ -132,7 +132,7 @@
             <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
             <view class="route-rating">
               <text class="rating">4.7分</text>
-              <text class="comments">| 1205条评论</text>
+              <text class="comments"> 1205条评论</text>
             </view>
             <text class="route-price">¥328.00起</text>
           </view>
@@ -163,12 +163,13 @@
             </view>
           </view>
         </view>
-        <view class="expand-btn" @click="toggleExpand">
+        <!-- 注释掉展开更多按钮但保留代码 -->
+        <!-- <view class="expand-btn" @click="toggleExpand">
           <text>{{ isExpanded ? '收起' : '展开更多' }}</text>
           <image class="expand-icon"
             :src="isExpanded ? 'https://wlmtsys.com:9000/travel/up.png' : 'https://wlmtsys.com:9000/travel/down.png'">
           </image>
-        </view>
+        </view> -->
       </view>
     </view>
 
@@ -199,10 +200,12 @@ const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const bannerList = ref([
   'https://wlmtsys.com:9000/travel/Banner1.jpg',
-  'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
-  'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
-  'https://wlmtsys.com:9000/travel/18.jpg',
-  'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
+  'https://wlmtsys.com:9000/travel/Banner2.jpg',
+  'https://wlmtsys.com:9000/travel/Banner3.jpg'
+  // 'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
+  // 'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
+  // 'https://wlmtsys.com:9000/travel/18.jpg',
+  // 'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
 ]);
 
 const userStore = useUserStore();
@@ -217,12 +220,14 @@ const spots = ref([
 ]);
 
 const visibleSpots = computed(() => {
-  return isExpanded.value ? spots.value : spots.value.slice(0, 4);
+  // return isExpanded.value ? spots.value : spots.value.slice(0, 4);
+  return spots.value; // 修改为始终返回全部景点
 });
 
-const toggleExpand = () => {
-  isExpanded.value = !isExpanded.value;
-};
+// 注释掉但保留展开/收起方法
+// const toggleExpand = () => {
+//   isExpanded.value = !isExpanded.value;
+// };
 
 const imageUrls = ref([]);
 const combinedArray = ref([]);
@@ -708,6 +713,12 @@ onMounted(() => {
   margin-bottom: 10rpx;
 }
 
+.activity-rating .rating::after {
+  content: "|";
+  margin: 0 8rpx;
+  color: #ccc;
+}
+
 .activity-price {
   color: #ff6600;
   font-size: 28rpx;
@@ -755,6 +766,12 @@ onMounted(() => {
   font-size: 24rpx;
   color: #666;
   margin-bottom: 10rpx;
+}
+
+.route-rating .rating::after {
+  content: "|";
+  margin: 0 8rpx;
+  color: #ccc;
 }
 
 .route-price {
@@ -964,13 +981,16 @@ onMounted(() => {
   justify-content: center;
   width: 100%;
   height: 90rpx;
-  background-color: transparent; /* Changed from blue to transparent */
-  background-image: none; /* Removed gradient */
+  background-color: transparent;
+  /* Changed from blue to transparent */
+  background-image: none;
+  /* Removed gradient */
   z-index: 100;
   box-sizing: border-box;
 }
 
 .nav-title {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Added text shadow for better visibility against banner */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* Added text shadow for better visibility against banner */
 }
 </style>

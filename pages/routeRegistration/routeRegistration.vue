@@ -6,39 +6,40 @@
       </view>
       <text class="title">{{ texts.title }}</text>
     </view>
-    
+
     <image :src="assets.banner" class="banner"></image>
-    
+
     <view class="registration-form">
       <view class="form-item">
         <input v-model="formData.name" :placeholder="texts.namePlaceholder" class="input" />
       </view>
-      
+
       <view class="form-item">
         <input v-model="formData.phone" :placeholder="texts.phonePlaceholder" class="input" />
       </view>
-      
+
       <view class="form-item">
         <view class="verification-container">
           <input v-model="formData.code" :placeholder="texts.codePlaceholder" class="input verification-input" />
           <button class="verification-btn" @click="sendCode">{{ texts.getCodeBtn }}</button>
         </view>
       </view>
-      
+
       <view class="form-item">
         <input v-model="formData.idCard" :placeholder="texts.idCardPlaceholder" class="input" />
       </view>
-      
+
       <view class="form-item">
         <text class="label">{{ texts.selectTravelers }}</text>
         <view class="counter">
-          <button :class="['counter-btn', 'minus', { 'disabled': formData.people === 1 }]" @click="decreasePeople" :style="{ color: formData.people === 1 ? '#AAAAAA' : '#007AFF' }">-</button>
+          <button :class="['counter-btn', 'minus', { 'disabled': formData.people === 1 }]" @click="decreasePeople"
+            :style="{ color: formData.people === 1 ? '#AAAAAA' : '#007AFF' }">-</button>
           <text class="counter-value">{{ formData.people }}</text>
           <button class="counter-btn plus" @click="increasePeople">+</button>
         </view>
         <text class="price-display">{{ texts.pricePerPerson }} × {{ formData.people }}人</text>
       </view>
-      
+
       <view class="form-item">
         <text class="label">{{ texts.selectPaymentMethod }}</text>
         <view class="payment-options">
@@ -54,7 +55,7 @@
           </view>
         </view>
       </view>
-      
+
       <view class="total-section">
         <view class="total-container">
           <view class="total-left">
@@ -75,7 +76,7 @@ export default {
       safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
-        banner: '/static/route/beach2.jpg',
+        banner: 'https://wlmtsys.com:9000/travel/beach.jpg',
         wechatIcon: '/static/route/wechat.png',
         alipayIcon: '/static/route/alipay.png'
       },
@@ -106,8 +107,8 @@ export default {
       }
     };
   },
-  onLoad(){
-	  this.getSafeAreaInfo();
+  onLoad() {
+    this.getSafeAreaInfo();
   },
   computed: {
     totalAmount() {
@@ -118,10 +119,10 @@ export default {
     goBack() {
       uni.navigateBack();
     },
-	getSafeAreaInfo() {
-	    const systemInfo = uni.getSystemInfoSync();
-	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
-	},
+    getSafeAreaInfo() {
+      const systemInfo = uni.getSystemInfoSync();
+      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+    },
     sendCode() {
       uni.showToast({
         title: '验证码已发送',
@@ -147,13 +148,13 @@ export default {
         });
         return;
       }
-      
+
       uni.showToast({
         title: '报名成功',
         icon: 'success',
         duration: 1500
       });
-      
+
       setTimeout(() => {
         uni.navigateTo({
           url: '/pages/routeRegistrationSuccess/routeRegistrationSuccess'
@@ -329,7 +330,9 @@ export default {
 .total-value {
   font-size: 18px;
   font-weight: bold;
+  /* 钱的颜色 */
   color: #007AFF;
+  color: rgb(255, 105, 5);
 }
 
 .pay-btn {

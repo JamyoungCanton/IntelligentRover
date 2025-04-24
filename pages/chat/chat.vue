@@ -365,6 +365,16 @@ const hideTooltip = () => {
 	showTooltipFlag.value = false;
 };
 
+// 点赞
+const likeMessage = () => {
+	console.log("点赞")
+}
+
+// 点踩
+const dislikeMessage = () => {
+	console.log("点踩")
+}
+
 // 复制消息内容
 const copyMessageContent = () => {
 	// 获取最后一条AI消息的文本内容
@@ -424,6 +434,11 @@ const copyMessageContent = () => {
 		});
 	}
 };
+
+// 收藏
+const collectMessage = () => {
+	console.log("收藏")
+}
 
 // 处理可点击元素的点击事件
 const handleItemClick = (item) => {
@@ -638,6 +653,13 @@ const getCategoryName = (categoryId) => {
 	return category ? category.name : "";
 };
 
+
+// 输入框左侧那个加号
+const showAddOptions = () => {
+	console.log("加号")
+}
+
+// 输入框输入提问
 const sendMessage = () => {
 	if (!inputMessage.value.trim()) return;
 
@@ -888,7 +910,7 @@ const onScroll = (e) => {
 	lastScrollTop.value = currentScrollTop;
 };
 
-// 企业写的接口调用
+// AI接口调用
 const callAIInterface = async (userQuery, retryCount = 0) => {
 	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
 	const data = {
@@ -961,7 +983,7 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 	}
 };
 
-// 在企业的基础上，需要传递上一次AI返回的数据
+// AI接口调用的基础上，需要传递上一次AI返回的数据
 const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
 	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
 	const data = {
@@ -1035,7 +1057,6 @@ const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
 	}
 };
 
-
 onMounted(() => {
 	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
 	statusBarHeight.value = sbHeight;
@@ -1044,17 +1065,1406 @@ onMounted(() => {
 		scrollToBottom();
 	}, 100);
 
-	// 读取button_1.txt文件并打印
-	const filePath = "/pages/chat/button_1.txt"; // 注意修改为正确的静态资源路径
-	readTextFile(filePath)
-		.then((jsonData) => {
-			console.log("成功读取button_1.txt文件:", jsonData);
-			// 判断jsonData是否已经是对象，如果是则直接赋值，如果是字符串则解析
-			button_msg1 = typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
-		})
-		.catch((error) => {
-			console.error("读取文件失败:", error);
-		});
+	// 本地测试：读取button_1.txt文件并打印
+	// const filePath = "/pages/chat/button_1.txt"; // 注意修改为正确的静态资源路径
+	// readTextFile(filePath)
+	// 	.then((jsonData) => {
+	// 		console.log("成功读取button_1.txt文件:", jsonData);
+	// 		// 判断jsonData是否已经是对象，如果是则直接赋值，如果是字符串则解析
+	// 		button_msg1 = typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
+	// 	})
+	// 	.catch((error) => {
+	// 		console.error("读取文件失败:", error);
+	// 	});
+
+	// 直接赋值
+	button_msg1 = {
+		"海钓体验": [
+			{
+				"type": "text",
+				"id": "",
+				"content": "根据您的需求，我建议如下行程：✅"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📝 根据您的需求，我为您设计了一份专注于海钓体验的万山岛旅游行程推荐。以下是详细安排："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗺️ 行程概览"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "本次行程以海钓为核心，结合万山岛的特色，为您提供一次难忘的体验。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 行程天数"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "建议安排 1-2天，具体可根据您的停留时间调整。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "Activity",
+				"id": "1",
+				"content": "海钓"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🎣 海钓体验"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 时长：3-4小时"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 难度：中等"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 价格：800元"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 亮点：在万山岛周边海域体验专业海钓，享受与海洋亲密接触的乐趣。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚤 交通安排"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 出发时间：8:00、10:00、14:00"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 费用：100元"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 建议：选择适合您时间的班次前往万山岛。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "Accommodation",
+				"id": "5",
+				"content": "万山岛海滨酒店"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🏨 住宿推荐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 房型：标准间"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 价格：450元/晚"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 评分：4.1"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 亮点：靠近海边，方便参与海钓活动。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "Restaurant",
+				"id": "10",
+				"content": "岛上美食坊"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 餐饮推荐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 营业时间：10:00-21:00"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 人均消费：180元"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 亮点：提供新鲜海鲜，适合海钓后享用。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "❓ 注意事项"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 海钓活动需提前预约，建议联系当地旅行社或酒店安排。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 请根据天气情况准备防晒、防风装备。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 若需延长停留时间，可考虑增加其他活动或景点游览。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "💬 总结"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "本次行程以海钓为核心，结合交通、住宿和餐饮推荐，为您提供一次轻松愉快的万山岛之旅。如有其他需求，欢迎随时咨询！"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "✅ 祝您旅途愉快！"
+			}
+		],
+		"浮潜探索": [
+			{
+				"type": "text",
+				"id": "",
+				"content": "根据您的需求，我建议如下行程：✅"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📝 行程概述："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "您对浮潜活动表现出浓厚兴趣，因此我将为您设计一个以浮潜为核心的万山岛探索行程。以下是基于现有数据的推荐："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗺️ 行程安排："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "Day 1:"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 上午：抵达万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚗 交通：建议乘坐"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，从出发地前往万山岛，预计航程约2小时。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 活动：抵达后，前往"
+			},
+			{
+				"type": "Accommodation",
+				"id": "3",
+				"content": "万山渔家乐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "办理入住，稍作休息。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 午餐：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "1",
+				"content": "海鲜大排档"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用当地海鲜。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 下午：浮潜初体验"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 活动：前往"
+			},
+			{
+				"type": "Activity",
+				"id": "2",
+				"content": "浮潜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，在专业教练的指导下，探索万山岛周边的海底世界，预计活动时间2-3小时。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 晚餐：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "4",
+				"content": "海鲜酒家"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "品尝更多海鲜美食。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "Day 2:"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 上午：继续浮潜探索"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 活动：再次体验"
+			},
+			{
+				"type": "Activity",
+				"id": "2",
+				"content": "浮潜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，深入探索不同的浮潜点，发现更多海洋生物。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 午餐：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "10",
+				"content": "岛上美食坊"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用午餐。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 下午：自由活动"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 活动：您可以选择在岛上自由活动，或者再次体验浮潜。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 晚餐：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "2",
+				"content": "岛上咖啡馆"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用晚餐。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "Day 3:"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "⏰ 上午：离开万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚗 交通：乘坐"
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "返回出发地，结束愉快的万山岛之旅。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "💡 注意事项："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "1. 浮潜活动需要一定的体力和水性，请根据自身情况选择是否参与。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "2. 建议提前预订浮潜活动和住宿，以确保行程顺利。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "3. 请关注天气情况，合理安排行程。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗣️ 总结："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "以上行程以浮潜为核心，结合了万山岛的特色美食和舒适住宿，为您打造一个难忘的海岛探索之旅。希望这份推荐能够满足您的需求，祝您旅途愉快！"
+			}
+		],
+		"亲子娱乐": [
+			{
+				"type": "text",
+				"id": "",
+				"content": "根据您的需求，我建议如下行程：✅"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📝 行程概述："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "您计划与家人（带儿童）一起前往万山岛，主要关注亲子娱乐活动。以下是为您设计的详细行程，确保适合家庭出游，并包含丰富的亲子体验。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗺️ 行程安排："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📅 建议天数：3天2夜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📌 第一天："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 上午：从出发地乘船前往万山岛。"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 中午：抵达后入住"
+			},
+			{
+				"type": "Accommodation",
+				"id": "3",
+				"content": "万山渔家乐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，享用午餐"
+			},
+			{
+				"type": "Restaurant",
+				"id": "1",
+				"content": "海鲜大排档"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 下午：前往"
+			},
+			{
+				"type": "Attraction",
+				"id": "2",
+				"content": "南沙湾"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，享受沙滩浴场，适合儿童玩耍。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 晚上：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "4",
+				"content": "海鲜酒家"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用晚餐。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📌 第二天："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 上午：参加"
+			},
+			{
+				"type": "Activity",
+				"id": "2",
+				"content": "浮潜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，适合亲子一起体验海洋生物。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 中午：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "10",
+				"content": "岛上美食坊"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用午餐。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 下午：前往"
+			},
+			{
+				"type": "Attraction",
+				"id": "10",
+				"content": "珊瑚礁区"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，观赏美丽的珊瑚礁。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 晚上：返回酒店休息，享用晚餐"
+			},
+			{
+				"type": "Restaurant",
+				"id": "7",
+				"content": "咖啡小屋"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📌 第三天："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 上午：参加"
+			},
+			{
+				"type": "Activity",
+				"id": "3",
+				"content": "徒步"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，探索岛屿的自然风光。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 中午：在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "2",
+				"content": "岛上咖啡馆"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用午餐。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 下午：乘船返回出发地。"
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚗 交通建议："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 往返万山岛可选择"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "或"
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，具体时间根据您的出发地安排。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🏨 住宿建议："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 推荐入住"
+			},
+			{
+				"type": "Accommodation",
+				"id": "3",
+				"content": "万山渔家乐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，提供海景房，适合家庭入住。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 餐饮建议："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 推荐尝试"
+			},
+			{
+				"type": "Restaurant",
+				"id": "1",
+				"content": "海鲜大排档"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "和"
+			},
+			{
+				"type": "Restaurant",
+				"id": "4",
+				"content": "海鲜酒家"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，提供丰富的海鲜选择。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "❓ 注意事项："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 请提前确认船票和住宿预订，确保行程顺利。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 亲子活动如浮潜和徒步，请根据儿童年龄和体力情况选择适合的活动。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "💬 总结："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "以上行程专为家庭设计，包含丰富的亲子娱乐活动，确保您和孩子们在万山岛度过一个愉快的假期。如有其他需求或问题，请随时联系我。"
+			}
+		],
+		"休闲畅游": [
+			{
+				"type": "text",
+				"id": "",
+				"content": "根据您的需求，我建议如下行程：✅"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "✅ 根据您的需求，我为您设计了一份万山岛休闲畅游的行程推荐。以下是详细信息："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗺️ 行程概览"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "本次行程以放松和享受自然为主，适合休闲旅行者。以下是每日安排："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📅 第一天：抵达与探索"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🕒 时间：全天"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 地点：万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚗 交通：建议选择"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "或"
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "前往万山岛。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🏨 住宿：推荐入住"
+			},
+			{
+				"type": "Accommodation",
+				"id": "3",
+				"content": "万山渔家乐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "或"
+			},
+			{
+				"type": "Accommodation",
+				"id": "5",
+				"content": "万山岛海滨酒店"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，享受舒适的海景房。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 餐饮：晚餐可选择"
+			},
+			{
+				"type": "Restaurant",
+				"id": "1",
+				"content": "海鲜大排档"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，品尝新鲜的海鲜。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📅 第二天：自然与活动"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🕒 时间：全天"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 地点：万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🎯 活动："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 上午：体验"
+			},
+			{
+				"type": "Activity",
+				"id": "2",
+				"content": "浮潜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，探索海底世界。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 下午：选择"
+			},
+			{
+				"type": "Activity",
+				"id": "3",
+				"content": "徒步"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "，感受岛上的自然风光。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 餐饮：午餐可在"
+			},
+			{
+				"type": "Restaurant",
+				"id": "10",
+				"content": "岛上美食坊"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "享用，晚餐推荐"
+			},
+			{
+				"type": "Restaurant",
+				"id": "4",
+				"content": "海鲜酒家"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📅 第三天：放松与返程"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🕒 时间：上午"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📍 地点：万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🎯 活动："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 上午：在岛上悠闲散步，享受宁静的海岛时光。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚗 交通：选择"
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "或"
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "返回。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📊 费用估算"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 交通：约200元/人（往返船票）。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 住宿：约500-800元/晚（根据选择）。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 餐饮：约200-250元/人/天。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 活动：浮潜约300元/人，徒步免费。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "❓ 注意事项"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 请提前确认船班时间，避免延误。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 建议携带防晒用品和舒适的徒步鞋。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "💬 总结"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "这份行程以休闲为主，结合自然探索和放松活动，适合希望在万山岛度过轻松假期的旅行者。如需进一步调整，请随时告知！"
+			}
+		],
+		"海岛介绍": [
+			{
+				"type": "text",
+				"id": "",
+				"content": "根据您的需求，我为您整理了关于万山岛的详细介绍：✅"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📝 根据您的需求，我为您整理了关于万山岛的详细介绍，以下是基于现有数据库信息的内容："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🗺️ 万山岛简介"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "万山岛是珠海市万山群岛中的一座美丽岛屿，以其自然风光和丰富的海洋资源而闻名。以下是关于万山岛的具体信息："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📊 万山岛基本信息"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 岛屿名称：万山岛"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 岛屿ID：102"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🏖️ 推荐景点"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "目前数据库中关于万山岛的景点信息暂未提供，但您可以期待以下类型的体验："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 自然景观：如海滩、礁石、森林等。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 文化地标：如灯塔、渔村等。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🎣 推荐活动"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "万山岛适合以下活动（基于数据库中的通用活动推荐）："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Activity",
+				"id": "1",
+				"content": "海钓"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：适合喜欢钓鱼的游客，价格约800元，时长3-4小时。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Activity",
+				"id": "2",
+				"content": "浮潜"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：适合探索海底世界，价格约300元，时长2-3小时。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Activity",
+				"id": "3",
+				"content": "徒步"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：适合欣赏自然风光，免费，时长4-8小时。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🏨 推荐住宿"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "以下是万山岛附近的住宿推荐："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Accommodation",
+				"id": "3",
+				"content": "万山渔家乐"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：海景房，价格500元，评分4.2。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Accommodation",
+				"id": "5",
+				"content": "万山岛海滨酒店"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：标准间，价格450元，评分4.1。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🍽️ 推荐餐饮"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "以下是万山岛附近的餐饮推荐："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Restaurant",
+				"id": "1",
+				"content": "海鲜大排档"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：价格约200元，营业时间11:00-21:00。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Restaurant",
+				"id": "4",
+				"content": "海鲜酒家"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：价格约250元，营业时间11:30-21:30。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Restaurant",
+				"id": "10",
+				"content": "岛上美食坊"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：价格约180元，营业时间10:00-21:00。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "🚢 推荐交通"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "前往万山岛的交通方式主要为船，以下是推荐选项："
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Transport",
+				"id": "1",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：价格100元，出发时间8:00、10:00、14:00。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- "
+			},
+			{
+				"type": "Transport",
+				"id": "2",
+				"content": "船"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "：价格100元，出发时间9:30、13:30。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "❓ 注意事项"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 目前数据库中关于万山岛的景点信息较少，建议您进一步咨询当地旅游部门或导游以获取更多详细信息。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "- 活动价格和交通时间可能因季节或天气变化而调整，请提前确认。"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "---"
+			},
+			{
+				"type": "text",
+				"id": "",
+				"content": "📢 如果您有更多具体需求（如预算、旅行日期、人数等），请告诉我，我可以为您进一步优化推荐！"
+			}
+		]
+	}
 });
 </script>
 
