@@ -4,7 +4,7 @@
     <view class="author-info">
       <image class="app-avatar avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg  " mode="scaleToFill" />
       <view class="info">
-        <view class="name">blulu</view>
+        <view class="name">{{ postDetailList.userVO.username}}</view>
         <view class="desc">lv3</view>
       </view>
       <view class="button">

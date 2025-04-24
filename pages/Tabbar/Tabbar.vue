@@ -54,8 +54,8 @@ const tabList = ref([
         middleClass: ''
     },
     {
-        iconPath: '/static/index/LOGO.png',
-        selectedIconPath: '/static/index/LOGO.png',
+        iconPath: '/static/index/logo.png',
+        selectedIconPath: '/static/index/logo.png',
         text: 'AI',
         pagePath: '/pages/chat/chat',
         isTabPage: true, 
