@@ -99,7 +99,7 @@
       <view class="section">
         <view class="section-header">
           <text class="section-title">热门活动</text>
-          <text class="section-more" @click="viewMore('热门活动')">查看更多 ></text>
+          <!-- <text class="section-more" @click="viewMore('热门活动')">查看更多 ></text> -->
         </view>
         <view class="activity-list">
           <view class="activity-item" v-for="activity in activities" :key="activity.id"

@@ -1,7 +1,12 @@
 <template>
 	<view class="page">
 		<view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
-			<text class="title">确认订单</text>
+			<view class="header-content">
+				<view class="back-btn" @click="handleBack">
+					<text class="back-icon">‹</text>
+				</view>
+				<text class="title">确认订单</text>
+			</view>
 		</view>
 
 		<view class="content">
@@ -124,6 +129,10 @@ const bindTimeChange = (e) => {
 			icon: 'none'
 		});
 	}
+};
+
+const handleBack = () => {
+	uni.navigateBack();
 };
 
 const handleConfirmPayment = () => {
@@ -295,8 +304,26 @@ page {
 
 .header {
 	padding: 30rpx;
-	text-align: center;
 	border-bottom: 1px solid #f0f0f0;
+}
+
+.header-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.back-btn {
+	position: absolute;
+	left: 0;
+	padding: 10rpx 20rpx;
+}
+
+.back-icon {
+	font-size: 48rpx;
+	font-weight: bold;
+	color: #333;
 }
 
 .header .title {
