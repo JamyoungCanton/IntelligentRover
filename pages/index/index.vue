@@ -1,12 +1,33 @@
 <template>
   <view class="container">
+
+
     <!-- 顶部区域 -->
     <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
-      <image class="banner" src="https://wlmtsys.com:9000/travel/Banner1.jpg" mode="widthFix"></image>
-      <view class="logo">
-        <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image>
-        <text class="logo-text">海岛智游侠</text>
+      <!-- <view class="header"> -->
+
+      <!-- 顶部导航 -->
+      <view class="nav-bar fixed-top flex-row items-center px-32" :style="{ paddingTop: safeAreaInsets.top + 'px' }"
+        style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999;">
+        <view class="flex-row items-center text-white">
+          <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
+          <text class="nav-title"
+            style="color: #FFFFFF; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;">海岛智游侠</text>
+          <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
+        </view>
       </view>
+
+      <!-- 轮播图 -->
+      <swiper class="banner-swiper" :autoplay="true" :interval="3000" :circular="true">
+        <swiper-item v-for="(item, index) in bannerList" :key="index">
+          <image class="banner" :src="item" mode="widthFix"></image>
+        </swiper-item>
+      </swiper>
+
+      <!-- <view class="logo"> -->
+      <!-- <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image> -->
+      <!-- <text class="logo-text">海岛智游侠</text> -->
+      <!-- </view> -->
     </view>
 
     <!-- 主要内容区 -->
@@ -128,7 +149,8 @@
 
         <view class="spot-list">
           <view class="spot-item" v-for="(spot, index) in visibleSpots" :key="index" @click="navigateToSpot(spot.name)">
-            <image class="spot-img" :src="spot.image || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png'"></image>
+            <image class="spot-img"
+              :src="spot.image || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png'"></image>
             <view class="spot-info">
               <view class="spot-name-row">
                 <text class="spot-name">{{ spot.name }}</text>
@@ -154,6 +176,15 @@
 
     <!-- 底部导航 -->
     <Tabbar />
+
+    <!-- AI悬浮窗 -->
+    <view class="ai-float-btn animate-pulse" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag"
+      @touchend="endDrag" :style="{ left: dragX + 'px', top: dragY + 'px' }">
+      <view class="ai-btn">
+        <img src="https://wlmtsys.com:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
+      </view>
+      <text class="ai-text">智能导游</text>
+    </view>
   </view>
 </template>
 
@@ -166,6 +197,13 @@ import Tabbar from '../Tabbar/Tabbar.vue';
 
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
+const bannerList = ref([
+  'https://wlmtsys.com:9000/travel/Banner1.jpg',
+  'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
+  'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
+  'https://wlmtsys.com:9000/travel/18.jpg',
+  'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
+]);
 
 const userStore = useUserStore();
 const activeTab = ref('景点攻略');
@@ -382,6 +420,52 @@ const getActivitiesList = () => {
   });
 };
 
+
+// AI悬浮窗
+const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
+const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);
+const startX = ref(0);
+const startY = ref(0);
+const offsetX = ref(0);
+const offsetY = ref(0);
+// 跳转到 chat 页面
+const navigateToChat = () => {
+  uni.switchTab({
+    url: '/pages/chat/chat'
+  });
+};
+
+const startDrag = (e) => {
+  const { clientX, clientY } = e.touches[0];
+  startX.value = clientX;
+  startY.value = clientY;
+  offsetX.value = dragX.value;
+  offsetY.value = dragY.value;
+};
+
+const moveDrag = (e) => {
+  e.preventDefault(); // 阻止默认滚动行为
+  const { clientX, clientY } = e.touches[0];
+  const x = clientX - startX.value + offsetX.value;
+  const y = clientY - startY.value + offsetY.value;
+  // 实时限制按钮在页面内
+  const screenWidth = uni.getSystemInfoSync().screenWidth;
+  const screenHeight = uni.getSystemInfoSync().screenHeight;
+
+  dragX.value = Math.max(0, Math.min(x, screenWidth - 58));
+  dragY.value = Math.max(0, Math.min(y, screenHeight - 96));
+};
+
+const endDrag = () => {
+  const screenWidth = uni.getSystemInfoSync().screenWidth;
+  const screenHeight = uni.getSystemInfoSync().screenHeight;
+
+  // 限制按钮在页面内
+  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth)) // 96 是按钮的宽度
+  dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
+
+};
+
 onShow(() => {
   getActivitiesList();
   getSpotsList('景点攻略'); // 默认加载景点数据
@@ -405,9 +489,20 @@ onMounted(() => {
   background-color: transparent;
 }
 
+.banner-swiper {
+  width: 100%;
+  height: 500rpx;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .banner {
   width: 100%;
-  height: 100%;
+  height: 260rpx;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .logo {
@@ -811,5 +906,69 @@ onMounted(() => {
 /* 占位的 */
 .blank {
   height: 200rpx;
+}
+
+/* AI悬浮窗 */
+.ai-float-btn {
+  position: fixed;
+  right: 30rpx;
+  bottom: 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1000;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.ai-text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  background-color: #1976D2;
+  padding: 6rpx 20rpx;
+  border-radius: 12rpx;
+  margin-top: 10rpx;
+  white-space: nowrap;
+  text-align: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+.ai-btn {
+  width: 100rpx;
+  height: 100rpx;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #E3F2FD;
+}
+
+.ai-btn:active {
+  transform: scale(0.95);
+}
+
+.ai-btn image {
+  width: 70rpx;
+  height: 70rpx;
+  object-fit: contain;
+}
+
+
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 90rpx;
+  background-color: #1976D2;
+  background-image: linear-gradient(to right, #1976D2, #2196F3);
+  z-index: 100;
+  box-sizing: border-box;
 }
 </style>
