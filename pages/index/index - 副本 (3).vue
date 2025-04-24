@@ -24,10 +24,10 @@
         </swiper-item>
       </swiper>
 
-      <!-- <view class="logo">
-      <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image>
-      <text class="logo-text">海岛智游侠</text>
-      </view> -->
+      <!-- <view class="logo"> -->
+      <!-- <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image> -->
+      <!-- <text class="logo-text">海岛智游侠</text> -->
+      <!-- </view> -->
     </view>
 
     <!-- 主要内容区 -->
@@ -958,19 +958,17 @@ onMounted(() => {
   object-fit: contain;
 }
 
+
+
 .nav-bar {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 90rpx;
-  background-color: transparent; /* Changed from blue to transparent */
-  background-image: none; /* Removed gradient */
+  background-color: #1976D2;
+  background-image: linear-gradient(to right, #1976D2, #2196F3);
   z-index: 100;
   box-sizing: border-box;
-}
-
-.nav-title {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Added text shadow for better visibility against banner */
 }
 </style>
