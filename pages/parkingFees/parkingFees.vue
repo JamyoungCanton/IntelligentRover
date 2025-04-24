@@ -8,16 +8,21 @@
     </view>
 
     <!-- 主内容区 -->
-    <scroll-view class="main-content" scroll-y >
+    <scroll-view class="main-content" scroll-y>
       <!-- 车牌输入卡片 -->
       <view class="card">
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
-         
           <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号如:粤C45678" maxlength="6" />
           <button @click="getParkingDeatil" class="change-btn">
             查询
           </button>
+        </view>
+        <!-- 新增：展示模糊查询结果 -->
+        <view v-if="filteredParkingInfoList.length > 0" class="history-plates">
+          <view class="plate-item" v-for="(item, index) in filteredParkingInfoList" :key="index" @click="selectPlate(item.licensePlate)">
+            {{ item.licensePlate }}
+          </view>
         </view>
       </view>
 
@@ -79,9 +84,10 @@
   </view>
 </template>
 
-<script  setup>
-import { ref } from 'vue';
+<script setup>
+import { ref, computed } from 'vue';
 import { useUserStore } from '@/store/modules/user';
+import { onShow } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
 
@@ -98,9 +104,6 @@ const parkingInfo = ref({
 });
 const rateDescriptionList = ref([]);
 
-
-
-
 const paymentMethods = ref([
   { name: '微信支付', icon: '/static/parkingFees/weixin.png', color: '#07C160', value: 'wechat' },
   { name: '支付宝', icon: '/static/parkingFees/zhifubao.png', color: '#1677FF', value: 'alipay' }
@@ -113,6 +116,51 @@ const safeAreaInsets = uni.getSystemInfoSync().safeAreaInsets || { top: 0, botto
 const goBack = () => {
   uni.switchTab({ url: '/pages/index/index' })
 }
+
+onShow(() => {
+  // 在页面显示时，获取用户信息
+  getParkingList()
+});
+const parkingInfoList = ref([]);
+
+// 获取所有停车信息
+const getParkingList = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/parking/ilParkingRecords/list',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: {
+      pageNo: 1,
+      pageSize: 50
+    },
+    success: (res) => {
+      if (res.data.code === 401) {
+        uni.showModal({
+          title: '请重新登录',
+          content: '',
+          showCancel: false,
+          confirmText: '确定',
+          success: (res) => {
+            if (res.confirm) {
+              uni.navigateTo({ url: '/pages/login/login' });
+            }
+          },
+        });
+      }
+      if (res.data.code === 200) {
+        const result = res.data.result.records;
+        console.log(result);
+        parkingInfoList.value = result;
+
+      }
+    },
+  })
+
+}
+
 
 const getParkingDeatil = () => {
   if (!plateNumber.value) {
@@ -138,7 +186,7 @@ const getParkingDeatil = () => {
       carNum: plateNumber.value
     },
     success: (res) => {
-      if(res.data.code === 401){
+      if (res.data.code === 401) {
         uni.showModal({
           title: '请重新登录',
           content: '',
@@ -156,42 +204,60 @@ const getParkingDeatil = () => {
         parkingInfo.value = result;
 
         // 按逗号分隔 rateDescription
-        parkingInfo.value.rateDescriptionList = result.rateDescription.split('，'); 
+        parkingInfo.value.rateDescriptionList = result.rateDescription.split('，');
         // 注意：这里使用的是中文逗号
-        rateDescriptionList.value = parkingInfo.value.rateDescriptionList 
+        rateDescriptionList.value = parkingInfo.value.rateDescriptionList
       } else {
         uni.showToast({
           title: '未找到停车信息',
           icon: 'none',
         });
       }
-      
+
     },
   })
 }
+
+// 新增：计算属性，用于模糊查询
+const filteredParkingInfoList = computed(() => {
+  if (!plateNumber.value) {
+    return [];
+  }
+  return parkingInfoList.value.filter(item => item.licensePlate.includes(plateNumber.value));
+});
+
+// 新增：点击查询结果时将车牌号填入输入框的方法，并隐藏查询结果
+const selectPlate = (carNum) => {
+  console.log('点击的车牌号:', carNum); // 添加调试语句
+  plateNumber.value = carNum;
+  // 清空输入框，使计算属性重新计算并隐藏结果
+  // plateNumber.value = '';
+  getParkingDeatil()
+};
+
 const onPayClick = (parking) => {
   console.log(parking.id);
-  
+
   const orderData = ref({
-contract: {
-  contractName: userStore.userInfo.realname || '',
-  contractPhone: userStore.userInfo.phone || ''
-},
-items: [
-  {
-    bookInfo: {
-      date: new Date().toISOString().split('T')[0], // 添加默认日期
-      fullname: userStore.userInfo.realname || '',
-      idCardNo: userStore.userInfo.idCardNo || '',
-      idCardType: 'ID_CARD',
-      schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+    contract: {
+      contractName: userStore.userInfo.realname || '',
+      contractPhone: userStore.userInfo.phone || ''
     },
-    productId: parking.id, // 初始为空字符串
-    productType: "Parking",
-    quantity: 1
-  }
-]
-})
+    items: [
+      {
+        bookInfo: {
+          date: new Date().toISOString().split('T')[0], // 添加默认日期
+          fullname: userStore.userInfo.realname || '',
+          idCardNo: userStore.userInfo.idCardNo || '',
+          idCardType: 'ID_CARD',
+          schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+        },
+        productId: parking.id, // 初始为空字符串
+        productType: "Parking",
+        quantity: 1
+      }
+    ]
+  })
   // 处理支付点击
   uni.showModal({
     title: '支付',
@@ -205,26 +271,26 @@ items: [
         uni.request({
           url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
           method: 'POST',
-          header:{
+          header: {
             'X-Access-Token': userStore.token,
             'Content-Type': 'application/json'
           },
-          data:orderData.value,
-          success:(success)=>{
+          data: orderData.value,
+          success: (success) => {
             console.log(success);
-            
-            if(success.data.code === 200){
+
+            if (success.data.code === 200) {
               uni.showToast({
-              title: '支付成功',
-              icon: 'none',
-             });
-             uni.navigateTo({
-              url: '/pages/pay_success/pay_success'
-            });
+                title: '支付成功',
+                icon: 'none',
+              });
+              uni.navigateTo({
+                url: '/pages/pay_success/pay_success'
+              });
             }
           },
         })
-       
+
       }
     }
   })
@@ -323,16 +389,27 @@ page {
 }
 
 .history-plates {
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column; /* 按列方向排列 */
+  align-items: center; /* 内容居中 */
+  margin-top: 10px; /* 调整间隙 */
 }
 
 .plate-item {
-  display: inline-block;
-  padding: 16rpx 32rpx;
-  border: 2rpx solid #e0e0e0;
+  background-color: #f0f0f0; /* 添加背景色 */
+  padding: 10px 20px; /* 调整内边距 */
+  border: 1px solid #ccc; /* 调整边框 */
   border-radius: 8rpx;
-  margin-right: 24rpx;
+  margin-bottom: 10px; /* 调整间隙 */
   color: #666666;
+  cursor: pointer;
+  text-align: center; /* 文字居中 */
+  width: 100%; /* 占满宽度 */
+  box-sizing: border-box; /* 包含内边距和边框 */
+}
+
+.plate-item:hover {
+  background-color: #e0e0e0;
 }
 
 .plate-item.active {
