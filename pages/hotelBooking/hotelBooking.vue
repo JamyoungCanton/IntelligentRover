@@ -349,7 +349,7 @@ uni.request({
         icon: 'success',
         duration: 1500
       });
-      // 可以跳转到订单详情页或其他页面
+      // 可以跳转到订单详情页或其他页面/
       uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotel.id}` })
     } else {
       uni.showToast({

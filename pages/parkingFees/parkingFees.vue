@@ -14,7 +14,7 @@
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
          
-          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号如:粤C45678" maxlength="6" />
+          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号如:粤C45678" maxlength="8" />
           <button @click="getParkingDeatil" class="change-btn">
             查询
           </button>
@@ -72,7 +72,7 @@
 
     <!-- 底部支付栏 -->
     <view class="bottom-bar">
-      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥15.00</button>
+      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥{{ parkingInfo.amountPayable }}</button>
     </view>
 
 
