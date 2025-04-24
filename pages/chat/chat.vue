@@ -468,6 +468,28 @@ const confirmTrip = () => {
 					for (let i = 0; i < processedData.length; i++) {
 						const { id, type } = processedData[i];
 						console.log(`ID: ${id}, 类型: ${type}`);
+						// 创建订单数据
+						const orderData = {
+							contract: {
+								contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
+								contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+							},
+							items: [
+								{
+									bookInfo: {
+										date: new Date().toISOString().split('T')[0], // 当前日期
+										fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
+										idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
+										idCardType: "ID_CARD",  // 默认为身份证
+										schedule: new Date().toISOString().split('T')[0] || '12:00'
+									},
+									productId: id,  // ID
+									productType: type,  // 类型
+									quantity: 1,  // 预订数量
+								}
+							]
+						};
+						createOrder(orderData)
 					}
 
 					// 跳转到订单页面
@@ -481,6 +503,58 @@ const confirmTrip = () => {
 				console.log("用户点击了取消");
 			}
 		},
+	});
+};
+
+// 创建订单函数
+const createOrder = (orderData) => {
+
+	// 在控制台打印订单信息
+	console.log('创建订单数据:', orderData);
+
+	// 发送创建订单请求
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+		method: 'POST',
+		data: orderData,
+		header: {
+			'Content-Type': 'application/json',
+			'X-Access-Token': userStore.token || ''
+		},
+		success: (res) => {
+			// 在控制台打印响应结果
+			console.log('创建订单响应:', res.data);
+
+			if (res.data.success) {
+				uni.showToast({
+					title: '预订成功',
+					icon: 'success',
+					duration: 2000
+				});
+				// 预订成功后跳转到订单页面
+				// setTimeout(() => {
+				// 	uni.navigateTo({
+				// 		url: '/pages/order/order'
+				// 	});
+				// }, 2000);
+			} else {
+				uni.showToast({
+					title: res.data.message || '预订失败',
+					icon: 'none',
+					duration: 2000
+				});
+			}
+		},
+		fail: (err) => {
+			// 在控制台打印错误信息
+			console.error('创建订单失败:', err);
+
+			uni.showToast({
+				title: '网络错误，请重试',
+				icon: 'none',
+				duration: 2000
+			});
+		}
 	});
 };
 
