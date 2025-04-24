@@ -184,6 +184,7 @@ const packageId = ref('');
 onLoad((options) => {
   if (options.id) {
     packageId.value = options.id;
+	console.log(packageId.value);
     fetchProductDetail();
   }
 });
@@ -203,7 +204,6 @@ const fetchProductDetail = async () => {
     // 检查请求是否成功
     if (res.statusCode === 200 && res.data && res.data) {
       const data = res.data.result;
-
       // 更新产品详情
       productDetail.id = data.id;
       productDetail.title = data.title;
@@ -312,8 +312,10 @@ const createOrder = () => {
           duration: 1500
         });
         // 可以跳转到订单详情页或其他页面
-        // uni.navigateTo({ url: `/pages/orderDetail/orderDetail?id=${res.data.result.id}` });
-      } else {
+		
+        uni.navigateTo({ url: `/pages/dayTravelOrder/dayTravelOrder?id=${packageId.value}` });
+        console.log(packageId.value);
+	  } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',
           icon: 'none'
@@ -803,6 +805,6 @@ const handleBooking = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 40rpx;
+  border-radius: 10rpx;
 }
 </style>

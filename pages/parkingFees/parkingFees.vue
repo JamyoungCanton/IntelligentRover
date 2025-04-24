@@ -77,7 +77,7 @@
 
     <!-- 底部支付栏 -->
     <view class="bottom-bar">
-      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥15.00</button>
+      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥{{ parkingInfo.amountPayable }}</button>
     </view>
 
 
