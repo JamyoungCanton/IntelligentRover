@@ -48,7 +48,8 @@
           />
           <view class="locationDetail">
             <text class="location-title" >门票费用</text>
-            <text class="location-contentprice" style="color:red">￥{{ hotelData.ticketprice }}.00</text>
+            <text class="location-contentprice" v-if="hotelData.ticketprice === 0" style="color:red">免费</text>
+            <text class="location-contentprice"  v-if="hotelData.ticketprice !== 0" style="color:red">￥{{ hotelData.ticketprice }}.00</text>
           </view>
       </view>
       <view class="attractionimg">

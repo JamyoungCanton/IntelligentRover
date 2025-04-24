@@ -58,7 +58,8 @@
               <view class="location">
                 <text class="location-text">门票价格</text>
               </view>
-              <text class="price">{{ item.ticketprice }}</text>
+              <text v-if="item.ticketprice !== 0" class="price">{{ item.ticketprice }}</text>
+              <text v-if="item.ticketprice === 0" class="price">免费</text>
             </view>
           </view>
         </view>
