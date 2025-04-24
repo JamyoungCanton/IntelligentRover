@@ -31,14 +31,11 @@
 
       <view class="filter-bar">
         <view class="filter-options">
-          <view class="filter-item">
-            <text>综合排序</text>
-            <uni-icons type="bottom" size="12" color="#666666"></uni-icons>
-          </view>
-          <view class="filter-item">
-            <text>筛选</text>
-            <uni-icons type="filter" size="12" color="#666666"></uni-icons>
-          </view>
+          <uni-data-select
+            v-model="filterValue"
+            :localdata="range"
+            @change="changeFilter"
+          ></uni-data-select>
         </view>
       </view>
 
@@ -79,6 +76,17 @@ const attractionGuidelist = ref([]);
 const selectedCategory = ref('全部');
 const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
 const searchInput = ref('');
+const filterValue = ref(0); // 新增，用于存储当前选中的筛选选项
+
+
+const range = [
+  { value: 0, text: "综合排序 " },
+  { value: 1, text: "价格从低到高" },
+  { value: 2, text: "价格从高到低" },
+  { value: 3, text: "按评分排序" }
+]
+
+
 
 const hasToken = () => {
   if(userStore.token === ''){
@@ -97,20 +105,39 @@ const hasToken = () => {
 }
 
 // 根据选中的分类筛选景点
+// 根据选中的分类和筛选选项筛选景点
 const filteredAttractions = computed(() => {
-  if(searchInput.value){
-   return attractionGuidelist.value.filter(item => item.name.includes(searchInput.value));
+  let filtered = attractionGuidelist.value;
+
+  if (searchInput.value) {
+    filtered = filtered.filter(item => item.name.includes(searchInput.value));
   }
+
   if (selectedCategory.value === '全部') {
-    return attractionGuidelist.value;
-  } 
-  else if (selectedCategory.value === '热门') {
-    return attractionGuidelist.value.sort((a,b) => b.rating - a.rating)
+    // 不做额外处理
+  } else if (selectedCategory.value === '热门') {
+    filtered = filtered.sort((a, b) => b.rating - a.rating);
+  } else {
+    filtered = filtered.filter(item => item.type === selectedCategory.value);
   }
-  else {
-    return attractionGuidelist.value.filter(item => item.type === selectedCategory.value);
+
+  switch (filterValue.value) {
+    case 1:
+      filtered = filtered.sort((a, b) => a.ticketprice - b.ticketprice);
+      break;
+    case 2:
+      filtered = filtered.sort((a, b) => b.ticketprice - a.ticketprice);
+      break;
+    case 3:
+      filtered = filtered.sort((a, b) => b.rating - a.rating);
+      break;
+    default:
+      // 综合排序，不做额外处理
   }
+
+  return filtered;
 });
+
 
 onMounted(() => {
   hasToken();

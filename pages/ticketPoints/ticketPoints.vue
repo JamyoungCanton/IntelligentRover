@@ -14,7 +14,7 @@
       </scroll-view>
     </view>
     <view class="postContent">
-      <view class="postItem"  v-for="(item, index) in postList" :key="index"  @click="navigateToPostDetail(item)">
+      <view class="postItem"  v-for="(item, index) in filteredPostList" :key="index"  @click="navigateToPostDetail(item)">
         <view class="postHeader">
           <image class="itemava"
             src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref ,onMounted} from 'vue';
+import { ref,computed } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { onShow } from '@dcloudio/uni-app';
@@ -75,6 +75,24 @@ const typeList = ref([
   { label: '旅游分享', value: 'share' },
   { label: '分享生活', value: 'life' }
 ]);
+
+const filteredPostList = computed(() => {
+  if (activeType.value === 'all') {
+    return postList.value;
+  }
+  if(activeType.value === 'daily'){
+    return postList.value.filter(post => post.area === '日常活动');
+  }
+  if(activeType.value === 'strategy'){
+    return postList.value.filter(post => post.area === '旅游攻略');
+  }
+  if(activeType.value === 'share'){
+    return postList.value.filter(post => post.area === '旅游分享');
+  }
+  if(activeType.value === 'life'){
+    return postList.value.filter(post => post.area === '分享生活');
+  }
+});
 
 const activeType = ref('all');
 
