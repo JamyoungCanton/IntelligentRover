@@ -284,6 +284,13 @@
 			"style": {
 				"navigationBarTitleText": "收藏帖子"
 			}
+		},
+		{
+			"path" : "pages/post/postList/postList",
+			"style" : 
+			{
+				"navigationBarTitleText" : ""
+			}
 		}
 	],
 	"globalStyle": {

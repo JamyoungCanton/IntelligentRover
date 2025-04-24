@@ -49,7 +49,7 @@
 <script setup>
 import { ref ,onMounted} from 'vue';
 import { useUserStore } from '@/store/modules/user';
-import { onShow,navigateTo } from '@dcloudio/uni-app';
+import { onShow } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
 
@@ -68,14 +68,14 @@ const getImageStyle = (imageCount, index) => {
 };
 
 const goToCreatePost = () => {
-  navigateTo({
+  uni.navigateTo({
     url: '/pages/post/createPost'
   });
 };
 
 const navigateToPostDetail = (post) => {
   console.log('点击了帖子', post.id);
-  navigateTo({
+  uni.navigateTo({
     url: `/pages/post/postDetail?id=${post.id}`
   });
 };
@@ -110,7 +110,7 @@ const getPostLst = () => {
             confirmText: '确定',
             success: (res) => {
               if (res.confirm) {
-                navigateTo({ url: '/pages/login/login' });
+                uni.navigateTo({ url: '/pages/login/login' });
               }
             },
           });
@@ -146,73 +146,64 @@ const getPostLst = () => {
 
 <style lang="scss">
 .container{
-  background-color: rgb(224, 250, 255); /* 更新为与首页相协调的颜色 */
-  min-height: 100vh;
+  background-color: rgb(248, 248, 248);
 }
 
 .postContent {
-  padding-top: 20px; /* 添加顶部间距 */
+  padding-top: 0; /* 因为去掉了顶部固定的分类栏，所以这里不需要再预留顶部间距 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 100%;
+  align-items: center; /* 添加这行使内容居中 */
+  width: 100%; /* 改为100%宽度 */
 }
 
 .postItem {
   display: flex;
   flex-direction: column;
-  border: solid 1px #e3f2fd; /* 更新边框颜色为淡蓝色 */
-  border-radius: 15px; /* 增加圆角 */
+  border: solid 1px #efebeb;
+  border-radius: 10px;
   width: 85%;
   margin: 0 20px; 
   background-color: #fff;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.08); /* 添加淡蓝色阴影 */
+  margin-bottom: 15px;
 }
-
 .postHeader{
   display: flex;
   flex-direction: row;
   align-content: center;
   align-items: center;
-  padding: 12px;
-}
+  padding: 8px;
 
+}
 .itemava{
   width: 45px;
   height:45px;
   border-radius: 50%;
   margin-right: 10px;
-  border: solid 1px #d9eeff; /* 更新为淡蓝色边框 */
+  border: solid 1px #c5c0c0;
 }
-
 .itemname{
   margin-right: 20px;
-  color: #333333;
 }
-
 .itemlv{
   margin-right: 20px;
   background-color: #ee8c1c;
   padding: 0 10px;
   border-radius: 8px;
-  color: white;
 }
-
 .postTitle{
   margin-left: 15px;
   font-size: 18px;
   font-weight: 500;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  color: #1e9eff; /* 更新为与首页相协调的蓝色 */
+  color: #225c99;
 }
-
 .postP{
+  // 首行缩进两个字符
   text-indent: 2em;
   font-size: 14px;
   padding: 5px 12px;
   color: #4f4f4f;
-  line-height: 1.5;
 }
 
 .postImage{
@@ -220,38 +211,31 @@ const getPostLst = () => {
   flex-wrap: wrap;
   justify-content: space-between;
   margin-top: 10px;
-  width: 100%;
-  padding: 0 12px;
-  box-sizing: border-box;
+  width: 100%; /* 确保容器宽度为 100% */
 }
-
 .postImage image{
-  border-radius: 8px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  margin-bottom: 10px; /* 图片之间的间距 */
 }
-
 .item-bottom{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
-  border-top: solid 1px #e3f2fd; /* 更新为淡蓝色边框 */
+  padding: 10px;
+  border-top: solid 1px #efebeb;
   margin-top: 5px;
 }
-
 .item-bottom-left{
   font-size: 12px;
   color: #666;
 }
-
 .item-bottom-right{
   display: flex;
   flex-direction: row;
   align-items: center;
+  
 }
-
 .right-data{
   display: flex;
   flex-direction: row;
@@ -260,10 +244,8 @@ const getPostLst = () => {
   color: #666;
   margin-right: 10px;
 }
-
 .data-detail{
   margin-right: 8px;
-  margin-left: 3px;
 }
 
 /* 悬浮加号按钮样式 */
@@ -273,19 +255,13 @@ const getPostLst = () => {
   top: 130px;
   width: 50px;
   height: 50px;
-  background-color: #00b2b2; /* 更新为与首页通知栏相协调的颜色 */
+  background-color: #007AFF;
   border-radius: 50%;
   color: white;
   font-size: 48px;
   text-align: center;
   line-height: 45px;
-  box-shadow: 0 4px 15px rgba(0, 178, 178, 0.3); /* 更新阴影颜色 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-  transition: all 0.3s ease;
-}
-
-.floating-plus-button:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 8px rgba(0, 178, 178, 0.2);
 }
 </style>

@@ -46,8 +46,8 @@ const tabList = ref([
         middleClass: ''
     },
     {
-        iconPath: '/static/index/底部-首页-未选.svg', 
-        selectedIconPath: '/static/index/底部-首页-选.svg',
+        iconPath: '/static/index/社区.svg', 
+        selectedIconPath: '/static/index/首页-社区互动.svg',
         text: '社交',
         pagePath: '/pages/ticketPoints/ticketPoints',
         isTabPage: true,
@@ -56,7 +56,7 @@ const tabList = ref([
     {
         iconPath: '/static/index/LOGO.png',
         selectedIconPath: '/static/index/LOGO.png',
-        text: '聊天',
+        text: 'AI',
         pagePath: '/pages/chat/chat',
         isTabPage: true, 
         middleClass: ''
