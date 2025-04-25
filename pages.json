@@ -286,18 +286,46 @@
 			}
 		},
 		{
-			"path" : "pages/dayTravelOrder/dayTravelOrder",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/dayTravelOrder/dayTravelOrder",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		},
 		{
-			"path" : "pages/activityPay/activityPay",
-			"style" : 
-			{
-				"navigationBarTitleText" : "activityPay",
-				"navigationStyle" : "custom"
+			"path": "pages/activityPay/activityPay",
+			"style": {
+				"navigationBarTitleText": "activityPay",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/my/aboutUs",
+			"style": {
+				"navigationBarTitleText": "aboutUs"
+			}
+		},
+		{
+			"path": "pages/my/selectLanguage",
+			"style": {
+				"navigationBarTitleText": "语言选择"
+			}
+		},
+		{
+			"path": "pages/my/setNotice",
+			"style": {
+				"navigationBarTitleText": "setNotice"
+			}
+		},
+		{
+			"path": "pages/my/setAccount",
+			"style": {
+				"navigationBarTitleText": "setAccount"
+			}
+		},
+		{
+			"path": "pages/my/feedback",
+			"style": {
+				"navigationBarTitleText": "feedback"
 			}
 		}
 	],

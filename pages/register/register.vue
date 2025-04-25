@@ -201,6 +201,8 @@ const validatePhoneCode = () => {
   }
 };
 
+key.value = new Date().getTime();
+
 // 发送手机验证码
 const handleSendPhoneCode = async () => {
   // 校验手机号和图形验证码是否为空
@@ -217,8 +219,8 @@ const handleSendPhoneCode = async () => {
     data: {
       mobile: formData.phone,
       smsmode: '1',
-      captcha: 'xxx',
-      checkKey: 'xxx'
+      captcha: formData.verifyCode,
+      checkKey: key.value
     },
     header: {
       'Content-Type': 'application/json'

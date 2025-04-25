@@ -42,22 +42,22 @@
         </view>
       </view>
 
-      <view class="menu-card" @tap="goLoginOut">
-        <view class="menu-item border-bottom">
+      <view class="menu-card">
+        <view class="menu-item border-bottom"  @tap="goLoginOut">
           <view class="menu-left">
             <uni-icons type="gear" size="18" color="#3B82F6" />
             <text class="menu-text">账号设置</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
-        <view class="menu-item border-bottom">
+        <view class="menu-item border-bottom" @click="goSettingNotice">
           <view class="menu-left">
             <uni-icons type="notification" size="18" color="#3B82F6" />
             <text class="menu-text">通知设置</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
-        <view class="menu-item">
+        <view class="menu-item" @click="goLanguage">
           <view class="menu-left">
             <uni-icons type="spinner-cycle" size="18" color="#3B82F6" />
             <text class="menu-text">语言切换</text>
@@ -67,14 +67,14 @@
       </view>
 
       <view class="menu-card">
-        <view class="menu-item border-bottom">
+        <view class="menu-item border-bottom" @click="goFeedback">
           <view class="menu-left">
             <uni-icons type="chatboxes" size="18" color="#3B82F6" />
             <text class="menu-text">意见反馈</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
-        <view class="menu-item">
+        <view class="menu-item" @click="goAboutUs">
           <view class="menu-left">
             <uni-icons type="info" size="18" color="#3B82F6" />
             <text class="menu-text">关于我们</text>
@@ -162,6 +162,24 @@ const handleGridItemClick = (item) => {
 // 退出登录页
 const goLoginOut = () => {
   uni.navigateTo({ url: '/pages/loginOut/loginOut' })
+}
+
+// 通知设置
+const goSettingNotice = () => {
+  uni.navigateTo({ url: '/pages/my/setNotice' })
+}
+
+// 语言切换
+const goLanguage = () => {
+  uni.navigateTo({ url: '/pages/my/selectLanguage' })
+}
+// 意见反馈
+const goFeedback = () => {
+  uni.navigateTo({ url: '/pages/my/feedback' })
+}
+// 关于我们
+const goAboutUs = () => {
+  uni.navigateTo({ url: '/pages/my/aboutUs' })
 }
 
 </script>
