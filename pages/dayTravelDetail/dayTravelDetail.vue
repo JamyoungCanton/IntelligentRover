@@ -7,7 +7,7 @@
 
     <!-- 标题和价格区域 -->
     <view class="title-container">
-      <view class="title">{{ productDetail.title || '加载中...' }}</view>
+      <view class="title" style="color: #333;">{{ productDetail.title || '加载中...' }}</view>
       <view class="subtitle">{{ productDetail.subtitle || '加载中...' }}</view>
       <view class="price-container">
         <text class="price">¥{{ productDetail.price || 0 }}</text>
@@ -49,7 +49,6 @@
       <view style="color: #333; font-size: 17px;">费用包含</view>
       <view class="usage-list">
         <view v-for="(item, index) in usageList" :key="index" class="usage-item">
-          <view class="dot" />
           <text>{{ item }}</text>
         </view>
       </view>
@@ -74,13 +73,13 @@
             <image class="user-avatar" :src="review.avatar" mode="aspectFill"></image>
             <view class="user-info">
               <text class="user-name">{{ review.username }}</text>
-              <view class="rating">
+              <view class="rating-star">
                 <view
-                  class="iconfont star-icon"
+                  class="star-icon"
                   v-for="star in 5"
                   :key="star"
                 >
-                  <image src="https://wlmtsys.com:9000/travel/star.png" class="starimg"></image>
+                  <image src="/static/dayTravel/star.png" class="starimg"></image>
                 </view>
               </view>
             </view>
@@ -607,14 +606,6 @@ const handleBooking = () => {
   margin-bottom: 12px;
 }
 
-.dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: #333;
-  margin-right: 8px;
-  flex-shrink: 0;
-}
 
 /* 行程亮点样式 */
 .highlight-list {
@@ -695,6 +686,7 @@ const handleBooking = () => {
 }
 
 .user-info {
+  position: relative;
   display: flex;
   flex-direction: column;
 }
@@ -706,8 +698,12 @@ const handleBooking = () => {
   margin-bottom: 5rpx;
 }
 
-.rating {
+.rating-star {
+  background-color: #ffffff;
+  position: absolute;
   display: flex;
+  top: 80%;
+  left: 5%;
 }
 
 .star-icon {

@@ -50,10 +50,6 @@
             <image :src="sortType.price ? '/static/down.png' : '/static/up.png'" mode="aspectFill" class="sort-arrow" />
           </view>
         </view>
-        <view class="filter-right">
-          <uni-icons type="filter" size="16" color="#666666" />
-          <text class="filter-text" @click="showFilter = !showFilter">筛选</text>
-        </view>
       </view>
 
       <view class="ticket-list">

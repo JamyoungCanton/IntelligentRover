@@ -33,11 +33,6 @@
 
     <!-- 筛选和排序 -->
     <view class="filter-bar">
-      <view class="filter-options">
-        <view class="filter-item" @click="toggleFilter">
-          <text>筛选</text>
-        </view>
-      </view>
       <view class="sub-filter">
         <view class="sub-filter-item" @click="setSort('price')">价格</view>
         <view class="sub-filter-item" @click="setSort('sales')">销量</view>
@@ -311,6 +306,7 @@ onMounted(() => {
   background-color: #f8f8f8f8;
   padding: 10px;
   border-radius: 5px;
+  height: 25px;
 }
 
 .filter-options {
@@ -378,9 +374,9 @@ onMounted(() => {
 }
 
 .rating {
-	width: 30px;
+	width: 15%;
 	height: 25px;
-	line-height: 25px;
+	line-height: 20px;
 	font-size: 15px;
 	position: absolute;
 	align-items: center;
@@ -388,7 +384,7 @@ onMounted(() => {
 	z-index: 10;
 	background-color: rgba(0, 0, 0, 0.3);
 	right: 2px;
-	bottom: 15px;
+	bottom: 7%;
 	color: #FFFFFF;
 	padding-left: 5px;
 }
