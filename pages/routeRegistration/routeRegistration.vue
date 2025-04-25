@@ -40,7 +40,8 @@
         <text class="price-display">{{ texts.pricePerPerson }} × {{ formData.people }}人</text>
       </view>
 
-      <view class="form-item">
+      <!-- 注释掉支付方式选择部分 -->
+      <!-- <view class="form-item">
         <text class="label">{{ texts.selectPaymentMethod }}</text>
         <view class="payment-options">
           <view class="payment-option" @click="selectPayment('wechat')">
@@ -54,7 +55,7 @@
             <radio :checked="formData.payment === 'alipay'" class="radio"></radio>
           </view>
         </view>
-      </view>
+      </view> -->
 
       <view class="total-section">
         <view class="total-container">
@@ -94,7 +95,7 @@ export default {
         wechatPayment: '微信支付',
         alipayPayment: '支付宝',
         total: '总计',
-        payNowBtn: '立即支付'
+        payNowBtn: '立即报名'
       },
       // 表单数据
       formData: {
@@ -199,6 +200,8 @@ export default {
   background-color: #fff;
   padding: 20px;
   margin-top: 10px;
+  padding-bottom: 100px;
+  /* 为底部固定区域留出空间 */
 }
 
 .form-item {
@@ -306,7 +309,13 @@ export default {
 }
 
 .total-section {
-  margin-top: 30px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  padding: 15px 20px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .total-container {

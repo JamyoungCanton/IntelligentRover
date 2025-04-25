@@ -6,20 +6,20 @@
       </view>
       <text class="title">报名成功</text>
     </view>
-    
+
     <view class="success-icon">
       <image :src="assets.successIcon" class="success-img"></image>
     </view>
-    
+
     <text class="success-text">恭喜您，报名成功！</text>
-    
+
     <view class="order-info">
       <text class="order-item">订单编号：{{ orderInfo.orderId }}</text>
       <text class="order-item">行程名称：{{ orderInfo.tourName }}</text>
       <text class="order-item">出发日期：{{ orderInfo.departureDate }}</text>
       <text class="order-item">出行人数：{{ orderInfo.travelers }}人</text>
     </view>
-    
+
     <view class="notification">
       <view class="notice-item">
         <image :src="assets.infoIcon1" class="notice-icon"></image>
@@ -30,12 +30,12 @@
         <text class="notice-text">{{ notifications[1] }}</text>
       </view>
     </view>
-    
+
     <view class="action-buttons">
       <button class="detail-btn" @click="viewDetails">{{ buttons.viewDetails }}</button>
       <button class="home-btn" @click="goHome">{{ buttons.goHome }}</button>
     </view>
-    
+
     <view class="tips">
       <text class="tips-title">{{ tips.title }}</text>
       <view class="tips-content">
@@ -49,7 +49,7 @@
 export default {
   data() {
     return {
-	  safeArea: { top: 0, bottom: 0 },
+      safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
         successIcon: '/static/route/success.png',
@@ -85,16 +85,15 @@ export default {
     };
   },
   onLoad() {
-  	this.getSafeAreaInfo();
+    this.getSafeAreaInfo();
   },
   methods: {
     goBack() {
       uni.navigateBack();
     },
     viewDetails() {
-      uni.showToast({
-        title: '查看订单详情',
-        icon: 'none'
+      uni.switchTab({
+        url: `/pages/order/order`
       });
     },
     goHome() {
@@ -102,7 +101,7 @@ export default {
         url: '/pages/index/index'
       });
     },
-	getSafeAreaInfo() {
+    getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
       this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
     }

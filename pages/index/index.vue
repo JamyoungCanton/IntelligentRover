@@ -148,7 +148,8 @@
         </view>
 
         <view class="spot-list">
-          <view class="spot-item" v-for="(spot, index) in visibleSpots" :key="index" @click="navigateToSpot(spot.name)">
+          <view class="spot-item" v-for="(spot, index) in visibleSpots" :key="index"
+            @click="navigateToSpot(activeTab, spot.id)">
             <image class="spot-img"
               :src="spot.image || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png'"></image>
             <view class="spot-info">
@@ -249,7 +250,7 @@ const getSpotsList = (type) => {
             image: item.imageUrl || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
             comments: (item.commentCount || 0) + '条',
-            price: `¥${item.ticketprice || 0}/人`
+            price: item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`
           }));
         }
       },
@@ -282,7 +283,7 @@ const getSpotsList = (type) => {
             image: item.imageUrl || '/static/index/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
             comments: (item.commentCount || 0) + '条',
-            price: `¥${item.price || 0}/晚`
+            price: item.price === 0 ? '免费' : `¥${item.price}/晚`
           }));
         }
       },
@@ -315,7 +316,7 @@ const getSpotsList = (type) => {
             image: item.imageUrl || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
             comments: (item.commentCount || 0) + '条',
-            price: `¥${item.price || 0}/人`
+            price: item.price === 0 ? '免费' : `¥${item.price}/人`
           }));
         }
       },
@@ -384,12 +385,22 @@ const navigateToRoute = (routeId) => {
   });
 };
 
-const navigateToSpot = (spotName) => {
+const navigateToSpot = (type, id) => {
+  console.log(type, id)
+  let url = '';
+  switch (type) {
+    case '景点攻略':
+      url = `/pages/attractionDetail/attractionDetail?id=${id}`;
+      break;
+    case '美食推荐':
+      url = `/pages/foodDetails/foodDetails?id=${id}`;
+      break;
+    case '酒店住宿':
+      url = `/pages/hotelDetail/hotelDetail?id=${id}`;
+      break;
+  }
   uni.navigateTo({
-    url: '/pages/attractionDetail/attractionDetail',
-    success: (res) => {
-      res.eventChannel.emit('setSpotData', { name: spotName });
-    }
+    url: url
   });
 };
 

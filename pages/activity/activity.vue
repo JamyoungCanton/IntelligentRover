@@ -271,6 +271,7 @@ onLoad((options) => {
   console.log('活动详情页面收到的ID:', options.id);
   const activityId = options.id || 1;
   getActivityDetailsById(activityId);
+  console.log("token为：", userStore.token)
 });
 
 onShow(() => {

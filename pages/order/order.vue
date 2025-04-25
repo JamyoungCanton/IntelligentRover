@@ -47,7 +47,8 @@
             </text>
           </view>
           <view class="order-info">
-            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+            <image class="order-image"
+              src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
             </image>
             <view class="order-details">
               <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>
@@ -304,6 +305,7 @@ const getOrderDetailById1 = (orderSn) => {
   uni.showLoading({
     title: '加载订单详情中...'
   });
+  console.log("orderSn为：", orderSn)
 
   // 发起请求获取订单详情
   uni.request({
@@ -341,7 +343,7 @@ const getOrderDetailById1 = (orderSn) => {
   });
 };
 
-// 根据订单ID查询订单详情 GET，获取的订单信息比1更多，获取会失败
+// 根据订单ID查询订单详情 GET，获取的订单信息比1更多，！！！获取会失败！！！
 const getOrderDetailById2 = (orderSn) => {
   console.log(orderSn)
   // 显示加载提示
@@ -427,60 +429,69 @@ const cancelOrder = (order) => {
 };
 
 // 立即支付方法
+// const payOrder = (order) => {
+//   // 显示加载提示
+//   uni.showLoading({
+//     title: '支付处理中...'
+//   });
+
+//   // 发起支付请求
+//   uni.request({
+//     url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+//     method: 'POST',
+//     data: {
+//       orderSn: order.orderSn
+//     },
+//     header: {
+//       'Content-Type': 'application/x-www-form-urlencoded',
+//       'X-Access-Token': userStore.token
+//     },
+//     success: (res) => {
+//       console.log('支付请求响应结果:', res.data);
+
+//       // 根据响应处理支付结果
+//       if (res.data.success) {
+//         // 支付成功的处理
+//         uni.showToast({
+//           title: '支付成功',
+//           icon: 'success'
+//         });
+
+//         // 更新订单状态
+//         const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
+//         if (index !== -1) {
+//           orders.value[index].payStatus = 'PAID';
+//         }
+//       } else {
+//         // 支付失败的处理
+//         uni.showToast({
+//           title: res.data.message || '支付失败',
+//           icon: 'none'
+//         });
+//       }
+//     },
+//     fail: (err) => {
+//       console.error('支付请求失败:', err);
+//       uni.showToast({
+//         title: '支付请求失败',
+//         icon: 'none'
+//       });
+//     },
+//     complete: () => {
+//       // 隐藏加载提示
+//       uni.hideLoading();
+//     }
+//   });
+// };
+
+// 立即支付跳转支付页面
 const payOrder = (order) => {
-  // 显示加载提示
-  uni.showLoading({
-    title: '支付处理中...'
-  });
+  console.log("orderSn为:", order.orderSn)
+  uni.navigateTo({
+    url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}`
+  })
+}
 
-  // 发起支付请求
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-    method: 'POST',
-    data: {
-      orderSn: order.orderSn
-    },
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token
-    },
-    success: (res) => {
-      console.log('支付请求响应结果:', res.data);
-
-      // 根据响应处理支付结果
-      if (res.data.success) {
-        // 支付成功的处理
-        uni.showToast({
-          title: '支付成功',
-          icon: 'success'
-        });
-
-        // 更新订单状态
-        const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
-        if (index !== -1) {
-          orders.value[index].payStatus = 'PAID';
-        }
-      } else {
-        // 支付失败的处理
-        uni.showToast({
-          title: res.data.message || '支付失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('支付请求失败:', err);
-      uni.showToast({
-        title: '支付请求失败',
-        icon: 'none'
-      });
-    },
-    complete: () => {
-      // 隐藏加载提示
-      uni.hideLoading();
-    }
-  });
-};
 
 // 每次进入页面时调用
 onShow(() => {

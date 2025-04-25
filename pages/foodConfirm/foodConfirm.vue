@@ -191,12 +191,12 @@ const createOrder = (orderData) => {
 					icon: 'success',
 					duration: 2000
 				});
-				// 预订成功后跳转到订单页面
-				// setTimeout(() => {
-				// 	uni.navigateTo({
-				// 		url: '/pages/order/order'
-				// 	});
-				// }, 2000);
+				// 预订成功后跳转到订单支付页面
+				setTimeout(() => {
+					uni.navigateTo({
+						url: `/pages/activityPay/activityPay?orderSn=${res.data.result.orderSn}`
+					})
+				}, 1500);
 			} else {
 				uni.showToast({
 					title: res.data.message || '预订失败',

@@ -291,6 +291,14 @@
 			{
 				"navigationBarTitleText" : ""
 			}
+		},
+		{
+			"path" : "pages/activityPay/activityPay",
+			"style" : 
+			{
+				"navigationBarTitleText" : "activityPay",
+				"navigationStyle" : "custom"
+			}
 		}
 	],
 	"globalStyle": {

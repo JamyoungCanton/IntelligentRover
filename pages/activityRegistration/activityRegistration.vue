@@ -262,6 +262,11 @@ const submitRegistration = () => {
           icon: 'success'
         })
         console.log('订单创建成功:', res.data)
+        console.log('orderSn为:', res.data.result.orderSn)
+
+        uni.navigateTo({
+          url: `/pages/activityPay/activityPay?orderSn=${res.data.result.orderSn}`
+        })
       } else {
         uni.showToast({
           title: '订单创建失败: ' + res.data.message,
