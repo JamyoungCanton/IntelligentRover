@@ -209,7 +209,8 @@ success: (res) => {
       duration: 1500
     });
     // 可以跳转到订单详情页或其他页面
-    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}` })
+    const orderSn = res.data.result.orderSn;
+    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
   } else {
     uni.showToast({
       title: res.data.message || '订单创建失败',

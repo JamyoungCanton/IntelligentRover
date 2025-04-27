@@ -119,11 +119,14 @@ import { ref,onMounted } from 'vue';
 
 const userStore = useUserStore();
 const id = ref(''); 
+const orderSn = ref('');
 const hotelList = ref([]);
 
 onLoad((options) => {
   id.value = options.id;
+  orderSn.value = options.orderSn;
   console.log("接受到的id" ,id.value);
+  console.log("接受到的orderSn",orderSn.value);
 })
 onMounted(() => {
   
@@ -163,14 +166,29 @@ const handleConfirmPayment = () => {
 
   const userStore = useUserStore();
   console.log(userStore.token);
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+    method: 'POST',
+    header:{
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token,
+    },
+    data: {
+      orderSn: orderSn.value,
+    },
+    success:(res)=>{
+      console.log(res.data);
+    },
+  })
   
  
 
   uni.navigateTo({
     url: '/pages/pay_success/pay_success'
   });
-};
+}
 </script>
+
 
 <style>
 page {

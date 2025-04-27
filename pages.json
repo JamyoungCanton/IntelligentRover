@@ -301,7 +301,7 @@
 		{
 			"path": "pages/my/aboutUs",
 			"style": {
-				"navigationBarTitleText": "aboutUs"
+				"navigationBarTitleText": "关于我们"
 			}
 		},
 		{
@@ -313,19 +313,19 @@
 		{
 			"path": "pages/my/setNotice",
 			"style": {
-				"navigationBarTitleText": "setNotice"
+				"navigationBarTitleText": "通知设置"
 			}
 		},
 		{
 			"path": "pages/my/setAccount",
 			"style": {
-				"navigationBarTitleText": "setAccount"
+				"navigationBarTitleText": "账号设置"
 			}
 		},
 		{
 			"path": "pages/my/feedback",
 			"style": {
-				"navigationBarTitleText": "feedback"
+				"navigationBarTitleText": "意见反馈"
 			}
 		},
 		{
