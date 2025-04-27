@@ -613,7 +613,48 @@ const processAIMessageData = () => {
 };
 
 // Methods
-const selectCategory = (category) => {
+// 显示动态点动画
+const showThinkingAnimation = (duration = 3000) => {
+	return new Promise((resolve) => {
+		const dots = [".", "..", "...", ""];
+		let count = 0;
+		let dotCount = 0;
+
+		// 添加思考中消息
+		const messageId = Date.now();
+		chatMessages.push({
+			type: "ai",
+			content: "正在思考中",
+			id: messageId,
+			thinking: true
+		});
+		scrollToLatestMessage();
+
+		// 启动动画
+		const interval = setInterval(() => {
+			const messageIndex = chatMessages.findIndex(msg => msg.id === messageId);
+			if (messageIndex !== -1) {
+				dotCount = (dotCount + 1) % dots.length;
+				chatMessages[messageIndex].content = `正在思考中${dots[dotCount]}`;
+				updateCounter.value++;
+			}
+
+			count += 200;
+			if (count >= duration) {
+				clearInterval(interval);
+
+				// 移除动画消息
+				const removeIndex = chatMessages.findIndex(msg => msg.id === messageId);
+				if (removeIndex !== -1) {
+					chatMessages.splice(removeIndex, 1);
+				}
+				resolve();
+			}
+		}, 200);
+	});
+};
+
+const selectCategory = async (category) => {
 	console.log("Selected category:", category);
 	chatMessages.push({
 		type: "user",
@@ -641,11 +682,11 @@ const selectCategory = (category) => {
 			break;
 	}
 
-	//
-	AIAnswerThinking(fullContent)
+	// 先显示3秒思考动画
+	await showThinkingAnimation(3000);
 
-	// 模拟AI回复
-	// callAIInterface(chatMessages[chatMessages.length - 1].content);
+	// 然后显示AI回复
+	AIAnswerThinking(fullContent);
 };
 
 const getCategoryName = (categoryId) => {
@@ -910,9 +951,44 @@ const onScroll = (e) => {
 	lastScrollTop.value = currentScrollTop;
 };
 
+// 显示思考动画2 - 带点动画效果
+const showThinkingAnimation2 = () => {
+	const messageId = Date.now();
+	const dots = ['', '.', '..', '...'];
+	let dotIndex = 0;
+
+	// 添加思考中消息
+	chatMessages.push({
+		type: "ai",
+		content: `正在思考中${dots[dotIndex]}`,
+		id: messageId,
+		thinking: true
+	});
+	scrollToLatestMessage();
+
+	// 启动点动画
+	const intervalId = setInterval(() => {
+		dotIndex = (dotIndex + 1) % dots.length;
+		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
+		if (msgIndex !== -1) {
+			chatMessages[msgIndex].content = `正在思考中${dots[dotIndex]}`;
+			updateCounter.value++;
+		}
+	}, 300);
+
+	// 返回清除函数
+	return () => {
+		clearInterval(intervalId);
+		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
+		if (msgIndex !== -1) {
+			chatMessages.splice(msgIndex, 1);
+		}
+	};
+};
+
 // AI接口调用
 const callAIInterface = async (userQuery, retryCount = 0) => {
-	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
+	const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux"; // 修复了 URL 格式
 	const data = {
 		conversation_id: '',
 		inputs: {
@@ -925,135 +1001,170 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 
 	const body = JSON.stringify(data); // Body 参数
 
-	const response = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'X-Access-Token': token.value,
-			'Content-Type': 'application/json', // 必须与 Body 格式匹配
-		},
-		body: body, // 可以是字符串、FormData、Blob 等
-	});
+	// 显示思考动画
+	const clearAnimation = showThinkingAnimation2();
+	let response;
+	try {
+		response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'X-Access-Token': token.value,
+				'Content-Type': 'application/json', // 必须与 Body 格式匹配
+			},
+			body: body, // 可以是字符串、FormData、Blob 等
+		});
 
-	const reader = response.body.getReader();
-	const decoder = new TextDecoder();
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
 
-	let str = '';
-	while (true) {
-		const { value } = await reader.read();
-		const chunk = decoder.decode(value);
-		str += chunk;
-		if (chunk.indexOf('message_end') != -1) {
-			console.log("================= 接收结束 开始处理 ===============");
-			const chunks = str.split('data:');
-			let wantData = '';
-			for (let i = 0; i < chunks.length; i++) {
-				if (chunks[i].indexOf('workflow_finished') != -1) {
-					const jsonData = JSON.parse(chunks[i]);
-					const answer = jsonData.data.outputs.answer;
-					if (answer) {
-						const decodedAnswer = JSON.parse((answer));
-						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
+		let str = '';
+		while (true) {
+			const { value } = await reader.read();
+			const chunk = decoder.decode(value);
+			str += chunk;
+			if (chunk.indexOf('message_end') != -1) {
+				// 数据接收完成，清除动画
+				clearAnimation();
+				console.log("================= 接收结束 开始处理 ===============");
+				const chunks = str.split('data:');
+				let wantData = '';
+				for (let i = 0; i < chunks.length; i++) {
+					if (chunks[i].indexOf('workflow_finished') != -1) {
+						const jsonData = JSON.parse(chunks[i]);
+						const answer = jsonData.data.outputs.answer;
+						if (answer) {
+							const decodedAnswer = JSON.parse(answer);
+							console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
-						// 先创建空消息对象
-						const aiMessage = {
-							type: 'ai',
-							content: Array.isArray(decodedAnswer)
-								? decodedAnswer.map(item => ({
-									type: item.type,
-									id: item.id || '',
-									content: ''
-								}))
-								: [{ type: 'text', content: '' }],
-							typing: true
-						};
-						// 添加到消息列表
-						const messageIndex = chatMessages.push(aiMessage) - 1;
-						console.log("chatMessages =>", chatMessages);
-						// 使用打字机效果填充内容
-						typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-						scrollToLatestMessage();
+							// 先创建空消息对象
+							const aiMessage = {
+								type: 'ai',
+								content: Array.isArray(decodedAnswer)
+									? decodedAnswer.map(item => ({
+										type: item.type,
+										id: item.id || '',
+										content: ''
+									}))
+									: [{ type: 'text', content: '' }],
+								typing: true
+							};
+							// 添加到消息列表
+							const messageIndex = chatMessages.push(aiMessage) - 1;
+							console.log("chatMessages =>", chatMessages);
+							// 使用打字机效果填充内容
+							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
+							scrollToLatestMessage();
+						}
+						break;
 					}
-					break;
 				}
+				console.log("chunks 数组 =>", chunks);
+				console.log("================= 接收结束 处理完成开始渲染 ===============");
+				break;
 			}
-			console.log("chunks 数组 =>", chunks);
-			console.log("================= 接收结束 处理完成开始渲染 ===============");
-			break;
+		}
+	} catch (error) {
+		// 添加错误处理逻辑
+		console.error("发生错误:", error);
+		if (retryCount < 3) { // 添加重试逻辑
+			console.log(`重试第 ${retryCount + 1} 次...`);
+			return callAIInterface(userQuery, retryCount + 1);
+		} else {
+			console.error("达到最大重试次数，请求失败");
+			// 处理最终失败的情况，例如显示错误消息给用户
 		}
 	}
 };
 
 // AI接口调用的基础上，需要传递上一次AI返回的数据
 const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
-	const url = "http://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
-	const data = {
-		conversation_id: '',
-		inputs: {
-			original_intention: '',
-			recommended_plan: lastMessage
-		},
-		query: userQuery,
-		webMode: ''
-	};
+	// 显示思考动画
+	const clearAnimation = showThinkingAnimation2();
+	let response;
+	try {
+		const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux"; // 修复了 URL 格式
+		const data = {
+			conversation_id: '',
+			inputs: {
+				original_intention: '',
+				recommended_plan: lastMessage
+			},
+			query: userQuery,
+			webMode: ''
+		};
 
-	const body = JSON.stringify(data); // Body 参数
-	console.log("AI接口函数2，请求数据：", body);
+		const body = JSON.stringify(data); // Body 参数
+		console.log("AI接口函数2，请求数据：", body);
 
-	const response = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'X-Access-Token': token.value,
-			'Content-Type': 'application/json', // 必须与 Body 格式匹配
-		},
-		body: body, // 可以是字符串、FormData、Blob 等
-	});
+		response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'X-Access-Token': token.value,
+				'Content-Type': 'application/json', // 必须与 Body 格式匹配
+			},
+			body: body, // 可以是字符串、FormData、Blob 等
+		});
 
-	const reader = response.body.getReader();
-	const decoder = new TextDecoder();
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
 
-	let str = '';
-	while (true) {
-		const { value } = await reader.read();
-		const chunk = decoder.decode(value);
-		str += chunk;
-		if (chunk.indexOf('message_end') != -1) {
-			console.log("================= 接收结束 开始处理 ===============");
-			const chunks = str.split('data:');
-			let wantData = '';
-			for (let i = 0; i < chunks.length; i++) {
-				if (chunks[i].indexOf('workflow_finished') != -1) {
-					const jsonData = JSON.parse(chunks[i]);
-					const answer = jsonData.data.outputs.answer;
-					if (answer) {
-						const decodedAnswer = JSON.parse((answer));
-						console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
+		let str = '';
+		while (true) {
+			const { value } = await reader.read();
+			const chunk = decoder.decode(value);
+			str += chunk;
+			if (chunk.indexOf('message_end') != -1) {
+				console.log("================= 接收结束 开始处理 ===============");
+				const chunks = str.split('data:');
+				let wantData = '';
+				for (let i = 0; i < chunks.length; i++) {
+					if (chunks[i].indexOf('workflow_finished') != -1) {
+						const jsonData = JSON.parse(chunks[i]);
+						const answer = jsonData.data.outputs.answer;
+						if (answer) {
+							const decodedAnswer = JSON.parse(answer);
+							console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
 
-						// 先创建空消息对象
-						const aiMessage = {
-							type: 'ai',
-							content: Array.isArray(decodedAnswer)
-								? decodedAnswer.map(item => ({
-									type: item.type,
-									id: item.id || '',
-									content: ''
-								}))
-								: [{ type: 'text', content: '' }],
-							typing: true
-						};
-						// 添加到消息列表
-						const messageIndex = chatMessages.push(aiMessage) - 1;
-						console.log("chatMessages =>", chatMessages);
-						// 使用打字机效果填充内容
-						typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-						scrollToLatestMessage();
+							// 先创建空消息对象
+							const aiMessage = {
+								type: 'ai',
+								content: Array.isArray(decodedAnswer)
+									? decodedAnswer.map(item => ({
+										type: item.type,
+										id: item.id || '',
+										content: ''
+									}))
+									: [{ type: 'text', content: '' }],
+								typing: true
+							};
+							// 添加到消息列表
+							const messageIndex = chatMessages.push(aiMessage) - 1;
+							console.log("chatMessages =>", chatMessages);
+							// 使用打字机效果填充内容
+							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
+							scrollToLatestMessage();
+						}
+						break;
 					}
-					break;
 				}
+				console.log("chunks 数组 =>", chunks);
+				console.log("================= 接收结束 处理完成开始渲染 ===============");
+				break;
 			}
-			console.log("chunks 数组 =>", chunks);
-			console.log("================= 接收结束 处理完成开始渲染 ===============");
-			break;
 		}
+	} catch (error) {
+		// 添加错误处理逻辑
+		console.error("发生错误:", error);
+		if (retryCount < 3) { // 添加重试逻辑
+			console.log(`重试第 ${retryCount + 1} 次...`);
+			return callAIInterface2(userQuery, lastMessage, retryCount + 1);
+		} else {
+			console.error("达到最大重试次数，请求失败");
+			// 处理最终失败的情况，例如显示错误消息给用户
+		}
+	} finally {
+		// 确保无论是否成功或失败都清除动画
+		clearAnimation();
 	}
 };
 
