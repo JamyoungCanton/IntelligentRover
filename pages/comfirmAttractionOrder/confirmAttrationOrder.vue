@@ -176,9 +176,7 @@ const handleConfirmPayment = () => {
 // 退出
 const handleLogout = () => {
   uni.removeStorageSync('userToken'); 
-  uni.navigateTo({
-    url: '/pages/attractionGuide/attractionGuide' 
-  });
+  uni.navigateBack();
 };
 </script>
 

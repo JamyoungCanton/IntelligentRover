@@ -3,7 +3,6 @@
     <!-- 顶部导航 -->
     <view class="nav-header">
       <text class="nav-title">船票预定</text>
-      <uni-icons type="refresh" size="24" color="#ffffff" class="history-icon" />
     </view>
 
     <!-- 主内容区域 -->

@@ -257,11 +257,10 @@ const createOrder = () => {
           duration: 1500
         });
         // 在订单创建成功后跳转到 pages/ticketBooking/ticketBooking.vue 页面
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/ticketBooking/ticketBooking'
-          });
-        }, 1500);
+        console.log('传递的 ticketId:', ticketId.value);
+        uni.navigateTo({
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}`
+        });
       } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',

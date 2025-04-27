@@ -3,10 +3,6 @@
     <view class="header">
       <view class="title-section">
         <text class="title">景点攻略</text>
-        <view class="header-actions">
-          <uni-icons type="heart" size="24" color="#FFFFFF" class="header-icon"></uni-icons>
-          <uni-icons type="arrow-right" size="24" color="#FFFFFF" class="header-icon"></uni-icons>
-        </view>
       </view>
       <view class="search-wrap">
         <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>

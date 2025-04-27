@@ -327,6 +327,13 @@
 			"style": {
 				"navigationBarTitleText": "feedback"
 			}
+		},
+		{
+			"path" : "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
+			"style" : 
+			{
+				"navigationBarTitleText" : ""
+			}
 		}
 	],
 	"globalStyle": {
