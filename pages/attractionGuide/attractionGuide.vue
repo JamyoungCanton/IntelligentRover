@@ -74,6 +74,7 @@ const selectedCategory = ref('全部');
 const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
 const searchInput = ref('');
 const filterValue = ref(0); // 新增，用于存储当前选中的筛选选项
+const attractionGuidelistOriginal = ref([]); // 排序的原始数据
 
 
 const range = [
@@ -104,14 +105,14 @@ const hasToken = () => {
 // 根据选中的分类筛选景点
 // 根据选中的分类和筛选选项筛选景点
 const filteredAttractions = computed(() => {
-  let filtered = attractionGuidelist.value;
+  let filtered = JSON.parse(JSON.stringify(attractionGuidelistOriginal.value)); // 每次都从原始列表拷贝一份
 
   if (searchInput.value) {
     filtered = filtered.filter(item => item.name.includes(searchInput.value));
   }
 
   if (selectedCategory.value === '全部') {
-    // 不做额外处理
+    // 不处理
   } else if (selectedCategory.value === '热门') {
     filtered = filtered.sort((a, b) => b.rating - a.rating);
   } else {
@@ -129,11 +130,12 @@ const filteredAttractions = computed(() => {
       filtered = filtered.sort((a, b) => b.rating - a.rating);
       break;
     default:
-      // 综合排序，不做额外处理
+      // 综合排序，保持原始顺序（已经是原始顺序了）
   }
 
   return filtered;
 });
+
 
 
 onMounted(() => {
@@ -156,8 +158,10 @@ const getAttractionList = () => {
       pageSize: 50
     },
     success: (res) => {
-      attractionGuidelist.value = res.data.result.records;
+    attractionGuidelist.value = res.data.result.records;
+    attractionGuidelistOriginal.value = JSON.parse(JSON.stringify(res.data.result.records)); // 深拷贝
     }
+
   });
 }
 
@@ -274,14 +278,22 @@ page {
 }
 
 .filter-bar {
+  width: 100%; /* 占满整行 */
   padding: 20rpx 30rpx;
+  box-sizing: border-box;
+  justify-content: flex-start;/*左对齐 */
 }
 
 .filter-options {
+  width: 100%;
   display: flex;
-  gap: 20rpx;
+  justify-content: flex-start;/*左对齐 */
 }
+.filter-options uni-data-select {
+  width: 100%;
+  max-width: 300rpx; /* 设置最大宽度 */
 
+}
 .filter-item {
   display: flex;
   align-items: center;
