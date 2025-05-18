@@ -183,7 +183,13 @@ onShow(() => {
 }
 
 .flex { display: flex; flex-flow: row wrap; }
-.flex-center { align-items: center; justify-content: center; & > * { margin: 0; } }
+.flex-center {
+    align-items: center;
+    justify-content: center;
+    margin: 0px;
+}
+
+
 .flex-column { flex-direction: column; }
 .flex-middle { align-items: center; }
 .font-20 { font-size: 20rpx; }
