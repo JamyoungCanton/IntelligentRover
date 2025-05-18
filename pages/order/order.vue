@@ -48,7 +48,7 @@
           </view>
           <view class="order-info">
             <image class="order-image"
-              src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+              :src="order.imageUrl" mode="aspectFill">
             </image>
             <view class="order-details">
               <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>

@@ -1078,93 +1078,173 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 
 // AI接口调用的基础上，需要传递上一次AI返回的数据
 const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
+	const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
+	const data = {
+		conversation_id: '',
+		inputs: {
+			original_intention: '',
+			recommended_plan: lastMessage
+		},
+		query: userQuery,
+		webMode: ''
+	};
+
+	const body = JSON.stringify(data);
+	console.log("AI接口函数2，请求数据：", body);
+
 	// 显示思考动画
 	const clearAnimation = showThinkingAnimation2();
-	let response;
+	
 	try {
-		const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux"; // 修复了 URL 格式
-		const data = {
-			conversation_id: '',
-			inputs: {
-				original_intention: '',
-				recommended_plan: lastMessage
-			},
-			query: userQuery,
-			webMode: ''
+		// 先创建一个空的AI消息对象
+		const aiMessage = {
+			type: 'ai',
+			content: [], // 初始为空数组
+			id: Date.now(),
+			thinking: false,
+			typing: true
 		};
-
-		const body = JSON.stringify(data); // Body 参数
-		console.log("AI接口函数2，请求数据：", body);
-
-		response = await fetch(url, {
+		
+		// 添加到消息列表
+		const messageIndex = chatMessages.push(aiMessage) - 1;
+		scrollToLatestMessage();
+		
+		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
 				'X-Access-Token': token.value,
-				'Content-Type': 'application/json', // 必须与 Body 格式匹配
+				'Content-Type': 'application/json',
 			},
-			body: body, // 可以是字符串、FormData、Blob 等
+			body: body,
 		});
+
+		// 清除思考动画
+		clearAnimation();
+		
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
 
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder();
-
-		let str = '';
+		
+		// 存储接收到的数据块
+		let buffer = '';
+		
 		while (true) {
-			const { value } = await reader.read();
-			const chunk = decoder.decode(value);
-			str += chunk;
-			if (chunk.indexOf('message_end') != -1) {
-				console.log("================= 接收结束 开始处理 ===============");
-				const chunks = str.split('data:');
-				let wantData = '';
-				for (let i = 0; i < chunks.length; i++) {
-					if (chunks[i].indexOf('workflow_finished') != -1) {
-						const jsonData = JSON.parse(chunks[i]);
-						const answer = jsonData.data.outputs.answer;
-						if (answer) {
-							const decodedAnswer = JSON.parse(answer);
-							console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
-
-							// 先创建空消息对象
-							const aiMessage = {
-								type: 'ai',
-								content: Array.isArray(decodedAnswer)
-									? decodedAnswer.map(item => ({
-										type: item.type,
-										id: item.id || '',
-										content: ''
-									}))
-									: [{ type: 'text', content: '' }],
-								typing: true
-							};
-							// 添加到消息列表
-							const messageIndex = chatMessages.push(aiMessage) - 1;
-							console.log("chatMessages =>", chatMessages);
-							// 使用打字机效果填充内容
-							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-							scrollToLatestMessage();
-						}
-						break;
-					}
-				}
-				console.log("chunks 数组 =>", chunks);
-				console.log("================= 接收结束 处理完成开始渲染 ===============");
+			const { value, done } = await reader.read();
+			
+			if (done) {
+				console.log("流读取完成");
 				break;
+			}
+			
+			// 解码新接收的数据
+			const chunk = decoder.decode(value, { stream: true });
+			buffer += chunk;
+			
+			// 处理接收到的数据
+			const dataLines = buffer.split('\n');
+			
+			// 保留最后一行，可能是不完整的
+			buffer = dataLines.pop() || '';
+			
+			for (const line of dataLines) {
+				if (!line.trim() || !line.startsWith('data:')) continue;
+				
+				try {
+					const content = line.substring(5); // 移除 'data:' 前缀
+					const jsonData = JSON.parse(content);
+					
+					// 根据事件类型处理数据
+					if (jsonData.event === 'workflow_started') {
+						console.log("流式响应开始");
+					} 
+					else if (jsonData.event === 'workflow_step') {
+						// 处理中间步骤数据（如果有）
+					} 
+					else if (jsonData.event === 'agent_step' && jsonData.data && jsonData.data.outputs && jsonData.data.outputs.answer) {
+						// 处理中间的回答数据，添加到消息中
+						try {
+							const answerData = JSON.parse(jsonData.data.outputs.answer);
+							
+							// 更新消息内容
+							if (Array.isArray(answerData)) {
+								// 确保初始化消息内容结构
+								if (chatMessages[messageIndex].content.length === 0) {
+									chatMessages[messageIndex].content = answerData.map(item => ({
+										type: item.type || 'text',
+										id: item.id || '',
+										content: item.content || ''
+									}));
+								} else {
+									// 使用流式数据更新已有内容
+									answerData.forEach((item, idx) => {
+										if (idx < chatMessages[messageIndex].content.length) {
+											chatMessages[messageIndex].content[idx].content = item.content || '';
+										} else {
+											chatMessages[messageIndex].content.push({
+												type: item.type || 'text',
+												id: item.id || '',
+												content: item.content || ''
+											});
+										}
+									});
+								}
+								
+								// 强制更新视图
+								globalUpdateKey.value = Date.now();
+								scrollToBottom();
+							}
+						} catch (e) {
+							console.error("解析agent_step数据失败:", e);
+						}
+					} 
+					else if (jsonData.event === 'workflow_finished' && jsonData.data && jsonData.data.outputs && jsonData.data.outputs.answer) {
+						// 处理最终答案
+						try {
+							const finalAnswer = JSON.parse(jsonData.data.outputs.answer);
+							
+							// 更新消息的最终内容
+							if (Array.isArray(finalAnswer)) {
+								chatMessages[messageIndex].content = finalAnswer.map(item => ({
+									type: item.type || 'text',
+									id: item.id || '',
+									content: item.content || ''
+								}));
+								
+								// 标记打字效果完成
+								chatMessages[messageIndex].typing = false;
+								
+								// 强制更新视图并滚动到底部
+								globalUpdateKey.value = Date.now();
+								scrollToBottom();
+							}
+						} catch (e) {
+							console.error("解析最终答案失败:", e);
+						}
+					}
+				} catch (e) {
+					console.error("解析数据行失败:", e, line);
+				}
 			}
 		}
 	} catch (error) {
-		// 添加错误处理逻辑
+		clearAnimation();
 		console.error("发生错误:", error);
-		if (retryCount < 3) { // 添加重试逻辑
+		
+		if (retryCount < 3) {
 			console.log(`重试第 ${retryCount + 1} 次...`);
 			return callAIInterface2(userQuery, lastMessage, retryCount + 1);
 		} else {
 			console.error("达到最大重试次数，请求失败");
-			// 处理最终失败的情况，例如显示错误消息给用户
+			// 显示错误消息
+			uni.showToast({
+				title: '请求失败，请稍后重试',
+				icon: 'none',
+				duration: 2000
+			});
 		}
-	} finally {
-		// 确保无论是否成功或失败都清除动画
-		clearAnimation();
 	}
 };
 

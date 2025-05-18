@@ -156,14 +156,16 @@
 const creaOrder = (hotel) => {
 
   if (hotel.ticketprice === 0) {
-    uni.showToast({
-      title: '该景点免费，无需预订',
-      icon: 'error',
-      duration: 2000,
-      style: {
-        fontSize: '24px', // 增大字体
-        color: '#333', // 深色字体
-        lineHeight: '1.5' // 增加行高
+    // 使用模态对话框替代toast
+    uni.showModal({
+      title: '免费景点',
+      content: '该景点免费，无需预订门票',
+      showCancel: false,
+      confirmText: '我知道了',
+      success: function (res) {
+        if (res.confirm) {
+          console.log('用户点击确定');
+        }
       }
     });
     return; // 直接返回，不执行后续逻辑
@@ -182,9 +184,11 @@ items: [
       idCardNo: userStore.userInfo.idCardNo || '',
       idCardType: 'ID_CARD',
       schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+      
     },
     productId: hotel.id, // 初始为空字符串
-    productType: "Activities",
+    productType: "Attractions",
+    imageUrl: hotel.imageUrl,
     quantity: 1
   }
 ]
@@ -200,7 +204,7 @@ header: {
 },
 data: orderData.value,
 success: (res) => {
-  console.log(res.data);
+  console.log("订单创建结果："+res.data);
   
   if (res.data.code === 200) {
     uni.showToast({
@@ -254,7 +258,7 @@ fail: (err) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  margin-left: 20px;
+  margin-left: 0px;
 }
 .title-name {
   position: absolute;

@@ -249,6 +249,7 @@ const handleConfirmPayment = () => {
     return;
   }
 
+//  手机号校验
   const phoneRegex = /^1[3-9]\d{9}$/;
   if (!phoneRegex.test(contactPhone.value)) {
     uni.showToast({
