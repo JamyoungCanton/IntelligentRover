@@ -513,7 +513,7 @@ const endDrag = () => {
 // 会员充值导航
 const navigateToMembership = () => {
   uni.navigateTo({
-    url: '/pages/membership/membership'
+    url: '/pages/my/my?tab=membership'
   });
 };
 
