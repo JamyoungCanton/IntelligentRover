@@ -74,19 +74,13 @@
             <view class="user-info">
               <text class="user-name">{{ review.username }}</text>
               <view class="rating-star">
-                <view
-                  class="star-icon"
-                  v-for="star in 5"
-                  :key="star"
-                >
+                <view class="star-icon" v-for="star in 5" :key="star">
                   <image src="/static/dayTravel/star.png" class="starimg"></image>
                 </view>
               </view>
             </view>
           </view>
-          <view class="comment-content">
-            {{ review.content }}
-          </view>
+          <view class="comment-content">{{ review.content }}</view>
         </view>
       </view>
     </view>
@@ -109,7 +103,7 @@ import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
 
-// 定义产品详情数据结构
+// 数据结构定义
 interface ProductDetail {
   id: string | number;
   title: string;
@@ -118,26 +112,20 @@ interface ProductDetail {
   price: number;
   originalPrice: number;
 }
-
-// 定义行程亮点数据结构
 interface Highlight {
   icon: string;
   text: string;
 }
-
-// 定义预订须知数据结构
 interface Note {
   content: string;
 }
-
-// 定义用户评论数据结构
 interface Review {
   avatar: string;
   username: string;
   content: string;
 }
 
-// 产品详情
+// 响应式数据
 const productDetail = reactive<ProductDetail>({
   id: '',
   title: '',
@@ -146,20 +134,10 @@ const productDetail = reactive<ProductDetail>({
   price: 0,
   originalPrice: 0
 });
-
-// 行程亮点
 const highlights = ref<Highlight[]>([]);
-
-// 可选日期
 const availableDates = ref([]);
-
-// 费用说明数据
 const usageList = ref([]);
-
-// 预订须知数据
 const notesList = ref<Note[]>([]);
-
-// 用户评论（写死的数据）
 const reviews = ref<Review[]>([
   {
     avatar: '/static/daytravelDetail/man.png',
@@ -172,18 +150,13 @@ const reviews = ref<Review[]>([
     content: '性价比很高，推荐给大家！'
   }
 ]);
-
-// 当前选中的日期索引
 const selectedDateIndex = ref(0);
-
-// 套餐id
 const packageId = ref('');
 
 // 页面加载时获取数据
 onLoad((options) => {
   if (options.id) {
     packageId.value = options.id;
-	console.log(packageId.value);
     fetchProductDetail();
   }
 });
@@ -200,97 +173,64 @@ const fetchProductDetail = async () => {
       }
     });
 
-    // 检查请求是否成功
-    if (res.statusCode === 200 && res.data && res.data) {
+    if (res.statusCode === 200 && res.data && res.data.result) {
       const data = res.data.result;
-      // 更新产品详情
       productDetail.id = data.id;
       productDetail.title = data.title;
       productDetail.subtitle = data.packname;
-      productDetail.coverImage = data.images && data.images[0] && data.images[0].url ? data.images[0].url.replace(/<[^>]+>/g, '') : '/static/daytravelDetail/man.png';
+      productDetail.coverImage = data.images?.[0]?.url?.replace(/<[^>]+>/g, '') || '/static/daytravelDetail/man.png';
       productDetail.price = parseFloat(data.price);
       productDetail.originalPrice = parseFloat(data.priceDesc.split(',')[0]) || 0;
 
-      // 更新行程亮点
-      highlights.value = data.ilPackageHeightlightList.map(item => {
-        return {
-          icon: item.icon,
-          text: item.content
-        };
-      });
-
-      // 更新可选日期
-      availableDates.value = data.ilPackageDepartList.map(item => {
-        return {
-          day: item.departDate.split('-')[2],
-          weekday: item.xingqi,
-          date: item.departDate,
-          price: item.price,
-          available: true
-        };
-      });
-
-      // 更新费用说明
+      highlights.value = data.ilPackageHeightlightList.map(item => ({ icon: item.icon, text: item.content }));
+      availableDates.value = data.ilPackageDepartList.map(item => ({
+        day: item.departDate.split('-')[2],
+        weekday: item.xingqi,
+        date: item.departDate,
+        price: item.price,
+        available: true
+      }));
       usageList.value = data.priceDesc.split(',');
-
-      // 更新预订须知
-      notesList.value = data.notice.split(',').map(item => {
-        return { content: item };
-      });
-
-      console.log('获取产品详情成功');
+      notesList.value = data.notice.split(',').map(content => ({ content }));
     } else {
-      console.error("接口返回错误：", res.data || res.data);
       uni.showToast({ title: '获取产品详情失败！', icon: 'none' });
     }
   } catch (err) {
-    console.error('请求失败：', err.message);
+    console.error('请求失败：', err);
     uni.showToast({ title: '网络异常', icon: 'none' });
   }
 };
 
-// 选择日期
+// 日期选择
 const selectDate = (index: number) => {
   selectedDateIndex.value = index;
-  console.log('选择日期:', availableDates.value[index].date);
 };
 
-// 获取行程亮点图标
-const getHighlightIcon = (iconPath: string) => {
-  return iconPath;
-};
+// 行程图标
+const getHighlightIcon = (iconPath: string) => iconPath;
 
 // 创建订单
 const createOrder = () => {
-  // 使用用户信息填充联系人信息
-  const contract = {
-    contractName: userStore.userInfo.realname || '',
-    contractPhone: userStore.userInfo.phone || ''
-  };
-
-  // 获取选中的日期
   const selectedDate = availableDates.value[selectedDateIndex.value].date;
-
-  // 构建订单项
-  const items = [
-    {
-      bookInfo: {
-        date: selectedDate,
-        fullname: userStore.userInfo.realname || '',
-        idCardNo: userStore.userInfo.idCardNo || '',
-        idCardType: 'ID_CARD',
-        schedule: selectedDate
-      },
-      productId: productDetail.id.toString(), // 使用产品详情中的ID
-      productType: "OneDay",
-      quantity: 1
-    }
-  ];
-
-  // 构建请求数据
   const orderData = {
-    contract,
-    items
+    contract: {
+      contractName: userStore.userInfo.realname || '',
+      contractPhone: userStore.userInfo.phone || ''
+    },
+    items: [
+      {
+        bookInfo: {
+          date: selectedDate,
+          fullname: userStore.userInfo.realname || '',
+          idCardNo: userStore.userInfo.idCardNo || '',
+          idCardType: 'ID_CARD',
+          schedule: selectedDate
+        },
+        productId: productDetail.id.toString(),
+        productType: "OneDay",
+        quantity: 1
+      }
+    ]
   };
 
   uni.request({
@@ -302,36 +242,20 @@ const createOrder = () => {
     },
     data: orderData,
     success: (res) => {
-      console.log(res.data);
-      
       if (res.data.code === 200 && res.data.success) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
-        // 可以跳转到订单详情页或其他页面
-		
+        uni.showToast({ title: '订单创建成功', icon: 'success' });
         uni.navigateTo({ url: `/pages/dayTravelOrder/dayTravelOrder?id=${packageId.value}` });
-        console.log(packageId.value);
-	  } else {
-        uni.showToast({
-          title: res.data.message || '订单创建失败',
-          icon: 'none'
-        });
+      } else {
+        uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
       }
     },
-    fail: (err) => {
-      console.error('创建订单失败', err);
-      uni.showToast({
-        title: '创建订单失败，请稍后重试',
-        icon: 'none'
-      });
+    fail: () => {
+      uni.showToast({ title: '创建订单失败，请稍后重试', icon: 'none' });
     }
   });
 };
 
-// 处理预订
+// 点击预订按钮
 const handleBooking = () => {
   if (!userStore.token) {
     uni.showToast({ title: '请先登录', icon: 'none' });
@@ -339,7 +263,6 @@ const handleBooking = () => {
   }
   createOrder();
 };
-
 </script>
 
 <style>

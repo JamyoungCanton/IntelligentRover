@@ -16,15 +16,15 @@
       <view class="order-info">
         <view class="info-item">
           <text class="item-label">订单金额</text>
-          <text class="item-value">¥ 950.00</text>
+          <text class="item-value">¥ {{ price }}</text>
         </view>
         <view class="info-item">
           <text class="item-label">支付方式</text>
-          <text class="item-value">微信支付</text>
+          <text class="item-value">{{ payment === 'wechat' ? '微信支付' : '支付宝' }}</text>
         </view>
         <view class="info-item">
           <text class="item-label">订单编号</text>
-          <text class="item-value">202308151234567</text>
+          <text class="item-value">{{ orderId }}</text>
         </view>
       </view>
       <button class="btn primary" @tap="navigatortoOrder">查看订单详情</button>
@@ -36,6 +36,19 @@
 
 <script setup>
 import Navbar from '../navbar/navbar.vue';
+import { onLoad } from '@dcloudio/uni-app';
+import { ref } from 'vue';
+
+const price = ref('');
+const payment = ref('');
+const orderId = ref('');
+
+onLoad((options) => {
+  price.value = options.price || '0.00';
+  payment.value = options.payment || '未知方式';
+  orderId.value = options.orderId || '暂无订单号';
+});
+
 const navigatortoOrder = () => {
   uni.switchTab({
     url: '/pages/order/order'

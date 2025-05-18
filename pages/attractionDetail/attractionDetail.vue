@@ -209,10 +209,13 @@ success: (res) => {
       duration: 1500
     });
     // 可以跳转到订单详情页或其他页面
-    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}` })
+   uni.navigateTo({
+    url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&price=${hotelData.value.ticketprice}`
+  });
+
   } else {
     uni.showToast({
-      title: res.data.message || '订单创建失败',
+      title: '未开放，维护中',
       icon: 'none'
     });
   }

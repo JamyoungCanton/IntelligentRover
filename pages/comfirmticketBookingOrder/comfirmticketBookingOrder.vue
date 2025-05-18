@@ -109,7 +109,7 @@
         <button
           class="confirm-btn"
           @click="handleConfirmPayment"
-        >确认支付 ¥{{ selectedCabinPrice }}</button>
+        >确认支付 ￥{{ selectedCabinPrice }}</button>
       </view>
     </view>
   </view>
@@ -131,6 +131,7 @@ const contactName = ref('');
 const contactPhone = ref('');
 const remark = ref('');
 const selectedPayment = ref('wechat');
+
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -156,13 +157,15 @@ onLoad((options) => {
   if (options.ticketId) {
     ticketId.value = options.ticketId;
     fetchOrderDetails();
-  } else {
-    uni.showToast({
-      title: '缺少订单ID参数',
-      icon: 'none'
-    });
   }
+
+  if (options.price) {
+  selectedCabinPrice.value = parseFloat(options.price) || 0;
+  console.log('获取到的价格:', selectedCabinPrice.value);
+}
 });
+
+
 
 // 获取交通订单详情
 const fetchOrderDetails = () => {
@@ -190,10 +193,6 @@ const fetchOrderDetails = () => {
           });
           selectedScheduleTime.value = parsedSchedule.value[0].time;
         }
-        
-        // 默认选中第一个舱位
-        selectedCabinName.value = cabinTypes.value[0].name;
-        selectedCabinPrice.value = cabinTypes.value[0].price;
       } else {
         uni.showToast({
           title: res.data.message || '获取订单详情失败',
@@ -241,16 +240,34 @@ const handleConfirmPayment = () => {
     return;
   }
 
+  // 新增联系人姓名/手机号校验
+  if (!contactName.value.trim()) {
+    uni.showToast({
+      title: '请输入联系人姓名',
+      icon: 'none'
+    });
+    return;
+  }
+
+  const phoneRegex = /^1[3-9]\d{9}$/;
+  if (!phoneRegex.test(contactPhone.value)) {
+    uni.showToast({
+      title: '请输入有效的手机号',
+      icon: 'none'
+    });
+    return;
+  }
+
   const orderData = {
     contract: {
-      contractName: contactName.value || userStore.userInfo.realname || '默认联系人',
-      contractPhone: contactPhone.value || userStore.userInfo.phone || '12345678901'
+      contractName: contactName.value,
+      contractPhone: contactPhone.value
     },
     items: [
       {
         bookInfo: {
           date: selectedScheduleTime.value,
-          fullname: contactName.value || userStore.userInfo.realname || '默认联系人',
+          fullname: contactName.value,
           idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
           idCardType: 'ID_CARD',
           schedule: selectedScheduleTime.value
@@ -263,6 +280,7 @@ const handleConfirmPayment = () => {
     ]
   };
 
+  // 发送请求创建订单
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
@@ -277,9 +295,10 @@ const handleConfirmPayment = () => {
           title: '支付成功',
           icon: 'success'
         });
-        uni.navigateTo({
-          url: '/pages/pay_success/pay_success'
+       uni.navigateTo({
+         url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&id=${ticketId.value}`
         });
+
       } else {
         uni.showToast({
           title: res.data.message || '支付失败',
@@ -287,7 +306,7 @@ const handleConfirmPayment = () => {
         });
       }
     },
-    fail: (err) => {
+    fail: () => {
       uni.showToast({
         title: '网络异常，请稍后重试',
         icon: 'none'
@@ -295,6 +314,7 @@ const handleConfirmPayment = () => {
     }
   });
 };
+
 </script>
 
 <style>
@@ -356,7 +376,7 @@ page {
 }
 
 .input {
-  width: 100%;
+  width: 90%;
   height: 88rpx;
   padding: 0 32rpx;
   margin-bottom: 24rpx;

@@ -109,7 +109,7 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥750</button>
+      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥{{hotelList.ticketprice}}</button>
     </view>
   </view>
 </template>
@@ -163,16 +163,15 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
-
-  const userStore = useUserStore();
-  console.log(userStore.token);
-  
- 
+  const price = hotelList.value.ticketprice;
+  const payment = selectedPayment.value;
+  const orderId = new Date().getTime(); // 示例订单号，可换成真实订单号
 
   uni.navigateTo({
-    url: '/pages/pay_success/pay_success'
+    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}`
   });
 };
+
 // 退出
 const handleLogout = () => {
   uni.removeStorageSync('userToken'); 
