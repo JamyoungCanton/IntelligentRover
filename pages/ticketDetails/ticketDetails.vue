@@ -232,7 +232,8 @@ const createOrder = () => {
         productId: ticketInfo.value.id,
         productType: 'Transportation',
         quantity: 1,
-        price: selectedCabinPrice.value
+        price: selectedCabinPrice.value,
+        imageUrl: ticketInfo.value.imageUrl
       }
     ]
   };
