@@ -4056,7 +4056,7 @@ const toggleThinking = (item) => {
 
 /* 占位的 */
 .blank {
-	height: 80rpx;
+	height: 140rpx;
 	/* 减小占位高度，增加内容区域 */
 }
 
