@@ -219,10 +219,7 @@ const bannerList = ref([
   'https://wlmtsys.com:9000/travel/Banner1.jpg',
   'https://wlmtsys.com:9000/travel/Banner2.jpg',
   'https://wlmtsys.com:9000/travel/Banner3.jpg'
-  // 'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
-  // 'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
-  // 'https://wlmtsys.com:9000/travel/18.jpg',
-  // 'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
+
 ]);
 
 const userStore = useUserStore();
