@@ -59,9 +59,9 @@
           <view class="order-footer">
             <text class="price">¥ {{ order.amount || 0 }}</text>
             <view class="button-group">
-
-              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-default"
-                @click="cancelOrder(order)">取消订单</button>
+<!-- v-if="order.payStatus === 'UNPAID'" -->
+              <button class="btn btn-default"
+                @click="deleteOrder(order)">取消订单</button>
 
               <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
               <button v-else class="btn btn-primary" @click="getOrderDetailById1(order.orderSn)">查看详情</button>
@@ -395,38 +395,81 @@ const closeDetailPopup = () => {
 };
 
 // 取消订单方法
-const cancelOrder = (order) => {
-  // 弹出确认取消的模态框
+// const cancelOrder = (order) => {
+//   // 弹出确认取消的模态框
+//   uni.showModal({
+//     title: '取消订单',
+//     content: '您确定要取消该订单吗？',
+//     success: (res) => {
+//       if (res.confirm) {
+//         // 模拟订单取消：从列表中移除该订单
+//         const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
+//         if (index !== -1) {
+//           // 在控制台打印被取消的订单详细信息
+//           console.log('已取消的订单详情:', {
+//             orderSn: order.orderSn,
+//             goodsName: order.goodsName,
+//             payStatus: order.payStatus,
+//             createTime: order.createTime,
+//             amount: order.amount,
+//             createBy: order.createBy
+//           });
+
+//           orders.value.splice(index, 1);
+
+//           // 显示取消成功的提示
+//           uni.showToast({
+//             title: '订单已取消',
+//             icon: 'none'
+//           });
+//         }
+//       }
+//     }
+//   });
+// };
+// 删除订单方法
+const deleteOrder = (order) => {
   uni.showModal({
-    title: '取消订单',
-    content: '您确定要取消该订单吗？',
+    title: '删除订单',
+    content: '删除后无法恢复，确认要删除该订单吗？',
     success: (res) => {
-      if (res.confirm) {
-        // 模拟订单取消：从列表中移除该订单
-        const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
-        if (index !== -1) {
-          // 在控制台打印被取消的订单详细信息
-          console.log('已取消的订单详情:', {
-            orderSn: order.orderSn,
-            goodsName: order.goodsName,
-            payStatus: order.payStatus,
-            createTime: order.createTime,
-            amount: order.amount,
-            createBy: order.createBy
-          });
+      if (!res.confirm) return;
+      uni.showLoading({ title: '删除中...' });
 
-          orders.value.splice(index, 1);
-
-          // 显示取消成功的提示
-          uni.showToast({
-            title: '订单已取消',
-            icon: 'none'
-          });
+      uni.request({
+        // DELETE /island/order/ilOrder/delete?id=${id}
+        url: `https://island.zhangshuiyi.com/island/order/ilOrder/delete`,
+        method: 'DELETE',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': userStore.token
+        },
+        // DELETE 请求也可以在 data 中传 query 参数
+        data: { id: order.id },
+        success: (res) => {
+          if (res.data && res.data.success) {
+            // 从列表中移除
+            orders.value = orders.value.filter(o => o.id !== order.id);
+            uni.showToast({ title: '删除成功', icon: 'success' });
+          } else {
+            uni.showToast({
+              title: res.data?.message || '删除失败',
+              icon: 'none'
+            });
+          }
+        },
+        fail: (err) => {
+          console.error('删除请求失败:', err);
+          uni.showToast({ title: '网络错误，删除失败', icon: 'none' });
+        },
+        complete: () => {
+          uni.hideLoading();
         }
-      }
+      });
     }
   });
 };
+
 
 // 立即支付方法
 // const payOrder = (order) => {

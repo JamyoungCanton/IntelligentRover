@@ -135,8 +135,15 @@ const productDetail = reactive<ProductDetail>({
   originalPrice: 0
 });
 const highlights = ref<Highlight[]>([]);
-const availableDates = ref([]);
-const usageList = ref([]);
+interface AvailableDate {
+  day: string;
+  weekday: string;
+  date: string;
+  price: string | number;
+  available: boolean;
+}
+const availableDates = ref<AvailableDate[]>([]);
+const usageList = ref<string[]>([]);
 const notesList = ref<Note[]>([]);
 const reviews = ref<Review[]>([
   {
