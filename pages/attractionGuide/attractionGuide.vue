@@ -1,16 +1,22 @@
 <template>
   <view class="page">
-    <view class="header">
-      <view class="title-section">
-        <text class="title">景点攻略</text>
-      </view>
-      <view class="search-wrap">
-        <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-        <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
+    <!-- 顶部只保留搜索和筛选 -->
+    <view class="header-fixed">
+      <view class="search-sort-row">
+        <view class="search-wrap">
+          <uni-icons type="search" size="20" color="#0faedf" class="search-icon"></uni-icons>
+          <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
+        </view>
+        <view class="sort-wrap">
+          <uni-data-select
+            v-model="filterValue"
+            :localdata="range"
+            @change="changeFilter"
+          ></uni-data-select>
+        </view>
       </view>
     </view>
-
-    <scroll-view class="content" scroll-y>
+    <view class="category-fixed">
       <scroll-view class="category-list" scroll-x show-scrollbar="false">
         <view class="category-scroll">
           <button
@@ -24,17 +30,9 @@
           </button>
         </view>
       </scroll-view>
+    </view>
 
-      <view class="filter-bar">
-        <view class="filter-options">
-          <uni-data-select
-            v-model="filterValue"
-            :localdata="range"
-            @change="changeFilter"
-          ></uni-data-select>
-        </view>
-      </view>
-
+    <scroll-view class="content" scroll-y>
       <view class="spot-grid">
         <view
           v-for="item in filteredAttractions"
@@ -44,17 +42,19 @@
         >
           <image :src="item.imageUrl" mode="aspectFill"></image>
           <view class="spot-info">
-            <text class="spot-name">{{ item.name }}</text>
-            <view class="rating">
-              <uni-rate :value="item.rating" size="10" readonly></uni-rate>
-              <text class="rating-score">{{ item.rating }}</text>
+            <view class="name-rating-row">
+              <text class="spot-name">{{ item.name }}</text>
+              <view class="rating">
+                <uni-rate :value="item.rating" size="10" readonly></uni-rate>
+                <text class="rating-score">{{ item.rating }}</text>
+              </view>
             </view>
-            <text class="spot-desc">开放时间： {{ item.starttime }} - {{ item.endtime }}</text>
+            <text class="spot-desc">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
             <view class="spot-footer">
               <view class="location">
                 <text class="location-text">门票价格</text>
               </view>
-              <text v-if="item.ticketprice !== 0" class="price">{{ item.ticketprice }}</text>
+              <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
               <text v-if="item.ticketprice === 0" class="price">免费</text>
             </view>
           </view>
@@ -136,7 +136,11 @@ const filteredAttractions = computed(() => {
   return filtered;
 });
 
-
+// 格式化时间，只保留"时:分"
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  return timeStr.split(':').slice(0, 2).join(':');
+};
 
 onMounted(() => {
   hasToken();
@@ -179,83 +183,114 @@ const goAttraction = (id) => {
 </script>
 
 <style>
-page {
-  height: 100%;
-  background: #FFFFFF;
-}
-
 .page {
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* background: #F5F7FA; */
+  background-color: rgba(224, 250, 255);
+
 }
 
-.header {
-  background: #0066CC;
-  padding: 20rpx 30rpx;
-  flex-shrink: 0;
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: transparent;
+  box-shadow: none;
+  background-color: rgba(81, 219, 255);
 }
 
-.title-section {
+.search-sort-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.title {
-  color: #FFFFFF;
-  font-size: 32rpx;
-  font-weight: 500;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 30rpx;
-}
-
-.header-icon {
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  padding: 32rpx 24rpx 12rpx 24rpx;
+  background: transparent;
+  gap: 20rpx;
 }
 
 .search-wrap {
-  position: relative;
-  margin-top: 10rpx;
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 40rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15,174,223,0.10);
+  padding: 0 28rpx;
+  height: 64rpx;
+  margin-right: 0;
+  transition: box-shadow 0.2s;
 }
 
-.search-input {
-  width: 77%;
-  height: 72rpx;
-  background: #FFFFFF;
-  border-radius: 8rpx;
-  padding: 0 80rpx;
-  font-size: 28rpx;
-  color: #333333;
+.search-wrap:focus-within {
+  box-shadow: 0 6rpx 24rpx rgba(15,174,223,0.18);
 }
 
 .search-icon {
-  position: absolute;
-  left: 20rpx;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-right: 10rpx;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 30rpx;
+  color: #333;
+  outline: none;
 }
 
 .placeholder {
-  color: #999999;
+  color: #bbb;
 }
+
+.sort-wrap {
+  flex: 1;
+  min-width: 160rpx;
+  max-width: 200rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15,174,223,0.10);
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s;
+}
+
+.sort-wrap:focus-within {
+  box-shadow: 0 6rpx 24rpx rgba(15,174,223,0.18);
+}
+
+.sort-wrap uni-data-select {
+  width: 100%;
+  font-size: 28rpx;
+}
+.category-fixed {
+  position: fixed;
+  top: 105rpx; /* header-fixed的高度 */
+  left: 0;
+  right: 0;
+  z-index: 998;
+  background: #fff;
+}
+
 
 .content {
   flex: 1;
   overflow: auto;
+  margin-top: 10rpx;
+  padding-top: 175rpx; /* header-fixed高度+margin，避免内容被遮挡 */
+  min-height: 100vh;
 }
 
 .category-list {
-  padding: 20rpx 30rpx;
+  padding: 10rpx 30rpx 10rpx 30rpx;
   white-space: nowrap;
+  background: #FFFFFF;
 }
 
 .category-scroll {
@@ -264,86 +299,80 @@ page {
 }
 
 .category-item {
-  /* padding: 12rpx 30rpx; */
-  background: #F5F5F5;
-  border-radius: 8rpx;
+  padding: 8rpx 30rpx;
+  background: #F5F7FA;
+  border-radius: 30rpx;
   color: #666666;
   font-size: 28rpx;
   border: none;
+  transition: all 0.3s ease;
 }
 
 .category-item.active {
-  background: #0066CC;
+  background: #0faedf;
   color: #FFFFFF;
-}
-
-.filter-bar {
-  width: 100%; /* 占满整行 */
-  padding: 20rpx 30rpx;
-  box-sizing: border-box;
-  justify-content: flex-start;/*左对齐 */
-}
-
-.filter-options {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;/*左对齐 */
-}
-.filter-options uni-data-select {
-  width: 100%;
-  max-width: 300rpx; /* 设置最大宽度 */
-
-}
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 20rpx;
-  background: #F5F5F5;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #666666;
+  box-shadow: 0 4rpx 12rpx rgba(15, 174, 223, 0.15);
 }
 
 .spot-grid {
-  padding: 0 30rpx;
+  padding: 20rpx 30rpx;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  
   gap: 20rpx;
+  background: #F5F7FA;
+  background-color: rgba(224, 250, 255);
+
 }
 
 .spot-item {
   background: #FFFFFF;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.spot-item:active {
+  transform: scale(0.98);
 }
 
 .spot-item image {
   width: 100%;
   height: 240rpx;
+  object-fit: cover;
 }
 
 .spot-info {
-  padding: 16rpx;
+  padding: 20rpx;
+}
+
+.name-rating-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
 }
 
 .spot-name {
   font-size: 28rpx;
   font-weight: 500;
   color: #333333;
+  flex: 1;
+  margin-right: 16rpx;
 }
 
 .rating {
   display: flex;
   align-items: center;
-  margin-top: 8rpx;
+  gap: 8rpx;
+  white-space: nowrap;
 }
 
 .rating-score {
   font-size: 24rpx;
-  color: #999999;
-  margin-left: 8rpx;
+  color: #FF9800;
+  line-height: 1;
 }
 
 .spot-desc {
@@ -374,10 +403,9 @@ page {
 }
 
 .price {
-  font-size: 24rpx;
-  color: #0066CC;
+  font-size: 32rpx;
+  color: #FF5722;
+  font-weight: bold;
 }
-
-
 </style>
 

@@ -176,7 +176,7 @@ onShow(() => {
 
 <style lang="scss" scoped> 
 .specialColor .item-text {
-    color: rgb(229, 113, 1) !important; 
+    color: rgb(38, 88, 162) !important; 
 }
 .color-black { 
     color: #333;
@@ -288,7 +288,7 @@ onShow(() => {
 
      /* 中间按钮激活时的文本颜色 */
     .mid-button.specialColor .item-text {
-         color: rgb(229, 113, 1) !important;
+         color: rgb(38, 88, 162) !important;
     }
 
 

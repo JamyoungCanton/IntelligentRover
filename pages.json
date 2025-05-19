@@ -79,7 +79,7 @@
 		{
 			"path": "pages/attractionGuide/attractionGuide",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "景点攻略"
 			}
 		},
 		{
