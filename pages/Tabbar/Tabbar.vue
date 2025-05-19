@@ -54,8 +54,8 @@ const tabList = ref([
         middleClass: ''
     },
     {
-        iconPath: '/static/index/logo.png',
-        selectedIconPath: '/static/index/logo.png',
+        iconPath: 'https://wlmtsys.com:9000/travel/logo.png',
+        selectedIconPath: 'https://wlmtsys.com:9000/travel/logo.png',
         text: 'AI',
         pagePath: '/pages/chat/chat',
         isTabPage: true, 
@@ -183,7 +183,13 @@ onShow(() => {
 }
 
 .flex { display: flex; flex-flow: row wrap; }
-.flex-center { align-items: center; justify-content: center; & > * { margin: 0; } }
+.flex-center {
+    align-items: center;
+    justify-content: center;
+    margin: 0px;
+}
+
+
 .flex-column { flex-direction: column; }
 .flex-middle { align-items: center; }
 .font-20 { font-size: 20rpx; }

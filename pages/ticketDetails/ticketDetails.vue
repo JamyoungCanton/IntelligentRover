@@ -19,7 +19,8 @@
     </view>
     
     <view class="price-section">
-      <text class="price">¥{{ selectedCabinPrice || 0 }}起</text>
+      <text class="price" v-if="selectedCabinPrice">¥{{ selectedCabinPrice }}起</text>
+      <text class="price" v-else>¥0起</text>
       <button class="book-btn" @click="createOrder">立即预订</button>
     </view>
     
@@ -45,7 +46,7 @@
           :key="index" 
           class="cabin-item"
           :class="{ 'selected': selectedCabinIndex === index }"
-          @click="selectCabin(index)"
+          @tap="selectCabin(index)"
         >
           <b><text class="cabin-name">{{ cabin.name }}</text></b>
           <text class="cabin-price">¥{{ cabin.price }}</text>
@@ -178,10 +179,11 @@ const fetchOrderDetails = () => {
 			}
 			];
         console.log('乘船须知数据:', instructions.value);
-        
         // 默认选中第一个舱位
         selectedCabinIndex.value = 0;
         selectedCabinPrice.value = cabinTypes.value[0].price;
+        console.log('用户当前选择的舱位价格为:', selectedCabinPrice.value);
+
       } else {
         error.value = res.data.message || '获取数据失败';
         console.error('获取数据失败:', error.value);
@@ -198,6 +200,8 @@ const fetchOrderDetails = () => {
 const selectCabin = (index) => {
   selectedCabinIndex.value = index;
   selectedCabinPrice.value = cabinTypes.value[index].price;
+  console.log('已选择舱位:', cabinTypes.value[index]);
+  console.log('当前价格:', selectedCabinPrice.value);
 };
 
 const createOrder = () => {
@@ -232,7 +236,8 @@ const createOrder = () => {
         productId: ticketInfo.value.id,
         productType: 'Transportation',
         quantity: 1,
-        price: selectedCabinPrice.value
+        price: selectedCabinPrice.value,
+        imageUrl: ticketInfo.value.imageUrl
       }
     ]
   };
@@ -259,7 +264,7 @@ const createOrder = () => {
         // 在订单创建成功后跳转到 pages/ticketBooking/ticketBooking.vue 页面
         console.log('传递的 ticketId:', ticketId.value);
         uni.navigateTo({
-          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}`
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}`
         });
       } else {
         uni.showToast({

@@ -95,7 +95,7 @@
 			<view class="section-title">店铺实拍</view>
 			<scroll-view class="photo-scroll" scroll-x enable-flex>
 				<view class="photo-item" v-for="(photo, index) in shopPhotos" :key="index">
-					<image :src="`/static/foodDetails/${photo}`" mode="aspectFill"></image>
+					<image :src="`https://wlmtsys.com:9000/travel/${photo}`" mode="aspectFill"></image>
 				</view>
 			</scroll-view>
 		</view>
@@ -140,7 +140,7 @@
 			<view class="section-title">推荐菜品</view>
 			<scroll-view class="dishes-scroll" scroll-x enable-flex>
 				<view class="dish-item" v-for="(dish, index) in recommendedDishes" :key="index">
-					<image :src="`/static/foodDetails/${dish.image}`" mode="aspectFill"></image>
+					<image :src="`https://wlmtsys.com:9000/travel/${dish.image}`" mode="aspectFill"></image>
 					<view class="dish-name">{{ dish.name }}</view>
 					<view class="dish-desc">{{ dish.desc }}</view>
 					<view class="dish-price">¥{{ dish.price }}</view>

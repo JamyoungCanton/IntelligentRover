@@ -95,11 +95,20 @@
         </view>
       </view>
 
+      <!-- 会员充值卡片 -->
+      <view class="member-card" @click="navigateToMembership">
+        <view class="member-card-left">
+          <view class="member-title">会员专享</view>
+          <view class="member-desc">享受更多折扣与特权</view>
+        </view>
+        <view class="member-btn">立即充值</view>
+      </view>
+
       <!-- 热门活动 -->
       <view class="section">
         <view class="section-header">
           <text class="section-title">热门活动</text>
-          <!-- <text class="section-more" @click="viewMore('热门活动')">查看更多 ></text> -->
+          <text class="section-more" @click="viewMore('热门活动')">查看更多 ></text>
         </view>
         <view class="activity-list">
           <view class="activity-item" v-for="activity in activities" :key="activity.id"
@@ -111,7 +120,14 @@
                 <text class="rating">{{ activity.rating }}</text>
                 <text class="comments">{{ activity.comments }}</text>
               </view>
-              <text class="activity-price">{{ activity.price }}</text>
+              <view class="price-container">
+                <text class="activity-price">{{ activity.price }}</text>
+                <text class="original-price" v-if="activity.originalPrice">{{ activity.originalPrice }}</text>
+              </view>
+              <view class="member-price" v-if="activity.memberPrice">
+                <text class="member-tag">会员价</text>
+                <text class="member-price-value">{{ activity.memberPrice }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -124,7 +140,7 @@
           <text class="section-more" @click="viewMore('精选路线')">查看更多 ></text>
         </view>
         <view class="route-item" @click="navigateToRoute(1)">
-          <view class="hot-tag">
+          <view class="route-hot-tag">
             <image class="hot-img" src="https://wlmtsys.com:9000/travel/角标-推荐.svg"></image>
           </view>
           <image class="route-img" src="https://wlmtsys.com:9000/travel/首页-精选路线.jpg"></image>
@@ -203,10 +219,7 @@ const bannerList = ref([
   'https://wlmtsys.com:9000/travel/Banner1.jpg',
   'https://wlmtsys.com:9000/travel/Banner2.jpg',
   'https://wlmtsys.com:9000/travel/Banner3.jpg'
-  // 'http://island.zhangshuiyi.com/static_file/attractions/8海龟保护区.jpg',
-  // 'https://ai-public.mastergo.com/ai/img_res/a44a5f661a986db716a71f19589a90e9.jpg',
-  // 'https://wlmtsys.com:9000/travel/18.jpg',
-  // 'http://island.zhangshuiyi.com/static_file/attractions/10珊瑚礁区.jpg'
+
 ]);
 
 const userStore = useUserStore();
@@ -420,14 +433,26 @@ const getActivitiesList = () => {
     },
     success: (res) => {
       if (res.data.success) {
-        activities.value = res.data.result.records.map(activity => ({
-          id: activity.id,
-          name: activity.type,
-          image: activity.imageUrl || 'https://wlmtsys.com:9000/travel/首页-热门活动-海钓体验.jpg',
-          rating: '4.7分',
-          comments: '1205条评论',
-          price: '¥' + activity.price + '/人起'
-        }));
+        activities.value = res.data.result.records.map(activity => {
+          // 根据价格随机生成折扣信息
+          const price = parseFloat(activity.price) || 100;
+          const discount = Math.floor(Math.random() * 3) + 7; // 生成7-9之间的随机数
+          const discountRate = discount / 10; // 折扣率，0.7-0.9
+          const originalPrice = Math.floor(price / discountRate);
+          const memberPrice = Math.floor(price * 0.9); // 会员价格比当前价格再便宜10%
+          
+          return {
+            id: activity.id,
+            name: activity.type,
+            image: activity.imageUrl || 'https://wlmtsys.com:9000/travel/首页-热门活动-海钓体验.jpg',
+            rating: '4.7分',
+            comments: '1205条评论',
+            price: '¥' + activity.price + '/人起',
+            originalPrice: '¥' + originalPrice + '/人',
+            discount: discount + '折',
+            memberPrice: '¥' + memberPrice + '/人'
+          };
+        });
       }
     },
     fail: () => {
@@ -480,6 +505,13 @@ const endDrag = () => {
   dragX.value = Math.max(0, Math.min(dragX.value, screenWidth)) // 96 是按钮的宽度
   dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
 
+};
+
+// 会员充值导航
+const navigateToMembership = () => {
+  uni.navigateTo({
+    url: '/pages/membership/membership'
+  });
 };
 
 onShow(() => {
@@ -546,14 +578,14 @@ onMounted(() => {
 .content-box {
   position: relative;
   width: 100%;
-  padding: 30rpx 0 0 0;
+  /* padding: 30rpx 0 0 0; */
   background-color: rgb(224, 250, 255);
   /* 淡蓝色背景 */
   border-radius: 50rpx 50rpx 0 0;
   /* 顶部左右角圆角 */
   z-index: 10;
   /* 主要内容区的层级高于顶部区域 */
-  top: 80rpx;
+  top: 0rpx;
 }
 
 /* 通知栏 */
@@ -649,6 +681,78 @@ onMounted(() => {
   font-size: 24rpx;
 }
 
+/* 会员充值卡片 */
+.member-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0098cc 0%, #005b94 100%);
+  padding: 12rpx 20rpx;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.member-card::before {
+  content: "";
+  position: absolute;
+  top: -20rpx;
+  right: -20rpx;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: 1;
+}
+
+.member-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.member-card-left {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.member-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+  margin-bottom: 4rpx;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+}
+
+.member-desc {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.member-btn {
+  background: linear-gradient(135deg, #fff 0%, #e6f7ff 100%);
+  color: #0076cf;
+  padding: 6rpx 16rpx;
+  border-radius: 30rpx;
+  font-size: 22rpx;
+  font-weight: bold;
+  display: inline-block;
+  margin-left: 20rpx;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+}
+
 /* 热门活动和精选路线的背景颜色与内容区一致 */
 .section {
   margin: 20rpx;
@@ -734,7 +838,67 @@ onMounted(() => {
   color: #ff6600;
   font-size: 28rpx;
   font-weight: bold;
-  margin-top: 10rpx;
+}
+
+/* 添加热门活动价格容器样式 */
+.price-container {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+
+.original-price {
+  color: #999;
+  font-size: 22rpx;
+  text-decoration: line-through;
+}
+
+/* 会员价样式 */
+.member-price {
+  display: flex;
+  align-items: center;
+  margin-top: 6rpx;
+}
+
+.member-tag {
+  background-color: #FF9500;
+  color: white;
+  font-size: 18rpx;
+  padding: 2rpx 6rpx;
+  border-radius: 4rpx;
+  margin-right: 6rpx;
+}
+
+.member-price-value {
+  color: #FF9500;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+/* 热门标签和折扣标签样式 */
+.hot-tag {
+  position: absolute;
+  top: 10rpx;
+  left: 0;
+  background-color: #FF3B30;
+  color: white;
+  font-size: 20rpx;
+  padding: 3rpx 10rpx 3rpx 15rpx;
+  border-radius: 0 15rpx 15rpx 0;
+  z-index: 1;
+}
+
+.discount-tag {
+  position: absolute;
+  top: 40rpx;
+  right: 10rpx;
+  background-color: #FF9500;
+  color: white;
+  font-size: 20rpx;
+  padding: 3rpx 10rpx;
+  border-radius: 15rpx;
+  z-index: 1;
 }
 
 /* 精选路线卡片样式 */

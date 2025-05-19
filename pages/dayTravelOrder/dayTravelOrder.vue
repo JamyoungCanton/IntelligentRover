@@ -197,15 +197,19 @@ const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 
+// 确认支付
 const handleConfirmPayment = () => {
-  uni.showToast({
-    title: '支付成功',
-    icon: 'success'
-  });
+  const price = productDetail.value.price;
+  const payment = selectedPayment.value;
+  const orderId = new Date().getTime(); // 示例订单号，实际应来自后端
+  const productName = encodeURIComponent(productDetail.value.title); // 防止中文乱码
+
   uni.navigateTo({
-    url: `/pages/pay_success/pay_success?id=${productDetail.value.id}`
+    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}&productName=${productName}`
   });
 };
+
+
 </script>
 
 <style>

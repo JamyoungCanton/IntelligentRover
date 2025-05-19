@@ -11,14 +11,30 @@
         <view class="location-row">
           <view class="location-item">
             <text class="label">出发地</text>
-            <input class="value" v-model="fromLocation" placeholder="出发地如:东澳岛" />
+            <view class="input-wrapper">
+              <input class="value" v-model="fromLocation" placeholder="出发地如:东澳岛" @input="onFromLocationInput" />
+              <view class="suggestions" v-if="fromSuggestions.length > 0">
+                <view class="suggestion-item" v-for="(suggestion, index) in fromSuggestions" :key="index" 
+                      @click="selectFromSuggestion(suggestion)">
+                  {{ suggestion }}
+                </view>
+              </view>
+            </view>
           </view>
           <view class="exchange-btn">
             <uni-icons type="loop" size="20" color="#0066CC" @click="swapLocations" />
           </view>
           <view class="location-item align-right">
             <text class="label">目的地</text>
-            <input class="value" v-model="toLocation" placeholder="目的地如:万山岛" />
+            <view class="input-wrapper">
+              <input class="value" v-model="toLocation" placeholder="目的地如:万山岛" @input="onToLocationInput" />
+              <view class="suggestions" v-if="toSuggestions.length > 0">
+                <view class="suggestion-item" v-for="(suggestion, index) in toSuggestions" :key="index" 
+                      @click="selectToSuggestion(suggestion)">
+                  {{ suggestion }}
+                </view>
+              </view>
+            </view>
           </view>
         </view>
         
@@ -57,13 +73,26 @@
             <text class="time">{{ ticket.time }}</text>
             <text class="duration">{{ ticket.duration }}</text>
           </view>
+          <view class="route-row">
+            <view class="island-info">
+              <text class="island-name">{{ ticket.fromLocation }}</text>
+            </view>
+            <view class="arrow">
+              <image class="line" src="/static/ticket/line.png"></image>
+              <image src="/static/ticket/boat.png" class="arrow-img"></image>
+              <image class="line" src="/static/ticket/line.png"></image>
+            </view>
+            <view class="island-info">
+              <text class="island-name">{{ ticket.toLocation }}</text>
+            </view>
+          </view>
           <view class="ship-row">
             <text class="ship-name" style="color: gray;">{{ ticket.shipName }}</text>
             <text class="price" style="color: blue; font-size: 20px;">{{ ticket.price }}起</text>
           </view>
           <view class="action-row">
             <text class="remain">剩余 {{ ticket.remain }} 张</text>
-			<button class="book-btn primary" type="button">预订</button>
+			<button class="book-btn primary" type="button" @click.stop="goToPersonalInfo(ticket)">预订</button>
           </view>
         </view>
       </view>
@@ -72,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
@@ -84,6 +113,65 @@ const passengerOptions = ref(Array.from({ length: 10 }, (_, i) => i + 1));
 const tickets = ref([]);
 const showFilter = ref(false);
 const sortType = ref({});
+
+// 新增
+const fromSuggestions = ref([]);
+const toSuggestions = ref([]);
+const fromLocationId = ref('');
+const toLocationId = ref('');
+
+// 岛屿ID到名称的映射
+const islandMap = {
+  101: '东澳岛',
+  102: '万山岛',
+  103: '外伶仃岛',
+  104: '桂山岛'
+  // 根据实际情况添加更多的岛屿ID和名称
+};
+
+// 创建反向映射（名称到ID）
+const nameToIdMap = {};
+for (const [id, name] of Object.entries(islandMap)) {
+  nameToIdMap[name] = id;
+}
+
+// 处理出发地输入，提供搜索建议
+const onFromLocationInput = () => {
+  if (!fromLocation.value) {
+    fromSuggestions.value = [];
+    return;
+  }
+  
+  fromSuggestions.value = Object.values(islandMap).filter(name => 
+    name.includes(fromLocation.value)
+  );
+};
+
+// 处理目的地输入，提供搜索建议
+const onToLocationInput = () => {
+  if (!toLocation.value) {
+    toSuggestions.value = [];
+    return;
+  }
+  
+  toSuggestions.value = Object.values(islandMap).filter(name => 
+    name.includes(toLocation.value)
+  );
+};
+
+// 选择出发地建议
+const selectFromSuggestion = (suggestion) => {
+  fromLocation.value = suggestion;
+  fromLocationId.value = nameToIdMap[suggestion];
+  fromSuggestions.value = [];
+};
+
+// 选择目的地建议
+const selectToSuggestion = (suggestion) => {
+  toLocation.value = suggestion;
+  toLocationId.value = nameToIdMap[suggestion];
+  toSuggestions.value = [];
+};
 
 // 检查登录状态
 const hasToken = () => {
@@ -107,6 +195,7 @@ const hasToken = () => {
 // 交换出发地和目的地
 const swapLocations = () => {
   [fromLocation.value, toLocation.value] = [toLocation.value, fromLocation.value];
+  [fromLocationId.value, toLocationId.value] = [toLocationId.value, fromLocationId.value];
 };
 
 // 日期选择器
@@ -119,9 +208,64 @@ const onPassengerChange = (e) => {
   passengerCount.value = passengerOptions.value[e.detail.value];
 };
 
+// 模糊搜索函数
+const fuzzySearch = (input) => {
+  if (!input) return null;
+  
+  // 精确匹配
+  if (nameToIdMap[input]) {
+    return {
+      name: input,
+      id: nameToIdMap[input]
+    };
+  }
+  
+  // 模糊匹配
+  const matches = Object.entries(islandMap).filter(([id, name]) => 
+    name.includes(input)
+  );
+  
+  if (matches.length > 0) {
+    // 返回第一个匹配项
+    const [id, name] = matches[0];
+    return {
+      name,
+      id
+    };
+  }
+  
+  return null;
+};
+
 // 获取船票数据
 const fetchTickets = () => {
   if (!hasToken()) return;
+  
+  // 在发送请求前进行模糊匹配
+  let fromId = fromLocationId.value;
+  let toId = toLocationId.value;
+  
+  // 如果没有已选择的ID，尝试进行模糊匹配
+  if (!fromId && fromLocation.value) {
+    const fromMatch = fuzzySearch(fromLocation.value);
+    if (fromMatch) {
+      fromId = fromMatch.id;
+      fromLocation.value = fromMatch.name; // 更新为完整名称
+      fromLocationId.value = fromId; // 保存ID
+    }
+  }
+  
+  if (!toId && toLocation.value) {
+    const toMatch = fuzzySearch(toLocation.value);
+    if (toMatch) {
+      toId = toMatch.id;
+      toLocation.value = toMatch.name; // 更新为完整名称
+      toLocationId.value = toId; // 保存ID
+    }
+  }
+
+  // 显示选择的岛屿ID和名称（可选，用于调试）
+  console.log(`发送请求 - 出发地: ${fromLocation.value}(ID: ${fromId}), 目的地: ${toLocation.value}(ID: ${toId})`);
 
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/product/ilTransportation/list',
@@ -133,20 +277,23 @@ const fetchTickets = () => {
     data: {
       pageNo: 1,
       pageSize: 50,
-      fromLocation: fromLocation.value,
-      toLocation: toLocation.value,
+      fromislandid: fromId || "", // 使用匹配到的ID
+      toislandid: toId || "",  // 使用匹配到的ID
       date: currentDate.value,
       passengers: passengerCount.value
     },
     success: (res) => {
       if (res.data.success) {
+        console.log(res.data);
         tickets.value = res.data.result.records.map(item => ({
-          id: item.id, // 确保包含 id
+          id: item.id,
           time: formatTime(item.schedule),
           duration: `约 ${item.duration} 小时`,
           shipName: `${item.mode} | ${item.cabintype}`,
           price: `¥ ${item.cost}`,
-          remain: item.inventory
+          remain: item.inventory,
+          fromLocation: islandMap[item.fromislandid] || '未知起点',
+          toLocation: islandMap[item.toislandid] || '未知目的地'
         }));
       } else {
         console.error('获取船票失败:', res.data.message);
@@ -193,6 +340,33 @@ const toggleSort = (type) => {
 const goToDetails = (ticketId) => {
   uni.navigateTo({
     url: `/pages/ticketDetails/ticketDetails?ticketId=${ticketId}`
+  });
+};
+
+// 跳转到个人信息填写页面
+const goToPersonalInfo = (ticket) => {
+  if (!hasToken()) return;
+  
+  // 阻止事件冒泡，避免同时触发卡片的点击事件
+  event.stopPropagation();
+  
+  // 保存所选船票信息到本地存储
+  uni.setStorageSync('selectedTicket', JSON.stringify({
+    id: ticket.id,
+    time: ticket.time,
+    duration: ticket.duration,
+    shipName: ticket.shipName,
+    price: ticket.price,
+    remain: ticket.remain,
+    fromLocation: ticket.fromLocation,
+    toLocation: ticket.toLocation,
+    date: currentDate.value,
+    passengers: passengerCount.value
+  }));
+  
+  // 跳转到个人信息填写页面
+  uni.navigateTo({
+    url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticket.id}`
   });
 };
 
@@ -315,6 +489,48 @@ onMounted(() => {
   margin-bottom: 10px;
 }
 
+.route-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+
+.island-info {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.island-name {
+  font-size: 16px;
+  color: #0066CC;
+  font-weight: 500;
+  text-align: center;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 5px;
+  position: relative;
+}
+
+.line {
+  width: 60rpx;
+  height: 4rpx;
+}
+
+.arrow-img {
+  width: 40rpx;
+  height: 40rpx;
+  margin: 0 5rpx;
+}
+
 .ship-row {
   display: flex;
   justify-content: space-between;
@@ -350,5 +566,35 @@ input {
   width: 16px;
   height: 16px;
   margin-left: 5px;
+}
+
+/* 新增样式 */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 130px;
+  max-height: 200rpx;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-item {
+  padding: 10rpx;
+  font-size: 28rpx;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.suggestion-item:active {
+  background-color: #f0f0f0;
 }
 </style>

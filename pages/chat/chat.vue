@@ -1,7 +1,7 @@
 <template>
 	<view class="container" :key="globalUpdateKey">
 		<!-- Header -->
-		<view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
+		<view class="header" :style="{ paddingTop: `${Math.max(10, statusBarHeight/2)}px` }">
 			<view class="back-icon avatar ai-avatar" @tap="goBack"></view>
 			<view class="title">AI旅游助手</view>
 			<view class="more-icon avatar ai-avatar" @tap="showMore">
@@ -12,7 +12,7 @@
 		<!-- Chat Container -->
 		<scroll-view scroll-y class="chat-container" :scroll-top="scrollTop" scroll-with-animation
 			:scroll-into-view="scrollIntoView" :scroll-anchoring="true" enhanced :show-scrollbar="false"
-			@scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 30px">
+			@scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 10px">
 			<!-- AI Welcome Message -->
 			<view class="message ai-message" id="msg-0">
 				<view class="avatar ai-avatar">
@@ -59,8 +59,21 @@
 							<block v-for="(item, idx) in msg.content" :key="idx">
 								<!-- 打字机效果的文本内容（带闪烁光标） -->
 								<view v-if="item.type === 'text'" class="text-content"
-									:class="{ typing: msg.typing && idx === msg.content.length - 1 }"
-									v-html="item.content"></view>
+									:class="{ typing: msg.typing && idx === msg.content.length - 1 }">
+									<!-- 思考过程收纳组件 -->
+									<view v-if="item.hasThinking && item.thinkingContent" class="thinking-container">
+										<view class="thinking-header" @click="toggleThinking(item)">
+											<text class="thinking-icon">{{ item.thinkingOpen ? '∧' : '∨' }}</text>
+											<text class="thinking-title">已完成思考</text>
+											<view class="thinking-action">
+												<text>{{ item.thinkingOpen ? '收起' : '展开' }}</text>
+											</view>
+										</view>
+										<view v-if="item.thinkingOpen" class="thinking-content">{{ item.thinkingContent }}</view>
+									</view>
+									<!-- 主要内容 -->
+									{{ item.content }}
+								</view>
 								<view v-else-if="item.type === 'Transport'" class="trip-item transport clickable-span"
 									@tap="handleItemClick(item)">
 									{{ item.content }}
@@ -734,20 +747,38 @@ const sendMessage = () => {
 	// 判断上一条消息是否存在，初始的时候chatMessages.length为0
 	if (chatMessages.length > 1) {  // 存在上一条消息
 		let lastMessage = chatMessages[chatMessages.length - 2].content
-		console.log("上一条消息:", lastMessage)
-		// 将 Proxy 转换为普通数组
-		const normalArray = Array.from(lastMessage);
-		// 将每个对象转换为字符串形式
-		const stringifiedObjects = normalArray.map(item => {
-			return JSON.stringify(item);
-		});
-		// 将所有字符串连接成一个字符串
-		const resultString = stringifiedObjects.join(',');
+		console.log("上一条消息类型:", typeof lastMessage, Array.isArray(lastMessage) ? "数组长度:" + lastMessage.length : "");
+		
+		let resultString = '';
+		// 判断lastMessage是否为数组或对象，需要序列化
+		if (Array.isArray(lastMessage)) {
+			try {
+				// 深拷贝数组，避免直接修改原数组
+				const deepCopy = JSON.parse(JSON.stringify(lastMessage));
+				// 将数组转换为JSON字符串
+				resultString = JSON.stringify(deepCopy);
+			} catch (e) {
+				console.error("转换上一条数组消息时出错:", e);
+				resultString = "[]"; // 错误时提供空数组字符串
+			}
+		} else if (typeof lastMessage === 'object' && lastMessage !== null) {
+			try {
+				// 深拷贝对象，避免直接修改原对象
+				const deepCopy = JSON.parse(JSON.stringify(lastMessage));
+				// 将对象转换为JSON字符串
+				resultString = JSON.stringify(deepCopy);
+			} catch (e) {
+				console.error("转换上一条对象消息时出错:", e);
+				resultString = "{}"; // 错误时提供空对象字符串
+			}
+		} else {
+			// 处理字符串或其他类型的消息
+			resultString = String(lastMessage || "");
+		}
 
 		console.log("上一条消息转String后的结果:", resultString);
 		// 将上一条消息转String后的结果传递给AI接口作为参数
 		callAIInterface2(chatMessages[chatMessages.length - 1].content, resultString);
-
 
 	} else {  // 不存在上一条消息
 		console.log("不存在上一条消息")
@@ -756,7 +787,158 @@ const sendMessage = () => {
 	}
 };
 
-// 在sendMessage中使用此方法会让ai回复一个正在思考中...
+// 检测并分离思考过程的函数
+const processThinkingContent = (content) => {
+	if (typeof content !== 'string') return { mainContent: content, thinkingContent: '' };
+	
+	// 检查内容中是否有明确的分界标记
+	const contentMarkers = [
+		{ marker: '**地图/行程**', type: 'content' },
+		{ marker: '✅', type: 'content' },
+		{ marker: '📝', type: 'content' },
+		{ marker: '🗺️', type: 'content' },
+		{ marker: '行程概览', type: 'content' },
+		{ marker: '行程安排', type: 'content' },
+		{ marker: '旅行计划', type: 'content' },
+		{ marker: '推荐行程', type: 'content' }
+	];
+	
+	// 找到内容部分的起始位置
+	let contentStartIndex = -1;
+	let contentMarker = '';
+	
+	for (const { marker, type } of contentMarkers) {
+		const idx = content.indexOf(marker);
+		if (idx !== -1 && (contentStartIndex === -1 || idx < contentStartIndex)) {
+			contentStartIndex = idx;
+			contentMarker = marker;
+		}
+	}
+	
+	// 检测思考过程的开始标记
+	const thinkingMarkers = [
+		{ marker: '<details', type: 'thinking' },
+		{ marker: 'Thinking...', type: 'thinking' },
+		{ marker: 'thinking...', type: 'thinking' },
+		{ marker: '思考过程', type: 'thinking' },
+		{ marker: '思考中', type: 'thinking' },
+		{ marker: '好的，我需要', type: 'thinking' },
+		{ marker: '我来思考', type: 'thinking' },
+		{ marker: '根据你的需求', type: 'thinking' },
+		{ marker: '我将为你', type: 'thinking' }
+	];
+	
+	// 找到思考过程的起始位置
+	let thinkingStartIndex = -1;
+	let thinkingMarker = '';
+	
+	for (const { marker, type } of thinkingMarkers) {
+		const idx = content.indexOf(marker);
+		if (idx !== -1 && (thinkingStartIndex === -1 || idx < thinkingStartIndex)) {
+			thinkingStartIndex = idx;
+			thinkingMarker = marker;
+		}
+	}
+	
+	// 根据找到的标记处理内容
+	let thinkingContent = '';
+	let mainContent = content;
+	
+	// 如果同时找到了思考过程和内容的标记
+	if (thinkingStartIndex !== -1 && contentStartIndex !== -1) {
+		// 思考过程在前，内容在后
+		if (thinkingStartIndex < contentStartIndex) {
+			thinkingContent = content.substring(thinkingStartIndex, contentStartIndex).trim();
+			mainContent = content.substring(contentStartIndex).trim();
+		} 
+		// 内容在前，思考过程在后（不太可能，但处理一下）
+		else {
+			mainContent = content.substring(contentStartIndex, thinkingStartIndex).trim();
+			thinkingContent = content.substring(thinkingStartIndex).trim();
+		}
+	}
+	// 只找到了思考过程的标记
+	else if (thinkingStartIndex !== -1) {
+		// 如果整个内容都是思考过程
+		if (thinkingStartIndex === 0) {
+			thinkingContent = content;
+			mainContent = '';
+		} else {
+			// 思考过程后面的内容作为主内容
+			thinkingContent = content.substring(thinkingStartIndex).trim();
+			mainContent = content.substring(0, thinkingStartIndex).trim();
+		}
+	}
+	// 只找到了内容的标记
+	else if (contentStartIndex !== -1) {
+		// 如果整个内容都是正文
+		if (contentStartIndex === 0) {
+			mainContent = content;
+			thinkingContent = '';
+		} else {
+			// 内容标记前的部分作为思考过程
+			thinkingContent = content.substring(0, contentStartIndex).trim();
+			mainContent = content.substring(contentStartIndex).trim();
+		}
+	}
+	// 没有找到明确的标记，使用默认处理
+	else {
+		// 如果内容以某些常见的AI思考开头短语开始，则认为是思考过程
+		if (content.startsWith('我认为') || 
+			content.startsWith('根据您的') || 
+			content.startsWith('基于您的') ||
+			content.startsWith('考虑到')) {
+			thinkingContent = content;
+			mainContent = '';
+		} else {
+			// 默认整个内容都是主内容
+			mainContent = content;
+			thinkingContent = '';
+		}
+	}
+	
+	// 清理思考内容中的HTML标签
+	if (thinkingContent) {
+		thinkingContent = thinkingContent.replace(/<\/?[^>]+(>|$)/g, '');
+	}
+	
+	// 在主内容前添加行程分隔符（如果主内容不为空且不以特定标记开头）
+	if (mainContent && 
+		!mainContent.startsWith('✅') && 
+		!mainContent.startsWith('📝') && 
+		!mainContent.startsWith('🗺️') && 
+		!mainContent.startsWith('**地图/行程**')) {
+		mainContent = `✅ ${mainContent}`;
+	}
+	
+	return { mainContent, thinkingContent };
+};
+
+// 将具有思考过程的内容拆分为两部分：思考过程和主要内容
+// 在typewriterEffect函数中的contentArray处理之后添加以下代码
+const processContentWithThinking = (contentArray) => {
+	if (!Array.isArray(contentArray)) return contentArray;
+	
+	// 处理数组中的每个项目
+	return contentArray.map(item => {
+		if (item.type === 'text' && item.content) {
+			const { mainContent, thinkingContent } = processThinkingContent(item.content);
+			
+			// 如果检测到思考过程，分离成两个项目
+			if (thinkingContent) {
+				return {
+					...item,
+					content: mainContent,
+					thinkingContent: thinkingContent,
+					hasThinking: true
+				};
+			}
+		}
+		return item;
+	});
+};
+
+// 修改AIAnswerThinking函数中的typewriterEffect调用
 const AIAnswerThinking = function (fullContent) {
 	// 创建一个空的AI消息
 	const aiMessage = {
@@ -776,9 +958,11 @@ const AIAnswerThinking = function (fullContent) {
 	// 添加到消息列表
 	const messageIndex = chatMessages.push(aiMessage) - 1;
 
-	// 使用打字机效果显示内容
-	typewriterEffect(chatMessages[messageIndex], fullContent);
+	// 处理fullContent，检测并分离思考过程
+	const processedContent = Array.isArray(fullContent) ? processContentWithThinking(fullContent) : fullContent;
 
+	// 使用打字机效果显示内容
+	typewriterEffect(chatMessages[messageIndex], processedContent);
 
 	// 确保消息框立即可见
 	nextTick(() => {
@@ -791,38 +975,91 @@ let isTypingScroll = false;
 let lastContentHeight = 0;
 let scrollAnimationFrame = null;
 
+// 修复typewriterEffect函数中的边界检查问题
 const typewriterEffect = (message, fullContent, delay = 30) => {
-	// 标准化输入内容
+	if (!message || !fullContent) {
+		console.error("typewriterEffect: 无效的参数", { message, fullContent });
+		return;
+	}
+	
+	// 标准化输入内容，确保每个内容项具有合法结构并清理内容
 	const contentArray = Array.isArray(fullContent)
-		? fullContent
-		: [{ type: 'text', content: String(fullContent) }];
+		? fullContent.map(item => {
+			// 确保每个项目是有效对象
+			if (!item) return { type: 'text', content: '' };
+			
+			// 清理文本内容
+			const cleanedContent = item.type === 'text' ? cleanAIContent(item.content || '') : item.content || '';
+			
+			return {
+				type: item.type || 'text',
+				id: item.id || '',
+				content: cleanedContent
+			};
+		})
+		: [{ type: 'text', content: String(fullContent || '数据加载出错') }];
 
-	// 初始化消息内容
+	// 安全地初始化消息内容
+	try {
 	message.content = contentArray.map(item => ({
 		type: item.type || 'text',
 		id: item.id || '',
 		content: ''
 	}));
+	} catch (e) {
+		console.error("初始化消息内容失败:", e);
+		// 失败时使用简单文本
+		message.content = [{
+			type: 'text',
+			content: ''
+		}];
+	}
 
 	let currentIndex = 0;
 	let currentChar = 0;
 	let lastScrollTime = 0;
 
 	const typeNext = () => {
+		if (!message || !message.content) {
+			console.error("typeNext: 消息或内容已不存在");
+			return;
+		}
+		
 		if (currentIndex >= contentArray.length) {
 			message.typing = false;
 			isTypingScroll = false;
 			// 最终确保滚动到底部
-			requestAnimationFrame(() => {
+			setTimeout(() => {
 				scrollToBottom();
-			});
+			}, 0);
+			return;
+		}
+		
+		// 检查数组边界
+		if (currentIndex >= contentArray.length || !contentArray[currentIndex]) {
+			currentIndex++;
+			currentChar = 0;
+			setTimeout(typeNext, delay * 3);
 			return;
 		}
 
 		const currentItem = contentArray[currentIndex];
+		if (!currentItem) {
+			// 跳过无效项
+			currentIndex++;
+			setTimeout(typeNext, delay);
+			return;
+		}
+		
 		const text = currentItem.content || '';
 
 		if (currentChar < text.length) {
+			// 确保数组边界和对象存在
+			if (message.content && 
+				Array.isArray(message.content) && 
+				currentIndex < message.content.length && 
+				message.content[currentIndex]) {
+				
 			message.content[currentIndex].content = text.substring(0, currentChar + 1);
 			currentChar++;
 			updateCounter.value++;
@@ -836,20 +1073,26 @@ const typewriterEffect = (message, fullContent, delay = 30) => {
 				}
 			}).exec();
 
-			// 使用requestAnimationFrame优化滚动性能
+				// 使用setTimeout代替requestAnimationFrame优化滚动性能
 			if (scrollAnimationFrame) {
-				cancelAnimationFrame(scrollAnimationFrame);
+					clearTimeout(scrollAnimationFrame);
 			}
-			scrollAnimationFrame = requestAnimationFrame(() => {
+				scrollAnimationFrame = setTimeout(() => {
 				const now = Date.now();
 				if (!isTypingScroll || now - lastScrollTime > 150) { // 延长节流时间到150ms
 					isTypingScroll = true;
 					lastScrollTime = now;
 					scrollToBottom();
 				}
-			});
+				}, 16); // 约等于60fps的刷新率
 
 			setTimeout(typeNext, delay);
+			} else {
+				// 如果内容数组不匹配，跳到下一个
+				currentIndex++;
+				currentChar = 0;
+				setTimeout(typeNext, delay * 3);
+			}
 		} else {
 			currentIndex++;
 			currentChar = 0;
@@ -953,42 +1196,287 @@ const onScroll = (e) => {
 
 // 显示思考动画2 - 带点动画效果
 const showThinkingAnimation2 = () => {
+	// 先检查是否已有思考中消息，有则删除
+	const existingThinkingIndex = chatMessages.findIndex(msg => msg.thinking === true);
+	if (existingThinkingIndex !== -1) {
+		chatMessages.splice(existingThinkingIndex, 1);
+	}
+	
 	const messageId = Date.now();
 	const dots = ['', '.', '..', '...'];
 	let dotIndex = 0;
+	let isCleared = false;
 
 	// 添加思考中消息
-	chatMessages.push({
+	const thinkingIndex = chatMessages.push({
 		type: "ai",
 		content: `正在思考中${dots[dotIndex]}`,
 		id: messageId,
 		thinking: true
-	});
+	}) - 1;
 	scrollToLatestMessage();
 
 	// 启动点动画
 	const intervalId = setInterval(() => {
+		// 检查是否已被清除
+		if (isCleared) {
+			clearInterval(intervalId);
+			return;
+		}
+		
 		dotIndex = (dotIndex + 1) % dots.length;
+		// 找到消息的位置，只匹配ID即可，思考状态可能被改变
 		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
-		if (msgIndex !== -1) {
+		if (msgIndex !== -1 && chatMessages[msgIndex].thinking) {
 			chatMessages[msgIndex].content = `正在思考中${dots[dotIndex]}`;
 			updateCounter.value++;
+		} else {
+			// 如果找不到消息或不再处于思考状态，清理定时器
+			clearInterval(intervalId);
 		}
 	}, 300);
 
-	// 返回清除函数
+	// 返回清除函数 - 确保完全清除思考消息
 	return () => {
+		isCleared = true;
 		clearInterval(intervalId);
+		
+		// 再次查找消息位置(可能已经改变)，只匹配ID
 		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
 		if (msgIndex !== -1) {
-			chatMessages.splice(msgIndex, 1);
+			// 检查是否仍是思考状态，避免删除已转换的消息
+			if (chatMessages[msgIndex].thinking) {
+				chatMessages.splice(msgIndex, 1);
+				// 强制更新视图
+				globalUpdateKey.value = Date.now();
+			}
 		}
 	};
 };
 
-// AI接口调用
+// 修改cleanAIContent函数，保留思考过程但移除提问建议标签和内容
+const cleanAIContent = (content) => {
+	if (typeof content !== 'string') return content;
+	
+	try {
+		// 替换Unicode编码的表情符号
+		let cleaned = content.replace(/U\+([0-9A-F]{4,})/g, (match, codePoint) => {
+			try {
+				return String.fromCodePoint(parseInt(codePoint, 16));
+			} catch (e) {
+				return match;
+			}
+		});
+		
+		// 保留思考过程，但移除<details>标签
+		cleaned = cleaned.replace(/<\/?details.*?>/g, '');
+		cleaned = cleaned.replace(/<\/?summary.*?>/g, '');
+		
+		// 移除<ask>标签及其内容
+		cleaned = cleaned.replace(/<ask>.*?<\/ask>/gs, '');
+		
+		// 清理其他HTML标签
+		cleaned = cleaned.replace(/<\/?[^>]+(>|$)/g, '');
+		
+		return cleaned.trim();
+	} catch (e) {
+		console.error("清理AI内容出错:", e);
+		return content;  // 出错时返回原始内容
+	}
+};
+
+// 海钓相关的备用数据
+const FISHING_MOCK_DATA = [
+  {
+    "type": "text",
+    "id": "",
+    "content": "📌 根据您的海钓需求，我推荐以下万山岛2日行程："
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "🗓️ 第1天"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 08:00 从珠海九洲港乘坐"
+  },
+  {
+    "type": "Transport",
+    "id": "2",
+    "content": "船"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "前往万山岛（约100元/人）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 12:00 到达万山岛并在"
+  },
+  {
+    "type": "Restaurant",
+    "id": "10",
+    "content": "岛上美食坊"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "享用午餐（约180元/人）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 14:00-18:00 参加专业"
+  },
+  {
+    "type": "Activity",
+    "id": "1",
+    "content": "海钓"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "活动（约800元/次，含设备和指导）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 19:00 入住"
+  },
+  {
+    "type": "Accommodation",
+    "id": "5",
+    "content": "万山岛海滨酒店"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "（标准间约450元/晚）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 20:00 在"
+  },
+  {
+    "type": "Restaurant",
+    "id": "4",
+    "content": "海鲜酒家"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "享用晚餐（约250元/人）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "🗓️ 第2天"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 07:00 在"
+  },
+  {
+    "type": "Restaurant",
+    "id": "7",
+    "content": "咖啡小屋"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "享用早餐（约60元/人）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 08:00-12:00 进行第二次"
+  },
+  {
+    "type": "Activity",
+    "id": "1",
+    "content": "海钓"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "活动（可选不同的钓点）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⏰ 13:30 乘坐"
+  },
+  {
+    "type": "Transport",
+    "id": "2",
+    "content": "船"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "返回珠海（约100元/人）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "💰 费用概算："
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "- 交通：200元（往返船票）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "- 住宿：450元（一晚标准间）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "- 餐饮：490元（含早中晚餐）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "- 活动：800元（一次海钓体验）"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "总计：约1940元/人"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "⚠️ 注意事项："
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "1. 请提前预订船票和住宿"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "2. 建议携带防晒和防风装备"
+  },
+  {
+    "type": "text",
+    "id": "",
+    "content": "3. 海钓活动需视天气情况而定"
+  }
+];
+
+// 修改callAIInterface函数，确保思考动画和响应处理的顺序正确
 const callAIInterface = async (userQuery, retryCount = 0) => {
-	const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux"; // 修复了 URL 格式
+	const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
 	const data = {
 		conversation_id: '',
 		inputs: {
@@ -996,176 +1484,524 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 			recommended_plan: ''
 		},
 		query: userQuery,
-		webMode: ''
+		webMode: 'MAPP-小程序'
 	};
-
-	const body = JSON.stringify(data); // Body 参数
 
 	// 显示思考动画
 	const clearAnimation = showThinkingAnimation2();
-	let response;
+	
 	try {
-		response = await fetch(url, {
+		// 使用Promise包装请求，以便更好地控制流程
+		new Promise((resolve, reject) => {
+			uni.request({
+				url: url,
 			method: 'POST',
-			headers: {
+				header: {
 				'X-Access-Token': token.value,
-				'Content-Type': 'application/json', // 必须与 Body 格式匹配
-			},
-			body: body, // 可以是字符串、FormData、Blob 等
-		});
-
-		const reader = response.body.getReader();
-		const decoder = new TextDecoder();
-
-		let str = '';
-		while (true) {
-			const { value } = await reader.read();
-			const chunk = decoder.decode(value);
-			str += chunk;
-			if (chunk.indexOf('message_end') != -1) {
-				// 数据接收完成，清除动画
-				clearAnimation();
-				console.log("================= 接收结束 开始处理 ===============");
-				const chunks = str.split('data:');
-				let wantData = '';
-				for (let i = 0; i < chunks.length; i++) {
-					if (chunks[i].indexOf('workflow_finished') != -1) {
-						const jsonData = JSON.parse(chunks[i]);
-						const answer = jsonData.data.outputs.answer;
-						if (answer) {
-							const decodedAnswer = JSON.parse(answer);
-							console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
-
-							// 先创建空消息对象
-							const aiMessage = {
-								type: 'ai',
-								content: Array.isArray(decodedAnswer)
-									? decodedAnswer.map(item => ({
-										type: item.type,
-										id: item.id || '',
-										content: ''
-									}))
-									: [{ type: 'text', content: '' }],
-								typing: true
-							};
-							// 添加到消息列表
-							const messageIndex = chatMessages.push(aiMessage) - 1;
-							console.log("chatMessages =>", chatMessages);
-							// 使用打字机效果填充内容
-							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-							scrollToLatestMessage();
+					'Content-Type': 'application/json'
+				},
+				data: data,
+				timeout: 90000, // 90秒超时
+				success: (response) => {
+					resolve(response);
+				},
+				fail: (error) => {
+					reject(error);
+				}
+			});
+		})
+		.then(response => {
+			// 确保思考动画已清除
+			clearAnimation();
+			
+			// 获取完整响应数据
+			const responseData = response.data;
+			console.log("响应数据类型:", typeof responseData);
+			
+			if (typeof responseData === 'string') {
+				console.log("收到字符串形式的响应，进行解析");
+				
+				// 查找最后一个workflow_finished事件
+				const dataChunks = responseData.split('data:');
+				let finalAnswer = null;
+				
+				// 从后向前查找有效的workflow_finished事件
+				for (let i = dataChunks.length - 1; i >= 0; i--) {
+					const chunk = dataChunks[i].trim();
+					if (!chunk) continue;
+					
+					try {
+						const jsonData = JSON.parse(chunk);
+						if (jsonData.event === 'workflow_finished' && 
+							jsonData.data && jsonData.data.outputs && 
+							jsonData.data.outputs.answer) {
+							
+							try {
+								// 尝试解析答案
+								const answerData = jsonData.data.outputs.answer;
+								
+								// 处理不同类型的答案数据
+								if (typeof answerData === 'string') {
+									try {
+										finalAnswer = JSON.parse(answerData);
+										console.log("找到最终答案(来自字符串JSON)", finalAnswer);
+									} catch (parseError) {
+										console.error("解析答案字符串为JSON失败:", parseError);
+										// 若无法解析为JSON，则创建简单文本内容
+										finalAnswer = [{ type: 'text', content: answerData }];
+									}
+								} else if (Array.isArray(answerData)) {
+									finalAnswer = answerData;
+									console.log("找到最终答案(来自数组)", finalAnswer);
+								} else if (typeof answerData === 'object' && answerData !== null) {
+									finalAnswer = [answerData];
+									console.log("找到最终答案(来自对象)", finalAnswer);
+								} else {
+									console.log("找到未知类型的答案:", typeof answerData);
+									finalAnswer = [{ type: 'text', content: String(answerData) }];
+								}
+								
+								break; // 找到有效答案后退出循环
+							} catch (parseError) {
+								console.error("处理答案数据失败:", parseError);
+							}
 						}
-						break;
+					} catch (e) {
+						// 忽略无效JSON
+						console.log("解析JSON失败:", e);
 					}
 				}
-				console.log("chunks 数组 =>", chunks);
-				console.log("================= 接收结束 处理完成开始渲染 ===============");
-				break;
+				
+				// 只有在找到有效答案后才进行处理
+				if (finalAnswer && Array.isArray(finalAnswer)) {
+					// 对数据进行安全处理
+					const safeAnswer = finalAnswer.map(item => {
+						// 确保每个项目都有有效的类型和内容
+						if (!item) return { type: 'text', content: '' };
+						return {
+							type: item.type || 'text',
+							id: item.id || '',
+							content: typeof item.content === 'string' ? item.content : ''
+						};
+					}).filter(item => item); // 过滤掉null/undefined
+					
+					console.log("处理后的安全答案:", safeAnswer);
+					
+					// 确保至少有一个有效的内容项
+					if (safeAnswer.length > 0) {
+						// 创建AI消息对象
+							const aiMessage = {
+								type: 'ai',
+							content: [],
+							id: Date.now(),
+							thinking: false,
+								typing: true
+							};
+						
+							// 添加到消息列表
+							const messageIndex = chatMessages.push(aiMessage) - 1;
+						
+						// 由于之前已经清除了思考动画，可以直接开始打字机效果
+						try {
+							// 使用安全的数据进行渲染
+							typewriterEffect(chatMessages[messageIndex], safeAnswer);
+							scrollToLatestMessage();
+						} catch (typeError) {
+							console.error("打字机效果出错:", typeError);
+							
+							// 出错时简单赋值
+							try {
+								chatMessages[messageIndex].content = safeAnswer;
+								chatMessages[messageIndex].typing = false;
+								globalUpdateKey.value = Date.now();
+								scrollToLatestMessage();
+							} catch (e) {
+								console.error("直接设置内容也失败:", e);
+								showErrorMessage("显示内容失败，请重试");
+							}
+						}
+					} else {
+						showErrorMessage("未找到有效的内容");
+					}
+				} else {
+					showErrorMessage("无法获取完整的响应");
+				}
+			} else if (typeof responseData === 'object') {
+				// 对象响应的处理 - 使用相同的安全处理逻辑
+				console.log("收到对象形式的响应");
+				
+				if (responseData.data && responseData.data.outputs && responseData.data.outputs.answer) {
+					try {
+						// 解析答案
+						const answer = responseData.data.outputs.answer;
+						let parsedAnswer;
+						
+						if (typeof answer === 'string') {
+							try {
+								parsedAnswer = JSON.parse(answer);
+								console.log("成功解析答案字符串为JSON对象:", parsedAnswer);
+							} catch (e) {
+								console.error("解析答案字符串失败:", e);
+								// 尝试对特殊格式进行清理后再解析
+								try {
+									// 处理可能的转义问题
+									const cleanedAnswer = answer.replace(/\\"/g, '"');
+									parsedAnswer = JSON.parse(cleanedAnswer);
+									console.log("清理后成功解析答案:", parsedAnswer);
+								} catch (e2) {
+									console.error("清理后解析仍然失败:", e2);
+									// 如果解析失败，创建简单文本内容
+									parsedAnswer = [{ type: 'text', content: answer }];
+								}
+							}
+						} else if (Array.isArray(answer)) {
+							parsedAnswer = answer;
+							console.log("答案已是数组格式:", parsedAnswer);
+						} else {
+							parsedAnswer = [{ type: 'text', content: String(answer) }];
+							console.log("将非字符串非数组答案转为文本:", parsedAnswer);
+						}
+      
+						// 安全处理数据
+						const safeAnswer = parsedAnswer.map(item => {
+							if (!item) return { type: 'text', content: '' };
+							return {
+								type: item.type || 'text',
+								id: item.id || '',
+								content: typeof item.content === 'string' ? item.content : ''
+							};
+						}).filter(item => item);
+						
+						// 创建消息并显示
+						if (safeAnswer.length > 0) {
+							const aiMessage = {
+								type: 'ai',
+								content: [],
+								id: Date.now(),
+								thinking: false,
+								typing: true
+							};
+							
+							const messageIndex = chatMessages.push(aiMessage) - 1;
+							
+							try {
+								typewriterEffect(chatMessages[messageIndex], safeAnswer);
+								scrollToLatestMessage();
+							} catch (e) {
+								chatMessages[messageIndex].content = safeAnswer;
+								chatMessages[messageIndex].typing = false;
+								globalUpdateKey.value = Date.now();
+								scrollToLatestMessage();
+							}
+						} else {
+							showErrorMessage("解析的内容为空");
+						}
+					} catch (e) {
+						console.error("处理对象响应失败:", e);
+						showErrorMessage("处理响应数据失败");
+					}
+				} else {
+					showErrorMessage("响应数据不完整");
+				}
+			} else {
+				showErrorMessage("收到未知类型的响应");
 			}
-		}
-	} catch (error) {
-		// 添加错误处理逻辑
-		console.error("发生错误:", error);
-		if (retryCount < 3) { // 添加重试逻辑
+		})
+		.catch(error => {
+			// 清除思考动画并显示错误
+			clearAnimation();
+			console.error("请求失败:", error);
+			
+			if (retryCount < 2) {
 			console.log(`重试第 ${retryCount + 1} 次...`);
-			return callAIInterface(userQuery, retryCount + 1);
+				setTimeout(() => {
+					callAIInterface(userQuery, retryCount + 1);
+				}, 1000);
 		} else {
-			console.error("达到最大重试次数，请求失败");
-			// 处理最终失败的情况，例如显示错误消息给用户
-		}
+				showErrorMessage("网络请求失败，请重试");
+			}
+		});
+	} catch (error) {
+		clearAnimation();
+		console.error("执行请求发生错误:", error);
+		showErrorMessage("请求执行错误，请重试");
 	}
 };
 
-// AI接口调用的基础上，需要传递上一次AI返回的数据
+// 辅助函数 - 显示错误消息
+const showErrorMessage = (message) => {
+	const aiMessage = {
+		type: 'ai',
+		content: [{
+			type: 'text',
+			content: `抱歉，${message}`
+		}],
+		id: Date.now(),
+		thinking: false,
+		typing: false
+	};
+	
+	chatMessages.push(aiMessage);
+	globalUpdateKey.value = Date.now();
+	scrollToLatestMessage();
+	
+	uni.showToast({
+		title: message,
+		icon: "none",
+		duration: 2000
+	});
+};
+
+// 实现callAIInterface2方法
 const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
-	// 显示思考动画
-	const clearAnimation = showThinkingAnimation2();
-	let response;
-	try {
-		const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux"; // 修复了 URL 格式
-		const data = {
-			conversation_id: '',
-			inputs: {
-				original_intention: '',
-				recommended_plan: lastMessage
-			},
-			query: userQuery,
-			webMode: ''
-		};
+  const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
+  
+  // 确保lastMessage是有效的JSON字符串
+  let parsedLastMessage = lastMessage;
+  
+  const data = {
+    conversation_id: '',
+    inputs: {
+      original_intention: '',
+      recommended_plan: parsedLastMessage
+    },
+    query: userQuery,
+    webMode: 'MAPP-小程序'
+  };
 
-		const body = JSON.stringify(data); // Body 参数
-		console.log("AI接口函数2，请求数据：", body);
+  console.log("AI接口函数2，请求数据:", data);
 
-		response = await fetch(url, {
-			method: 'POST',
-			headers: {
-				'X-Access-Token': token.value,
-				'Content-Type': 'application/json', // 必须与 Body 格式匹配
-			},
-			body: body, // 可以是字符串、FormData、Blob 等
-		});
+  // 显示思考动画
+  const clearAnimation = showThinkingAnimation2();
+  
+  try {
+    // 发送请求
+    uni.request({
+      url: url,
+      method: 'POST',
+      header: {
+        'X-Access-Token': token.value,
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      data: data,
+      timeout: 90000, // 90秒超时
+      
+      success: (response) => {
+        // 清除思考动画
+        clearAnimation();
+        
+        // 获取响应数据
+        const responseData = response.data;
+        console.log("响应数据类型:", typeof responseData);
+        
+        let finalAnswer = null;
+        
+        // 处理字符串形式的响应
+        if (typeof responseData === 'string') {
+          console.log("收到字符串形式的响应，进行解析");
+          
+          try {
+            // 查找最终答案
+            const dataChunks = responseData.split('\n');
+            
+            for (const chunk of dataChunks) {
+              if (!chunk.trim().startsWith('data:')) continue;
+              
+              try {
+                const jsonStr = chunk.trim().substring(5);
+                const jsonData = JSON.parse(jsonStr);
+                
+                if (jsonData.event === 'workflow_finished' && 
+                    jsonData.data?.outputs?.answer) {
+                  
+                  try {
+                    finalAnswer = JSON.parse(jsonData.data.outputs.answer);
+                    break;
+                  } catch (e) {
+                    console.error("解析JSON答案失败:", e);
+                  }
+                }
+              } catch (e) {
+                console.error("解析数据块失败:", e);
+              }
+            }
+          } catch (e) {
+            console.error("处理字符串响应失败:", e);
+          }
+        } 
+        // 处理对象形式的响应
+        else if (typeof responseData === 'object') {
+          console.log("收到对象形式的响应");
+          
+          if (responseData.data?.outputs?.answer) {
+            const answer = responseData.data.outputs.answer;
+            
+            try {
+              if (typeof answer === 'string') {
+                try {
+                  finalAnswer = JSON.parse(answer);
+                } catch (e) {
+                  console.error("解析答案字符串失败:", e);
+                  finalAnswer = [{ type: 'text', content: answer }];
+                }
+              } else if (Array.isArray(answer)) {
+                finalAnswer = answer;
+              } else if (typeof answer === 'object' && answer !== null) {
+                finalAnswer = [answer];
+              } else {
+                finalAnswer = [{ type: 'text', content: String(answer || '无内容') }];
+              }
+            } catch (e) {
+              console.error("处理对象响应失败:", e);
+            }
+          }
+        }
+                
+        // 处理最终答案
+        if (finalAnswer && Array.isArray(finalAnswer) && finalAnswer.length > 0) {
+          // 过滤并处理内容
+          const processedAnswer = finalAnswer
+            .filter(item => item != null) // 过滤空项
+            .map(item => {
+              if (item.type === 'text' && typeof item.content === 'string') {
+                // 清理内容
+                const cleanedContent = cleanAIContent(item.content);
+                // 检测并分离思考过程
+                const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
+                
+                return {
+                  ...item,
+                  content: mainContent || cleanedContent,
+                  thinkingContent: thinkingContent,
+                  hasThinking: !!thinkingContent
+                };
+              }
+              return item;
+            })
+            .filter(item => 
+              item != null && 
+              (item.type !== 'text' || (item.content && item.content.trim() !== ''))
+            );
 
-		const reader = response.body.getReader();
-		const decoder = new TextDecoder();
-
-		let str = '';
-		while (true) {
-			const { value } = await reader.read();
-			const chunk = decoder.decode(value);
-			str += chunk;
-			if (chunk.indexOf('message_end') != -1) {
-				console.log("================= 接收结束 开始处理 ===============");
-				const chunks = str.split('data:');
-				let wantData = '';
-				for (let i = 0; i < chunks.length; i++) {
-					if (chunks[i].indexOf('workflow_finished') != -1) {
-						const jsonData = JSON.parse(chunks[i]);
-						const answer = jsonData.data.outputs.answer;
-						if (answer) {
-							const decodedAnswer = JSON.parse(answer);
-							console.log(`事件[${jsonData.event}] 解码后的答案:`, decodedAnswer);
-
-							// 先创建空消息对象
-							const aiMessage = {
-								type: 'ai',
-								content: Array.isArray(decodedAnswer)
-									? decodedAnswer.map(item => ({
-										type: item.type,
-										id: item.id || '',
-										content: ''
-									}))
-									: [{ type: 'text', content: '' }],
-								typing: true
-							};
-							// 添加到消息列表
-							const messageIndex = chatMessages.push(aiMessage) - 1;
-							console.log("chatMessages =>", chatMessages);
-							// 使用打字机效果填充内容
-							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-							scrollToLatestMessage();
-						}
-						break;
-					}
-				}
-				console.log("chunks 数组 =>", chunks);
-				console.log("================= 接收结束 处理完成开始渲染 ===============");
-				break;
-			}
-		}
-	} catch (error) {
-		// 添加错误处理逻辑
-		console.error("发生错误:", error);
-		if (retryCount < 3) { // 添加重试逻辑
-			console.log(`重试第 ${retryCount + 1} 次...`);
-			return callAIInterface2(userQuery, lastMessage, retryCount + 1);
-		} else {
-			console.error("达到最大重试次数，请求失败");
-			// 处理最终失败的情况，例如显示错误消息给用户
-		}
-	} finally {
-		// 确保无论是否成功或失败都清除动画
-		clearAnimation();
-	}
+          // 在此处创建消息并添加到列表
+          const aiMessage = {
+            type: 'ai',
+            content: [], // 初始为空数组
+            id: Date.now(),
+            thinking: false,
+            typing: true
+          };
+          
+          // 添加消息并获取索引
+          const messageIndex = chatMessages.push(aiMessage) - 1;
+          
+          // 使用打字机效果显示内容
+          try {
+            typewriterEffect(chatMessages[messageIndex], processedAnswer);
+            // 更新视图
+            globalUpdateKey.value = Date.now();
+            // 滚动到最新消息
+            scrollToLatestMessage();
+          } catch (error) {
+            console.error("显示消息内容时出错:", error);
+            // 错误情况下显示简单消息
+            chatMessages[messageIndex].content = [{
+              type: 'text',
+              content: '显示内容时出错，请重试。'
+            }];
+            chatMessages[messageIndex].typing = false;
+            globalUpdateKey.value = Date.now();
+          }
+        } else {
+          // 未找到有效答案或格式不匹配
+          console.error("未找到有效答案或格式不匹配");
+          
+          // 创建错误消息
+          const aiMessage = {
+            type: 'ai',
+            content: [{
+              type: 'text',
+              content: '抱歉，无法获取有效回复。请稍后再试。'
+            }],
+            id: Date.now(),
+            thinking: false,
+            typing: false
+          };
+          
+          chatMessages.push(aiMessage);
+          globalUpdateKey.value = Date.now();
+          scrollToLatestMessage();
+          
+          uni.showToast({
+            title: "无法获取有效响应",
+            icon: "none",
+            duration: 2000
+          });
+        }
+      },
+      fail: (error) => {
+        // 清除思考动画
+        clearAnimation();
+        console.error("请求失败:", error);
+        
+        // 创建错误消息
+        const aiMessage = {
+          type: 'ai',
+          content: [{
+            type: 'text',
+            content: '网络请求失败，请检查您的网络连接并稍后再试。'
+          }],
+          id: Date.now(),
+          thinking: false,
+          typing: false
+        };
+        
+        chatMessages.push(aiMessage);
+        globalUpdateKey.value = Date.now();
+        scrollToLatestMessage();
+        
+        if (retryCount < 2) {
+          console.log(`重试第 ${retryCount + 1} 次...`);
+          setTimeout(() => {
+            callAIInterface2(userQuery, lastMessage, retryCount + 1);
+          }, 1000);
+        } else {
+          uni.showToast({
+            title: "网络请求失败",
+            icon: "none",
+            duration: 2000
+          });
+        }
+      }
+    });
+  } catch (error) {
+    // 清除思考动画
+    clearAnimation();
+    console.error("执行请求发生错误:", error);
+    
+    // 创建错误消息
+    const aiMessage = {
+      type: 'ai',
+      content: [{
+        type: 'text',
+        content: '执行请求时发生错误，请稍后再试。'
+      }],
+      id: Date.now(),
+      thinking: false,
+      typing: false
+    };
+    
+    chatMessages.push(aiMessage);
+    globalUpdateKey.value = Date.now();
+    scrollToLatestMessage();
+    
+    if (retryCount < 2) {
+      setTimeout(() => {
+        callAIInterface2(userQuery, lastMessage, retryCount + 1);
+      }, 1000);
+    }
+  }
 };
 
 onMounted(() => {
@@ -2577,6 +3413,26 @@ onMounted(() => {
 		]
 	}
 });
+
+// 添加toggleThinking函数，用于展开/收起思考过程
+const toggleThinking = (item) => {
+	// 使用Vue的响应式机制添加或切换thinkingOpen属性
+	if (item.thinkingOpen === undefined) {
+		item.thinkingOpen = false; // 默认收起
+	} else {
+		item.thinkingOpen = !item.thinkingOpen;
+	}
+	
+	// 强制更新视图
+	globalUpdateKey.value = Date.now();
+	
+	// 内容展开后调整滚动
+	if (item.thinkingOpen) {
+		nextTick(() => {
+			scrollToBottom();
+		});
+	}
+};
 </script>
 
 <style>
@@ -2668,7 +3524,7 @@ onMounted(() => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 15px;
-	height: 44px;
+	height: 36px;
 	background-color: #4285f4;
 	color: #ffffff;
 	position: relative;
@@ -2676,25 +3532,23 @@ onMounted(() => {
 
 .back-icon,
 .more-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .title {
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 500;
 }
 
 .chat-container {
 	flex: 1;
 	overflow-y: auto;
-	padding-bottom: 60px;
-	/* 增加底部间距，为输入框和消息之间留出更多空间 */
-	margin-bottom: 20px;
-	/* 在聊天容器和输入框之间增加间隔 */
+	padding-bottom: 30px; /* 减少底部填充 */
+	margin-bottom: 10px; /* 减少底部边距 */
 }
 
 .avatar {
@@ -3040,7 +3894,7 @@ onMounted(() => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 15px;
-	height: 44px;
+	height: 22px;
 	background-color: #4285f4;
 	color: #ffffff;
 	position: relative;
@@ -3048,8 +3902,8 @@ onMounted(() => {
 
 .back-icon,
 .more-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 20px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -3057,7 +3911,7 @@ onMounted(() => {
 }
 
 .title {
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 500;
 	color: #ffffff;
 }
@@ -3065,7 +3919,7 @@ onMounted(() => {
 .input-container {
 	display: flex;
 	align-items: center;
-	padding: 8px 12px;
+	padding: 6px 12px;
 	background-color: #ffffff;
 	border-top: 1px solid #eeeeee;
 	position: fixed;
@@ -3202,7 +4056,66 @@ onMounted(() => {
 
 /* 占位的 */
 .blank {
-	height: 100rpx;
-	/* 与Tabbar高度一致，使用rpx单位 */
+	height: 140rpx;
+	/* 减小占位高度，增加内容区域 */
+}
+
+/* 思考过程样式 */
+.thinking-container {
+	margin: 8px 0;
+	border-radius: 4px;
+	background-color: #f6f8fa;
+	border: 1px solid #e3e6e8;
+	overflow: hidden;
+	width: 100%;
+}
+
+.thinking-header {
+	padding: 8px 12px;
+	display: flex;
+	align-items: center;
+	background-color: #f6f8fa;
+	cursor: pointer;
+	user-select: none;
+}
+
+.thinking-icon {
+	font-size: 12px;
+	color: #586069;
+	margin-right: 6px;
+}
+
+.thinking-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #586069;
+	flex: 1;
+}
+
+.thinking-action {
+	font-size: 12px;
+	color: #0366d6;
+	padding: 2px 8px;
+	border-radius: 3px;
+	background-color: rgba(3, 102, 214, 0.1);
+	border: 1px solid rgba(3, 102, 214, 0.2);
+	margin-left: auto;
+}
+
+.thinking-action text {
+	color: #0366d6;
+	font-weight: 500;
+}
+
+.thinking-content {
+	padding: 10px 12px;
+	font-size: 14px;
+	line-height: 1.6;
+	color: #444;
+	white-space: pre-wrap;
+	background-color: #fff;
+	max-height: 400px;
+	overflow-y: auto;
+	border-top: 1px solid #e3e6e8;
 }
 </style>
