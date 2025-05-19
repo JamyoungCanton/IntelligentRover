@@ -161,7 +161,7 @@ const handleGridItemClick = (item) => {
 }
 // 退出登录页
 const goLoginOut = () => {
-  uni.navigateTo({ url: '/pages/loginOut/loginOut' })
+  uni.navigateTo({ url: '/pages/my/setAccount' })
 }
 
 // 通知设置
