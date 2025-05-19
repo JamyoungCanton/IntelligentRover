@@ -154,11 +154,14 @@ const handleConfirmPayment = () => {
 					idCardType: "ID_CARD",  // 默认为身份证
 					schedule: diningTime.value || '12:00'  // 使用用户选择的时间
 				},
-				productId: id.value,  // 餐厅ID
-				productType: "Dining",  // 餐饮类型
-				quantity: quantity.value,  // 预订数量
-				price: foodDetails.value.price,  // 单价
-				amount: foodDetails.value.price * quantity.value  // 总金额
+				productId: id.value,
+				productType: "Dining",
+				quantity: quantity.value,
+				price: foodDetails.value.price,
+				amount: foodDetails.value.price * quantity.value,
+				name: foodDetails.value.restaurant,
+				image: foodDetails.value.image,
+				specs: diningTime.value  // 这里我们把“用餐时间”作为规格传过去
 			}
 		]
 	};
@@ -191,12 +194,14 @@ const createOrder = (orderData) => {
 					icon: 'success',
 					duration: 2000
 				});
+				console.log("订单编号", res.data.result.orderSn)
 				// 预订成功后跳转到订单支付页面
 				setTimeout(() => {
 					uni.navigateTo({
-						url: `/pages/activityPay/activityPay?orderSn=${res.data.result.orderSn}`
+						url: `/pages/activityPay/activityPay?title=${foodDetails.value.title}&price=${foodDetails.value.price * quantity.value}&score=${foodDetails.value.score}&soldSum=${foodDetails.value.soldSum}&restaurant=${encodeURIComponent(foodDetails.value.restaurant)}&diningTime=${diningTime.value}&orderSn=${res.data.result.orderSn}`
 					})
-				}, 1500);
+
+				}, 1000);
 			} else {
 				uni.showToast({
 					title: res.data.message || '预订失败',

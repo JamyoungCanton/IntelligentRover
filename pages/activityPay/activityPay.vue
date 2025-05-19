@@ -238,6 +238,7 @@ const handlePayment = () => {
 	align-items: center;
 	padding: 20rpx;
 	border-bottom: 1px solid #eee;
+	margin-top: 50px;
 }
 
 .back {
@@ -290,52 +291,48 @@ const handlePayment = () => {
 
 .order-item {
 	display: flex;
-	padding: 20rpx 0;
-	border-bottom: 1rpx solid #f5f5f5;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 0;
+	border-bottom: 1px solid #f0f0f0;
 }
 
 .item-image {
-	width: 120rpx;
-	height: 120rpx;
-	border-radius: 8rpx;
-	margin-right: 20rpx;
+	width: 60px;
+	height: 60px;
+	border-radius: 8px;
+	margin-right: 12px;
 }
 
 .item-info {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	justify-content: center;
 }
 
 .item-name {
-	font-size: 28rpx;
-	color: #333;
-	line-height: 1.4;
+	font-weight: 600;
+	font-size: 15px;
 }
 
 .item-spec {
-	font-size: 24rpx;
+	font-size: 13px;
 	color: #999;
-	margin-top: 10rpx;
 }
 
 .item-right {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
-	justify-content: space-between;
+	text-align: right;
 }
 
 .item-price {
-	font-size: 28rpx;
-	color: #f56c6c;
+	color: #fa541c;
 	font-weight: bold;
 }
 
 .item-quantity {
-	font-size: 24rpx;
-	color: #999;
+	color: #666;
+	font-size: 13px;
 }
 
 .order-base-info {
