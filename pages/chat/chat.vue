@@ -1,7 +1,7 @@
 <template>
 	<view class="container" :key="globalUpdateKey">
 		<!-- Header -->
-		<view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
+		<view class="header" :style="{ paddingTop: `${Math.max(10, statusBarHeight/2)}px` }">
 			<view class="back-icon avatar ai-avatar" @tap="goBack"></view>
 			<view class="title">AI旅游助手</view>
 			<view class="more-icon avatar ai-avatar" @tap="showMore">
@@ -12,7 +12,7 @@
 		<!-- Chat Container -->
 		<scroll-view scroll-y class="chat-container" :scroll-top="scrollTop" scroll-with-animation
 			:scroll-into-view="scrollIntoView" :scroll-anchoring="true" enhanced :show-scrollbar="false"
-			@scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 30px">
+			@scrolltoupper="onScrollToUpper" @scroll="onScroll" style="margin-top: 10px">
 			<!-- AI Welcome Message -->
 			<view class="message ai-message" id="msg-0">
 				<view class="avatar ai-avatar">
@@ -747,20 +747,38 @@ const sendMessage = () => {
 	// 判断上一条消息是否存在，初始的时候chatMessages.length为0
 	if (chatMessages.length > 1) {  // 存在上一条消息
 		let lastMessage = chatMessages[chatMessages.length - 2].content
-		console.log("上一条消息:", lastMessage)
-		// 将 Proxy 转换为普通数组
-		const normalArray = Array.from(lastMessage);
-		// 将每个对象转换为字符串形式
-		const stringifiedObjects = normalArray.map(item => {
-			return JSON.stringify(item);
-		});
-		// 将所有字符串连接成一个字符串
-		const resultString = stringifiedObjects.join(',');
+		console.log("上一条消息类型:", typeof lastMessage, Array.isArray(lastMessage) ? "数组长度:" + lastMessage.length : "");
+		
+		let resultString = '';
+		// 判断lastMessage是否为数组或对象，需要序列化
+		if (Array.isArray(lastMessage)) {
+			try {
+				// 深拷贝数组，避免直接修改原数组
+				const deepCopy = JSON.parse(JSON.stringify(lastMessage));
+				// 将数组转换为JSON字符串
+				resultString = JSON.stringify(deepCopy);
+			} catch (e) {
+				console.error("转换上一条数组消息时出错:", e);
+				resultString = "[]"; // 错误时提供空数组字符串
+			}
+		} else if (typeof lastMessage === 'object' && lastMessage !== null) {
+			try {
+				// 深拷贝对象，避免直接修改原对象
+				const deepCopy = JSON.parse(JSON.stringify(lastMessage));
+				// 将对象转换为JSON字符串
+				resultString = JSON.stringify(deepCopy);
+			} catch (e) {
+				console.error("转换上一条对象消息时出错:", e);
+				resultString = "{}"; // 错误时提供空对象字符串
+			}
+		} else {
+			// 处理字符串或其他类型的消息
+			resultString = String(lastMessage || "");
+		}
 
 		console.log("上一条消息转String后的结果:", resultString);
 		// 将上一条消息转String后的结果传递给AI接口作为参数
 		callAIInterface2(chatMessages[chatMessages.length - 1].content, resultString);
-
 
 	} else {  // 不存在上一条消息
 		console.log("不存在上一条消息")
@@ -1187,34 +1205,51 @@ const showThinkingAnimation2 = () => {
 	const messageId = Date.now();
 	const dots = ['', '.', '..', '...'];
 	let dotIndex = 0;
+	let isCleared = false;
 
 	// 添加思考中消息
-	chatMessages.push({
+	const thinkingIndex = chatMessages.push({
 		type: "ai",
 		content: `正在思考中${dots[dotIndex]}`,
 		id: messageId,
 		thinking: true
-	});
+	}) - 1;
 	scrollToLatestMessage();
 
 	// 启动点动画
 	const intervalId = setInterval(() => {
+		// 检查是否已被清除
+		if (isCleared) {
+			clearInterval(intervalId);
+			return;
+		}
+		
 		dotIndex = (dotIndex + 1) % dots.length;
+		// 找到消息的位置，只匹配ID即可，思考状态可能被改变
 		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
-		if (msgIndex !== -1) {
+		if (msgIndex !== -1 && chatMessages[msgIndex].thinking) {
 			chatMessages[msgIndex].content = `正在思考中${dots[dotIndex]}`;
 			updateCounter.value++;
+		} else {
+			// 如果找不到消息或不再处于思考状态，清理定时器
+			clearInterval(intervalId);
 		}
 	}, 300);
 
-	// 返回清除函数 - 修改确保完全清除思考消息
+	// 返回清除函数 - 确保完全清除思考消息
 	return () => {
+		isCleared = true;
 		clearInterval(intervalId);
+		
+		// 再次查找消息位置(可能已经改变)，只匹配ID
 		const msgIndex = chatMessages.findIndex(msg => msg.id === messageId);
 		if (msgIndex !== -1) {
-			chatMessages.splice(msgIndex, 1);
-			// 强制更新视图
-			globalUpdateKey.value = Date.now();
+			// 检查是否仍是思考状态，避免删除已转换的消息
+			if (chatMessages[msgIndex].thinking) {
+				chatMessages.splice(msgIndex, 1);
+				// 强制更新视图
+				globalUpdateKey.value = Date.now();
+			}
 		}
 	};
 };
@@ -1604,13 +1639,27 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 						if (typeof answer === 'string') {
 							try {
 								parsedAnswer = JSON.parse(answer);
+								console.log("成功解析答案字符串为JSON对象:", parsedAnswer);
 							} catch (e) {
-								parsedAnswer = [{ type: 'text', content: answer }];
+								console.error("解析答案字符串失败:", e);
+								// 尝试对特殊格式进行清理后再解析
+								try {
+									// 处理可能的转义问题
+									const cleanedAnswer = answer.replace(/\\"/g, '"');
+									parsedAnswer = JSON.parse(cleanedAnswer);
+									console.log("清理后成功解析答案:", parsedAnswer);
+								} catch (e2) {
+									console.error("清理后解析仍然失败:", e2);
+									// 如果解析失败，创建简单文本内容
+									parsedAnswer = [{ type: 'text', content: answer }];
+								}
 							}
 						} else if (Array.isArray(answer)) {
 							parsedAnswer = answer;
+							console.log("答案已是数组格式:", parsedAnswer);
 						} else {
 							parsedAnswer = [{ type: 'text', content: String(answer) }];
+							console.log("将非字符串非数组答案转为文本:", parsedAnswer);
 						}
       
 						// 安全处理数据
@@ -1705,346 +1754,254 @@ const showErrorMessage = (message) => {
 
 // 实现callAIInterface2方法
 const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
-	const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
-		const data = {
-			conversation_id: '',
-			inputs: {
-				original_intention: '',
-				recommended_plan: lastMessage
-			},
-			query: userQuery,
-		webMode: 'MAPP-小程序'
-	};
+  const url = "https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux";
+  
+  // 确保lastMessage是有效的JSON字符串
+  let parsedLastMessage = lastMessage;
+  
+  const data = {
+    conversation_id: '',
+    inputs: {
+      original_intention: '',
+      recommended_plan: parsedLastMessage
+    },
+    query: userQuery,
+    webMode: 'MAPP-小程序'
+  };
 
-	console.log("AI接口函数2，请求数据:", data);
+  console.log("AI接口函数2，请求数据:", data);
 
-	// 显示思考动画
-	const clearAnimation = showThinkingAnimation2();
-	
-	try {
-		// 先创建一个空的AI消息对象
-		const aiMessage = {
-			type: 'ai',
-			content: [], // 初始为空数组
-			id: Date.now(),
-			thinking: false,
-			typing: true
-		};
-		
-		// 添加到消息列表前确保思考消息已清除
-		setTimeout(() => {
-			// 使用延时确保思考动画完全清除
-			const messageIndex = chatMessages.push(aiMessage) - 1;
-			scrollToLatestMessage();
-			
-			// 使用uni.request实现请求
-			uni.request({
-				url: url,
-			method: 'POST',
-				header: {
-				'X-Access-Token': token.value,
-					'Content-Type': 'application/json',
-					'Accept': 'text/event-stream' // 尝试告诉服务器我们接受流式响应
-				},
-				data: data,
-				timeout: 90000, // 增加超时时间到90秒
-				
-				success: (response) => {
-					// 确保先清除思考动画
-					clearAnimation();
-					
-					// 获取响应数据
-					const responseData = response.data;
-					console.log("响应数据类型:", typeof responseData);
-					
-					if (typeof responseData === 'string') {
-						// 处理字符串形式的响应（模拟流式处理）
-						console.log("收到字符串形式的响应，进行解析");
-						
-						// 拆分数据流
-						const dataChunks = responseData.split('\n');
-						let finalAnswer = null;
-						
-						// 处理每个数据块
-						for (let i = 0; i < dataChunks.length; i++) {
-							const chunk = dataChunks[i].trim();
-							if (!chunk.startsWith('data:')) continue;
-							
-							try {
-								// 提取data:之后的JSON
-								const jsonStr = chunk.substring(5);
-								const jsonData = JSON.parse(jsonStr);
-								
-								// 检查是否为最终数据
-								if (jsonData.event === 'workflow_finished' && 
-									jsonData.data && 
-									jsonData.data.outputs && 
-									jsonData.data.outputs.answer) {
-									
-									try {
-										finalAnswer = JSON.parse(jsonData.data.outputs.answer);
-									} catch (e) {
-										console.error("解析最终JSON答案失败:", e);
-									}
-								}
-							} catch (e) {
-								console.error("解析流数据块失败:", e);
-							}
-						}
-						
-						// 处理最终答案
-						if (finalAnswer) {
-							// 清理思考过程和提问建议
-							if (Array.isArray(finalAnswer)) {
-								// 首先过滤掉空项
-								finalAnswer = finalAnswer.filter(item => item);
-								
-								// 然后处理每一项内容
-								finalAnswer = finalAnswer.map(item => {
-									if (item.type === 'text' && item.content) {
-										// 清理内容
-										const cleanedContent = cleanAIContent(item.content);
-										
-										// 检测并分离思考过程
-										const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
-										
-										return {
-											...item,
-											content: mainContent,
-											thinkingContent: thinkingContent,
-											hasThinking: !!thinkingContent
-										};
-									}
-									return item;
-								});
-								
-								// 最后过滤掉内容为空的项
-								finalAnswer = finalAnswer.filter(item => 
-									item && 
-									(item.type !== 'text' || (item.content && item.content.trim() !== ''))
-								);
-							}
-							
-							// 模拟流式展示：将答案分成多个部分逐步显示
-							const segments = Math.ceil(finalAnswer.length / 5);
-							for (let i = 0; i < segments; i++) {
-								const start = i * 5;
-								const end = Math.min(start + 5, finalAnswer.length);
-								const segmentData = finalAnswer.slice(start, end);
-								
-								setTimeout(() => {
-									// 更新或追加内容
-									if (i === 0) {
-										// 初始化内容
-										chatMessages[messageIndex].content = segmentData.map(item => ({
-											type: item.type || 'text',
-										id: item.id || '',
-											content: item.content || ''
-										}));
-									} else {
-										// 追加内容
-										segmentData.forEach(item => {
-											chatMessages[messageIndex].content.push({
-												type: item.type || 'text',
-												id: item.id || '',
-												content: item.content || ''
-											});
-										});
-									}
-									
-									// 最后一段标记完成
-									if (i === segments - 1) {
-										chatMessages[messageIndex].typing = false;
-									}
-									
-									// 强制更新视图
-									globalUpdateKey.value = Date.now();
-									scrollToBottom();
-								}, i * 150); // 每段间隔150ms
-							}
-						} else {
-							// 未找到有效的最终答案
-							console.error("未找到有效的最终答案");
-							chatMessages[messageIndex].content = [{
-								type: 'text',
-								content: '抱歉，无法获取有效的回复内容。请稍后再试。'
-							}];
-							chatMessages[messageIndex].typing = false;
-							
-							// 更新视图
-							globalUpdateKey.value = Date.now();
-							
-							uni.showToast({
-								title: "网络请求失败",
-								icon: "none",
-								duration: 2000
-							});
-						}
-					} else if (typeof responseData === 'object') {
-						// 处理对象形式的响应
-						console.log("收到对象形式的响应");
-						
-						if (responseData.data && responseData.data.outputs && responseData.data.outputs.answer) {
-							try {
-								const answer = responseData.data.outputs.answer;
-								let decodedAnswer;
-								
-								// 解析JSON
-								if (typeof answer === 'string') {
-									try {
-										decodedAnswer = JSON.parse(answer);
-										console.log("解析出答案(来自字符串JSON):", decodedAnswer);
-									} catch (e) {
-										console.error("解析JSON答案失败:", e);
-										decodedAnswer = [{
-											type: 'text',
-											content: answer
-										}];
-									}
-								} else if (Array.isArray(answer)) {
-									decodedAnswer = answer;
-									console.log("解析出答案(来自数组):", decodedAnswer);
-								} else if (typeof answer === 'object' && answer !== null) {
-									decodedAnswer = [answer]; 
-									console.log("解析出答案(来自对象):", decodedAnswer);
-								} else {
-									console.log("答案是未知类型:", typeof answer);
-									decodedAnswer = [{
-										type: 'text',
-										content: String(answer || '无法解析的响应内容')
-									}];
-								}
-								
-								// 清理思考过程和提问建议
-								if (Array.isArray(decodedAnswer)) {
-									// 首先过滤掉空项
-									decodedAnswer = decodedAnswer.filter(item => item);
-									
-									// 然后处理每一项内容
-									decodedAnswer = decodedAnswer.map(item => {
-										if (item.type === 'text' && item.content) {
-											// 清理内容
-											const cleanedContent = cleanAIContent(item.content);
-											
-											// 检测并分离思考过程
-											const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
-											
-											return {
-												...item,
-												content: mainContent,
-												thinkingContent: thinkingContent,
-												hasThinking: !!thinkingContent
-											};
-										}
-										return item;
-									});
-									
-									// 最后过滤掉内容为空的项
-									decodedAnswer = decodedAnswer.filter(item => 
-										item && 
-										(item.type !== 'text' || (item.content && item.content.trim() !== ''))
-									);
-								}
-								
-								// 使用打字机效果显示内容
-							typewriterEffect(chatMessages[messageIndex], decodedAnswer);
-							} catch (e) {
-								console.error("处理响应数据失败:", e);
-								
-								// 错误情况下显示提示
-								chatMessages[messageIndex].content = [{
-									type: 'text',
-									content: '处理响应数据时出错，请稍后再试。'
-								}];
-								chatMessages[messageIndex].typing = false;
-								
-								// 更新视图
-								globalUpdateKey.value = Date.now();
-								
-								uni.showToast({
-									title: "网络请求失败",
-									icon: "none",
-									duration: 2000
-								});
-							}
-						} else {
-							console.error("响应数据格式不符合预期:", responseData);
-							
-							// 格式不符合预期时显示提示
-							chatMessages[messageIndex].content = [{
-								type: 'text',
-								content: '服务器响应格式不正确，请稍后再试。'
-							}];
-							chatMessages[messageIndex].typing = false;
-							
-							// 更新视图
-							globalUpdateKey.value = Date.now();
-							
-							uni.showToast({
-								title: "网络请求失败",
-								icon: "none",
-								duration: 2000
-							});
-						}
-					}
-				},
-				fail: (error) => {
-					clearAnimation();
-					console.error("请求失败:", error);
-					
-					if (retryCount < 2) {
-						console.log(`重试第 ${retryCount + 1} 次...`);
-						setTimeout(() => {
-							callAIInterface2(userQuery, lastMessage, retryCount + 1);
-						}, 1000);
-					} else {
-						console.error("达到最大重试次数，显示错误信息");
-						
-						// 显示错误消息
-						chatMessages[messageIndex].content = [{
-							type: 'text',
-							content: '抱歉，网络请求失败。请检查您的网络连接并稍后再试。'
-						}];
-						chatMessages[messageIndex].typing = false;
-						
-						// 更新视图
-						globalUpdateKey.value = Date.now();
-						
-						uni.showToast({
-							title: "网络请求失败",
-							icon: "none",
-							duration: 2000
-						});
-					}
-				}
-			});
-		}, 100);
-	} catch (error) {
-		clearAnimation();
-		console.error("执行请求发生错误:", error);
-		
-		if (retryCount < 2) {
-			console.log(`重试第 ${retryCount + 1} 次...`);
-			setTimeout(() => {
-				callAIInterface2(userQuery, lastMessage, retryCount + 1);
-			}, 1000);
-		} else {
-			console.error("达到最大重试次数，显示错误信息");
-			
-			// 显示错误消息
-			const aiMessage = {
-				type: 'ai',
-				content: [{
-					type: 'text',
-					content: '抱歉，执行请求时发生错误。请稍后再试。'
-				}],
-				typing: false
-			};
-			
-			chatMessages.push(aiMessage);
-			scrollToLatestMessage();
-		}
-	}
+  // 显示思考动画
+  const clearAnimation = showThinkingAnimation2();
+  
+  try {
+    // 发送请求
+    uni.request({
+      url: url,
+      method: 'POST',
+      header: {
+        'X-Access-Token': token.value,
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      data: data,
+      timeout: 90000, // 90秒超时
+      
+      success: (response) => {
+        // 清除思考动画
+        clearAnimation();
+        
+        // 获取响应数据
+        const responseData = response.data;
+        console.log("响应数据类型:", typeof responseData);
+        
+        let finalAnswer = null;
+        
+        // 处理字符串形式的响应
+        if (typeof responseData === 'string') {
+          console.log("收到字符串形式的响应，进行解析");
+          
+          try {
+            // 查找最终答案
+            const dataChunks = responseData.split('\n');
+            
+            for (const chunk of dataChunks) {
+              if (!chunk.trim().startsWith('data:')) continue;
+              
+              try {
+                const jsonStr = chunk.trim().substring(5);
+                const jsonData = JSON.parse(jsonStr);
+                
+                if (jsonData.event === 'workflow_finished' && 
+                    jsonData.data?.outputs?.answer) {
+                  
+                  try {
+                    finalAnswer = JSON.parse(jsonData.data.outputs.answer);
+                    break;
+                  } catch (e) {
+                    console.error("解析JSON答案失败:", e);
+                  }
+                }
+              } catch (e) {
+                console.error("解析数据块失败:", e);
+              }
+            }
+          } catch (e) {
+            console.error("处理字符串响应失败:", e);
+          }
+        } 
+        // 处理对象形式的响应
+        else if (typeof responseData === 'object') {
+          console.log("收到对象形式的响应");
+          
+          if (responseData.data?.outputs?.answer) {
+            const answer = responseData.data.outputs.answer;
+            
+            try {
+              if (typeof answer === 'string') {
+                try {
+                  finalAnswer = JSON.parse(answer);
+                } catch (e) {
+                  console.error("解析答案字符串失败:", e);
+                  finalAnswer = [{ type: 'text', content: answer }];
+                }
+              } else if (Array.isArray(answer)) {
+                finalAnswer = answer;
+              } else if (typeof answer === 'object' && answer !== null) {
+                finalAnswer = [answer];
+              } else {
+                finalAnswer = [{ type: 'text', content: String(answer || '无内容') }];
+              }
+            } catch (e) {
+              console.error("处理对象响应失败:", e);
+            }
+          }
+        }
+                
+        // 处理最终答案
+        if (finalAnswer && Array.isArray(finalAnswer) && finalAnswer.length > 0) {
+          // 过滤并处理内容
+          const processedAnswer = finalAnswer
+            .filter(item => item != null) // 过滤空项
+            .map(item => {
+              if (item.type === 'text' && typeof item.content === 'string') {
+                // 清理内容
+                const cleanedContent = cleanAIContent(item.content);
+                // 检测并分离思考过程
+                const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
+                
+                return {
+                  ...item,
+                  content: mainContent || cleanedContent,
+                  thinkingContent: thinkingContent,
+                  hasThinking: !!thinkingContent
+                };
+              }
+              return item;
+            })
+            .filter(item => 
+              item != null && 
+              (item.type !== 'text' || (item.content && item.content.trim() !== ''))
+            );
+
+          // 在此处创建消息并添加到列表
+          const aiMessage = {
+            type: 'ai',
+            content: [], // 初始为空数组
+            id: Date.now(),
+            thinking: false,
+            typing: true
+          };
+          
+          // 添加消息并获取索引
+          const messageIndex = chatMessages.push(aiMessage) - 1;
+          
+          // 使用打字机效果显示内容
+          try {
+            typewriterEffect(chatMessages[messageIndex], processedAnswer);
+            // 更新视图
+            globalUpdateKey.value = Date.now();
+            // 滚动到最新消息
+            scrollToLatestMessage();
+          } catch (error) {
+            console.error("显示消息内容时出错:", error);
+            // 错误情况下显示简单消息
+            chatMessages[messageIndex].content = [{
+              type: 'text',
+              content: '显示内容时出错，请重试。'
+            }];
+            chatMessages[messageIndex].typing = false;
+            globalUpdateKey.value = Date.now();
+          }
+        } else {
+          // 未找到有效答案或格式不匹配
+          console.error("未找到有效答案或格式不匹配");
+          
+          // 创建错误消息
+          const aiMessage = {
+            type: 'ai',
+            content: [{
+              type: 'text',
+              content: '抱歉，无法获取有效回复。请稍后再试。'
+            }],
+            id: Date.now(),
+            thinking: false,
+            typing: false
+          };
+          
+          chatMessages.push(aiMessage);
+          globalUpdateKey.value = Date.now();
+          scrollToLatestMessage();
+          
+          uni.showToast({
+            title: "无法获取有效响应",
+            icon: "none",
+            duration: 2000
+          });
+        }
+      },
+      fail: (error) => {
+        // 清除思考动画
+        clearAnimation();
+        console.error("请求失败:", error);
+        
+        // 创建错误消息
+        const aiMessage = {
+          type: 'ai',
+          content: [{
+            type: 'text',
+            content: '网络请求失败，请检查您的网络连接并稍后再试。'
+          }],
+          id: Date.now(),
+          thinking: false,
+          typing: false
+        };
+        
+        chatMessages.push(aiMessage);
+        globalUpdateKey.value = Date.now();
+        scrollToLatestMessage();
+        
+        if (retryCount < 2) {
+          console.log(`重试第 ${retryCount + 1} 次...`);
+          setTimeout(() => {
+            callAIInterface2(userQuery, lastMessage, retryCount + 1);
+          }, 1000);
+        } else {
+          uni.showToast({
+            title: "网络请求失败",
+            icon: "none",
+            duration: 2000
+          });
+        }
+      }
+    });
+  } catch (error) {
+    // 清除思考动画
+    clearAnimation();
+    console.error("执行请求发生错误:", error);
+    
+    // 创建错误消息
+    const aiMessage = {
+      type: 'ai',
+      content: [{
+        type: 'text',
+        content: '执行请求时发生错误，请稍后再试。'
+      }],
+      id: Date.now(),
+      thinking: false,
+      typing: false
+    };
+    
+    chatMessages.push(aiMessage);
+    globalUpdateKey.value = Date.now();
+    scrollToLatestMessage();
+    
+    if (retryCount < 2) {
+      setTimeout(() => {
+        callAIInterface2(userQuery, lastMessage, retryCount + 1);
+      }, 1000);
+    }
+  }
 };
 
 onMounted(() => {
@@ -3567,7 +3524,7 @@ const toggleThinking = (item) => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 15px;
-	height: 44px;
+	height: 36px;
 	background-color: #4285f4;
 	color: #ffffff;
 	position: relative;
@@ -3575,25 +3532,23 @@ const toggleThinking = (item) => {
 
 .back-icon,
 .more-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .title {
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 500;
 }
 
 .chat-container {
 	flex: 1;
 	overflow-y: auto;
-	padding-bottom: 60px;
-	/* 增加底部间距，为输入框和消息之间留出更多空间 */
-	margin-bottom: 20px;
-	/* 在聊天容器和输入框之间增加间隔 */
+	padding-bottom: 30px; /* 减少底部填充 */
+	margin-bottom: 10px; /* 减少底部边距 */
 }
 
 .avatar {
@@ -3939,7 +3894,7 @@ const toggleThinking = (item) => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 15px;
-	height: 44px;
+	height: 22px;
 	background-color: #4285f4;
 	color: #ffffff;
 	position: relative;
@@ -3947,8 +3902,8 @@ const toggleThinking = (item) => {
 
 .back-icon,
 .more-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 20px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -3956,7 +3911,7 @@ const toggleThinking = (item) => {
 }
 
 .title {
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 500;
 	color: #ffffff;
 }
@@ -3964,7 +3919,7 @@ const toggleThinking = (item) => {
 .input-container {
 	display: flex;
 	align-items: center;
-	padding: 8px 12px;
+	padding: 6px 12px;
 	background-color: #ffffff;
 	border-top: 1px solid #eeeeee;
 	position: fixed;
@@ -4101,8 +4056,8 @@ const toggleThinking = (item) => {
 
 /* 占位的 */
 .blank {
-	height: 100rpx;
-	/* 与Tabbar高度一致，使用rpx单位 */
+	height: 80rpx;
+	/* 减小占位高度，增加内容区域 */
 }
 
 /* 思考过程样式 */

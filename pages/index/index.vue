@@ -578,14 +578,14 @@ onMounted(() => {
 .content-box {
   position: relative;
   width: 100%;
-  padding: 30rpx 0 0 0;
+  /* padding: 30rpx 0 0 0; */
   background-color: rgb(224, 250, 255);
   /* 淡蓝色背景 */
   border-radius: 50rpx 50rpx 0 0;
   /* 顶部左右角圆角 */
   z-index: 10;
   /* 主要内容区的层级高于顶部区域 */
-  top: 80rpx;
+  top: 0rpx;
 }
 
 /* 通知栏 */
