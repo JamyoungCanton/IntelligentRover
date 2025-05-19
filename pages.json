@@ -79,7 +79,8 @@
 		{
 			"path": "pages/attractionGuide/attractionGuide",
 			"style": {
-				"navigationBarTitleText": "景点攻略"
+				"navigationBarTitleText": "景点攻略",
+				"navigationBarTextStyle": "black"
 			}
 		},
 		{
