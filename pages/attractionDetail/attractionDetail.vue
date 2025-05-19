@@ -213,10 +213,15 @@ success: (res) => {
       duration: 1500
     });
     // 可以跳转到订单详情页或其他页面
+<<<<<<< HEAD
+    const orderSn = res.data.result.orderSn;
+    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+=======
    uni.navigateTo({
     url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&price=${hotelData.value.ticketprice}`
   });
 
+>>>>>>> f7755687a477af4d7824bc2248556139e04b9be2
   } else {
     uni.showToast({
       title: '未开放，维护中',

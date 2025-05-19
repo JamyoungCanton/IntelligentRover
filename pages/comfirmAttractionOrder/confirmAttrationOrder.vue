@@ -109,7 +109,7 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥{{hotelList.ticketprice}}</button>
+      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥750</button>
     </view>
   </view>
 </template>
@@ -121,11 +121,14 @@ import { ref,onMounted } from 'vue';
 
 const userStore = useUserStore();
 const id = ref(''); 
+const orderSn = ref(''); 
 const hotelList = ref([]);
 
 onLoad((options) => {
-  id.value = options.id;
-  console.log("接受到的id" ,id.value);
+   id.value = options.id;
+   orderSn.value = options.orderSn;
+  console.log('接收的 id:', id);
+  console.log('接收的 orderSn:', orderSn);
 })
 onMounted(() => {
   
@@ -138,8 +141,9 @@ onMounted(() => {
     },
     data: { id: id},
     success:(res)=>{
-      hotelList.value = res.data;
       console.log(res.data);
+      hotelList.value = res.data;
+      console.log(hotelList.value);
     },fail:(err)=>{
       console.log(err);
       
@@ -163,15 +167,30 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
-  const price = hotelList.value.ticketprice;
-  const payment = selectedPayment.value;
-  const orderId = new Date().getTime(); // 示例订单号，可换成真实订单号
+
+  const userStore = useUserStore();
+  console.log(userStore.token);
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+    method: 'POST',
+    header:{
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token,
+    },
+    data: {
+      orderSn: orderSn.value,
+    },
+    success:(res)=>{
+      console.log(res.data);
+    },
+  })
+  
+ 
 
   uni.navigateTo({
-    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}`
+    url: '/pages/pay_success/pay_success'
   });
 };
-
 // 退出
 const handleLogout = () => {
   uni.removeStorageSync('userToken'); 

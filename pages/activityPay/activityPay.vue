@@ -181,9 +181,9 @@ const goBack = () => {
 
 const handlePayment = () => {
 	// 显示加载提示
-	uni.showLoading({
-		title: '支付处理中...'
-	});
+	// uni.showLoading({
+	// 	title: '支付处理中...'
+	// });
 
 	// 发起支付请求
 	uni.request({
