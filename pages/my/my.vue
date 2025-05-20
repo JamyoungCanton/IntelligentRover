@@ -98,7 +98,7 @@ const userStore = useUserStore();
 const gridItems = ref([
   {
     img: 'https://wlmtsys.com:9000/travel/collectItinerary.png',
-    text: '收藏帖子',
+    text: '我的帖子',
     onClick: 'goCollectPost'
   },
   {
