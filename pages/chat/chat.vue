@@ -62,17 +62,39 @@
 									:class="{ typing: msg.typing && idx === msg.content.length - 1 }">
 									<!-- 思考过程收纳组件 -->
 									<view v-if="item.hasThinking && item.thinkingContent" class="thinking-container">
-										<view class="thinking-header" @click="toggleThinking(item)">
+										<view class="thinking-header" :class="{ 'open': item.thinkingOpen }" @click="event => toggleThinking(item, event)">
 											<text class="thinking-icon">{{ item.thinkingOpen ? '∧' : '∨' }}</text>
-											<text class="thinking-title">已完成思考</text>
+											<text class="thinking-title">AI思考过程</text>
 											<view class="thinking-action">
 												<text>{{ item.thinkingOpen ? '收起' : '展开' }}</text>
 											</view>
 										</view>
-										<view v-if="item.thinkingOpen" class="thinking-content">{{ item.thinkingContent }}</view>
+										<view v-show="item.thinkingOpen" class="thinking-content">{{ item.thinkingContent }}</view>
 									</view>
+                                    <!-- 分隔线，更清晰地区分思考和内容 -->
+                                    <view v-if="item.hasThinking && item.thinkingContent" class="thinking-content-separator"></view>
 									<!-- 主要内容 -->
-									{{ item.content }}
+									<span v-if="item.display === 'inline'" style="display:inline;">{{ item.content }}</span>
+									<span v-else-if="item.content.includes('---')" class="content-with-dividers">
+										<div v-for="(part, partIdx) in item.content.split('---')" :key="'divider-'+partIdx" class="divider-section">
+											<div v-if="partIdx > 0" class="content-divider"></div>
+											<div>{{ part.trim() }}</div>
+										</div>
+									</span>
+									<span v-else-if="item.content.includes('\n') && item.content.match(/[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]/)" class="emoji-content">
+										<div class="emoji-line" v-for="(line, lineIdx) in item.content.split('\n')" :key="'emoji-'+lineIdx">
+											<template v-if="line.trim().length > 0">
+												<!-- 处理Emoji开头的行 -->
+												<span v-if="line.match(/^[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]/)">
+													<span class="emoji-prefix">{{ line.match(/^[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]+/)[0] }}</span>
+													<span class="emoji-content-text">{{ line.substring(line.match(/^[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]+/)[0].length) }}</span>
+												</span>
+												<!-- 处理普通行 -->
+												<span v-else class="normal-line">{{ line }}</span>
+											</template>
+										</div>
+									</span>
+									<span v-else>{{ item.content }}</span>
 								</view>
 								<view v-else-if="item.type === 'Transport'" class="trip-item transport clickable-span"
 									@tap="handleItemClick(item)">
@@ -93,6 +115,30 @@
 								<view v-else-if="item.type === 'Attraction'" class="trip-item attraction clickable-span"
 									@tap="handleItemClick(item)">
 									{{ item.content }}
+								</view>
+								<view v-else-if="item.type === 'table'" class="trip-summary-container">
+									<table class="trip-summary-table" v-if="item.content && item.content.length > 0">
+										<thead>
+											<tr>
+												<th>{{ item.content[0]?.name || '项目' }}</th>
+												<th>{{ item.content[0]?.price || '费用' }}</th>
+												<th>{{ item.content[0]?.remark || '备注' }}</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="(row, rowIdx) in (item.content && item.content.length > 2 ? item.content.slice(1, -1) : [])" :key="rowIdx">
+												<td>{{ row?.name || '' }}</td>
+												<td class="price-column">{{ row?.price ? '¥'+row.price : '' }}</td>
+												<td>{{ row?.remark || '' }}</td>
+											</tr>
+											<tr class="trip-summary-total" v-if="item.content && item.content.length > 1">
+												<td>{{ item.content[item.content.length-1]?.name || '总计' }}</td>
+												<td class="price-column">{{ item.content[item.content.length-1]?.price ? '¥'+item.content[item.content.length-1].price : '' }}</td>
+												<td>{{ item.content[item.content.length-1]?.remark || '' }}</td>
+											</tr>
+										</tbody>
+									</table>
+									<view v-else class="error-message">表格数据格式错误</view>
 								</view>
 								<view v-else-if="item.type === '价格'" class="price-section">
 									<view class="price-info">
@@ -366,11 +412,26 @@ const showTooltip = (text, event) => {
 
 	// 获取鼠标位置
 	const { clientX, clientY } = event;
-	// 设置提示框位置（鼠标右下角）
+								// 设置提示框位置（鼠标右下角）
 	tooltipPosition.value = {
 		left: clientX + 10, // 右偏移10px
 		top: clientY + 10, // 下偏移10px
 	};
+	
+	// 修正样式
+	if (document && document.querySelectorAll) {
+		setTimeout(() => {
+			// 找到所有.trip-item元素并确保内联显示
+			document.querySelectorAll('.trip-item').forEach(el => {
+				el.style.display = 'inline';
+			});
+			
+			// 找到所有活动、交通等元素并确保内联显示
+			document.querySelectorAll('.transport, .accommodation, .restaurant, .activity, .attraction').forEach(el => {
+				el.style.display = 'inline';
+			});
+		}, 100);
+	}
 };
 
 // 隐藏提示
@@ -791,108 +852,91 @@ const sendMessage = () => {
 const processThinkingContent = (content) => {
 	if (typeof content !== 'string') return { mainContent: content, thinkingContent: '' };
 	
-	// 检查内容中是否有明确的分界标记
+	// 第一步: 查找行程正式内容的起始位置
+	// 这些是标志着正式行程内容开始的标记
 	const contentMarkers = [
-		{ marker: '**地图/行程**', type: 'content' },
-		{ marker: '✅', type: 'content' },
-		{ marker: '📝', type: 'content' },
-		{ marker: '🗺️', type: 'content' },
-		{ marker: '行程概览', type: 'content' },
-		{ marker: '行程安排', type: 'content' },
-		{ marker: '旅行计划', type: 'content' },
-		{ marker: '推荐行程', type: 'content' }
+		'✅', '📝', '🗺️', '📊', '📅', '🌴', 
+		'行程概览', '行程安排', '旅行计划', '推荐行程', '**地图/行程**'
 	];
 	
-	// 找到内容部分的起始位置
-	let contentStartIndex = -1;
-	let contentMarker = '';
+	let contentStart = content.length; // 默认为内容末尾
+	let emojiLineStart = -1; // emoji行开始的位置
 	
-	for (const { marker, type } of contentMarkers) {
-		const idx = content.indexOf(marker);
-		if (idx !== -1 && (contentStartIndex === -1 || idx < contentStartIndex)) {
-			contentStartIndex = idx;
-			contentMarker = marker;
+	// 找到第一个emoji开头的行
+	const emojiRegex = /^[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]/m;
+	const emojiMatch = content.match(emojiRegex);
+	
+	if (emojiMatch && emojiMatch.index !== undefined) {
+		emojiLineStart = emojiMatch.index;
+	}
+	
+	// 判断哪些标记出现在文本中，并找到最早出现的位置
+	for (const marker of contentMarkers) {
+		const pos = content.indexOf(marker);
+		if (pos !== -1 && pos < contentStart) {
+			contentStart = pos;
 		}
 	}
 	
-	// 检测思考过程的开始标记
-	const thinkingMarkers = [
-		{ marker: '<details', type: 'thinking' },
-		{ marker: 'Thinking...', type: 'thinking' },
-		{ marker: 'thinking...', type: 'thinking' },
-		{ marker: '思考过程', type: 'thinking' },
-		{ marker: '思考中', type: 'thinking' },
-		{ marker: '好的，我需要', type: 'thinking' },
-		{ marker: '我来思考', type: 'thinking' },
-		{ marker: '根据你的需求', type: 'thinking' },
-		{ marker: '我将为你', type: 'thinking' }
+	// 如果找到了emoji行且在所有内容标记之前，将其视为行程开始
+	if (emojiLineStart !== -1 && (emojiLineStart < contentStart || contentStart === content.length)) {
+		contentStart = emojiLineStart;
+	}
+	
+	// 思考过程的开始标记
+	const thinkingPhrases = [
+		'我需要', '让我思考', '思考过程', '首先', 
+		'根据您的', '基于您的', '基于你的', '根据你的需求',
+		'考虑到', '我来分析', '我将为您', '我将为你'
 	];
 	
-	// 找到思考过程的起始位置
-	let thinkingStartIndex = -1;
-	let thinkingMarker = '';
-	
-	for (const { marker, type } of thinkingMarkers) {
-		const idx = content.indexOf(marker);
-		if (idx !== -1 && (thinkingStartIndex === -1 || idx < thinkingStartIndex)) {
-			thinkingStartIndex = idx;
-			thinkingMarker = marker;
+	// 查找思考过程开始的位置
+	let thinkingStart = -1;
+	for (const phrase of thinkingPhrases) {
+		const pos = content.indexOf(phrase);
+		if (pos !== -1 && (thinkingStart === -1 || pos < thinkingStart)) {
+			thinkingStart = pos;
 		}
 	}
 	
-	// 根据找到的标记处理内容
+	// 确定主内容和思考内容
+	let mainContent = '';
 	let thinkingContent = '';
-	let mainContent = content;
 	
-	// 如果同时找到了思考过程和内容的标记
-	if (thinkingStartIndex !== -1 && contentStartIndex !== -1) {
-		// 思考过程在前，内容在后
-		if (thinkingStartIndex < contentStartIndex) {
-			thinkingContent = content.substring(thinkingStartIndex, contentStartIndex).trim();
-			mainContent = content.substring(contentStartIndex).trim();
+	// 情况1: 找到了思考内容和主内容的分界点
+	if (thinkingStart !== -1 && contentStart < content.length) {
+		// 如果思考在前，行程在后
+		if (thinkingStart < contentStart) {
+			thinkingContent = content.substring(0, contentStart).trim();
+			mainContent = content.substring(contentStart).trim();
 		} 
-		// 内容在前，思考过程在后（不太可能，但处理一下）
+		// 如果行程在前，思考在后 (不太可能，但处理一下)
 		else {
-			mainContent = content.substring(contentStartIndex, thinkingStartIndex).trim();
-			thinkingContent = content.substring(thinkingStartIndex).trim();
+			// 这种情况比较特殊，可能是"行程推荐"在前，然后是解释/思考
+			mainContent = content.substring(0, thinkingStart).trim();
+			thinkingContent = content.substring(thinkingStart).trim();
 		}
 	}
-	// 只找到了思考过程的标记
-	else if (thinkingStartIndex !== -1) {
-		// 如果整个内容都是思考过程
-		if (thinkingStartIndex === 0) {
-			thinkingContent = content;
-			mainContent = '';
-		} else {
-			// 思考过程后面的内容作为主内容
-			thinkingContent = content.substring(thinkingStartIndex).trim();
-			mainContent = content.substring(0, thinkingStartIndex).trim();
-		}
+	// 情况2: 只找到了思考内容的开始
+	else if (thinkingStart !== -1) {
+		thinkingContent = content.trim();
+		mainContent = '';
 	}
-	// 只找到了内容的标记
-	else if (contentStartIndex !== -1) {
-		// 如果整个内容都是正文
-		if (contentStartIndex === 0) {
-			mainContent = content;
-			thinkingContent = '';
-		} else {
-			// 内容标记前的部分作为思考过程
-			thinkingContent = content.substring(0, contentStartIndex).trim();
-			mainContent = content.substring(contentStartIndex).trim();
-		}
+	// 情况3: 只找到了主内容的开始
+	else if (contentStart < content.length) {
+		// 所有内容都是主内容
+		mainContent = content.trim();
+		thinkingContent = '';
 	}
-	// 没有找到明确的标记，使用默认处理
+	// 情况4: 两者都没找到，尝试基于内容特征识别
 	else {
-		// 如果内容以某些常见的AI思考开头短语开始，则认为是思考过程
-		if (content.startsWith('我认为') || 
-			content.startsWith('根据您的') || 
-			content.startsWith('基于您的') ||
-			content.startsWith('考虑到')) {
-			thinkingContent = content;
+		// 如果内容较长，且不直接以emoji开头，可能是思考过程
+		if (content.length > 200 && !content.match(/^[\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]/)) {
+			thinkingContent = content.trim();
 			mainContent = '';
 		} else {
 			// 默认整个内容都是主内容
-			mainContent = content;
+			mainContent = content.trim();
 			thinkingContent = '';
 		}
 	}
@@ -902,13 +946,9 @@ const processThinkingContent = (content) => {
 		thinkingContent = thinkingContent.replace(/<\/?[^>]+(>|$)/g, '');
 	}
 	
-	// 在主内容前添加行程分隔符（如果主内容不为空且不以特定标记开头）
-	if (mainContent && 
-		!mainContent.startsWith('✅') && 
-		!mainContent.startsWith('📝') && 
-		!mainContent.startsWith('🗺️') && 
-		!mainContent.startsWith('**地图/行程**')) {
-		mainContent = `✅ ${mainContent}`;
+	// 如果主内容为空但思考内容不为空，则主内容置为空字符串而不是undefined
+	if (!mainContent && thinkingContent) {
+		mainContent = '';
 	}
 	
 	return { mainContent, thinkingContent };
@@ -921,6 +961,8 @@ const processContentWithThinking = (contentArray) => {
 	
 	// 处理数组中的每个项目
 	return contentArray.map(item => {
+		if (!item) return { type: 'text', content: '' };
+		
 		if (item.type === 'text' && item.content) {
 			const { mainContent, thinkingContent } = processThinkingContent(item.content);
 			
@@ -928,17 +970,24 @@ const processContentWithThinking = (contentArray) => {
 			if (thinkingContent) {
 				return {
 					...item,
-					content: mainContent,
+					content: mainContent || '',
 					thinkingContent: thinkingContent,
-					hasThinking: true
+					hasThinking: true,
+					thinkingOpen: false  // 默认收缩状态
 				};
+			}
+		} else if (item.type === 'table' && item.content) {
+			// 确保表格数据有效
+			if (!Array.isArray(item.content)) {
+				console.warn('表格数据不是数组格式', item.content);
+				item.content = [];
 			}
 		}
 		return item;
 	});
 };
 
-// 修改AIAnswerThinking函数中的typewriterEffect调用
+// 修改AIAnswerThinking函数，确保思考过程收缩
 const AIAnswerThinking = function (fullContent) {
 	// 创建一个空的AI消息
 	const aiMessage = {
@@ -958,8 +1007,28 @@ const AIAnswerThinking = function (fullContent) {
 	// 添加到消息列表
 	const messageIndex = chatMessages.push(aiMessage) - 1;
 
-	// 处理fullContent，检测并分离思考过程
-	const processedContent = Array.isArray(fullContent) ? processContentWithThinking(fullContent) : fullContent;
+	// 处理fullContent，检测并分离思考过程，并确保思考内容默认收缩
+	console.log("处理AI回复内容...");
+	let processedContent;
+	if (Array.isArray(fullContent)) {
+		// 首先处理分离思考内容
+		processedContent = processContentWithThinking(fullContent);
+		// 再次确保思考内容默认收缩
+		processedContent = processedContent.map(item => {
+			if (item && item.hasThinking) {
+				console.log("设置思考内容默认收缩");
+				return { 
+					...item, 
+					thinkingOpen: false // 强制设置为收缩状态
+				};
+			}
+			return item;
+		});
+	} else {
+		processedContent = fullContent;
+	}
+	
+	console.log("内容处理完成，思考内容默认收缩状态");
 
 	// 使用打字机效果显示内容
 	typewriterEffect(chatMessages[messageIndex], processedContent);
@@ -967,6 +1036,32 @@ const AIAnswerThinking = function (fullContent) {
 	// 确保消息框立即可见
 	nextTick(() => {
 		scrollToBottom();
+		
+		// 添加额外保障，确保思考内容收缩
+		setTimeout(() => {
+			try {
+				// 直接操作DOM强制收缩
+				const thinkingContents = document.querySelectorAll('.thinking-content');
+				thinkingContents.forEach(el => {
+					el.style.display = 'none';
+				});
+				
+				// 确保消息对象中的状态也是关闭的
+				if (chatMessages[messageIndex] && 
+					Array.isArray(chatMessages[messageIndex].content)) {
+					chatMessages[messageIndex].content.forEach(item => {
+						if (item && item.hasThinking) {
+							item.thinkingOpen = false;
+						}
+					});
+				}
+				
+				// 更新视图
+				globalUpdateKey.value = Date.now();
+			} catch (e) {
+				console.error('强制收缩思考内容失败:', e);
+			}
+		}, 100);
 	});
 };
 
@@ -988,14 +1083,39 @@ const typewriterEffect = (message, fullContent, delay = 30) => {
 			// 确保每个项目是有效对象
 			if (!item) return { type: 'text', content: '' };
 			
-			// 清理文本内容
-			const cleanedContent = item.type === 'text' ? cleanAIContent(item.content || '') : item.content || '';
-			
-			return {
-				type: item.type || 'text',
-				id: item.id || '',
-				content: cleanedContent
-			};
+			try {
+				// 清理文本内容
+				let cleanedContent = '';
+				if (item.type === 'text') {
+					if (typeof item.content === 'string') {
+						cleanedContent = cleanAIContent(item.content);
+					} else if (item.content === undefined || item.content === null) {
+						cleanedContent = '';
+					} else {
+						cleanedContent = String(item.content);
+					}
+				} else if (item.type === 'table') {
+					// 确保表格内容是数组
+					if (!Array.isArray(item.content)) {
+						console.warn('表格内容非数组格式，已创建空数组', item);
+						item.content = [];
+					}
+					cleanedContent = item.content;
+				} else {
+					cleanedContent = item.content || '';
+				}
+				
+				// 确保内容项包含display属性
+				return {
+					type: item.type || 'text',
+					id: item.id || '',
+					content: cleanedContent,
+					display: item.type !== 'text' ? 'inline' : 'block' // 非文本类型设置为内联显示
+				};
+			} catch (error) {
+				console.error('处理内容项出错:', error, item);
+				return { type: 'text', content: '内容处理错误' };
+			}
 		})
 		: [{ type: 'text', content: String(fullContent || '数据加载出错') }];
 
@@ -1025,13 +1145,58 @@ const typewriterEffect = (message, fullContent, delay = 30) => {
 			return;
 		}
 		
-		if (currentIndex >= contentArray.length) {
-			message.typing = false;
-			isTypingScroll = false;
-			// 最终确保滚动到底部
+			if (currentIndex >= contentArray.length) {
+		message.typing = false;
+		isTypingScroll = false;
+		
+		console.log("打字机效果完成，强制收缩所有思考内容");
+		
+		// 确保所有思考内容都是收起状态 - 直接操作DOM确保视觉效果正确
+		const forceCollapseAllThinking = () => {
+			// 1. 先处理数据模型
+			if (message.content && Array.isArray(message.content)) {
+				message.content.forEach(item => {
+					if (item && item.hasThinking) {
+						item.thinkingOpen = false;
+					}
+				});
+			}
+			
+			// 2. 直接操作DOM元素确保视觉状态正确
 			setTimeout(() => {
-				scrollToBottom();
-			}, 0);
+				try {
+					// 查找所有thinking-content元素并隐藏
+					const thinkingContents = document.querySelectorAll('.thinking-content');
+					thinkingContents.forEach(el => {
+						el.style.display = 'none';
+					});
+					
+					// 移除所有header的open类
+					const thinkingHeaders = document.querySelectorAll('.thinking-header');
+					thinkingHeaders.forEach(header => {
+						header.classList.remove('open');
+					});
+					
+					console.log(`强制收缩完成: 处理了 ${thinkingHeaders.length} 个思考标题`);
+				} catch (e) {
+					console.error("DOM操作失败:", e);
+				}
+			}, 50);
+		};
+		
+		// 应用强制收缩
+		forceCollapseAllThinking();
+		
+		// 强制更新视图
+		globalUpdateKey.value = Date.now() + 1;
+		
+		// 最终确保滚动到底部
+		setTimeout(() => {
+			// 再次尝试收缩(双重保险)
+			forceCollapseAllThinking();
+			scrollToBottom();
+			globalUpdateKey.value = Date.now() + 2;
+		}, 200);
 			return;
 		}
 		
@@ -1051,7 +1216,10 @@ const typewriterEffect = (message, fullContent, delay = 30) => {
 			return;
 		}
 		
-		const text = currentItem.content || '';
+		// 确保text是字符串类型
+		const text = typeof currentItem.content === 'string' ? currentItem.content : 
+					 (currentItem.content === null || currentItem.content === undefined) ? '' : 
+					 String(currentItem.content);
 
 		if (currentChar < text.length) {
 			// 确保数组边界和对象存在
@@ -1254,7 +1422,7 @@ const showThinkingAnimation2 = () => {
 	};
 };
 
-// 修改cleanAIContent函数，保留思考过程但移除提问建议标签和内容
+// 优化cleanAIContent函数，更好地处理emoji和思考过程
 const cleanAIContent = (content) => {
 	if (typeof content !== 'string') return content;
 	
@@ -1275,8 +1443,38 @@ const cleanAIContent = (content) => {
 		// 移除<ask>标签及其内容
 		cleaned = cleaned.replace(/<ask>.*?<\/ask>/gs, '');
 		
-		// 清理其他HTML标签
-		cleaned = cleaned.replace(/<\/?[^>]+(>|$)/g, '');
+		// 处理分隔符---，替换为换行（在渲染时会处理为分隔符）
+		cleaned = cleaned.replace(/---/g, '\n\n---\n\n');
+		
+		// 确保emoji行的处理 - 前面留出空行
+		cleaned = cleaned.replace(/\n([\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff][^\n]*)/g, '\n\n$1');
+		
+		// 确保所有emoji前都有换行（除了行首）
+		const emojiRegex = /(^|[^\n])([^\n]*)([\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]+)([^\n]*\n)/g;
+		cleaned = cleaned.replace(emojiRegex, (match, start, before, emoji, after) => {
+			// 如果emoji前的内容不是空的，并且emoji不在行首，添加换行
+			if (before.trim() && start !== '\n') {
+				return `${start}${before}\n${emoji}${after}`;
+			}
+			return match;
+		});
+		
+		// 特殊处理常见的特定格式（如"行程安排："后面的内容）
+		const formatMarkers = ['行程安排：', '行程概览：', '行程详情：', '推荐行程：'];
+		formatMarkers.forEach(marker => {
+			if (cleaned.includes(marker)) {
+				// 确保标记后有换行
+				cleaned = cleaned.replace(new RegExp(`${marker}([^\n])`, 'g'), `${marker}\n$1`);
+			}
+		});
+		
+		console.log('清理后的内容:', cleaned.substring(0, 50) + '...');
+		
+		// 处理景点名称后的emoji
+		cleaned = cleaned.replace(/(景点|玩法|攻略)([\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\ud83e\udfff]+)/g, '$1<span class="inline-emoji">$2</span>');
+		
+		// 清理其他HTML标签，但保留我们添加的emoji内联标签
+		cleaned = cleaned.replace(/<(?!\/?span class="inline-emoji")[^>]+(>|$)/g, '');
 		
 		return cleaned.trim();
 	} catch (e) {
@@ -1540,26 +1738,152 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 								// 尝试解析答案
 								const answerData = jsonData.data.outputs.answer;
 								
-								// 处理不同类型的答案数据
-								if (typeof answerData === 'string') {
-									try {
-										finalAnswer = JSON.parse(answerData);
-										console.log("找到最终答案(来自字符串JSON)", finalAnswer);
-									} catch (parseError) {
-										console.error("解析答案字符串为JSON失败:", parseError);
-										// 若无法解析为JSON，则创建简单文本内容
-										finalAnswer = [{ type: 'text', content: answerData }];
-									}
-								} else if (Array.isArray(answerData)) {
-									finalAnswer = answerData;
-									console.log("找到最终答案(来自数组)", finalAnswer);
-								} else if (typeof answerData === 'object' && answerData !== null) {
-									finalAnswer = [answerData];
-									console.log("找到最终答案(来自对象)", finalAnswer);
-								} else {
-									console.log("找到未知类型的答案:", typeof answerData);
-									finalAnswer = [{ type: 'text', content: String(answerData) }];
+									// 处理不同类型的答案数据
+						if (typeof answerData === 'string') {
+							try {
+								finalAnswer = JSON.parse(answerData);
+								console.log("找到最终答案(来自字符串JSON)", finalAnswer);
+								
+								// 额外验证确保表格数据结构正确
+								if (Array.isArray(finalAnswer)) {
+									finalAnswer = finalAnswer.map(item => {
+										if (item && item.type === 'table') {
+											if (!Array.isArray(item.content)) {
+												console.warn('表格内容不是数组，重置为空数组', item);
+												return { ...item, content: [] };
+											}
+										}
+										return item;
+									});
 								}
+							} catch (parseError) {
+								console.error("解析答案字符串为JSON失败:", parseError);
+								// 若无法解析为JSON，则创建简单文本内容
+								finalAnswer = [{ type: 'text', content: answerData }];
+							}
+						} else if (Array.isArray(answerData)) {
+							finalAnswer = answerData;
+							console.log("找到最终答案(来自数组)", finalAnswer);
+							
+							// 同样验证表格数据
+							finalAnswer = finalAnswer.map(item => {
+								if (item && item.type === 'table') {
+									if (!Array.isArray(item.content)) {
+										console.warn('表格内容不是数组，重置为空数组');
+										return { ...item, content: [] };
+									}
+								}
+								return item;
+							});
+						} else if (typeof answerData === 'object' && answerData !== null) {
+							finalAnswer = [answerData];
+							console.log("找到最终答案(来自对象)", finalAnswer);
+							
+							// 检查单个对象
+							if (answerData.type === 'table' && !Array.isArray(answerData.content)) {
+								console.warn('表格内容不是数组，尝试转换', answerData.content);
+								try {
+									// 如果内容是字符串，尝试解析为JSON
+									if (typeof answerData.content === 'string') {
+										try {
+											const parsed = JSON.parse(answerData.content);
+											if (Array.isArray(parsed)) {
+												answerData.content = parsed;
+											} else if (typeof parsed === 'object') {
+												// 如果解析出来是对象而不是数组，尝试从对象中提取数据
+												const rows = [];
+												if (parsed.header) {
+													rows.push(parsed.header);
+												} else {
+													rows.push({"name": "项目", "price": "费用", "remark": "备注"});
+												}
+												
+												if (parsed.rows && Array.isArray(parsed.rows)) {
+													rows.push(...parsed.rows);
+												} else if (parsed.items && Array.isArray(parsed.items)) {
+													rows.push(...parsed.items);
+												}
+												
+												if (parsed.total) {
+													rows.push(parsed.total);
+												}
+												
+												if (rows.length > 1) {
+													answerData.content = rows;
+												} else {
+													answerData.content = [];
+												}
+											} else {
+												answerData.content = [];
+											}
+										} catch (e) {
+											console.error('解析表格字符串失败:', e);
+											answerData.content = [];
+										}
+									} else if (typeof answerData.content === 'object' && answerData.content !== null) {
+										// 如果内容是对象而非数组，尝试构建表格结构
+										const rows = [];
+										rows.push({"name": "项目", "price": "费用", "remark": "备注"});
+										
+										// 尝试从对象的不同属性中提取数据
+										const extractItems = (obj) => {
+											const result = [];
+											for (const key in obj) {
+												if (typeof obj[key] === 'object' && obj[key] !== null) {
+													if (obj[key].name || obj[key].price || obj[key].remark) {
+														result.push({
+															name: obj[key].name || key,
+															price: obj[key].price || '',
+															remark: obj[key].remark || ''
+														});
+													}
+												} else {
+													result.push({
+														name: key,
+														price: obj[key] || '',
+														remark: ''
+													});
+												}
+											}
+											return result;
+										};
+										
+										const items = extractItems(answerData.content);
+										if (items.length > 0) {
+											rows.push(...items);
+											
+											// 添加总计行
+											let totalPrice = 0;
+											items.forEach(item => {
+												const price = parseFloat(item.price);
+												if (!isNaN(price)) {
+													totalPrice += price;
+												}
+											});
+											
+											rows.push({
+												name: "总计",
+												price: totalPrice.toString(),
+												remark: "合计费用"
+											});
+											
+											answerData.content = rows;
+										} else {
+											answerData.content = [];
+										}
+									} else {
+										answerData.content = [];
+									}
+									finalAnswer = [{ ...answerData }];
+								} catch (error) {
+									console.error('处理表格内容失败:', error);
+									finalAnswer = [{ ...answerData, content: [] }];
+								}
+							}
+						} else {
+							console.log("找到未知类型的答案:", typeof answerData);
+							finalAnswer = [{ type: 'text', content: String(answerData) }];
+						}
 								
 								break; // 找到有效答案后退出循环
 							} catch (parseError) {
@@ -1578,10 +1902,22 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 					const safeAnswer = finalAnswer.map(item => {
 						// 确保每个项目都有有效的类型和内容
 						if (!item) return { type: 'text', content: '' };
+						
+						// 特别处理表格类型数据
+						if (item.type === 'table') {
+							// 保留数组类型的表格内容
+							return {
+								type: item.type,
+								id: item.id || '',
+								content: Array.isArray(item.content) ? item.content : []
+							};
+						}
+						
+						// 处理其他类型的内容
 						return {
 							type: item.type || 'text',
 							id: item.id || '',
-							content: typeof item.content === 'string' ? item.content : ''
+							content: typeof item.content === 'string' ? item.content : (item.content === undefined ? '' : String(item.content))
 						};
 					}).filter(item => item); // 过滤掉null/undefined
 					
@@ -1665,10 +2001,22 @@ const callAIInterface = async (userQuery, retryCount = 0) => {
 						// 安全处理数据
 						const safeAnswer = parsedAnswer.map(item => {
 							if (!item) return { type: 'text', content: '' };
+							
+							// 特别处理表格类型数据
+							if (item.type === 'table') {
+								// 保留数组类型的表格内容
+								return {
+									type: item.type,
+									id: item.id || '',
+									content: Array.isArray(item.content) ? item.content : []
+								};
+							}
+							
+							// 处理其他类型的内容
 							return {
 								type: item.type || 'text',
 								id: item.id || '',
-								content: typeof item.content === 'string' ? item.content : ''
+								content: typeof item.content === 'string' ? item.content : (item.content === undefined ? '' : String(item.content))
 							};
 						}).filter(item => item);
 						
@@ -1864,20 +2212,31 @@ const callAIInterface2 = async (userQuery, lastMessage, retryCount = 0) => {
           const processedAnswer = finalAnswer
             .filter(item => item != null) // 过滤空项
             .map(item => {
-              if (item.type === 'text' && typeof item.content === 'string') {
-                // 清理内容
-                const cleanedContent = cleanAIContent(item.content);
-                // 检测并分离思考过程
-                const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
-                
-                return {
-                  ...item,
-                  content: mainContent || cleanedContent,
-                  thinkingContent: thinkingContent,
-                  hasThinking: !!thinkingContent
-                };
+              try {
+                if (item.type === 'text' && typeof item.content === 'string') {
+                  // 清理内容
+                  const cleanedContent = cleanAIContent(item.content);
+                  // 检测并分离思考过程
+                  const { mainContent, thinkingContent } = processThinkingContent(cleanedContent);
+                  
+                  return {
+                    ...item,
+                    content: mainContent || cleanedContent,
+                    thinkingContent: thinkingContent,
+                    hasThinking: !!thinkingContent
+                  };
+                } else if (item.type === 'table') {
+                  // 确保表格内容是有效数组
+                  if (!Array.isArray(item.content)) {
+                    console.warn('表格内容不是数组，将创建空数组', item);
+                    return { ...item, content: [] };
+                  }
+                }
+                return item;
+              } catch (error) {
+                console.error('处理答案项出错:', error, item);
+                return { type: 'text', content: '内容处理错误' };
               }
-              return item;
             })
             .filter(item => 
               item != null && 
@@ -2010,6 +2369,31 @@ onMounted(() => {
 	safeAreaInsets.value = insets;
 	setTimeout(() => {
 		scrollToBottom();
+		
+		// 修复样式：确保所有交互元素内联显示
+		const fixInlineDisplay = () => {
+			// 使用uni查询选择器
+			const query = uni.createSelectorQuery();
+			query.selectAll('.trip-item, .transport, .accommodation, .restaurant, .activity, .attraction').fields({
+				id: true,
+				dataset: true,
+				rect: true,
+				size: true,
+				properties: ['className']
+			}, (res) => {
+				console.log('找到元素数量:', res ? res.length : 0);
+				if (res && res.length) {
+					// 通过样式类更新来触发重新渲染
+					globalUpdateKey.value = Date.now();
+				}
+			}).exec();
+		};
+		
+		// 初始化时执行一次
+		fixInlineDisplay();
+		
+		// 设置一个定时器，每隔1秒检查一次
+		setInterval(fixInlineDisplay, 1000);
 	}, 100);
 
 	// 本地测试：读取button_1.txt文件并打印
@@ -2027,6 +2411,18 @@ onMounted(() => {
 	// 直接赋值
 	button_msg1 = {
 		"海钓体验": [
+			{
+				"type": "table",
+				"id": "",
+				"content": [
+					{"name": "项目", "price": "费用 (元)", "remark": "备注"},
+					{"name": "交通", "price": "200", "remark": "往返船票"},
+					{"name": "住宿", "price": "450", "remark": "一晚标准间"},
+					{"name": "餐饮", "price": "490", "remark": "含早中晚餐"},
+					{"name": "活动", "price": "800", "remark": "海钓体验"},
+					{"name": "总计", "price": "1940", "remark": "每人"}
+				]
+			},
 			{
 				"type": "text",
 				"id": "",
@@ -3415,7 +3811,13 @@ onMounted(() => {
 });
 
 // 添加toggleThinking函数，用于展开/收起思考过程
-const toggleThinking = (item) => {
+const toggleThinking = (item, event) => {
+	// 防止事件冒泡
+	if (event) {
+		event.stopPropagation();
+		event.preventDefault();
+	}
+	
 	// 使用Vue的响应式机制添加或切换thinkingOpen属性
 	if (item.thinkingOpen === undefined) {
 		item.thinkingOpen = false; // 默认收起
@@ -3423,16 +3825,52 @@ const toggleThinking = (item) => {
 		item.thinkingOpen = !item.thinkingOpen;
 	}
 	
+	// 处理header的class
+	if (event && event.currentTarget) {
+		try {
+			if (item.thinkingOpen) {
+				event.currentTarget.classList.add('open');
+			} else {
+				event.currentTarget.classList.remove('open');
+			}
+		} catch (e) {
+			console.error('更新class失败:', e);
+		}
+	}
+	
 	// 强制更新视图
 	globalUpdateKey.value = Date.now();
+	
+	// 收缩后通知
+	console.log('思考内容状态:', item.thinkingOpen ? '已展开' : '已收缩');
 	
 	// 内容展开后调整滚动
 	if (item.thinkingOpen) {
 		nextTick(() => {
 			scrollToBottom();
 		});
+	} else {
+		// 收缩后也更新视图
+		nextTick(() => {
+			globalUpdateKey.value = Date.now();
+			
+			// 直接操作DOM确保内容被收起
+			setTimeout(() => {
+				try {
+					// 查找对应的thinking-content元素
+					const contentElem = event.currentTarget.nextElementSibling;
+					if (contentElem && contentElem.classList.contains('thinking-content')) {
+						contentElem.style.display = 'none';
+					}
+				} catch (e) {
+					console.error('DOM收缩操作失败:', e);
+				}
+			}, 10);
+		});
 	}
 };
+
+
 </script>
 
 <style>
@@ -3746,19 +4184,21 @@ const toggleThinking = (item) => {
 }
 
 .message-content {
-	max-width: 70%;
-	margin: 0 12px;
-	padding: 12px;
+	max-width: 85%;
+	margin: 0 10px;
+	padding: 16px;
 	border-radius: 12px;
 	background-color: #ffffff;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-	font-size: 14px;
-	line-height: 2;
+	font-size: 16px;
+	line-height: 1.8;
+	width: calc(100% - 90px); /* 考虑头像和边距 */
 }
 
 .user-message .message-content {
 	background-color: #4285f4;
 	color: #ffffff;
+	max-width: 80%;
 }
 
 .category-container {
@@ -3889,6 +4329,61 @@ const toggleThinking = (item) => {
 	white-space: nowrap;
 }
 
+.content-divider {
+	height: 1px;
+	background-color: #eee;
+	margin: 10px 0;
+	width: 100%;
+}
+
+.trip-summary-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 15px 0;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.trip-summary-table th {
+	background-color: #f0f7ff;
+	color: #4285f4;
+	text-align: left;
+	padding: 10px;
+	font-size: 15px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.trip-summary-table td {
+	padding: 10px;
+	border-bottom: 1px solid #eeeeee;
+	font-size: 15px;
+}
+
+.trip-summary-table tr:last-child td {
+	border-bottom: none;
+}
+
+.trip-summary-table .price-column {
+	color: #4285f4;
+	font-weight: bold;
+	text-align: right;
+}
+
+.trip-summary-total {
+	background-color: #f0f7ff;
+	font-weight: bold;
+}
+
+.error-message {
+	color: #ff6b6b;
+	padding: 10px;
+	background-color: #fff0f0;
+	border-radius: 6px;
+	text-align: center;
+	margin: 10px 0;
+}
+
 .header {
 	display: flex;
 	align-items: center;
@@ -3957,6 +4452,10 @@ const toggleThinking = (item) => {
 
 .text-content {
 	margin-bottom: 10px;
+	display: inline;
+	white-space: normal;
+	word-wrap: break-word;
+	font-size: 16px;
 }
 
 .trip-section {
@@ -3978,6 +4477,10 @@ const toggleThinking = (item) => {
 	cursor: pointer;
 	background-color: transparent;
 	/* 无背景色 */
+	display: inline;
+	/* 确保内联显示 */
+	font-size: 16px;
+	/* 增大字体 */
 }
 
 .transport,
@@ -3987,6 +4490,8 @@ const toggleThinking = (item) => {
 	cursor: pointer;
 	padding: 5px;
 	border-radius: 4px;
+	display: inline;
+	/* 确保内联显示 */
 }
 
 /* .transport {
@@ -4062,60 +4567,197 @@ const toggleThinking = (item) => {
 
 /* 思考过程样式 */
 .thinking-container {
-	margin: 8px 0;
-	border-radius: 4px;
-	background-color: #f6f8fa;
-	border: 1px solid #e3e6e8;
+	margin: 12px 0;
+	border-radius: 6px;
+	background-color: #f0f5ff;
+	border: 1px solid #d0e0ff;
 	overflow: hidden;
 	width: 100%;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .thinking-header {
-	padding: 8px 12px;
+	padding: 10px 14px;
 	display: flex;
 	align-items: center;
-	background-color: #f6f8fa;
+	background-color: #e5efff;
 	cursor: pointer;
 	user-select: none;
+	transition: all 0.2s;
+	position: relative;
+}
+
+.thinking-header:hover {
+	background-color: #d5e5ff;
+}
+
+.thinking-header:after {
+	content: '';
+	position: absolute;
+	right: 50px;
+	width: 6px;
+	height: 6px;
+	border-right: 2px solid #4285f4;
+	border-bottom: 2px solid #4285f4;
+	transform: rotate(45deg);
+	transition: transform 0.2s;
+}
+
+.thinking-header.open:after {
+	transform: rotate(-135deg);
 }
 
 .thinking-icon {
-	font-size: 12px;
-	color: #586069;
-	margin-right: 6px;
+	font-size: 14px;
+	color: #4285f4;
+	margin-right: 8px;
 }
 
 .thinking-title {
-	font-size: 14px;
+	font-size: 15px;
 	font-weight: 500;
-	color: #586069;
+	color: #4285f4;
 	flex: 1;
 }
 
 .thinking-action {
-	font-size: 12px;
-	color: #0366d6;
-	padding: 2px 8px;
-	border-radius: 3px;
-	background-color: rgba(3, 102, 214, 0.1);
-	border: 1px solid rgba(3, 102, 214, 0.2);
+	font-size: 13px;
+	color: #ffffff;
+	padding: 3px 10px;
+	border-radius: 12px;
+	background-color: #4285f4;
 	margin-left: auto;
+	transition: opacity 0.2s;
+}
+
+.thinking-action:hover {
+	opacity: 0.9;
 }
 
 .thinking-action text {
-	color: #0366d6;
+	color: #ffffff;
 	font-weight: 500;
 }
 
 .thinking-content {
-	padding: 10px 12px;
-	font-size: 14px;
-	line-height: 1.6;
-	color: #444;
+	padding: 14px 16px;
+	font-size: 15px;
+	line-height: 1.8;
+	color: #333;
 	white-space: pre-wrap;
 	background-color: #fff;
 	max-height: 400px;
 	overflow-y: auto;
-	border-top: 1px solid #e3e6e8;
+	border-top: 1px solid #d0e0ff;
+}
+
+.emoji-content {
+	display: block;
+	white-space: normal;
+	margin-top: 10px;
+}
+
+.emoji-line {
+	display: block;
+	margin: 12px 0;
+	line-height: 1.6;
+	font-size: 16px;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.emoji-prefix {
+	display: block;
+	font-size: 24px;
+	margin-bottom: 8px;
+	line-height: 1.4;
+}
+
+.emoji-content-text {
+	display: block;
+	padding-left: 12px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	border-left: 3px solid #4285f4;
+	margin-left: 3px;
+	line-height: 1.6;
+}
+
+.normal-line {
+	display: block;
+	margin: 4px 0;
+}
+
+.inline-emoji {
+	display: inline;
+	white-space: nowrap;
+	margin-left: 2px;
+}
+
+.thinking-content-separator {
+	height: 1px;
+	background: linear-gradient(to right, #4285f4, transparent);
+	margin: 12px 0;
+	opacity: 0.5;
+}
+
+.emoji-content .emoji-line .emoji-inline {
+	display: inline;
+	white-space: nowrap;
+	font-size: 16px;
+}
+
+.content-divider {
+	height: 1px;
+	background-color: #eee;
+	margin: 10px 0;
+	width: 100%;
+}
+
+.divider-section {
+	margin: 8px 0;
+}
+
+.trip-summary-container {
+	margin: 15px 0;
+}
+
+.trip-summary-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 15px 0;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.trip-summary-table th {
+	background-color: #f0f7ff;
+	color: #4285f4;
+	text-align: left;
+	padding: 10px;
+	font-size: 14px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.trip-summary-table td {
+	padding: 10px;
+	border-bottom: 1px solid #eeeeee;
+	font-size: 14px;
+}
+
+.trip-summary-table tr:last-child td {
+	border-bottom: none;
+}
+
+.trip-summary-table .price-column {
+	color: #4285f4;
+	font-weight: bold;
+	text-align: right;
+}
+
+.trip-summary-total {
+	background-color: #f0f7ff;
+	font-weight: bold;
 }
 </style>
