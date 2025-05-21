@@ -205,7 +205,7 @@ const getImageStyle = (imageCount, index) => {
   if (imageCount === 1) {
     return { width: '100%', height: '200px' }; // 单张图片全宽显示
   } else if (imageCount === 2) {
-    return { width: '48%', height: '200px' }; // 两张图片并排显示
+    return { width: '48%', height: '150px' }; // 两张图片并排显示
   } else if (imageCount === 3) {
     return { width: '32%', height: '120px' }; // 三张图片并排显示
   } else if (imageCount === 4) {
