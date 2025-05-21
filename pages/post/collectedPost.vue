@@ -23,6 +23,7 @@
             class="post-image"
             mode="aspectFill"
           />
+        
         </view>
       </view>
     </view>
@@ -31,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useUserStore } from '/store/modules/user';
+import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
 const posts = ref<any[]>([]);
