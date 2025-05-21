@@ -325,27 +325,27 @@ const categories = reactive([
 	{
 		id: "fishing",
 		name: "海钓体验",
-		icon: "https://wlmtsys.com:9000/travel/fishing.jpg",
+		icon: "https://wuminghui.top:9000/travel/fishing.jpg",
 	},
 	{
 		id: "snorkeling",
 		name: "浮潜探索",
-		icon: "https://wlmtsys.com:9000/travel/snorkeling.jpg",
+		icon: "https://wuminghui.top:9000/travel/snorkeling.jpg",
 	},
 	{
 		id: "family",
 		name: "亲子娱乐",
-		icon: "https://wlmtsys.com:9000/travel/family.jpg",
+		icon: "https://wuminghui.top:9000/travel/family.jpg",
 	},
 	{
 		id: "leisure",
 		name: "休闲畅游",
-		icon: "https://wlmtsys.com:9000/travel/leisure.jpg",
+		icon: "https://wuminghui.top:9000/travel/leisure.jpg",
 	},
 	{
 		id: "island",
 		name: "海岛介绍",
-		icon: "https://wlmtsys.com:9000/travel/island.jpg",
+		icon: "https://wuminghui.top:9000/travel/island.jpg",
 	},
 ]);
 

@@ -14,11 +14,11 @@
     <!-- 会员卡片 -->
     <view class="member-card">
       <view class="card-top">
-        <image class="card-bg" src="https://wlmtsys.com:9000/travel/logo.png" mode="aspectFill"></image>
+        <image class="card-bg" src="https://wuminghui.top:9000/travel/logo.png" mode="aspectFill"></image>
         <view class="card-content">
           <view class="card-user-info">
             <view class="user-avatar">
-              <image class="avatar" :src="token ? (userInfo.avatar || 'https://wlmtsys.com:9000/travel/logo.png') : '/static/my/noLogin.png'"></image>
+              <image class="avatar" :src="token ? (userInfo.avatar || 'https://wuminghui.top:9000/travel/logo.png') : '/static/my/noLogin.png'"></image>
             </view>
             <view class="user-detail">
               <text class="user-name">{{ token ? (userInfo.username || '用户') : '游客' }}</text>
@@ -121,22 +121,22 @@ onShow(() => {
 // 会员特权列表
 const privileges = ref([
   {
-    icon: 'https://wlmtsys.com:9000/travel/首页-景点攻略.svg',
+    icon: 'https://wuminghui.top:9000/travel/首页-景点攻略.svg',
     name: '专属折扣',
     desc: '享受全岛景点/酒店8折优惠'
   },
   {
-    icon: 'https://wlmtsys.com:9000/travel/首页-船票预订.svg',
+    icon: 'https://wuminghui.top:9000/travel/首页-船票预订.svg',
     name: '优先预约',
     desc: '热门景区/酒店优先预约资格'
   },
   {
-    icon: 'https://wlmtsys.com:9000/travel/首页-美食推荐.svg',
+    icon: 'https://wuminghui.top:9000/travel/首页-美食推荐.svg',
     name: '专属客服',
     desc: '7×24小时专人服务'
   },
   {
-    icon: 'https://wlmtsys.com:9000/travel/首页-酒店住宿.svg',
+    icon: 'https://wuminghui.top:9000/travel/首页-酒店住宿.svg',
     name: '生日礼包',
     desc: '生日当月获赠精美礼品'
   }
@@ -170,11 +170,11 @@ const rechargeOptions = ref([
 // 支付方式
 const paymentMethods = ref([
   {
-    icon: 'https://wlmtsys.com:9000/travel/微信支付.png',
+    icon: 'https://wuminghui.top:9000/travel/微信支付.png',
     name: '微信支付'
   },
   {
-    icon: 'https://wlmtsys.com:9000/travel/支付宝.png',
+    icon: 'https://wuminghui.top:9000/travel/支付宝.png',
     name: '支付宝'
   }
 ]);
@@ -236,7 +236,7 @@ const handlePay = () => {
       {
         productId: option.id || option.duration, // 使用选项ID或名称
         productType: "Attractions", // 产品类型为会员
-        imageUrl: 'https://wlmtsys.com:9000/travel/logo.png',
+        imageUrl: 'https://wuminghui.top:9000/travel/logo.png',
         quantity: 1,
         price: parseFloat(option.price), // 添加价格信息
         title: `会员${option.duration}`, // 添加标题

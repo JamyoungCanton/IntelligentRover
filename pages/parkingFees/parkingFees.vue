@@ -105,8 +105,8 @@ const parkingInfo = ref({
 const rateDescriptionList = ref([]);
 
 const paymentMethods = ref([
-  { name: '微信支付', icon: 'https://wlmtsys.com:9000/wlmtsys/2025/05/19/53fe7786fa524c07b4228f81aa9605b3.png', color: '#07C160', value: 'wechat' },
-  { name: '支付宝', icon: 'https://wlmtsys.com:9000/wlmtsys/2025/05/19/3e6ccbf7345c4f65aed388dc0565ffb9.png', color: '#1677FF', value: 'alipay' }
+  { name: '微信支付', icon: 'https://wuminghui.top:9000/wlmtsys/2025/05/19/53fe7786fa524c07b4228f81aa9605b3.png', color: '#07C160', value: 'wechat' },
+  { name: '支付宝', icon: 'https://wuminghui.top:9000/wlmtsys/2025/05/19/3e6ccbf7345c4f65aed388dc0565ffb9.png', color: '#1677FF', value: 'alipay' }
 ]);
 
 // 获取屏幕的安全距离

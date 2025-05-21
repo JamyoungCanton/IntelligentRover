@@ -96,7 +96,7 @@ const textData = ref({
   activityTitle: '深海潜水体验',
   activityTime: '2024年3月15日 09:00-12:00',
   activityLocation: '万山群岛 东澳岛潜水基地',
-  activityImage: 'https://wlmtsys.com:9000/travel/diving2.jpg',
+  activityImage: 'https://wuminghui.top:9000/travel/diving2.jpg',
 
   // 价格信息
   price: '¥399',

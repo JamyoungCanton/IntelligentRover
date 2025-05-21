@@ -140,17 +140,17 @@ const mineTypeList = ref([
 const bannerList = ref([
   { 
     id: 1, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/19.jpg',
+    imageUrl: 'https://wuminghui.top:9000/travel/19.jpg',
     title: '岛屿风光'
   },
   { 
     id: 2, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/20.webp',
+    imageUrl: 'https://wuminghui.top:9000/travel/20.webp',
     title: '海边日落'
   },
   { 
     id: 3, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/32.jpg',
+    imageUrl: 'https://wuminghui.top:9000/travel/32.jpg',
     title: '蓝天白云'
   }
 ]);

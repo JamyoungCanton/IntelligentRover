@@ -97,21 +97,21 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    img: 'https://wlmtsys.com:9000/travel/collectItinerary.png',
-    text: '收藏帖子',
+    img: 'https://wuminghui.top:9000/travel/collectItinerary.png',
+    text: '我的帖子',
     onClick: 'goCollectPost'
   },
   {
-    img: 'https://wlmtsys.com:9000/travel/historyOrder.png',
+    img: 'https://wuminghui.top:9000/travel/historyOrder.png',
     text: '历史订单',
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
+    img: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
     text: '待出行',
   },
   {
-    img: 'https://wlmtsys.com:9000/travel/customerService.png',
+    img: 'https://wuminghui.top:9000/travel/customerService.png',
     text: '客服中心'
   }
 ]);

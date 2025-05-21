@@ -301,13 +301,8 @@ const getOrderList = () => {
 
 // 根据订单ID查询订单详情  GET
 const getOrderDetailById1 = (orderSn) => {
-  // 显示加载提示
-  uni.showLoading({
-    title: '加载订单详情中...'
-  });
-  console.log("orderSn为：", orderSn)
+  uni.showLoading({ title: '加载订单详情中...' });
 
-  // 发起请求获取订单详情
   uni.request({
     url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${orderSn}`,
     method: 'GET',
@@ -316,32 +311,30 @@ const getOrderDetailById1 = (orderSn) => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      console.log('订单详情响应数据:', res.data);
-
-      // 如果请求成功，处理响应数据
       if (res.data.success) {
-        currentOrderDetail.value = res.data.result;
-        showDetailPopup.value = true; // 显示弹窗
+        const detail = res.data.result;
+
+        // 如果接口没有返回 goodsName，则尝试从已有 orders 中找
+        const matched = orders.value.find(o => o.orderSn === orderSn);
+        if (matched && !detail.goodsName) {
+          detail.goodsName = matched.goodsName;
+        }
+
+        currentOrderDetail.value = detail;
+        showDetailPopup.value = true;
       } else {
-        // 处理请求失败的情况
-        uni.showToast({
-          title: res.data.message || '获取订单详情失败',
-          icon: 'none'
-        });
+        uni.showToast({ title: res.data.message || '获取订单详情失败', icon: 'none' });
       }
     },
-    fail: (err) => {
-      console.error('获取订单详情失败:', err);
-      uni.showToast({
-        title: '获取订单详情失败',
-        icon: 'none'
-      });
+    fail: () => {
+      uni.showToast({ title: '获取订单详情失败', icon: 'none' });
     },
     complete: () => {
       uni.hideLoading();
     }
   });
 };
+
 
 // 根据订单ID查询订单详情 GET，获取的订单信息比1更多，！！！获取会失败！！！
 const getOrderDetailById2 = (orderSn) => {

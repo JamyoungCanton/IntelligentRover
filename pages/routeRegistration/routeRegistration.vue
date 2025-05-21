@@ -77,7 +77,7 @@ export default {
       safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
-        banner: 'https://wlmtsys.com:9000/travel/beach.jpg',
+        banner: 'https://wuminghui.top:9000/travel/beach.jpg',
         wechatIcon: '/static/route/wechat.png',
         alipayIcon: '/static/route/alipay.png'
       },

@@ -1,267 +1,240 @@
 <template>
   <view class="container">
-    <view class="postContent">
-      <view class="postItem" v-for="(item, index) in postList" :key="index" @click="navigateToPostDetail(item)">
-        <view class="postHeader">
-          <image class="itemava"
-            src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
-            mode="scaleToFill"
-          />
-          <text class="itemname">{{ item.userVO.username}}</text>
-          <text class="itemlv">lv3</text>
-        </view>
-        <view class="postTitle">
-          <text>{{ item.title }}</text>
-        </view>
-        <view class="postP">
-          <p>{{ item.content }}</p>
-        </view>
-        <view class="postImage" >
-          <image
-          v-for="(img,index) in item.images" :key="index"
-            :src="img.url"
-            mode="scaleToFill"
-            :style="getImageStyle(item.images.length, index)"
-          />
-        </view>
-        <view class="item-bottom">
-          <view class="item-bottom-left">
-            <view class="left-data">{{ item.createTime}}·41分钟前·{{ item.area }}</view>
+    <view v-if="loading" class="loading">加载中...</view>
+    <view v-else-if="posts.length === 0" class="no-posts">你还没有发布任何帖子</view>
+    <view v-else class="post-list">
+      <view 
+        class="post-card" 
+        v-for="post in posts" 
+        :key="post.id"
+      >
+        <text class="delete-text" @tap.stop="handleDelete(post.id)">删除</text>
+
+        <!-- 点击整个卡片跳详情 -->
+        <view @tap="toDetail(post.id)">
+          <view class="post-header">
+            <text class="post-title">{{ post.title || '未命名帖子' }}</text>
+            <text class="post-time">{{ formatTime(post.createTime) }}</text>
           </view>
-         <view class="item-bottom-right">
-            <view class="right-data">
-              <uni-icons type="heart" size="16" color="#666"></uni-icons>
-              <text class="data-detail">{{ item.likes }}</text>
-              <uni-icons type="star" size="16" color="#666"></uni-icons>
-              <text class="data-detail">{{ item.focus }}</text>
-              <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text class="data-detail">{{ item.comments }}</text>
+          <view class="post-content">{{ post.content }}</view>
+          <image
+            v-if="post.images?.length"
+            :src="post.images[0].url"
+            class="post-image"
+            mode="aspectFill"
+          />
+
+          <!-- 底部信息 -->
+          <view class="item-bottom">
+            <!-- 左侧：时间 · 分区 -->
+            <view class="item-bottom-left">
+              <text class="left-data">
+                {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
+              </text>
+            </view>
+            <!-- 右侧：点赞/关注/评论 -->
+            <view class="item-bottom-right">
+              <uni-icons type="heart" size="18" color="#999" />
+              <text class="data-detail">{{ post.likes ?? 0 }}</text>
+              <uni-icons type="star" size="18" color="#999" />
+              <text class="data-detail">{{ post.focus ?? 0 }}</text>
+              <uni-icons type="chat" size="18" color="#999" />
+              <text class="data-detail">{{ post.comments ?? 0 }}</text>
             </view>
           </view>
         </view>
       </view>
     </view>
-
-    <view class="floating-plus-button" @click="goToCreatePost">+</view>
   </view>
 </template>
 
-<script setup>
-import { ref ,onMounted} from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
-import { onShow } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
+const posts = ref<any[]>([]);
+const loading = ref(true);
 
-const getImageStyle = (imageCount, index) => {
-  if (imageCount === 1) {
-    return { width: '100%', height: '200px' }; // 单张图片全宽显示
-  } else if (imageCount === 2) {
-    return { width: '48%', height: '200px' }; // 两张图片并排显示
-  } else if (imageCount === 3) {
-    return { width: '32%', height: '120px' }; // 三张图片并排显示
-  } else if (imageCount === 4) {
-    return { width: '48%', height: '160px' }; // 四张图片并排显示
-  } else {
-    return { width: '32%', height: '120px' }; // 其他情况默认显示三张图片并排
+// 原生时间格式化
+const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
+// 截取到分钟
+const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
+
+// 拉我的帖子
+async function fetchMyPosts() {
+  loading.value = true;
+  const userId = uni.getStorageSync('userId');
+  const token = uni.getStorageSync('token') || userStore.token;
+  try {
+    const res: any = await new Promise((resolve, reject) => {
+      uni.request({
+        url: 'https://island.zhangshuiyi.com/island/posts/page',
+        method: 'GET',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': token
+        },
+        data: { userId, pageNo: 1, pageSize: 20, order: 1 },
+        success: resolve,
+        fail: reject
+      });
+    });
+    if (res.statusCode === 200 && res.data.success) {
+      posts.value = res.data.result.list || [];
+    } else {
+      uni.showToast({ title: res.data.message || '获取失败', icon: 'none' });
+    }
+  } catch (e) {
+    console.error(e);
+    uni.showToast({ title: '网络异常', icon: 'none' });
+  } finally {
+    loading.value = false;
   }
-};
+}
 
-const goToCreatePost = () => {
-  uni.navigateTo({
-    url: '/pages/post/createPost'
+// 删除帖子
+async function handleDelete(postId: string) {
+  const mod = await uni.showModal({
+    title: '确认删除',
+    content: '删除后不可恢复，是否继续？'
   });
-};
+  if (!mod.confirm) return;
 
-const navigateToPostDetail = (post) => {
-  console.log('点击了帖子', post.id);
+  const token = uni.getStorageSync('token') || userStore.token;
+  try {
+    const res: any = await new Promise((resolve, reject) => {
+      uni.request({
+        url: 'https://island.zhangshuiyi.com/island/posts/deletePost',
+        method: 'DELETE',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': token
+        },
+        data: { id: postId },
+        success: resolve,
+        fail: reject
+      });
+    });
+    if ((res.statusCode === 200 || res.statusCode === 204) && res.data.success !== false) {
+      uni.showToast({ title: '删除成功', icon: 'success' });
+      posts.value = posts.value.filter(p => p.id !== postId);
+    } else {
+      uni.showToast({ title: res.data.message || '删除失败', icon: 'none' });
+    }
+  } catch (e) {
+    console.error(e);
+    uni.showToast({ title: '网络异常', icon: 'none' });
+  }
+}
+
+// 跳详情
+function toDetail(id: string) {
   uni.navigateTo({
-    url: `/pages/post/postDetail?id=${post.id}`
+    url: `/pages/post/postDetail?id=${id}`
   });
-};
+}
 
-onShow(() => {
-  getPostLst();
-});
-
-const postList = ref([]);
-// 获取帖子信息
-const getPostLst = () => {
-  uni.request({
-      url: 'https://island.zhangshuiyi.com/island/collectRecord',
-      method: 'GET',
-      header:{
-        'X-Access-Token': userStore.token,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      data:{
-        isAsc: true,
-        order:1,
-        pageNo: 1,
-        pageSize: 50
-        // sortBy: 'id'
-      },
-      success: (res) => {
-        if(res.data.code === 401){
-          uni.showModal({
-            title: '请重新登录',
-            content: '',
-            showCancel: false,
-            confirmText: '确定',
-            success: (res) => {
-              if (res.confirm) {
-                uni.navigateTo({ url: '/pages/login/login' });
-              }
-            },
-          });
-        }
-        
-        else if (res.statusCode === 200) {
-          console.log('获取到的帖子信息:', res.data.result.result);
-          
-          // 处理获取到的帖子信息
-          postList.value = res.data.result.result
-          // console.log('处理后的帖子信息:', postList.value);
-          
-        } else {
-          console.error('获取帖子信息失败，状态码:', res.data.code);
-          uni.showToast({
-            title: '获取帖子信息失败',
-            icon: 'none'
-          });
-        }
-      },
-      fail: (err) => {
-        console.error('请求出错:', err);
-        uni.showToast({
-          title: '网络请求出错',
-          icon: 'none'
-        });
-      }
-  })
-}  
-    
-  
+onMounted(fetchMyPosts);
 </script>
 
-<style lang="scss">
-.container{
-  background-color: rgb(248, 248, 248);
+<style  lang="scss">
+.container {
+  padding: 30rpx;
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  padding-bottom: 100px;
 }
-
-.postContent {
-  padding-top: 0; /* 因为去掉了顶部固定的分类栏，所以这里不需要再预留顶部间距 */
+.loading, .no-posts {
+  text-align: center;
+  margin-top: 100rpx;
+  color: #888;
+  font-size: 32rpx;
+}
+.post-list {
   display: flex;
   flex-direction: column;
-  align-items: center; /* 添加这行使内容居中 */
-  width: 100%; /* 改为100%宽度 */
+  gap: 30rpx;
 }
-
-.postItem {
+.post-card {
+  position: relative;
+  padding: 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
+}
+.delete-text {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  font-size: 28rpx;
+  color: #f56c6c;
+}
+.post-header {
   display: flex;
-  flex-direction: column;
-  border: solid 1px #efebeb;
-  border-radius: 10px;
-  width: 85%;
-  margin: 0 20px; 
-  background-color: #fff;
-  margin-bottom: 15px;
-}
-.postHeader{
-  display: flex;
-  flex-direction: row;
-  align-content: center;
-  align-items: center;
-  padding: 8px;
-
-}
-.itemava{
-  width: 45px;
-  height:45px;
-  border-radius: 50%;
-  margin-right: 10px;
-  border: solid 1px #c5c0c0;
-}
-.itemname{
-  margin-right: 20px;
-}
-.itemlv{
-  margin-right: 20px;
-  background-color: #ee8c1c;
-  padding: 0 10px;
-  border-radius: 8px;
-}
-.postTitle{
-  margin-left: 15px;
-  font-size: 18px;
-  font-weight: 500;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  color: #225c99;
-}
-.postP{
-  // 首行缩进两个字符
-  text-indent: 2em;
-  font-size: 14px;
-  padding: 5px 12px;
-  color: #4f4f4f;
-}
-
-.postImage{
-  display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  margin-top: 10px;
-  width: 100%; /* 确保容器宽度为 100% */
+  margin-bottom: 10rpx;
 }
-.postImage image{
-  border-radius: 5px;
-  margin-bottom: 10px; /* 图片之间的间距 */
+.post-title {
+  font-size: 36rpx;
+  font-weight: bold;
 }
+.post-time {
+  font-size: 24rpx;
+  color: #aaa;
+}
+.post-content {
+  font-size: 28rpx;
+  margin-bottom: 10rpx;
+}
+.post-image {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 12rpx;
+  object-fit: cover;
+}
+
 .item-bottom{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  border-top: solid 1px #efebeb;
+  padding: 12px 15px;
+  border-top: solid 1px #f0f0f0;
   margin-top: 5px;
-}
-.item-bottom-left{
-  font-size: 12px;
-  color: #666;
-}
-.item-bottom-right{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  
-}
-.right-data{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  font-size: 12px;
-  color: #666;
-  margin-right: 10px;
-}
-.data-detail{
-  margin-right: 8px;
+  background: linear-gradient(to bottom, rgba(250,250,250,0.5), rgba(255,255,255,0.8));
 }
 
-/* 悬浮加号按钮样式 */
-.floating-plus-button {
-  position: fixed;
-  right: 35px;
-  top: 130px;
-  width: 50px;
-  height: 50px;
-  background-color: #007AFF;
-  border-radius: 50%;
-  color: white;
-  font-size: 48px;
-  text-align: center;
-  line-height: 45px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+.item-bottom-left{
+  font-size: 13px;
+  color: #999;
+}
+
+.item-bottom-right{
+  display: flex;
+  align-items: center;
+}
+
+.right-data{
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+  
+  /* 交互按钮增强 */
+  .uni-icons {
+    transition: all 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+    
+    &:active {
+      background-color: rgba(0, 0, 0, 0.05);
+      transform: scale(1.1);
+    }
+  }
+}
+
+.data-detail{
+  margin: 0 12px 0 4px;
 }
 </style>

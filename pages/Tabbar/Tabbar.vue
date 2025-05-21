@@ -54,8 +54,8 @@ const tabList = ref([
         middleClass: ''
     },
     {
-        iconPath: 'https://wlmtsys.com:9000/travel/logo.png',
-        selectedIconPath: 'https://wlmtsys.com:9000/travel/logo.png',
+        iconPath: 'https://wuminghui.top:9000/travel/logo.png',
+        selectedIconPath: 'https://wuminghui.top:9000/travel/logo.png',
         text: 'AI',
         pagePath: '/pages/chat/chat',
         isTabPage: true, 
