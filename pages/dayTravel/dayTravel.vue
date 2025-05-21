@@ -109,16 +109,16 @@ const tabs = ref([
 // 轮播图数据
 const carouselItems = ref([
   {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
+    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
   },
   {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
+    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
   },
   {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
+    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
   },
   {
-    image: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
+    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
   }
 ]);
 

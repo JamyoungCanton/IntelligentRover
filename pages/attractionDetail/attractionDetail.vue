@@ -56,11 +56,11 @@
         <text class="section-title">景点实拍</text>
         <view class="attimg">
           <image
-            src="https://wlmtsys.com:9000/travel/19.jpg"
+            src="https://wuminghui.top:9000/travel/19.jpg"
             mode="scaleToFill"
           />
           <image
-            src="https://wlmtsys.com:9000/travel/32.jpg"
+            src="https://wuminghui.top:9000/travel/32.jpg"
             mode="scaleToFill"
           />
           <image
@@ -68,15 +68,15 @@
             mode="scaleToFill"
           />
           <image
-            src="https://wlmtsys.com:9000/travel/20.webp"
+            src="https://wuminghui.top:9000/travel/20.webp"
             mode="scaleToFill"
           />
           <image
-            src="https://wlmtsys.com:9000/travel/18.jpg"
+            src="https://wuminghui.top:9000/travel/18.jpg"
             mode="scaleToFill"
           />
           <image
-            src="https://wlmtsys.com:9000/travel/12.jpg"
+            src="https://wuminghui.top:9000/travel/12.jpg"
             mode="scaleToFill"
           />
         </view>

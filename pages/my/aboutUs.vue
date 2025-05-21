@@ -2,7 +2,7 @@
   <view class="about-us-page">
     <!-- 头像和介绍 -->
     <view class="profile-section">
-      <image class="avatar" src="https://wlmtsys.com:9000/travel/logo.png" />
+      <image class="avatar" src="https://wuminghui.top:9000/travel/logo.png" />
       <text class="app-name">海岛智游侠</text>
       <text class="slogan">让每次海岛旅行都充满智慧与欢乐</text>
       <text class="desc">我们致力于为用户提供智能、便捷的海岛旅游体验</text>

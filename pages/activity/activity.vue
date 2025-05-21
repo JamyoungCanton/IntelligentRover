@@ -124,7 +124,7 @@ const activity = reactive({
 
   // 基本活动信息
   id: 1,
-  image: 'https://wlmtsys.com:9000/travel/diving.jpg',
+  image: 'https://wuminghui.top:9000/travel/diving.jpg',
   type: '深潜探索',
   title: '海底世界深潜体验',
   price: '¥368',

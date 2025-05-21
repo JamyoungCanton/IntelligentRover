@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <image class="logo" src="https://wlmtsys.com:9000/travel/logo.png" mode="aspectFit" />
+      <image class="logo" src="https://wuminghui.top:9000/travel/logo.png" mode="aspectFit" />
       <text class="title">海岛智游侠</text>
     </view>
 
