@@ -10,7 +10,7 @@
       >
         <text class="delete-text" @tap.stop="handleDelete(post.id)">删除</text>
 
-        <!-- 卡片内容区域点击跳详情 -->
+        <!-- 点击整个卡片跳详情 -->
         <view @tap="toDetail(post.id)">
           <view class="post-header">
             <text class="post-title">{{ post.title || '未命名帖子' }}</text>
@@ -23,7 +23,25 @@
             class="post-image"
             mode="aspectFill"
           />
-        
+
+          <!-- 底部信息 -->
+          <view class="item-bottom">
+            <!-- 左侧：时间 · 分区 -->
+            <view class="item-bottom-left">
+              <text class="left-data">
+                {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
+              </text>
+            </view>
+            <!-- 右侧：点赞/关注/评论 -->
+            <view class="item-bottom-right">
+              <uni-icons type="heart" size="18" color="#999" />
+              <text class="data-detail">{{ post.likes ?? 0 }}</text>
+              <uni-icons type="star" size="18" color="#999" />
+              <text class="data-detail">{{ post.focus ?? 0 }}</text>
+              <uni-icons type="chat" size="18" color="#999" />
+              <text class="data-detail">{{ post.comments ?? 0 }}</text>
+            </view>
+          </view>
         </view>
       </view>
     </view>
@@ -38,9 +56,10 @@ const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
 
-// 时间格式化
+// 原生时间格式化
 const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
-
+// 截取到分钟
+const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
 
 // 拉我的帖子
 async function fetchMyPosts() {
@@ -97,7 +116,6 @@ async function handleDelete(postId: string) {
         fail: reject
       });
     });
-    // 按文档，200 或 204 都算成功
     if ((res.statusCode === 200 || res.statusCode === 204) && res.data.success !== false) {
       uni.showToast({ title: '删除成功', icon: 'success' });
       posts.value = posts.value.filter(p => p.id !== postId);
@@ -113,17 +131,19 @@ async function handleDelete(postId: string) {
 // 跳详情
 function toDetail(id: string) {
   uni.navigateTo({
-  url: `/pages/post/postDetail?id=${id}`
-});
+    url: `/pages/post/postDetail?id=${id}`
+  });
 }
-
 
 onMounted(fetchMyPosts);
 </script>
 
-<style scoped>
+<style  lang="scss">
 .container {
-  padding: 20rpx;
+  padding: 30rpx;
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  padding-bottom: 100px;
 }
 .loading, .no-posts {
   text-align: center;
@@ -172,5 +192,49 @@ onMounted(fetchMyPosts);
   height: 300rpx;
   border-radius: 12rpx;
   object-fit: cover;
+}
+
+.item-bottom{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-top: solid 1px #f0f0f0;
+  margin-top: 5px;
+  background: linear-gradient(to bottom, rgba(250,250,250,0.5), rgba(255,255,255,0.8));
+}
+
+.item-bottom-left{
+  font-size: 13px;
+  color: #999;
+}
+
+.item-bottom-right{
+  display: flex;
+  align-items: center;
+}
+
+.right-data{
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+  
+  /* 交互按钮增强 */
+  .uni-icons {
+    transition: all 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+    
+    &:active {
+      background-color: rgba(0, 0, 0, 0.05);
+      transform: scale(1.1);
+    }
+  }
+}
+
+.data-detail{
+  margin: 0 12px 0 4px;
 }
 </style>
