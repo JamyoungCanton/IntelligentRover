@@ -238,7 +238,7 @@ const selectPlate = (carNum) => {
 const onPayClick = (parking) => {
   console.log(parking.id);
 
-  const orderData = ref({
+  const orderData = {
     contract: {
       contractName: userStore.userInfo.realname || '',
       contractPhone: userStore.userInfo.phone || ''
@@ -246,28 +246,28 @@ const onPayClick = (parking) => {
     items: [
       {
         bookInfo: {
-          date: new Date().toISOString().split('T')[0], // 添加默认日期
+          date: new Date().toISOString().split('T')[0], // 当前日期
           fullname: userStore.userInfo.realname || '',
           idCardNo: userStore.userInfo.idCardNo || '',
           idCardType: 'ID_CARD',
-          schedule: new Date().toISOString().split('T')[0] // 添加默认日期
+          schedule: new Date().toISOString().split('T')[0]
         },
-        productId: parking.id, // 初始为空字符串
+        productId: parking.id, // 停车记录ID
         productType: "Parking",
-        quantity: 1
+        quantity: 1,
+        amount: parking.amountPayable
       }
     ]
-  })
-  // 处理支付点击
+  };
+
   uni.showModal({
     title: '支付',
-    content: '是否确认支付？',
+    content: `是否确认支付￥${parking.amountPayable}？`,
     showCancel: true,
     cancelText: '取消',
     confirmText: '确定',
     success: (res) => {
       if (res.confirm) {
-        // 处理支付逻辑
         uni.request({
           url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
           method: 'POST',
@@ -275,25 +275,36 @@ const onPayClick = (parking) => {
             'X-Access-Token': userStore.token,
             'Content-Type': 'application/json'
           },
-          data: orderData.value,
+          data: orderData,
           success: (success) => {
-            console.log(success);
-
-            if (success.data.code === 200) {
+            if (success.data.code === 200 || success.data.success) {
               uni.showToast({
                 title: '支付成功',
-                icon: 'none',
+                icon: 'success',
+                duration: 1500
               });
-              uni.navigateTo({
-                url: '/pages/pay_success/pay_success'
+              setTimeout(() => {
+                uni.switchTab({
+                  url: '/pages/index/index'
+                });
+              }, 1500);
+            } else {
+              uni.showToast({
+                title: success.data.message || '订单创建失败',
+                icon: 'none',
               });
             }
           },
-        })
-
+          fail: () => {
+            uni.showToast({
+              title: '网络错误',
+              icon: 'none',
+            });
+          }
+        });
       }
     }
-  })
+  });
 };
 </script>
 

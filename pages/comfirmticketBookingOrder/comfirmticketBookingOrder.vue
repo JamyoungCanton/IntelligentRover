@@ -240,16 +240,26 @@ const handleConfirmPayment = () => {
     return;
   }
 
-  // 新增联系人姓名/手机号校验
-  if (!contactName.value.trim()) {
+  // 姓名校验：只能为中英文，不能包含数字或特殊字符
+  const nameRegex = /^[\u4e00-\u9fa5a-zA-Z·]{2,20}$/;
+  if (!nameRegex.test(contactName.value.trim())) {
     uni.showToast({
-      title: '请输入联系人姓名',
+      title: '姓名只能为中英文，不能包含数字或特殊字符',
       icon: 'none'
     });
     return;
   }
 
-//  手机号校验
+  // 手机号不能包含中文
+  if (/[\u4e00-\u9fa5]/.test(contactPhone.value)) {
+    uni.showToast({
+      title: '手机号不能包含中文',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 手机号格式校验
   const phoneRegex = /^1[3-9]\d{9}$/;
   if (!phoneRegex.test(contactPhone.value)) {
     uni.showToast({
@@ -281,7 +291,8 @@ const handleConfirmPayment = () => {
     ]
   };
 
-  // 发送请求创建订单
+  console.log('提交订单数据：', orderData);
+  // 1. 先创建订单
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
@@ -291,23 +302,51 @@ const handleConfirmPayment = () => {
     },
     data: orderData,
     success: (res) => {
-      if (res.statusCode === 200 && res.data.success) {
-        uni.showToast({
-          title: '支付成功',
-          icon: 'success'
+      console.log('创建订单返回：', res);
+      if (res.statusCode === 200 && res.data.success && res.data.result && res.data.result.orderSn) {
+        const orderSn = res.data.result.orderSn;
+        // 2. 创建成功后，调用支付接口
+        uni.request({
+          url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn}`,
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json',
+            'X-Access-Token': userStore.token
+          },
+          success: (payRes) => {
+            console.log('支付接口返回：', payRes);
+            if (payRes.statusCode === 200 && payRes.data.success) {
+              uni.showToast({
+                title: '支付成功',
+                icon: 'success'
+              });
+              uni.navigateTo({
+                url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&id=${ticketId.value}`
+              });
+            } else {
+              uni.showToast({
+                title: payRes.data.message || '支付失败',
+                icon: 'none'
+              });
+            }
+          },
+          fail: (err) => {
+            console.log('支付接口失败：', err);
+            uni.showToast({
+              title: '支付请求失败',
+              icon: 'none'
+            });
+          }
         });
-       uni.navigateTo({
-         url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&id=${ticketId.value}`
-        });
-
       } else {
         uni.showToast({
-          title: res.data.message || '支付失败',
+          title: res.data.message || '订单创建失败',
           icon: 'none'
         });
       }
     },
-    fail: () => {
+    fail: (err) => {
+      console.log('创建订单失败：', err);
       uni.showToast({
         title: '网络异常，请稍后重试',
         icon: 'none'

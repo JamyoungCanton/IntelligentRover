@@ -96,13 +96,13 @@
       </view>
 
       <!-- 会员充值卡片 -->
-      <view class="member-card" @click="navigateToMembership">
+      <!-- <view class="member-card" @click="navigateToMembership">
         <view class="member-card-left">
           <view class="member-title">会员专享</view>
           <view class="member-desc">享受更多折扣与特权</view>
         </view>
         <view class="member-btn">立即充值</view>
-      </view>
+      </view> -->
 
       <!-- 热门活动 -->
       <view class="section">
@@ -121,13 +121,13 @@
                 <text class="comments">{{ activity.comments }}</text>
               </view>
               <view class="price-container">
-                <text class="activity-price">{{ activity.price }}</text>
+                <text class="activity-price">{{ activity.memberPrice }}</text>
                 <text class="original-price" v-if="activity.originalPrice">{{ activity.originalPrice }}</text>
               </view>
-              <view class="member-price" v-if="activity.memberPrice">
+              <!-- <view class="member-price" v-if="activity.memberPrice">
                 <text class="member-tag">会员价</text>
                 <text class="member-price-value">{{ activity.memberPrice }}</text>
-              </view>
+              </view> -->
             </view>
           </view>
         </view>
@@ -439,7 +439,7 @@ const getActivitiesList = () => {
           const discount = Math.floor(Math.random() * 3) + 7; // 生成7-9之间的随机数
           const discountRate = discount / 10; // 折扣率，0.7-0.9
           const originalPrice = Math.floor(price / discountRate);
-          const memberPrice = Math.floor(price * 0.9); // 会员价格比当前价格再便宜10%
+          const memberPrice = Math.floor(price * 0.9); // 优惠价格比当前价格再便宜10%
           
           return {
             id: activity.id,

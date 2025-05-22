@@ -526,7 +526,7 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 32rpx 0;
+  margin: 90rpx 0rpx 20rpx 0rpx;
   padding: 16rpx;
   background-color: #F5F5F5;
   border-radius: 16rpx;

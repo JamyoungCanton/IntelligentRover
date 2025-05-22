@@ -288,9 +288,15 @@
 			}
 		},
 		{
-			"path": "pages/post/collectedPost",
+			"path": "pages/post/mypost",
 			"style": {
 				"navigationBarTitleText": "我的帖子"
+			}
+		},
+		{
+			"path": "pages/collectpost/collectpost",
+			"style": {
+				"navigationBarTitleText": "收藏帖子"
 			}
 		},
 		{
