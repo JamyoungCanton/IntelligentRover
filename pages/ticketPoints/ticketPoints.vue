@@ -92,10 +92,11 @@
           </view>
           <view class="item-bottom-right" v-if="currentPostType !== 'mine'">
             <view class="right-data">
-              <uni-icons type="heart" size="18" color="#999"></uni-icons>
+              <!-- <uni-icons type="heart" size="18" color="#999"></uni-icons> -->
+              <uni-icons type="heart" size="24" :color="item.liked ? '#ff0000' : '#666'"></uni-icons>
               <text class="data-detail">{{ item.likes }}</text>
-              <uni-icons type="star" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.focus }}</text>
+              <uni-icons type="star" size="24" :color="item.collected ? '#ff0000' : '#666'" ></uni-icons>
+              <text class="data-detail">{{ item.collect }}</text>
               <uni-icons type="chat" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.comments }}</text>
             </view>
