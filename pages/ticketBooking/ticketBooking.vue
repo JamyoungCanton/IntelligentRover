@@ -346,10 +346,6 @@ const goToDetails = (ticketId) => {
 // 跳转到个人信息填写页面
 const goToPersonalInfo = (ticket) => {
   if (!hasToken()) return;
-  
-  // 阻止事件冒泡，避免同时触发卡片的点击事件
-  event.stopPropagation();
-  
   // 保存所选船票信息到本地存储
   uni.setStorageSync('selectedTicket', JSON.stringify({
     id: ticket.id,
@@ -363,7 +359,6 @@ const goToPersonalInfo = (ticket) => {
     date: currentDate.value,
     passengers: passengerCount.value
   }));
-  
   // 跳转到个人信息填写页面
   uni.navigateTo({
     url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticket.id}`

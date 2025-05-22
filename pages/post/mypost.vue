@@ -1,5 +1,24 @@
 <template>
   <view class="container">
+    <view class="post-type-buttons">
+      <view
+        class="type-button"
+        :class="{ active: currentTab === 'my' }"
+        @tap="switchTab('my')"
+      >
+        <uni-icons type="compose" size="18" :color="currentTab === 'my' ? '#fff' : '#666'" />
+        <text>我的发布</text>
+      </view>
+      <view
+        class="type-button"
+        :class="{ active: currentTab === 'collect' }"
+        @tap="switchTab('collect')"
+      >
+        <uni-icons type="star" size="18" :color="currentTab === 'collect' ? '#fff' : '#666'" />
+        <text>我的收藏</text>
+      </view>
+    </view>
+
     <view v-if="loading" class="loading">加载中...</view>
     <view v-else-if="posts.length === 0" class="no-posts">你还没有发布任何帖子</view>
     <view v-else class="post-list">
@@ -55,6 +74,8 @@ import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
+const currentTab = ref<'my' | 'collect'>('my');
+
 
 // 原生时间格式化
 const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
@@ -134,11 +155,88 @@ function toDetail(id: string) {
     url: `/pages/post/postDetail?id=${id}`
   });
 }
+// 切换跳转逻辑
+function switchTab(tab: 'my' | 'collect') {
+  if (tab === currentTab.value) return;
+  currentTab.value = tab;
+
+  if (tab === 'collect') {
+    uni.redirectTo({ url: '/pages/collectpost/collectpost' });
+  } else {
+    uni.redirectTo({ url: '/pages/post/mypost' }); // 替换为你实际的“我的发布”路径
+  }
+}
 
 onMounted(fetchMyPosts);
 </script>
 
-<style  lang="scss">
+<style  lang="scss" scoped>
+.post-type-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 15px;
+  background-color: #fff;
+  margin: 15px;
+  border-radius: 14px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 2;
+  border: 1px solid #f0f0f0;
+  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+}
+
+.type-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  border-radius: 12px;
+  width: 48%;
+  background-color: #f8f9fa;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.type-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  transform: translateX(-100%);
+  transition: 0.6s;
+  z-index: 1;
+}
+
+.type-button:hover::before {
+  transform: translateX(100%);
+}
+
+.type-button text {
+  margin-left: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  position: relative;
+  z-index: 2;
+}
+
+.type-button.active {
+  background: linear-gradient(135deg, #0080ff, #0066CC);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
+  transform: translateY(-2px);
+  border: none;
+}
+
+.type-button:active {
+  transform: scale(0.98);
+}
+
 .container {
   padding: 30rpx;
   background-color: #f8f8f8;

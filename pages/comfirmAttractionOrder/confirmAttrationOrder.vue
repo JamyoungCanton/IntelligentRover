@@ -109,7 +109,9 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥750</button>
+      <button class="confirm-btn" @click="handleConfirmPayment">
+        确认支付 ¥{{ hotelList.ticketprice }}
+      </button>
     </view>
   </view>
 </template>
@@ -188,7 +190,7 @@ const handleConfirmPayment = () => {
  
 
   uni.navigateTo({
-    url: '/pages/pay_success/pay_success'
+    url: `/pages/pay_success/pay_success?amount=${hotelList.value.ticketprice}&orderId=${orderSn.value}`
   });
 };
 // 退出

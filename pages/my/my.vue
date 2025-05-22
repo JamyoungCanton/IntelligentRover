@@ -155,7 +155,7 @@ const handleGridItemClick = (item) => {
   }
   if (item.onClick === 'goCollectPost') {
     uni.navigateTo({
-      url: '/pages/post/collectedPost',
+      url: '/pages/post/mypost',
     })
   }
 }

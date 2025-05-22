@@ -16,7 +16,7 @@
       <view class="order-info">
         <view class="info-item">
           <text class="item-label">订单金额</text>
-          <text class="item-value">¥ {{ price }}</text>
+          <text class="item-value">¥ {{ amount }}</text>
         </view>
         <view class="info-item">
           <text class="item-label">支付方式</text>
@@ -42,11 +42,13 @@ import { ref } from 'vue';
 const price = ref('');
 const payment = ref('');
 const orderId = ref('');
+const amount = ref(0);
 
 onLoad((options) => {
   price.value = options.price || '0.00';
   payment.value = options.payment || '未知方式';
   orderId.value = options.orderId || '暂无订单号';
+  amount.value = options.amount;
 });
 
 const navigatortoOrder = () => {

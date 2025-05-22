@@ -142,7 +142,7 @@ import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 
-const tabs = ['全部', '待支付', '已支付', '待出行', '进行中', '已完成'];
+const tabs = ['全部', '待支付', '进行中', '已完成'];
 const currentTab = ref(0);
 const orders = ref([]);
 const userStore = useUserStore();
@@ -152,13 +152,11 @@ const showDetailPopup = ref(false); // 控制弹窗显示
 const currentOrderDetail = ref(null); // 当前订单详情
 
 
-// 订单状态映射
+// 订单状态映射（去除已支付、待出行）
 const statusMap = {
   1: { payStatus: 'UNPAID' }, // 待支付
-  2: { payStatus: 'PAID' }, // 已支付
-  3: { orderStatus: 'WAITING' }, // 待出行
-  4: { orderStatus: 'PROCESSING' }, // 进行中
-  5: { orderStatus: 'COMPLETED' } // 已完成
+  2: { orderStatus: 'PROCESSING' }, // 进行中
+  3: { orderStatus: 'COMPLETED' } // 已完成
 };
 
 // 根据当前标签和搜索关键词过滤订单
@@ -166,7 +164,7 @@ const filteredOrders = computed(() => {
   let result = orders.value;
 
   // 根据标签筛选
-  if (currentTab.value !== 0) { // 不是"全部"标签
+  if (currentTab.value !== 0) {
     const status = statusMap[currentTab.value];
     result = result.filter(order => {
       return Object.entries(status).every(([key, value]) => order[key] === value);
@@ -592,14 +590,18 @@ page {
 }
 
 .tabs-wrapper {
-  display: inline-flex;
+  display: flex;
+  width: 90%;
 }
 
 .tab-item {
-  padding: 20rpx 30rpx;
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
   font-size: 28rpx;
   color: #666;
   position: relative;
+  box-sizing: border-box;
 }
 
 .tab-item.active {
