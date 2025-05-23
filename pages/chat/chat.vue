@@ -1,14 +1,14 @@
 <template>
 	<view class="container">
-		<div class="scroll-container">
-			<view class="header">
+		<!-- 将header移到滚动容器外部 -->
+		<view class="header">
 			<view class="header-top">
 				<image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17170461054774894891ai顶部.png" mode="widthFix" class="logo"></image>
 			</view>
 			<view class="header-center">
 				<p class="header-center-text">欢迎使用AI旅游助手!我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</p>
 				<div class="header-center-function">
-					<div class="function-item"  v-for="item in headerCenterFunction" :key="item.icon">
+					<div class="function-item" v-for="item in headerCenterFunction" :key="item.icon">
 						<image :src="item.icon" mode="widthFix"></image>
 						<text>{{item.text}}</text>
 					</div>
@@ -19,33 +19,22 @@
 			</view>
 		</view>
 
-		<view class="chat-container">
-      <!-- 历史消息展示 -->
-      <view 
-        v-for="(msg, index) in chatMessages" 
-        :key="index" 
-        class="message-item"
-      >
-        <!-- 用户消息 -->
-        <view v-if="msg.type === 'user'" class="user-message">
-          <div class="message-content">{{ msg.content }}</div>
-        </view>
-        <!-- AI回复消息 -->
-        <view v-else class="ai-message">
-          <div 
-            class="typing-content"
-            :class="{ typing: isTyping && index === chatMessages.length - 1 }"
-          >
-            <!-- 打字机效果内容 -->
-            <span v-html="msg.content"></span>
-          </div>
-        </view>
-      </view>
-    </view>
-
+		<!-- 聊天内容滚动区域 -->
+		<div class="scroll-container">
+			<view class="chat-container">
+				<view v-for="(msg, index) in chatMessages" :key="index" class="message-item">
+					<view v-if="msg.type === 'user'" class="user-message">
+						<div class="message-content">{{ msg.content }}</div>
+					</view>
+					<view v-else class="ai-message">
+						<div class="typing-content" :class="{ typing: isTyping && index === chatMessages.length - 1 }">
+							<span v-html="msg.content"></span>
+						</div>
+					</view>
+				</view>
+			</view>
 		</div>
-		
-		
+
 		<div class="bottom">
 			<div class="voiceMessage">
 				<img class="voice-icon" src="/static/chat/ai图标-语音输入.svg" alt="语音输入">
@@ -57,7 +46,6 @@
 		</div>
 		<Tabbar />
 	</view>
-	
 </template>
 
 <script setup >
@@ -155,79 +143,72 @@ onMounted(() => {
 .container {
 	min-height: 100vh;
 	background-color: rgba(241, 252, 254);
-	padding: 20px;
-	padding-bottom: 160px; /* Add padding to account for bottom bar and input */
 	display: flex;
 	flex-direction: column;
-}
-
-.scroll-container {
-	flex: 1;
-	overflow-y: auto;
-	margin-bottom: 20px;
-}
-
-.chat-container {
-	flex: 1;
-	overflow-y: visible;
-	margin-bottom: 20px;
+	position: relative;
 }
 
 .header {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	border-radius: 10px;
+	padding: 20px;
+	background-color: rgba(241, 252, 254);
+	z-index: 10;
 }
-.header-top{
-	width: 100%;
+
+.header-top {
+	margin-bottom: 15px;
 }
-.header-top image{
+
+.header-top image {
 	width: 150px;
 	height: 20px;
+	display: block;
 }
-.header-center{
+
+.header-center {
 	background-color: #fff;
 	border-radius: 15px;
 	padding: 15px;
 	font-size: 14px;
+	margin-bottom: 15px;
 }
-.header-center-text{
+
+.header-center-text {
 	margin-bottom: 12px;
 }
-.header-center-function{
+
+.header-center-function {
 	display: flex;
 	align-items: center;
 	flex-direction: row;	
 	justify-content: space-between;
-	border-radius: 10px;
 	padding: 10px;
 	width: 100%;
-	margin: 0%;
 }
-.function-item{
+
+.function-item {
 	display: flex;
 	align-items: center;
 	flex-direction: column;	
-	border-radius: 10px;
 	padding: 0px;
 }
-.function-item image{
+
+.function-item image {
 	width: 30px;
 	height: 30px;
 }
-.function-item text{
+
+.function-item text {
 	margin-top: 15px;
 	font-size: 12px;
 	width: 50px;
 	color: #333;
 }
-.header-bottom{
-	margin-top: 5px;
+
+.header-bottom {
 	padding: 10px;
 }
-.header-span{
+
+.header-span {
 	background-color: #fff;
 	border-radius: 10px;
 	padding: 10px;
@@ -235,40 +216,55 @@ onMounted(() => {
 	border: none;
 }
 
+.scroll-container {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0 20px;
+	padding-bottom: 150px; /* 增加底部内边距，确保内容不被遮挡 */
+	margin-bottom: 0;
+	height: calc(100vh - 350px); /* 设置固定高度，减去header和bottom的高度 */
+}
+
+.chat-container {
+	width: 100%;
+	min-height: 100%;
+	padding-bottom: 20px; /* 添加一些底部间距 */
+}
 
 /* 聊天内容部分 */
 .message-item {
-  margin: 15px 0;
+	margin: 15px 0;
+	position: relative; /* 确保消息定位正确 */
 }
 
 .user-message {
-  display: flex;
-  justify-content: flex-end;
+	display: flex;
+	justify-content: flex-end;
 }
 
 .ai-message {
-  display: flex;
-  justify-content: flex-start;
+	display: flex;
+	justify-content: flex-start;
 }
 
 .message-content,
 .typing-content {
-  max-width: 70%;
-  padding: 12px 18px;
-  border-radius: 20px;
-  line-height: 1.6;
+	max-width: 70%;
+	padding: 12px 18px;
+	border-radius: 20px;
+	line-height: 1.6;
 }
 
 .user-message .message-content {
-  background-color: #4285f4;
-  color: white;
-  align-self: flex-end;
+	background-color: #4285f4;
+	color: white;
+	align-self: flex-end;
 }
 
 .ai-message .typing-content {
-  background-color: #e5f5ff;
-  color: #333;
-  position: relative;
+	background-color: #e5f5ff;
+	color: #333;
+	position: relative;
 }
 
 /* 打字机光标效果 */
@@ -282,14 +278,14 @@ onMounted(() => {
 
 /* 底输入框 */
 .bottom {
-	border-radius: 10px;
-	width: 90%;
 	position: fixed;
-	bottom: 83px;
-	left: 50%;
-	transform: translateX(-50%);
-	background-color: rgba(241, 252, 254); /* Add semi-transparent background */
-	padding: 10px;
+	bottom: 90px;
+	left: 0;
+	right: 0;
+	padding: 10px 20px;
+	background-color: rgba(241, 252, 254);
+	z-index: 100;
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* 添加轻微阴影 */
 }
 .voiceMessage{
 	display: flex;
