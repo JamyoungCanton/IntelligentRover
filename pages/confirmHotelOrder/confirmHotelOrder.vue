@@ -193,13 +193,13 @@ const handleConfirmPayment = () => {
 
 function payOrder(orderSn, token) {
   return new Promise((resolve, reject) => {
-    uni.request({
+  uni.request({
       url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn}`,
-      method: 'POST',
+    method: 'POST',
       header: {
         'Content-Type': 'application/json',
         'X-Access-Token': token
-      },
+    },
       data: {},
       success: (res) => {
         if (res.statusCode === 200 && res.data.success) {

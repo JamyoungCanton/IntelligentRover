@@ -181,6 +181,14 @@ const filteredOrders = computed(() => {
     );
   }
 
+  // 只显示未取消的订单
+  if (currentTab.value === 1) { // 待支付
+    result = result.filter(order => !['CANCEL', 'CANCELLED'].includes(order.payStatus) && order.orderStatus !== 'CANCELLED');
+  }
+
+  // 过滤掉已取消订单（兼容 orderStatus 字段）
+  result = result.filter(order => !['CANCEL', 'CANCELLED'].includes(order.payStatus) && order.orderStatus !== 'CANCELLED');
+
   // 按照创建时间排序，最近的在前
   result.sort((a, b) => {
     // 兼容 iOS 的日期解析
@@ -280,6 +288,7 @@ const getOrderList = () => {
       // 如果请求成功，更新订单数据
       if (res.data.success) {
         const orderList = res.data.result.records || [];
+        console.log('最新订单records:', orderList);
         orders.value = orderList;
       }
     },
@@ -385,73 +394,42 @@ const closeDetailPopup = () => {
   currentOrderDetail.value = null;
 };
 
-// 取消订单方法
-// const cancelOrder = (order) => {
-//   // 弹出确认取消的模态框
-//   uni.showModal({
-//     title: '取消订单',
-//     content: '您确定要取消该订单吗？',
-//     success: (res) => {
-//       if (res.confirm) {
-//         // 模拟订单取消：从列表中移除该订单
-//         const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
-//         if (index !== -1) {
-//           // 在控制台打印被取消的订单详细信息
-//           console.log('已取消的订单详情:', {
-//             orderSn: order.orderSn,
-//             goodsName: order.goodsName,
-//             payStatus: order.payStatus,
-//             createTime: order.createTime,
-//             amount: order.amount,
-//             createBy: order.createBy
-//           });
-
-//           orders.value.splice(index, 1);
-
-//           // 显示取消成功的提示
-//           uni.showToast({
-//             title: '订单已取消',
-//             icon: 'none'
-//           });
-//         }
-//       }
-//     }
-//   });
-// };
 // 删除订单方法
 const deleteOrder = (order) => {
+  console.log('deleteOrder参数:', order);
+  if (!order.id) {
+    uni.showToast({ title: '订单ID不存在，无法取消', icon: 'none' });
+    return;
+  }
   uni.showModal({
-    title: '删除订单',
-    content: '删除后无法恢复，确认要删除该订单吗？',
+    title: '取消订单',
+    content: '您确定要取消该订单吗？',
     success: (res) => {
       if (!res.confirm) return;
-      uni.showLoading({ title: '删除中...' });
+      uni.showLoading({ title: '取消中...' });
 
       uni.request({
-        // DELETE /island/order/ilOrder/delete?id=${id}
-        url: `https://island.zhangshuiyi.com/island/order/ilOrder/delete`,
-        method: 'DELETE',
+        url: `https://island.zhangshuiyi.com/island/front/order/Cancel`,
+        method: 'GET',
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Access-Token': userStore.token
         },
-        // DELETE 请求也可以在 data 中传 query 参数
-        data: { id: order.id },
+        data: { orderId: order.id },
         success: (res) => {
           if (res.data && res.data.success) {
-            // 从列表中移除
-            orders.value = orders.value.filter(o => o.id !== order.id);
-            uni.showToast({ title: '删除成功', icon: 'success' });
+            getOrderList();
+            uni.showToast({ title: '订单已取消', icon: 'success' });
           } else {
             uni.showToast({
-              title: res.data?.message || '删除失败',
+              title: res.data?.message || '取消失败',
               icon: 'none'
             });
           }
         },
         fail: (err) => {
-          console.error('删除请求失败:', err);
-          uni.showToast({ title: '网络错误，删除失败', icon: 'none' });
+          console.error('取消请求失败:', err);
+          uni.showToast({ title: '网络错误，取消失败', icon: 'none' });
         },
         complete: () => {
           uni.hideLoading();

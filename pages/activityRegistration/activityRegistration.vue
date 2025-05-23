@@ -30,12 +30,12 @@
 
       <view class="form-item">
         <text class="label">{{ textData.labels.name }}</text>
-        <input v-model="form.name" class="input" :placeholder="textData.placeholders.name" />
+        <input v-model="form.name" class="input" :placeholder="textData.placeholders.name" maxlength="10" />
       </view>
 
       <view class="form-item">
         <text class="label">{{ textData.labels.phone }}</text>
-        <input v-model="form.phone" class="input" :placeholder="textData.placeholders.phone" />
+        <input v-model="form.phone" class="input" :placeholder="textData.placeholders.phone" maxlength="11" />
       </view>
 
       <view class="form-item">
@@ -59,11 +59,6 @@
       <view class="cost-item">
         <text class="cost-name">{{ textData.costNames.activity }}</text>
         <text class="cost-value">¥{{ activityCost }} × {{ form.participants }}人</text>
-      </view>
-
-      <view class="cost-item">
-        <text class="cost-name">{{ textData.costNames.insurance }}</text>
-        <text class="cost-value">¥{{ insuranceCost }} × {{ form.participants }}人</text>
       </view>
     </view>
 
@@ -169,10 +164,9 @@ const safeArea = ref({ top: 0, bottom: 0 })
 
 // 计算属性
 const activityCost = computed(() => {
-  const price = textData.value.price.replace(/[^\d.]/g, '') // 移除¥等非数字字符
+  const price = textData.value.price.replace(/[^0-9.]/g, '') // 移除¥等非数字字符
   return Number(price) * form.value.participants
 })
-const insuranceCost = computed(() => 50 * form.value.participants)
 
 // 方法
 const goBack = () => {
@@ -206,7 +200,13 @@ const submitRegistration = () => {
     })
     return
   }
-
+  if (!/^[\u4e00-\u9fa5a-zA-Z]{2,10}$/.test(form.value.name)) {
+    uni.showToast({
+      title: '姓名需为2-10位中英文字符',
+      icon: 'none'
+    })
+    return
+  }
   if (!form.value.phone) {
     uni.showToast({
       title: textData.value.validationMessages.phone,
@@ -214,7 +214,13 @@ const submitRegistration = () => {
     })
     return
   }
-
+  if (!/^1[3-9]\d{9}$/.test(form.value.phone)) {
+    uni.showToast({
+      title: '请输入正确的11位手机号',
+      icon: 'none'
+    })
+    return
+  }
   if (!agreed.value) {
     uni.showToast({
       title: textData.value.validationMessages.agreement,
@@ -222,7 +228,6 @@ const submitRegistration = () => {
     })
     return
   }
-
   // 构建完整的订单数据
   const orderData = {
     contract: {
@@ -241,7 +246,7 @@ const submitRegistration = () => {
       productType: "Activities",
       quantity: form.value.participants,
       price: Number(textData.value.price.replace(/[^\d.]/g, '')),
-      amount: activityCost.value + insuranceCost.value
+      amount: activityCost.value
     }]
   }
   console.log('订单数据:', orderData)

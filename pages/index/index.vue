@@ -121,13 +121,9 @@
                 <text class="comments">{{ activity.comments }}</text>
               </view>
               <view class="price-container">
-                <text class="activity-price">{{ activity.memberPrice }}</text>
-                <text class="original-price" v-if="activity.originalPrice">{{ activity.originalPrice }}</text>
+                <text class="discount-price">优惠价 ¥{{ (activity.priceNum * 0.9).toFixed(2) }}</text>
+                <text class="original-price">¥{{ activity.priceNum.toFixed(2) }}</text>
               </view>
-              <!-- <view class="member-price" v-if="activity.memberPrice">
-                <text class="member-tag">会员价</text>
-                <text class="member-price-value">{{ activity.memberPrice }}</text>
-              </view> -->
             </view>
           </view>
         </view>
@@ -150,7 +146,7 @@
               <text class="rating">4.7分</text>
               <text class="comments"> 1205条评论</text>
             </view>
-            <text class="route-price">¥328.00起</text>
+            <text class="route-price">¥688.00起</text>
           </view>
         </view>
       </view>
@@ -434,12 +430,11 @@ const getActivitiesList = () => {
     success: (res) => {
       if (res.data.success) {
         activities.value = res.data.result.records.map(activity => {
-          // 根据价格随机生成折扣信息
-          const price = parseFloat(activity.price) || 100;
+          const priceNum = Number(activity.price) || 0;
           const discount = Math.floor(Math.random() * 3) + 7; // 生成7-9之间的随机数
           const discountRate = discount / 10; // 折扣率，0.7-0.9
-          const originalPrice = Math.floor(price / discountRate);
-          const memberPrice = Math.floor(price * 0.9); // 优惠价格比当前价格再便宜10%
+          const originalPrice = Math.floor(priceNum / discountRate);
+          const memberPrice = Math.floor(priceNum * 0.9); // 优惠价格比当前价格再便宜10%
           
           return {
             id: activity.id,
@@ -447,7 +442,8 @@ const getActivitiesList = () => {
             image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
             rating: '4.7分',
             comments: '1205条评论',
-            price: '¥' + activity.price + '/人起',
+            priceNum,
+            price: '¥' + priceNum + '/人起',
             originalPrice: '¥' + originalPrice + '/人',
             discount: discount + '折',
             memberPrice: '¥' + memberPrice + '/人'
@@ -523,6 +519,17 @@ onMounted(() => {
   statusBarHeight.value = sbHeight;
   safeAreaInsets.value = insets;
 });
+
+// 提取纯数字价格
+const getOriginalPrice = (priceStr) => {
+  // 只取第一个数字
+  const match = priceStr.match(/\\d+(\\.\\d+)?/);
+  return match ? Number(match[0]).toFixed(2) : '0.00';
+};
+const getDiscountPrice = (priceStr) => {
+  const original = getOriginalPrice(priceStr);
+  return (original * 0.9).toFixed(2);
+};
 </script>
 
 <style scoped>
@@ -846,6 +853,15 @@ onMounted(() => {
   align-items: center;
   gap: 8rpx;
   margin-top: 6rpx;
+}
+
+.discount-price {
+  color: #FF9500;
+  font-size: 25rpx;
+  font-weight: bold;
+  margin-right: 8rpx;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .original-price {

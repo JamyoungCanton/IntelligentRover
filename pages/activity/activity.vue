@@ -25,14 +25,6 @@
         </uni-icons>
         <text class="rating">{{ activity.ratingText }}</text>
       </view>
-
-      <view class="favorite" @click="toggleFavorite">
-        <image :src="isFavorite ? activity.icons.favoriteFilled : activity.icons.favorite" class="favorite-icon">
-        </image>
-        <text :class="['favorite-text', isFavorite ? 'active' : '']">
-          {{ activity.favoriteText }}
-        </text>
-      </view>
     </view>
 
     <view class="activity-schedule">
@@ -98,8 +90,6 @@ import { useUserStore } from '@/store/modules/user';
 const safeAreaInsets = ref({ bottom: 0 });
 const statusBarHeight = ref(0);
 const userStore = useUserStore();
-
-const isFavorite = ref(false);
 
 // 活动详情数据对象
 const activity = reactive({
@@ -198,10 +188,6 @@ const goToRegistration = (id) => {
   uni.navigateTo({
     url: `/pages/activityRegistration/activityRegistration?id=${id}`
   });
-};
-
-const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value;
 };
 
 // 调用接口获取活动详细信息
@@ -351,31 +337,6 @@ onShow(() => {
   margin-left: 10px;
   font-size: 14px;
   color: #666;
-}
-
-.favorite {
-  position: absolute;
-  right: 20px;
-  bottom: 70px;
-  display: flex;
-  flex-direction: column;
-  /* 垂直排列 */
-  align-items: center;
-}
-
-.favorite-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 5px;
-}
-
-.favorite-text {
-  font-size: 12px;
-  color: #666;
-}
-
-.favorite-text.active {
-  color: red;
 }
 
 .section-title {

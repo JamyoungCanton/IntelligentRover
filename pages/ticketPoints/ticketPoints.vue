@@ -92,11 +92,10 @@
           </view>
           <view class="item-bottom-right" v-if="currentPostType !== 'mine'">
             <view class="right-data">
-              <!-- <uni-icons type="heart" size="18" color="#999"></uni-icons> -->
-              <uni-icons type="heart" size="24" :color="item.liked ? '#ff0000' : '#666'"></uni-icons>
+              <uni-icons type="heart" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.likes }}</text>
-              <uni-icons type="star" size="24" :color="item.collected ? '#ff0000' : '#666'" ></uni-icons>
-              <text class="data-detail">{{ item.collect }}</text>
+              <uni-icons type="star" size="18" color="#999"></uni-icons>
+              <text class="data-detail">{{ item.focus }}</text>
               <uni-icons type="chat" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.comments }}</text>
             </view>
@@ -214,7 +213,7 @@ const getImageStyle = (imageCount, index) => {
   if (imageCount === 1) {
     return { width: '100%', height: '200px' }; // 单张图片全宽显示
   } else if (imageCount === 2) {
-    return { width: '48%', height: '150px' }; // 两张图片并排显示
+    return { width: '48%', height: '200px' }; // 两张图片并排显示
   } else if (imageCount === 3) {
     return { width: '32%', height: '120px' }; // 三张图片并排显示
   } else if (imageCount === 4) {
@@ -293,68 +292,6 @@ const switchPostType = (type) => {
   }
 };
 
-const getUserNotifications = () => {
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/notification/list',
-    method: 'GET',
-    header:{
-      'X-Access-Token': userStore.token,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    data:{
-      pageNo: 1,
-      pageSize: 50
-    },
-    success: (res) => {
-      if(res.data.code === 401){
-        uni.showModal({
-          title: '请重新登录',
-          content: '',
-          showCancel: false,
-          confirmText: '确定',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({ url: '/pages/login/login' });
-            }
-          },
-        });
-      } else if (res.statusCode === 200) {
-        // 处理获取到的通知信息
-        notificationList.value = res.data.result?.list || [];
-        // 将通知列表赋值给帖子列表，用于显示
-        postList.value = notificationList.value.map(notification => ({
-          id: notification.id,
-          postId: notification.postId,
-          title: '新通知',
-          content: notification.content,
-          createTime: notification.createTime,
-          userVO: {
-            username: notification.fromUser || '系统通知'
-          },
-          area: notification.type === 'comment' ? '评论' : 
-                 notification.type === 'like' ? '点赞' : 
-                 notification.type === 'follow' ? '关注' : '系统通知',
-          images: [],
-          likes: 0,
-          focus: 0,
-          comments: 0
-        }));
-      } else {
-        uni.showToast({
-          title: '获取通知信息失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('请求出错:', err);
-      uni.showToast({
-        title: '网络请求出错',
-        icon: 'none'
-      });
-    }
-  });
-};
 
 onShow(() => {
   // 根据当前选择的类型获取对应的帖子

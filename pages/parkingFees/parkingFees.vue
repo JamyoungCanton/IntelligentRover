@@ -299,8 +299,8 @@ const onPayClick = (parking) => {
             uni.showToast({
               title: '网络错误',
               icon: 'none',
-            });
-          }
+              });
+            }
         });
       }
     }

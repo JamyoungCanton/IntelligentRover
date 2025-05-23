@@ -343,6 +343,19 @@
 			}
 		},
 		{
+			"path": "pages/my/changemine",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/my/changePassword",
+			"style": {
+				"navigationBarTitleText": "修改密码"
+			}
+		},
+		{
 			"path" : "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
 			"style" : 
 			{
