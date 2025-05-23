@@ -51,6 +51,7 @@
 <script setup >
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { ref, reactive, nextTick, onMounted, watch } from 'vue';
+import {useUserStore} from '@/store/modules/user';
 
 // 固定回复内容
 const FIXED_REPLY = "现在的样式更加现代化，交互体验更好，而且代码更容易维护。图标大小现在是通过 CSS 类来控制的，如果需要调整大小，只需要修改对应的 CSS 类即可。你可以刷新页面查看效果。如果你想调整任何具体的样式（比如图标大小、颜色、间距等），请告诉我，我可以进一步帮你调整。";
@@ -65,8 +66,9 @@ const headerCenterFunction = [
 
 const message = ref('');
 const chatMessages = ref([]);
-let isTyping = ref(false); // 打字机状态
-let currentIndex = 0; // 当前打字位置
+let isTyping = ref(false);
+let currentIndex = 0;
+const userStore = useUserStore();
 
 // 滚动到底部函数
 const scrollToBottom = () => {
@@ -84,23 +86,146 @@ const scrollToBottom = () => {
 };
 
 // 发送消息
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!message.value.trim()) return;
   
   // 添加用户消息
   chatMessages.value.push({ type: 'user', content: message.value });
+  const userInput = message.value;
   message.value = ''; // 清空输入框
   
-  // 滚动到底部
-  scrollToBottom();
-  
   // 添加AI消息（初始为空）
-  chatMessages.value.push({ type: 'ai', content: '' });
+  chatMessages.value.push({ type: 'ai', content: [], id: Date.now(), thinking: false, typing: true });
   
-  // 1秒后开始打字机回复
-  setTimeout(() => {
-    startTypingEffect();
-  }, 1000);
+  // 发送AI请求
+  await sendAiRequest(userInput);
+};
+
+// 发送ai请求
+const sendAiRequest = async (userInput) => {
+  try {
+    const token = userStore.token; // 从store获取token
+    console.log('发送请求，token:', token);
+    console.log('发送的消息:', userInput);
+
+    const requestData = {
+      conversation_id: '',
+      inputs: {
+        original_intention: '',
+        recommended_plan: ''
+      },
+      query: userInput,
+      webMode: 'MAPP-小程序'
+    };
+
+    // 显示思考动画
+    isTyping.value = true;
+
+    try {
+      const response = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux',
+        method: 'POST',
+        data: requestData,
+        header: {
+          'X-Access-Token': token,
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        }
+      });
+
+      console.log('API响应:', response);
+
+      if (response.data && response.statusCode === 200) {
+        console.log('响应数据:', response.data);
+        
+        // 处理流式响应数据
+        const responseText = response.data;
+        const chunks = responseText.split('data:').filter(chunk => chunk.trim());
+        
+        let finalAnswer = null;
+        
+        // 查找最终答案
+        for (const chunk of chunks) {
+          try {
+            const jsonData = JSON.parse(chunk);
+            if (jsonData.event === 'workflow_finished' && jsonData.data?.outputs?.answer) {
+              try {
+                finalAnswer = JSON.parse(jsonData.data.outputs.answer);
+                break;
+              } catch (e) {
+                console.error('解析最终答案失败:', e);
+              }
+            }
+          } catch (e) {
+            console.error('解析数据块失败:', e);
+            continue;
+          }
+        }
+
+        if (finalAnswer && Array.isArray(finalAnswer)) {
+          // 处理最终答案
+          const safeAnswer = finalAnswer.map(item => {
+            if (!item) return { type: 'text', content: '' };
+            
+            // 特别处理表格类型数据
+            if (item.type === 'table') {
+              return {
+                type: item.type,
+                id: item.id || '',
+                content: Array.isArray(item.content) ? item.content : []
+              };
+            }
+            
+            // 处理其他类型的内容
+            return {
+              type: item.type || 'text',
+              id: item.id || '',
+              content: typeof item.content === 'string' ? item.content : String(item.content || '')
+            };
+          }).filter(item => item.content);
+
+          // 更新消息内容
+          chatMessages.value[chatMessages.value.length - 1].content = safeAnswer;
+          chatMessages.value[chatMessages.value.length - 1].typing = false;
+        } else {
+          chatMessages.value[chatMessages.value.length - 1].content = [{
+            type: 'text',
+            content: '抱歉，我现在无法回答您的问题。'
+          }];
+        }
+      } else {
+        console.error('请求失败:', response.statusCode, response.data);
+        chatMessages.value[chatMessages.value.length - 1].content = [{
+          type: 'text',
+          content: '抱歉，请求出错了，请稍后再试。'
+        }];
+      }
+    } catch (error) {
+      console.error('请求失败:', error);
+      chatMessages.value[chatMessages.value.length - 1].content = [{
+        type: 'text',
+        content: '抱歉，网络请求失败，请稍后再试。'
+      }];
+    }
+
+    // 结束打字动画
+    isTyping.value = false;
+    chatMessages.value[chatMessages.value.length - 1].typing = false;
+    
+    // 滚动到底部
+    scrollToBottom();
+  } catch (error) {
+    console.error('AI请求出错：', error);
+    chatMessages.value.push({ 
+      type: 'ai', 
+      content: [{
+        type: 'text',
+        content: '抱歉，发生了错误，请稍后再试。'
+      }],
+      typing: false 
+    });
+    scrollToBottom();
+  }
 };
 
 // 打字机效果
