@@ -249,7 +249,7 @@ const getSpotsList = (type) => {
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         if (res.data.success) {
@@ -281,7 +281,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         console.log("酒店住宿响应数据", res)
@@ -314,7 +314,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         console.log("美食推荐响应数据", res)
@@ -425,7 +425,7 @@ const getActivitiesList = () => {
     data: params,
     header: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token
+      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
     },
     success: (res) => {
       if (res.data.success) {

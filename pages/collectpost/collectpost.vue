@@ -78,26 +78,27 @@ const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
 // 获取收藏帖子列表
 async function fetchCollectedPosts() {
   loading.value = true;
-  const userId = uni.getStorageSync('userId');
   const token = uni.getStorageSync('token') || userStore.token;
 
   try {
     const res: any = await new Promise((resolve, reject) => {
       uni.request({
-        url: 'https://island.zhangshuiyi.com/island/posts/collect/list',
+        url: 'https://island.zhangshuiyi.com/island/collectRecord',
         method: 'GET',
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Access-Token': token
         },
-        data: { userId, pageNo: 1, pageSize: 20 },
         success: resolve,
         fail: reject
       });
     });
 
+    console.log('收藏接口返回', res);
+
     if (res.statusCode === 200 && res.data.success) {
-      posts.value = res.data.result.list || [];
+      const result = res.data.result;
+      posts.value = Array.isArray(result) ? result : (result?.list || []);
     } else {
       uni.showToast({ title: res.data.message || '获取失败', icon: 'none' });
     }

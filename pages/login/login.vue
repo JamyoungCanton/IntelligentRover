@@ -60,6 +60,13 @@
         <text class="action-link" @tap="handleRegister">注册账号</text>
         <text class="action-link" @tap="handleForgetPassword">忘记密码</text>
       </view>
+      <!-- 新增微信一键登录按钮 -->
+      <view class="wechat-login-btn-wrap">
+        <button class="wechat-login-btn" open-type="getUserInfo" @tap="handleWechatLogin">
+          <image src="https://wuminghui.top:9000/travel/wechat-icon.png" style="width:32rpx;height:32rpx;margin-right:12rpx;vertical-align:middle;" />
+          微信一键登录
+        </button>
+      </view>
 
     </view>
   </view>
@@ -245,18 +252,39 @@ const handleGuestLogin = () => {
 
 // 注册
 const handleWechatLogin = () => {
-  console.log(1);
-  
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/sys/wxLogin',
-    header:{'Content-Type':'application/json'},
-    method:'POST',
-    data:{code:'wx200ca5910f255867'},
-    success:(success)=>{
-      console.log(success);
+  // 微信小程序环境下才可用
+  uni.login({
+    provider: 'weixin',
+    success: function (loginRes) {
+      if (loginRes.code) {
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/sys/wxLogin',
+          method: 'POST',
+          header: { 'Content-Type': 'application/json' },
+          data: { code: loginRes.code },
+          success: (res) => {
+            if (res.data.success && res.data.result && res.data.result.token) {
+              userStore.setToken(res.data.result.token);
+              userStore.updateUserInfo(res.data.result.userInfo || {});
+              uni.showToast({ title: '微信登录成功', icon: 'success', duration: 1500 });
+              uni.reLaunch({ url: '/pages/index/index' });
+            } else {
+              uni.showToast({ title: res.data.message || '微信登录失败', icon: 'none' });
+            }
+          },
+          fail: () => {
+            uni.showToast({ title: '微信登录失败', icon: 'none' });
+          }
+        });
+      } else {
+        uni.showToast({ title: '获取微信code失败', icon: 'none' });
+      }
     },
-  })
-}
+    fail: function () {
+      uni.showToast({ title: '微信登录失败', icon: 'none' });
+    }
+  });
+};
 </script>
 
 <style>
@@ -397,5 +425,25 @@ button {
 
 .password-input {
   -webkit-text-security: disc !important;
+}
+
+/* 新增微信登录按钮样式 */
+.wechat-login-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 40rpx;
+}
+.wechat-login-btn {
+  background-color: #07c160;
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50rpx;
+  width: 80%;
+  height: 90rpx;
+  margin: 0 auto;
+  border: none;
 }
 </style>
