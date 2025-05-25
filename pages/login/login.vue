@@ -257,8 +257,8 @@ const handleWechatLogin = () => {
     provider: 'weixin',
     success: function (loginRes) {
       if (loginRes.code) {
-        uni.request({
-          url: 'https://island.zhangshuiyi.com/island/sys/wxLogin',
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/wxLogin',
           method: 'POST',
           header: { 'Content-Type': 'application/json' },
           data: { code: loginRes.code },

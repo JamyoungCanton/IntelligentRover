@@ -92,7 +92,7 @@
           </view>
           <view class="action-row">
             <text class="remain">剩余 {{ ticket.remain }} 张</text>
-			<button class="book-btn primary" type="button" @click.stop="goToPersonalInfo(ticket)">预订</button>
+			<button class="book-btn primary" type="button" @click.stop="goToDetails(ticket.id)">预订</button>
           </view>
         </view>
       </view>

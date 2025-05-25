@@ -131,7 +131,7 @@ const contactName = ref('');
 const contactPhone = ref('');
 const remark = ref('');
 const selectedPayment = ref('wechat');
-
+const orderSn = ref('');
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -154,21 +154,24 @@ const selectedCabinIndex = ref(0);
 
 // 页面加载时获取数据
 onLoad((options) => {
-  if (options.ticketId) {
-    ticketId.value = options.ticketId;
-    fetchOrderDetails();
-  }
+  if (options.ticketId) ticketId.value = options.ticketId;
+  if (options.price) selectedCabinPrice.value = parseFloat(options.price) || 0;
+  if (options.orderSn) orderSn.value = options.orderSn;
+  if (options.cabinName) selectedCabinName.value = decodeURIComponent(options.cabinName);
+  if (options.scheduleTime) selectedScheduleTime.value = decodeURIComponent(options.scheduleTime);
 
-  if (options.price) {
-  selectedCabinPrice.value = parseFloat(options.price) || 0;
-  console.log('获取到的价格:', selectedCabinPrice.value);
-}
+  // 如果参数里有 cabinName 和 scheduleTime，说明是从 ticketDetails 跳转过来的，直接用参数，不要再覆盖
+  if (options.cabinName && options.scheduleTime) {
+    // 不用 fetchOrderDetails 赋值
+    fetchOrderDetails(false); // 传个参数，表示不覆盖
+  } else {
+    // 没有参数，才查接口并赋默认值
+    fetchOrderDetails(true);
+  }
 });
 
-
-
 // 获取交通订单详情
-const fetchOrderDetails = () => {
+const fetchOrderDetails = (shouldSetDefault = true) => {
   uni.request({
     url: `https://island.zhangshuiyi.com/island/product/ilTransportation/queryById?id=${ticketId.value}`,
     method: 'GET',
@@ -182,16 +185,22 @@ const fetchOrderDetails = () => {
         fromIslandName.value = islandMap[data.fromislandid] || '未知岛屿';
         toIslandName.value = islandMap[data.toislandid] || '未知岛屿';
         
-        // 解析航班时刻
-        if (data.schedule) {
-          parsedSchedule.value = data.schedule.split(',').map(item => {
-            const [time, status] = item.split('|');
-            return {
-              time: time || '00:00',
-              status: status || '余票充足'
-            };
-          });
-          selectedScheduleTime.value = parsedSchedule.value[0].time;
+        if (shouldSetDefault) {
+          // 只有在没有参数时才赋默认值
+          if (data.schedule) {
+            parsedSchedule.value = data.schedule.split(',').map(item => {
+              const [time, status] = item.split('|');
+              return {
+                time: time || '00:00',
+                status: status || '余票充足'
+              };
+            });
+            selectedScheduleTime.value = parsedSchedule.value[0].time;
+          }
+          // 默认选中第一个舱位
+          selectedCabinIndex.value = 0;
+          selectedCabinName.value = cabinTypes.value[0].name;
+          selectedCabinPrice.value = cabinTypes.value[0].price;
         }
       } else {
         uni.showToast({

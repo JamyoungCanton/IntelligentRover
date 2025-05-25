@@ -121,8 +121,8 @@
                 <text class="comments">{{ activity.comments }}</text>
               </view>
               <view class="price-container">
-                <text class="discount-price">优惠价 ¥{{ (activity.priceNum * 0.9).toFixed(2) }}</text>
-                <text class="original-price">¥{{ activity.priceNum.toFixed(2) }}</text>
+                <text class="discount-price">优惠价 ¥{{ activity.discountPrice }}</text>
+                <text class="original-price">¥{{ activity.originalPrice }}</text>
               </view>
             </view>
           </view>
@@ -431,11 +431,7 @@ const getActivitiesList = () => {
       if (res.data.success) {
         activities.value = res.data.result.records.map(activity => {
           const priceNum = Number(activity.price) || 0;
-          const discount = Math.floor(Math.random() * 3) + 7; // 生成7-9之间的随机数
-          const discountRate = discount / 10; // 折扣率，0.7-0.9
-          const originalPrice = Math.floor(priceNum / discountRate);
-          const memberPrice = Math.floor(priceNum * 0.9); // 优惠价格比当前价格再便宜10%
-          
+          const originalPrice = (priceNum * 1.2).toFixed(2); // 原价为现价*1.2
           return {
             id: activity.id,
             name: activity.type,
@@ -443,10 +439,9 @@ const getActivitiesList = () => {
             rating: '4.7分',
             comments: '1205条评论',
             priceNum,
-            price: '¥' + priceNum + '/人起',
-            originalPrice: '¥' + originalPrice + '/人',
-            discount: discount + '折',
-            memberPrice: '¥' + memberPrice + '/人'
+            discountPrice: priceNum.toFixed(2), // 优惠价就是现价
+            originalPrice: originalPrice,       // 原价为现价*1.2
+            price: '¥' + priceNum + '/人起'
           };
         });
       }

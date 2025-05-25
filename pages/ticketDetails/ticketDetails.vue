@@ -89,6 +89,9 @@ const selectedCabinIndex = ref(-1); // 选中的舱位索引
 const selectedCabinPrice = ref(0); // 选中的舱位价格
 const fromIslandName = ref(''); // 出发岛屿名称
 const toIslandName = ref(''); // 到达岛屿名称
+const orderSn = ref('');
+const selectedCabinName = ref('');
+const selectedScheduleTime = ref('');
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -103,13 +106,20 @@ const islandMap = {
 const ticketId = ref('');
 
 onLoad((options) => {
-  if (options.ticketId) {
-    ticketId.value = options.ticketId;
-    console.log('获取到的ticketId:', ticketId.value);
-    fetchOrderDetails();
-  } else {
-    error.value = '缺少ticketId参数';
+  if (options.ticketId) ticketId.value = options.ticketId;
+  if (options.price) selectedCabinPrice.value = parseFloat(options.price) || 0;
+  if (options.orderSn) orderSn.value = options.orderSn;
+  if (options.cabinName) selectedCabinName.value = decodeURIComponent(options.cabinName);
+  if (options.scheduleTime) selectedScheduleTime.value = decodeURIComponent(options.scheduleTime);
+  if (options.price) {
+    selectedCabinPrice.value = parseFloat(options.price) || 0;
+    console.log('获取到的价格:', selectedCabinPrice.value);
   }
+  if (options.price) {
+    selectedCabinPrice.value = parseFloat(options.price) || 0;
+    console.log('获取到的价格:', selectedCabinPrice.value);
+  }
+  fetchOrderDetails();
 });
 
 // 获取交通详情数据
@@ -255,16 +265,16 @@ const createOrder = () => {
     success: (res) => {
       console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
 
-      if (res.data.code === 200) {
+      if (res.data.code === 200 && res.data.result && res.data.result.orderSn) {
+        const orderSn = res.data.result.orderSn;
         uni.showToast({
           title: '订单创建成功',
           icon: 'success',
           duration: 1500
         });
-        // 在订单创建成功后跳转到 pages/ticketBooking/ticketBooking.vue 页面
-        console.log('传递的 ticketId:', ticketId.value);
+        // 假设你有 selectedCabinName、selectedScheduleTime 变量
         uni.navigateTo({
-          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}`
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&orderSn=${orderSn}&cabinName=${encodeURIComponent(selectedCabinName.value)}&scheduleTime=${encodeURIComponent(selectedScheduleTime.value)}`
         });
       } else {
         uni.showToast({

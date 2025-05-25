@@ -183,11 +183,24 @@ const filteredOrders = computed(() => {
 
   // 只显示未取消的订单
   if (currentTab.value === 1) { // 待支付
-    result = result.filter(order => !['CANCEL', 'CANCELLED'].includes(order.payStatus) && order.orderStatus !== 'CANCELLED');
+    result = result.filter(order => {
+      // 主对象和mainOrder对象的orderStatus/payStatus都要判断
+      const status1 = order.orderStatus;
+      const status2 = order.payStatus;
+      const mainOrderStatus = order.mainOrder?.orderStatus;
+      const mainPayStatus = order.mainOrder?.payStatus;
+      return !['CANCEL', 'CANCELLED'].includes(status2)
+        && status1 !== 'CANCELLED'
+        && mainOrderStatus !== 'CANCELLED'
+        && !['CANCEL', 'CANCELLED'].includes(mainPayStatus);
+    });
   }
 
   // 过滤掉已取消订单（兼容 orderStatus 字段）
-  result = result.filter(order => !['CANCEL', 'CANCELLED'].includes(order.payStatus) && order.orderStatus !== 'CANCELLED');
+  result = result.filter(order => {
+    // 只要有一个orderStatus为CANCELLED就过滤掉
+    return order.orderStatus !== 'CANCELLED' && order.mainOrder?.orderStatus !== 'CANCELLED';
+  });
 
   // 按照创建时间排序，最近的在前
   result.sort((a, b) => {
@@ -289,7 +302,11 @@ const getOrderList = () => {
       if (res.data.success) {
         const orderList = res.data.result.records || [];
         console.log('最新订单records:', orderList);
+        console.log(JSON.stringify(orderList, null, 2));
         orders.value = orderList;
+        orderList.forEach(o => {
+          console.log(`orderId: ${o.orderId}, payStatus: ${o.payStatus}, orderStatus: ${o.orderStatus}`);
+        });
       }
     },
     fail: (err) => {
@@ -396,8 +413,8 @@ const closeDetailPopup = () => {
 
 // 删除订单方法
 const deleteOrder = (order) => {
-  console.log('deleteOrder参数:', order);
-  if (!order.id) {
+  console.log('deleteOrder参数:', order, 'order.id:', order.id, 'order.orderId:', order.orderId);
+  if (!order.orderId) {
     uni.showToast({ title: '订单ID不存在，无法取消', icon: 'none' });
     return;
   }
@@ -407,7 +424,7 @@ const deleteOrder = (order) => {
     success: (res) => {
       if (!res.confirm) return;
       uni.showLoading({ title: '取消中...' });
-
+      
       uni.request({
         url: `https://island.zhangshuiyi.com/island/front/order/Cancel`,
         method: 'GET',
@@ -415,7 +432,7 @@ const deleteOrder = (order) => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Access-Token': userStore.token
         },
-        data: { orderId: order.id },
+        data: { orderId: order.orderId },
         success: (res) => {
           if (res.data && res.data.success) {
             getOrderList();
