@@ -284,7 +284,7 @@ const fetchTickets = () => {
     },
     success: (res) => {
       if (res.data.success) {
-        console.log(res.data);
+        console.log('船票数据:', res.data.result.records);
         tickets.value = res.data.result.records.map(item => ({
           id: item.id,
           time: formatTime(item.schedule),

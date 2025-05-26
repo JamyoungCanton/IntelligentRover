@@ -57,7 +57,7 @@
             </view>
           </view>
           <view class="order-footer">
-            <text class="price">¥ {{ order.amount || 0 }}</text>
+            <text class="price">¥ {{ order.price || order.amount || 0 }}</text>
             <view class="button-group">
 <!-- v-if="order.payStatus === 'UNPAID'" -->
               <button class="btn btn-default"
@@ -297,16 +297,10 @@ const getOrderList = () => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      console.log('订单列表响应数据:', res.data);
       // 如果请求成功，更新订单数据
       if (res.data.success) {
         const orderList = res.data.result.records || [];
-        console.log('最新订单records:', orderList);
-        console.log(JSON.stringify(orderList, null, 2));
         orders.value = orderList;
-        orderList.forEach(o => {
-          console.log(`orderId: ${o.orderId}, payStatus: ${o.payStatus}, orderStatus: ${o.orderStatus}`);
-        });
       }
     },
     fail: (err) => {

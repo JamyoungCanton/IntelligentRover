@@ -156,16 +156,13 @@ const selectedCabinIndex = ref(0);
 onLoad((options) => {
   if (options.ticketId) ticketId.value = options.ticketId;
   if (options.price) selectedCabinPrice.value = parseFloat(options.price) || 0;
-  if (options.orderSn) orderSn.value = options.orderSn;
   if (options.cabinName) selectedCabinName.value = decodeURIComponent(options.cabinName);
   if (options.scheduleTime) selectedScheduleTime.value = decodeURIComponent(options.scheduleTime);
 
   // 如果参数里有 cabinName 和 scheduleTime，说明是从 ticketDetails 跳转过来的，直接用参数，不要再覆盖
   if (options.cabinName && options.scheduleTime) {
-    // 不用 fetchOrderDetails 赋值
     fetchOrderDetails(false); // 传个参数，表示不覆盖
   } else {
-    // 没有参数，才查接口并赋默认值
     fetchOrderDetails(true);
   }
 });
@@ -278,6 +275,8 @@ const handleConfirmPayment = () => {
     return;
   }
 
+  console.log('创建订单时的价格：', selectedCabinPrice.value);
+
   const orderData = {
     contract: {
       contractName: contactName.value,
@@ -330,7 +329,7 @@ const handleConfirmPayment = () => {
                 icon: 'success'
               });
               uni.navigateTo({
-                url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&id=${ticketId.value}`
+                url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&orderId=${orderSn}&payment=${selectedPayment.value}&amount=${selectedCabinPrice.value}`
               });
             } else {
               uni.showToast({

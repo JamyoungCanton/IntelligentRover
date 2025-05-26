@@ -47,8 +47,8 @@ const amount = ref(0);
 onLoad((options) => {
   price.value = options.price || '0.00';
   payment.value = options.payment || '未知方式';
-  orderId.value = options.orderId || '暂无订单号';
-  amount.value = options.amount;
+  orderId.value = options.orderId || options.id || '暂无订单号';
+  amount.value = options.amount || options.price || '0.00';
 });
 
 const navigatortoOrder = () => {
