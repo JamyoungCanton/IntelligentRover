@@ -305,7 +305,7 @@ const createPost = () => {
     left: 0;
     right: 0;
     height: 220px;
-    background-image: url('https://wlmtsys.com:9000/travel/20.webp');
+    background-image: url('https://wuminghui.top:9000/travel/20.webp');
     background-size: cover;
     background-position: center;
     opacity: 0.25;

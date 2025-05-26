@@ -134,23 +134,24 @@ const mineTypeList = ref([
   { label: '全部', value: 'all' },
   { label: '点赞', value: 'like' },
   { label: '评论', value: 'comment' },
-  { label: '关注', value: 'follow' }
+  { label: '关注', value: 'follow' },
+  { label: '收藏', value: 'collect' }
 ]);
 
 const bannerList = ref([
   { 
     id: 1, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/19.jpg',
+    imageUrl: 'https://wuminghui.top:9000/travel/19.jpg',
     title: '岛屿风光'
   },
   { 
     id: 2, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/20.webp',
+    imageUrl: 'https://wuminghui.top:9000/travel/20.webp',
     title: '海边日落'
   },
   { 
     id: 3, 
-    imageUrl: 'https://wlmtsys.com:9000/travel/32.jpg',
+    imageUrl: 'https://wuminghui.top:9000/travel/32.jpg',
     title: '蓝天白云'
   }
 ]);
@@ -199,6 +200,13 @@ const selectType = (type) => {
   activeType.value = type;
   // 这里可以添加选择类型后的逻辑
   // 根据贴字的类型进行筛选
+  if (currentPostType.value === 'mine') {
+    if (type === 'collect') {
+      getUserCollectedPosts(); 
+    } else {
+      getUserNotifications();
+    }
+  }
 };
 
 const getImageStyle = (imageCount, index) => {
@@ -284,68 +292,6 @@ const switchPostType = (type) => {
   }
 };
 
-const getUserNotifications = () => {
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/notification/list',
-    method: 'GET',
-    header:{
-      'X-Access-Token': userStore.token,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    data:{
-      pageNo: 1,
-      pageSize: 50
-    },
-    success: (res) => {
-      if(res.data.code === 401){
-        uni.showModal({
-          title: '请重新登录',
-          content: '',
-          showCancel: false,
-          confirmText: '确定',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({ url: '/pages/login/login' });
-            }
-          },
-        });
-      } else if (res.statusCode === 200) {
-        // 处理获取到的通知信息
-        notificationList.value = res.data.result?.list || [];
-        // 将通知列表赋值给帖子列表，用于显示
-        postList.value = notificationList.value.map(notification => ({
-          id: notification.id,
-          postId: notification.postId,
-          title: '新通知',
-          content: notification.content,
-          createTime: notification.createTime,
-          userVO: {
-            username: notification.fromUser || '系统通知'
-          },
-          area: notification.type === 'comment' ? '评论' : 
-                 notification.type === 'like' ? '点赞' : 
-                 notification.type === 'follow' ? '关注' : '系统通知',
-          images: [],
-          likes: 0,
-          focus: 0,
-          comments: 0
-        }));
-      } else {
-        uni.showToast({
-          title: '获取通知信息失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('请求出错:', err);
-      uni.showToast({
-        title: '网络请求出错',
-        icon: 'none'
-      });
-    }
-  });
-};
 
 onShow(() => {
   // 根据当前选择的类型获取对应的帖子
@@ -491,7 +437,96 @@ const getFollowingStatus = () => {
     }
   });
 }  
-    
+
+
+// 处理收藏/取消收藏
+const handleCollect = (postId, isCollect) => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/collect',
+    method: 'POST',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/json'
+    },
+    data: {
+      operation: isCollect ? 1 : 0,
+      postsId: postId,
+      userId: userStore.userInfo.userId
+    },
+    success: (res) => {
+      if (res.statusCode === 200 && res.data.code === 200) {
+        uni.showToast({
+          title: isCollect ? '收藏成功' : '取消收藏成功',
+          icon: 'success'
+        });
+        // 刷新收藏列表
+        getUserCollectedPosts();
+      } else {
+        uni.showToast({
+          title: isCollect ? '收藏失败' : '取消收藏失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('收藏操作请求出错:', err);
+      uni.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
+    }
+  });
+};
+
+const getUserCollectedPosts = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/page',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: {
+      userId: userStore.userInfo.userId,
+      pageNo: 1,
+      pageSize: 50
+    },
+    success: (res) => {
+      if (res.statusCode === 200 && res.data.code === 200) {
+        // 只保留已收藏的帖子
+        const collectedPosts = (res.data.result.list || []).filter(post => post.collected);
+        postList.value = collectedPosts.map(post => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          createTime: post.createTime,
+          area: '收藏',
+          userVO: {
+            username: post.userVO?.username || '未知用户',
+            userId: post.userId
+          },
+          images: post.images || [],
+          likes: post.likes || 0,
+          focus: post.focus || 0,
+          comments: post.comments || 0
+        }));
+      } else {
+        uni.showToast({
+          title: '获取收藏失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('收藏请求出错:', err);
+      uni.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
+    }
+  });
+};
+
   
 </script>
 

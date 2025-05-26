@@ -19,13 +19,6 @@
       </view>
 
       <view class="form-item">
-        <view class="verification-container">
-          <input v-model="formData.code" :placeholder="texts.codePlaceholder" class="input verification-input" />
-          <button class="verification-btn" @click="sendCode">{{ texts.getCodeBtn }}</button>
-        </view>
-      </view>
-
-      <view class="form-item">
         <input v-model="formData.idCard" :placeholder="texts.idCardPlaceholder" class="input" />
       </view>
 
@@ -63,7 +56,9 @@
             <text class="total-label">{{ texts.total }}</text>
             <text class="total-value">¥{{ totalAmount }}</text>
           </view>
-          <button class="pay-btn" @click="submitForm">{{ texts.payNowBtn }}</button>
+          <button class="pay-btn" @click="submitForm">
+            {{ texts.payNowBtn }} ¥{{ totalAmount }}
+          </button>
         </view>
       </view>
     </view>
@@ -71,13 +66,15 @@
 </template>
 
 <script>
+import { useUserStore } from '@/store/modules/user';
+
 export default {
   data() {
     return {
       safeArea: { top: 0, bottom: 0 },
       // 图片资源路径
       assets: {
-        banner: 'https://wlmtsys.com:9000/travel/beach.jpg',
+        banner: 'https://wuminghui.top:9000/travel/beach.jpg',
         wechatIcon: '/static/route/wechat.png',
         alipayIcon: '/static/route/alipay.png'
       },
@@ -90,7 +87,7 @@ export default {
         idCardPlaceholder: '请输入身份证号',
         getCodeBtn: '获取验证码',
         selectTravelers: '选择出行人数',
-        pricePerPerson: '¥3999/人',
+        pricePerPerson: '¥688/人',
         selectPaymentMethod: '选择支付方式',
         wechatPayment: '微信支付',
         alipayPayment: '支付宝',
@@ -101,7 +98,6 @@ export default {
       formData: {
         name: '',
         phone: '',
-        code: '',
         idCard: '',
         people: 2,
         payment: 'wechat'
@@ -113,7 +109,7 @@ export default {
   },
   computed: {
     totalAmount() {
-      return 3999 * this.formData.people;
+      return 688 * this.formData.people;
     }
   },
   methods: {
@@ -123,12 +119,6 @@ export default {
     getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
       this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
-    },
-    sendCode() {
-      uni.showToast({
-        title: '验证码已发送',
-        icon: 'none'
-      });
     },
     decreasePeople() {
       if (this.formData.people > 1) {
@@ -141,8 +131,23 @@ export default {
     selectPayment(paymentMethod) {
       this.formData.payment = paymentMethod;
     },
-    submitForm() {
-      if (!this.formData.name || !this.formData.phone || !this.formData.code || !this.formData.idCard) {
+    async submitForm() {
+      // 姓名校验
+      if (!/^[\u4e00-\u9fa5a-zA-Z]{2,10}$/.test(this.formData.name)) {
+        uni.showToast({ title: '姓名需为2-10位中英文', icon: 'none' });
+        return;
+      }
+      // 手机号校验
+      if (!/^1[3-9]\d{9}$/.test(this.formData.phone)) {
+        uni.showToast({ title: '请输入正确的手机号', icon: 'none' });
+        return;
+      }
+      // 身份证号校验
+      if (!/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(this.formData.idCard)) {
+        uni.showToast({ title: '请输入正确的身份证号', icon: 'none' });
+        return;
+      }
+      if (!this.formData.name || !this.formData.phone || !this.formData.idCard) {
         uni.showToast({
           title: '请填写完整信息',
           icon: 'none'
@@ -150,17 +155,82 @@ export default {
         return;
       }
 
-      uni.showToast({
-        title: '报名成功',
-        icon: 'success',
-        duration: 1500
+      const userStore = useUserStore();
+      const token = userStore.token;
+      // 创建订单
+      const orderData = {
+        contract: {
+          contractName: this.formData.name,
+          contractPhone: this.formData.phone
+        },
+        items: [
+          {
+            bookInfo: {
+              date: new Date().toISOString().split('T')[0],
+              fullname: this.formData.name,
+              idCardNo: this.formData.idCard,
+              idCardType: 'ID_CARD',
+              schedule: new Date().toISOString().split('T')[0]
+            },
+            productId: 'ROUTE_001',
+            productType: 'OneDay',
+            quantity: this.formData.people
+          }
+        ]
+      };
+      uni.showLoading({ title: '正在创建订单...' });
+      uni.request({
+        url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+        method: 'POST',
+        data: orderData,
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': token
+        },
+        success: (res) => {
+          if (res.data && res.data.result && res.data.result.orderSn) {
+            const orderSn = res.data.result.orderSn;
+            // 支付订单
+            uni.request({
+              url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+              method: 'POST',
+              data: { orderSn },
+              header: {
+                'Content-Type': 'application/json',
+                'X-Access-Token': token
+              },
+              success: (payRes) => {
+                uni.hideLoading();
+                if (payRes.data && payRes.data.success) {
+                  uni.showToast({
+                    title: '报名并支付成功',
+                    icon: 'success',
+                    duration: 1500
+                  });
+                  setTimeout(() => {
+                    uni.navigateTo({
+                      url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
+                    });
+                  }, 1500);
+                } else {
+                  uni.showToast({ title: payRes.data.message || '支付失败', icon: 'none' });
+                }
+              },
+              fail: () => {
+                uni.hideLoading();
+                uni.showToast({ title: '支付失败', icon: 'none' });
+              }
+            });
+          } else {
+            uni.hideLoading();
+            uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
+          }
+        },
+        fail: () => {
+          uni.hideLoading();
+          uni.showToast({ title: '订单创建失败', icon: 'none' });
+        }
       });
-
-      setTimeout(() => {
-        uni.navigateTo({
-          url: '/pages/routeRegistrationSuccess/routeRegistrationSuccess'
-        });
-      }, 1500);
     }
   }
 };
@@ -214,27 +284,6 @@ export default {
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
-}
-
-.verification-container {
-  display: flex;
-}
-
-.verification-input {
-  flex: 1;
-  margin-right: 10px;
-}
-
-.verification-btn {
-  background-color: #007AFF;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 5px;
-  font-size: 14px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .counter {

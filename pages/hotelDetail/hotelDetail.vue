@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <img src="https://wlmtsys.com:9000/wlmtsys/2025/04/22/01b4e40e018145a3b7926e46fa939a65.png" style="width: 100%;" alt="">
+      <img src="https://wuminghui.top:9000/wlmtsys/2025/04/22/01b4e40e018145a3b7926e46fa939a65.png" style="width: 100%;" alt="">
       <view class="title-name">
         <text class="title">{{ hotelData.name }}</text>
         <view class="rating">

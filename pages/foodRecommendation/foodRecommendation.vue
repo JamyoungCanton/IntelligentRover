@@ -182,26 +182,26 @@ const displayedRestaurants = computed(() => {
 });
 
 const imageUrls = ref([
-  "https://wlmtsys.com:9000/travel/f1.jpg",
-  "https://wlmtsys.com:9000/travel/f2.jpg",
-  "https://wlmtsys.com:9000/travel/f3.jpg",
-  "https://wlmtsys.com:9000/travel/f4.jpg",
-  "https://wlmtsys.com:9000/travel/f5.jpg",
-  "https://wlmtsys.com:9000/travel/f6.jpg",
-  "https://wlmtsys.com:9000/travel/f7.jpg",
-  "https://wlmtsys.com:9000/travel/f8.jpg",
-  "https://wlmtsys.com:9000/travel/f9.jpg",
-  "https://wlmtsys.com:9000/travel/f10.jpg",
-  "https://wlmtsys.com:9000/travel/f11.jpg",
-  "https://wlmtsys.com:9000/travel/f12.jpg",
-  "https://wlmtsys.com:9000/travel/f13.jpg",
-  "https://wlmtsys.com:9000/travel/f14.jpeg",
-  "https://wlmtsys.com:9000/travel/f15.png",
-  "https://wlmtsys.com:9000/travel/f16.png",
-  "https://wlmtsys.com:9000/travel/f17.jpg",
-  "https://wlmtsys.com:9000/travel/f18.jpg",
-  "https://wlmtsys.com:9000/travel/f19.jpg",
-  "https://wlmtsys.com:9000/travel/f20.jpg",
+  "https://wuminghui.top:9000/travel/f1.jpg",
+  "https://wuminghui.top:9000/travel/f2.jpg",
+  "https://wuminghui.top:9000/travel/f3.jpg",
+  "https://wuminghui.top:9000/travel/f4.jpg",
+  "https://wuminghui.top:9000/travel/f5.jpg",
+  "https://wuminghui.top:9000/travel/f6.jpg",
+  "https://wuminghui.top:9000/travel/f7.jpg",
+  "https://wuminghui.top:9000/travel/f8.jpg",
+  "https://wuminghui.top:9000/travel/f9.jpg",
+  "https://wuminghui.top:9000/travel/f10.jpg",
+  "https://wuminghui.top:9000/travel/f11.jpg",
+  "https://wuminghui.top:9000/travel/f12.jpg",
+  "https://wuminghui.top:9000/travel/f13.jpg",
+  "https://wuminghui.top:9000/travel/f14.jpeg",
+  "https://wuminghui.top:9000/travel/f15.png",
+  "https://wuminghui.top:9000/travel/f16.png",
+  "https://wuminghui.top:9000/travel/f17.jpg",
+  "https://wuminghui.top:9000/travel/f18.jpg",
+  "https://wuminghui.top:9000/travel/f19.jpg",
+  "https://wuminghui.top:9000/travel/f20.jpg",
 ]);
 
 // 选择分类标签
@@ -526,7 +526,7 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 32rpx 0;
+  margin: 90rpx 0rpx 20rpx 0rpx;
   padding: 16rpx;
   background-color: #F5F5F5;
   border-radius: 16rpx;

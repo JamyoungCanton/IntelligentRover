@@ -97,7 +97,7 @@ const itineraryData = [
     price: 1288,
     type: "海岛游",
     status: "未开始",
-    coverImage: "https://wlmtsys.com:9000/travel/%E6%AC%A0%E6%88%91%E4%BA%94%E6%AF%9B%E9%92%B1.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "https://wuminghui.top:9000/travel/%E6%AC%A0%E6%88%91%E4%BA%94%E6%AF%9B%E9%92%B1.jpg", // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐摆渡车前往海岛", location: "酒店门口", description: "" },
       { time: "09:00", title: "海岛游览", location: "海岛", description: "享受海滩美景" },
@@ -113,7 +113,7 @@ const itineraryData = [
     price: 398,
     type: "海鲜美食",
     status: "未开始",
-    coverImage: "https://wlmtsys.com:9000/travel/fish-pier.jpg", // 图片名称，实际路径在组件中处理
+    coverImage: "https://wuminghui.top:9000/travel/fish-pier.jpg", // 图片名称，实际路径在组件中处理
     details: [
       { time: "08:00", title: "乘坐'万山号'摆渡车前往'碧海渔排'", location: "万山海景酒店门口", description: "" },
       { time: "09:00", title: "在'碧海渔排'进行海钓活动", location: "碧海渔排", description: "享受自助烹饪服务" },

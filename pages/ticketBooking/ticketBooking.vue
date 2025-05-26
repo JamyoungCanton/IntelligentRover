@@ -92,7 +92,7 @@
           </view>
           <view class="action-row">
             <text class="remain">剩余 {{ ticket.remain }} 张</text>
-			<button class="book-btn primary" type="button" @click.stop="goToPersonalInfo(ticket)">预订</button>
+			<button class="book-btn primary" type="button" @click.stop="goToDetails(ticket.id)">预订</button>
           </view>
         </view>
       </view>
@@ -284,7 +284,7 @@ const fetchTickets = () => {
     },
     success: (res) => {
       if (res.data.success) {
-        console.log(res.data);
+        console.log('船票数据:', res.data.result.records);
         tickets.value = res.data.result.records.map(item => ({
           id: item.id,
           time: formatTime(item.schedule),
@@ -346,10 +346,6 @@ const goToDetails = (ticketId) => {
 // 跳转到个人信息填写页面
 const goToPersonalInfo = (ticket) => {
   if (!hasToken()) return;
-  
-  // 阻止事件冒泡，避免同时触发卡片的点击事件
-  event.stopPropagation();
-  
   // 保存所选船票信息到本地存储
   uni.setStorageSync('selectedTicket', JSON.stringify({
     id: ticket.id,
@@ -363,7 +359,6 @@ const goToPersonalInfo = (ticket) => {
     date: currentDate.value,
     passengers: passengerCount.value
   }));
-  
   // 跳转到个人信息填写页面
   uni.navigateTo({
     url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticket.id}`

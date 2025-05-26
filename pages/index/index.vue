@@ -25,7 +25,7 @@
       </swiper>
 
       <!-- <view class="logo">
-      <image class="logo-img" src="https://wlmtsys.com:9000/travel/LOGO.png"></image>
+      <image class="logo-img" src="https://wuminghui.top:9000/travel/LOGO.png"></image>
       <text class="logo-text">海岛智游侠</text>
       </view> -->
     </view>
@@ -47,62 +47,62 @@
       <view class="icon-nav">
         <view class="icon-item" @click="navigateTo('景点攻略')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-景点攻略.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-景点攻略.svg"></image>
           </view>
           <text class="icon-text">景点攻略</text>
         </view>
         <view class="icon-item" @click="navigateTo('船票预订')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-船票预订.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-船票预订.svg"></image>
           </view>
           <text class="icon-text">船票预订</text>
         </view>
         <view class="icon-item" @click="navigateTo('美食推荐')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-美食推荐.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-美食推荐.svg"></image>
           </view>
           <text class="icon-text">美食推荐</text>
         </view>
         <view class="icon-item" @click="navigateTo('酒店住宿')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-酒店住宿.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-酒店住宿.svg"></image>
           </view>
           <text class="icon-text">酒店住宿</text>
         </view>
         <view class="icon-item" @click="navigateTo('停车收费')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-停车收费.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-停车收费.svg"></image>
           </view>
           <text class="icon-text">停车收费</text>
         </view>
         <view class="icon-item" @click="navigateTo('一日畅游')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-一日畅游.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-一日畅游.svg"></image>
           </view>
           <text class="icon-text">一日畅游</text>
         </view>
         <view class="icon-item" @click="navigateTo('社区互动')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-社区互动.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-社区互动.svg"></image>
           </view>
           <text class="icon-text">社区互动</text>
         </view>
         <view class="icon-item" @click="navigateTo('更多服务')">
           <view class="icon-bg">
-            <image class="icon" src="https://wlmtsys.com:9000/travel/首页-更多服务.svg"></image>
+            <image class="icon" src="https://wuminghui.top:9000/travel/首页-更多服务.svg"></image>
           </view>
           <text class="icon-text">更多服务</text>
         </view>
       </view>
 
       <!-- 会员充值卡片 -->
-      <view class="member-card" @click="navigateToMembership">
+      <!-- <view class="member-card" @click="navigateToMembership">
         <view class="member-card-left">
           <view class="member-title">会员专享</view>
           <view class="member-desc">享受更多折扣与特权</view>
         </view>
         <view class="member-btn">立即充值</view>
-      </view>
+      </view> -->
 
       <!-- 热门活动 -->
       <view class="section">
@@ -121,12 +121,8 @@
                 <text class="comments">{{ activity.comments }}</text>
               </view>
               <view class="price-container">
-                <text class="activity-price">{{ activity.price }}</text>
-                <text class="original-price" v-if="activity.originalPrice">{{ activity.originalPrice }}</text>
-              </view>
-              <view class="member-price" v-if="activity.memberPrice">
-                <text class="member-tag">会员价</text>
-                <text class="member-price-value">{{ activity.memberPrice }}</text>
+                <text class="discount-price">优惠价 ¥{{ activity.discountPrice }}</text>
+                <text class="original-price">¥{{ activity.originalPrice }}</text>
               </view>
             </view>
           </view>
@@ -141,16 +137,16 @@
         </view>
         <view class="route-item" @click="navigateToRoute(1)">
           <view class="route-hot-tag">
-            <image class="hot-img" src="https://wlmtsys.com:9000/travel/角标-推荐.svg"></image>
+            <image class="hot-img" src="https://wuminghui.top:9000/travel/角标-推荐.svg"></image>
           </view>
-          <image class="route-img" src="https://wlmtsys.com:9000/travel/首页-精选路线.jpg"></image>
+          <image class="route-img" src="https://wuminghui.top:9000/travel/首页-精选路线.jpg"></image>
           <view class="route-info">
             <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
             <view class="route-rating">
               <text class="rating">4.7分</text>
               <text class="comments"> 1205条评论</text>
             </view>
-            <text class="route-price">¥328.00起</text>
+            <text class="route-price">¥688.00起</text>
           </view>
         </view>
       </view>
@@ -167,7 +163,7 @@
           <view class="spot-item" v-for="(spot, index) in visibleSpots" :key="index"
             @click="navigateToSpot(activeTab, spot.id)">
             <image class="spot-img"
-              :src="spot.image || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png'"></image>
+              :src="spot.image || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png'"></image>
             <view class="spot-info">
               <view class="spot-name-row">
                 <text class="spot-name">{{ spot.name }}</text>
@@ -184,7 +180,7 @@
         <!-- <view class="expand-btn" @click="toggleExpand">
           <text>{{ isExpanded ? '收起' : '展开更多' }}</text>
           <image class="expand-icon"
-            :src="isExpanded ? 'https://wlmtsys.com:9000/travel/up.png' : 'https://wlmtsys.com:9000/travel/down.png'">
+            :src="isExpanded ? 'https://wuminghui.top:9000/travel/up.png' : 'https://wuminghui.top:9000/travel/down.png'">
           </image>
         </view> -->
       </view>
@@ -199,7 +195,7 @@
     <view class="ai-float-btn animate-pulse" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag"
       @touchend="endDrag" :style="{ left: dragX + 'px', top: dragY + 'px' }">
       <view class="ai-btn">
-        <img src="https://wlmtsys.com:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
+        <img src="https://wuminghui.top:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -216,9 +212,9 @@ import Tabbar from '../Tabbar/Tabbar.vue';
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const bannerList = ref([
-  'https://wlmtsys.com:9000/travel/Banner1.jpg',
-  'https://wlmtsys.com:9000/travel/Banner2.jpg',
-  'https://wlmtsys.com:9000/travel/Banner3.jpg'
+  'https://wuminghui.top:9000/travel/Banner1.jpg',
+  'https://wuminghui.top:9000/travel/Banner2.jpg',
+  'https://wuminghui.top:9000/travel/Banner3.jpg'
 
 ]);
 
@@ -253,14 +249,14 @@ const getSpotsList = (type) => {
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         if (res.data.success) {
           spots.value = res.data.result.records.map(item => ({
             id: item.id || 0,
             name: item.name || '未知名称',
-            image: item.imageUrl || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png',
+            image: item.imageUrl || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
             comments: (item.commentCount || 0) + '条',
             price: item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`
@@ -285,7 +281,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         console.log("酒店住宿响应数据", res)
@@ -318,7 +314,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
+        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
       },
       success: (res) => {
         console.log("美食推荐响应数据", res)
@@ -326,7 +322,7 @@ const getSpotsList = (type) => {
           spots.value = res.data.result.records.map(item => ({
             id: item.id || 0,
             name: item.name || '未知名称',
-            image: item.imageUrl || 'https://wlmtsys.com:9000/travel/retouch_2025032816113042(1).png',
+            image: item.imageUrl || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
             comments: (item.commentCount || 0) + '条',
             price: item.price === 0 ? '免费' : `¥${item.price}/人`
@@ -429,28 +425,23 @@ const getActivitiesList = () => {
     data: params,
     header: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token
+      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
     },
     success: (res) => {
       if (res.data.success) {
         activities.value = res.data.result.records.map(activity => {
-          // 根据价格随机生成折扣信息
-          const price = parseFloat(activity.price) || 100;
-          const discount = Math.floor(Math.random() * 3) + 7; // 生成7-9之间的随机数
-          const discountRate = discount / 10; // 折扣率，0.7-0.9
-          const originalPrice = Math.floor(price / discountRate);
-          const memberPrice = Math.floor(price * 0.9); // 会员价格比当前价格再便宜10%
-          
+          const priceNum = Number(activity.price) || 0;
+          const originalPrice = (priceNum * 1.2).toFixed(2); // 原价为现价*1.2
           return {
             id: activity.id,
             name: activity.type,
-            image: activity.imageUrl || 'https://wlmtsys.com:9000/travel/首页-热门活动-海钓体验.jpg',
+            image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
             rating: '4.7分',
             comments: '1205条评论',
-            price: '¥' + activity.price + '/人起',
-            originalPrice: '¥' + originalPrice + '/人',
-            discount: discount + '折',
-            memberPrice: '¥' + memberPrice + '/人'
+            priceNum,
+            discountPrice: priceNum.toFixed(2), // 优惠价就是现价
+            originalPrice: originalPrice,       // 原价为现价*1.2
+            price: '¥' + priceNum + '/人起'
           };
         });
       }
@@ -523,6 +514,17 @@ onMounted(() => {
   statusBarHeight.value = sbHeight;
   safeAreaInsets.value = insets;
 });
+
+// 提取纯数字价格
+const getOriginalPrice = (priceStr) => {
+  // 只取第一个数字
+  const match = priceStr.match(/\\d+(\\.\\d+)?/);
+  return match ? Number(match[0]).toFixed(2) : '0.00';
+};
+const getDiscountPrice = (priceStr) => {
+  const original = getOriginalPrice(priceStr);
+  return (original * 0.9).toFixed(2);
+};
 </script>
 
 <style scoped>
@@ -846,6 +848,15 @@ onMounted(() => {
   align-items: center;
   gap: 8rpx;
   margin-top: 6rpx;
+}
+
+.discount-price {
+  color: #FF9500;
+  font-size: 25rpx;
+  font-weight: bold;
+  margin-right: 8rpx;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .original-price {

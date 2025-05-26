@@ -27,13 +27,11 @@
     <view class="section-title"><text>航班时刻</text></view>
     <view class="schedule-section">
       <view class="schedule-list">
-        <view 
-          v-for="(schedule, index) in parsedSchedule" 
-          :key="index" 
-          class="schedule-item"
-        >
-          <text class="time">{{ schedule.time }}</text>
-          <text :class="['status', schedule.status === '余票充足' ? 'available' : 'limited']">{{ schedule.status }}</text>
+        <view class="schedule-item">
+          <text class="time">{{ parsedSchedule[0]?.time }}</text>
+          <text :class="['status', parsedSchedule[0]?.status === '余票充足' ? 'available' : 'limited']">
+            {{ parsedSchedule[0]?.status }}
+          </text>
         </view>
       </view>
     </view>
@@ -81,7 +79,9 @@ import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
 const ticketInfo = ref(null);
-const parsedSchedule = ref([]);
+const parsedSchedule = ref([
+  { time: '08:00', status: '余票充足' },
+]);
 const cabinTypes = ref([]);
 const instructions = ref([]);
 const error = ref('');
@@ -89,6 +89,10 @@ const selectedCabinIndex = ref(-1); // 选中的舱位索引
 const selectedCabinPrice = ref(0); // 选中的舱位价格
 const fromIslandName = ref(''); // 出发岛屿名称
 const toIslandName = ref(''); // 到达岛屿名称
+const orderSn = ref('');
+const selectedCabinName = ref('');
+const selectedScheduleTime = ref(parsedSchedule.value[0]?.time || '');
+const selectedScheduleIndex = ref(0); // 默认选中第一个
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -103,13 +107,20 @@ const islandMap = {
 const ticketId = ref('');
 
 onLoad((options) => {
-  if (options.ticketId) {
-    ticketId.value = options.ticketId;
-    console.log('获取到的ticketId:', ticketId.value);
-    fetchOrderDetails();
-  } else {
-    error.value = '缺少ticketId参数';
+  if (options.ticketId) ticketId.value = options.ticketId;
+  if (options.price) selectedCabinPrice.value = parseFloat(options.price) || 0;
+  if (options.orderSn) orderSn.value = options.orderSn;
+  if (options.cabinName) selectedCabinName.value = decodeURIComponent(options.cabinName);
+  if (options.scheduleTime) selectedScheduleTime.value = decodeURIComponent(options.scheduleTime);
+  if (options.price) {
+    selectedCabinPrice.value = parseFloat(options.price) || 0;
+    console.log('获取到的价格:', selectedCabinPrice.value);
   }
+  if (options.price) {
+    selectedCabinPrice.value = parseFloat(options.price) || 0;
+    console.log('获取到的价格:', selectedCabinPrice.value);
+  }
+  fetchOrderDetails();
 });
 
 // 获取交通详情数据
@@ -149,12 +160,13 @@ const fetchOrderDetails = () => {
             };
           });
           console.log('解析后的航班时刻:', parsedSchedule.value);
+          selectedScheduleIndex.value = 0;
+          selectedScheduleTime.value = parsedSchedule.value[0]?.time || '';
         }
         
         // 解析舱位类型
         cabinTypes.value = [
-          { name: '普通舱', price: 128, description: '标准座椅' },
-          { name: '商务舱', price: 228, description: '宽敞座椅，赠送饮品' }
+          { name: '普通舱', price: ticketInfo.value.cost, description: '标准座椅' }
         ];
         console.log('舱位类型数据:', cabinTypes.value);
         
@@ -181,7 +193,7 @@ const fetchOrderDetails = () => {
         console.log('乘船须知数据:', instructions.value);
         // 默认选中第一个舱位
         selectedCabinIndex.value = 0;
-        selectedCabinPrice.value = cabinTypes.value[0].price;
+        selectedCabinPrice.value = ticketInfo.value.cost;
         console.log('用户当前选择的舱位价格为:', selectedCabinPrice.value);
 
       } else {
@@ -227,11 +239,11 @@ const createOrder = () => {
     items: [
       {
         bookInfo: {
-          date: ticketInfo.value.schedule,
+          date: parsedSchedule.value[0]?.time || '',
           fullname: userStore.userInfo.realname || '默认联系人',
           idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
           idCardType: 'ID_CARD',
-          schedule: ticketInfo.value.schedule
+          schedule: parsedSchedule.value[0]?.time || ''
         },
         productId: ticketInfo.value.id,
         productType: 'Transportation',
@@ -255,16 +267,15 @@ const createOrder = () => {
     success: (res) => {
       console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
 
-      if (res.data.code === 200) {
+      if (res.data.code === 200 && res.data.result && res.data.result.orderSn) {
+        const orderSn = res.data.result.orderSn;
         uni.showToast({
           title: '订单创建成功',
           icon: 'success',
           duration: 1500
         });
-        // 在订单创建成功后跳转到 pages/ticketBooking/ticketBooking.vue 页面
-        console.log('传递的 ticketId:', ticketId.value);
         uni.navigateTo({
-          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}`
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&cabinName=${encodeURIComponent(cabinTypes.value[selectedCabinIndex.value]?.name || '')}&scheduleTime=${encodeURIComponent(parsedSchedule.value[0]?.time || '')}`
         });
       } else {
         uni.showToast({
@@ -489,5 +500,10 @@ onMounted(() => {
   color: #ff4d4f;
   margin-top: 20rpx;
   font-size: 28rpx;
+}
+
+.schedule-item.selected {
+  border: 2rpx solid #1890ff;
+  background: #e6f7ff;
 }
 </style>

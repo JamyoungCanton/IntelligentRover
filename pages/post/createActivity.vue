@@ -17,6 +17,6 @@
 
 <style scoped>
 .createActivity {
-  /* 添加样式 */
+  min-height: 1px;
 }
 </style>

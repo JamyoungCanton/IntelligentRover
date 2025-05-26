@@ -1,3 +1,4 @@
+   // @ts-ignore
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
@@ -11,8 +12,14 @@ import { defineStore } from 'pinia';
 export const useUserStore = defineStore('user', () => {
   /** @type {import('vue').Ref<UserInfo>} */
   const userInfo = ref({
-    realname: '',
+    avatar: '',
+    username: '',
     phone: '',
+    bio: '',
+    gender: 0,
+    birthday: '',
+    email: '',
+    realname: '',
     idCardNo: ''
   });
 

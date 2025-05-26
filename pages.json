@@ -288,7 +288,13 @@
 			}
 		},
 		{
-			"path": "pages/post/collectedPost",
+			"path": "pages/post/mypost",
+			"style": {
+				"navigationBarTitleText": "我的帖子"
+			}
+		},
+		{
+			"path": "pages/collectpost/collectpost",
 			"style": {
 				"navigationBarTitleText": "收藏帖子"
 			}
@@ -334,6 +340,19 @@
 			"path": "pages/my/feedback",
 			"style": {
 				"navigationBarTitleText": "意见反馈"
+			}
+		},
+		{
+			"path": "pages/my/changemine",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/my/changePassword",
+			"style": {
+				"navigationBarTitleText": "修改密码"
 			}
 		},
 		{

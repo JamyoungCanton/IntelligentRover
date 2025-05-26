@@ -2,10 +2,10 @@
   <view class="account-page">
     <!-- 个人信息卡片 -->
     <view class="profile-card" @click="goProfile">
-      <image class="avatar" src="https://randomuser.me/api/portraits/men/32.jpg" />
+      <image class="avatar" :src="userStore.userInfo.avatar" />
       <view class="profile-info">
-        <text class="profile-name">张小明</text>
-        <text class="profile-tip">点击修改个人信息</text>
+        <text class="profile-name">{{ userStore.userInfo.username }}</text>
+        <text class="profile-tip">{{ userStore.userInfo.signature }}</text>
       </view>
       <uni-icons type="right" size="22" color="#bbb" />
     </view>
@@ -13,17 +13,15 @@
     <!-- 账号绑定 -->
     <view class="section-title">账号绑定</view>
     <view class="card">
-      <view class="row" @click="goPhone">
+      <view class="row" @click="goProfile">
         <uni-icons type="phone" size="24" color="#4A90E2" />
         <text class="row-title">手机号绑定</text>
-        <view class="row-value">138****8888</view>
-        <uni-icons type="right" size="18" color="#bbb" />
+        <view class="row-value">{{ userStore.userInfo.phone || '未绑定' }}</view>
       </view>
-      <view class="row" @click="goEmail">
+      <view class="row" @click="goProfile">
         <uni-icons type="email" size="24" color="#4A90E2" />
         <text class="row-title">邮箱绑定</text>
-        <view class="row-value">未绑定</view>
-        <uni-icons type="right" size="18" color="#bbb" />
+        <view class="row-value">{{ userStore.userInfo.email || '未绑定' }}</view>
       </view>
     </view>
 
@@ -34,16 +32,6 @@
         <uni-icons type="locked" size="24" color="#4A90E2" />
         <text class="row-title">修改登录密码</text>
         <uni-icons type="right" size="18" color="#bbb" />
-      </view>
-      <view class="row" @click="goSecurity">
-        <uni-icons type="auth" size="24" color="#4A90E2" />
-        <text class="row-title">安全问题设置</text>
-        <uni-icons type="right" size="18" color="#bbb" />
-      </view>
-      <view class="row">
-        <uni-icons type="key" size="24" color="#4A90E2" />
-        <text class="row-title">二次验证</text>
-        <switch :checked="false" color="#1677ff" style="margin-left:auto;" />
       </view>
     </view>
 
@@ -70,24 +58,12 @@ const goLogibOut = () => {
 };
 
 const goProfile = () => {
-  // 跳转到个人信息编辑页
-  uni.navigateTo({ url: '/pages/my/profile' });
+  // 跳转到changemine页面，编辑模式
+  uni.navigateTo({ url: '/pages/my/changemine?mode=edit' });
 };
-const goPhone = () => {
-  // 跳转到手机绑定页
-  uni.navigateTo({ url: '/pages/my/bindPhone' });
-};
-const goEmail = () => {
-  // 跳转到邮箱绑定页
-  uni.navigateTo({ url: '/pages/my/bindEmail' });
-};
+
 const goPassword = () => {
-  // 跳转到修改密码页
   uni.navigateTo({ url: '/pages/my/changePassword' });
-};
-const goSecurity = () => {
-  // 跳转到安全问题设置页
-  uni.navigateTo({ url: '/pages/my/securityQuestion' });
 };
 </script>
 

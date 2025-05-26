@@ -28,22 +28,22 @@
           <view class="forecast-items">
             <view class="forecast-item">
               <text class="time">现在</text>
-              <image class="forecast-icon" src="https://wlmtsys.com:9000/wlmtsys/2025/05/19/34bdf4c7d7df4176809257ac3594630d.png"></image>
+              <image class="forecast-icon" src="https://wuminghui.top:9000/wlmtsys/2025/05/19/34bdf4c7d7df4176809257ac3594630d.png"></image>
               <text class="temp">28°</text>
             </view>
             <view class="forecast-item">
               <text class="time">14:00</text>
-              <image class="forecast-icon" src="https://wlmtsys.com:9000/wlmtsys/2025/05/19/eb3b7432f593494daf8052daf907b730.png" mode="aspectFit"></image>
+              <image class="forecast-icon" src="https://wuminghui.top:9000/wlmtsys/2025/05/19/eb3b7432f593494daf8052daf907b730.png" mode="aspectFit"></image>
               <text class="temp">29°</text>
             </view>
             <view class="forecast-item">
               <text class="time">15:00</text>
-              <image class="forecast-icon" src="https://wlmtsys.com:9000/wlmtsys/2025/05/19/19fc218e86a443f88d4af4a2da4d36e1.png" mode="aspectFit"></image>
+              <image class="forecast-icon" src="https://wuminghui.top:9000/wlmtsys/2025/05/19/19fc218e86a443f88d4af4a2da4d36e1.png" mode="aspectFit"></image>
               <text class="temp">27°</text>
             </view>
             <view class="forecast-item">
               <text class="time">16:00</text>
-              <image class="forecast-icon" src="https://wlmtsys.com:9000/wlmtsys/2025/05/19/d34b4e568aae48d18845c9acf138fd13.png" mode="aspectFit"></image>
+              <image class="forecast-icon" src="https://wuminghui.top:9000/wlmtsys/2025/05/19/d34b4e568aae48d18845c9acf138fd13.png" mode="aspectFit"></image>
               <text class="temp">26°</text>
             </view>
           </view>
@@ -76,7 +76,7 @@
         <view class="emergency-grid">
           <view class="emergency-item">
             <image
-              src="https://wlmtsys.com:9000/wlmtsys/2025/05/19/b0d1e9f642a346ee9cdce177fde55d70.png"
+              src="https://wuminghui.top:9000/wlmtsys/2025/05/19/b0d1e9f642a346ee9cdce177fde55d70.png"
               mode="scaleToFill"
               style="height: 35rpx; width: 35rpx;"
             />

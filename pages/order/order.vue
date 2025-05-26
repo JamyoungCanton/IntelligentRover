@@ -57,7 +57,7 @@
             </view>
           </view>
           <view class="order-footer">
-            <text class="price">¥ {{ order.amount || 0 }}</text>
+            <text class="price">¥ {{ order.price || order.amount || 0 }}</text>
             <view class="button-group">
 <!-- v-if="order.payStatus === 'UNPAID'" -->
               <button class="btn btn-default"
@@ -142,7 +142,7 @@ import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 
-const tabs = ['全部', '待支付', '已支付', '待出行', '进行中', '已完成'];
+const tabs = ['全部', '待支付', '进行中', '已完成'];
 const currentTab = ref(0);
 const orders = ref([]);
 const userStore = useUserStore();
@@ -152,13 +152,11 @@ const showDetailPopup = ref(false); // 控制弹窗显示
 const currentOrderDetail = ref(null); // 当前订单详情
 
 
-// 订单状态映射
+// 订单状态映射（去除已支付、待出行）
 const statusMap = {
   1: { payStatus: 'UNPAID' }, // 待支付
-  2: { payStatus: 'PAID' }, // 已支付
-  3: { orderStatus: 'WAITING' }, // 待出行
-  4: { orderStatus: 'PROCESSING' }, // 进行中
-  5: { orderStatus: 'COMPLETED' } // 已完成
+  2: { orderStatus: 'PROCESSING' }, // 进行中
+  3: { orderStatus: 'COMPLETED' } // 已完成
 };
 
 // 根据当前标签和搜索关键词过滤订单
@@ -166,7 +164,7 @@ const filteredOrders = computed(() => {
   let result = orders.value;
 
   // 根据标签筛选
-  if (currentTab.value !== 0) { // 不是"全部"标签
+  if (currentTab.value !== 0) {
     const status = statusMap[currentTab.value];
     result = result.filter(order => {
       return Object.entries(status).every(([key, value]) => order[key] === value);
@@ -182,6 +180,27 @@ const filteredOrders = computed(() => {
       (order.title && order.title.toLowerCase().includes(keyword)) // 景点名称
     );
   }
+
+  // 只显示未取消的订单
+  if (currentTab.value === 1) { // 待支付
+    result = result.filter(order => {
+      // 主对象和mainOrder对象的orderStatus/payStatus都要判断
+      const status1 = order.orderStatus;
+      const status2 = order.payStatus;
+      const mainOrderStatus = order.mainOrder?.orderStatus;
+      const mainPayStatus = order.mainOrder?.payStatus;
+      return !['CANCEL', 'CANCELLED'].includes(status2)
+        && status1 !== 'CANCELLED'
+        && mainOrderStatus !== 'CANCELLED'
+        && !['CANCEL', 'CANCELLED'].includes(mainPayStatus);
+    });
+  }
+
+  // 过滤掉已取消订单（兼容 orderStatus 字段）
+  result = result.filter(order => {
+    // 只要有一个orderStatus为CANCELLED就过滤掉
+    return order.orderStatus !== 'CANCELLED' && order.mainOrder?.orderStatus !== 'CANCELLED';
+  });
 
   // 按照创建时间排序，最近的在前
   result.sort((a, b) => {
@@ -278,7 +297,6 @@ const getOrderList = () => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      console.log('订单列表响应数据:', res.data);
       // 如果请求成功，更新订单数据
       if (res.data.success) {
         const orderList = res.data.result.records || [];
@@ -301,13 +319,8 @@ const getOrderList = () => {
 
 // 根据订单ID查询订单详情  GET
 const getOrderDetailById1 = (orderSn) => {
-  // 显示加载提示
-  uni.showLoading({
-    title: '加载订单详情中...'
-  });
-  console.log("orderSn为：", orderSn)
+  uni.showLoading({ title: '加载订单详情中...' });
 
-  // 发起请求获取订单详情
   uni.request({
     url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${orderSn}`,
     method: 'GET',
@@ -316,32 +329,30 @@ const getOrderDetailById1 = (orderSn) => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      console.log('订单详情响应数据:', res.data);
-
-      // 如果请求成功，处理响应数据
       if (res.data.success) {
-        currentOrderDetail.value = res.data.result;
-        showDetailPopup.value = true; // 显示弹窗
+        const detail = res.data.result;
+
+        // 如果接口没有返回 goodsName，则尝试从已有 orders 中找
+        const matched = orders.value.find(o => o.orderSn === orderSn);
+        if (matched && !detail.goodsName) {
+          detail.goodsName = matched.goodsName;
+        }
+
+        currentOrderDetail.value = detail;
+        showDetailPopup.value = true;
       } else {
-        // 处理请求失败的情况
-        uni.showToast({
-          title: res.data.message || '获取订单详情失败',
-          icon: 'none'
-        });
+        uni.showToast({ title: res.data.message || '获取订单详情失败', icon: 'none' });
       }
     },
-    fail: (err) => {
-      console.error('获取订单详情失败:', err);
-      uni.showToast({
-        title: '获取订单详情失败',
-        icon: 'none'
-      });
+    fail: () => {
+      uni.showToast({ title: '获取订单详情失败', icon: 'none' });
     },
     complete: () => {
       uni.hideLoading();
     }
   });
 };
+
 
 // 根据订单ID查询订单详情 GET，获取的订单信息比1更多，！！！获取会失败！！！
 const getOrderDetailById2 = (orderSn) => {
@@ -394,73 +405,42 @@ const closeDetailPopup = () => {
   currentOrderDetail.value = null;
 };
 
-// 取消订单方法
-// const cancelOrder = (order) => {
-//   // 弹出确认取消的模态框
-//   uni.showModal({
-//     title: '取消订单',
-//     content: '您确定要取消该订单吗？',
-//     success: (res) => {
-//       if (res.confirm) {
-//         // 模拟订单取消：从列表中移除该订单
-//         const index = orders.value.findIndex(item => item.orderSn === order.orderSn);
-//         if (index !== -1) {
-//           // 在控制台打印被取消的订单详细信息
-//           console.log('已取消的订单详情:', {
-//             orderSn: order.orderSn,
-//             goodsName: order.goodsName,
-//             payStatus: order.payStatus,
-//             createTime: order.createTime,
-//             amount: order.amount,
-//             createBy: order.createBy
-//           });
-
-//           orders.value.splice(index, 1);
-
-//           // 显示取消成功的提示
-//           uni.showToast({
-//             title: '订单已取消',
-//             icon: 'none'
-//           });
-//         }
-//       }
-//     }
-//   });
-// };
 // 删除订单方法
 const deleteOrder = (order) => {
+  console.log('deleteOrder参数:', order, 'order.id:', order.id, 'order.orderId:', order.orderId);
+  if (!order.orderId) {
+    uni.showToast({ title: '订单ID不存在，无法取消', icon: 'none' });
+    return;
+  }
   uni.showModal({
-    title: '删除订单',
-    content: '删除后无法恢复，确认要删除该订单吗？',
+    title: '取消订单',
+    content: '您确定要取消该订单吗？',
     success: (res) => {
       if (!res.confirm) return;
-      uni.showLoading({ title: '删除中...' });
-
+      uni.showLoading({ title: '取消中...' });
+      
       uni.request({
-        // DELETE /island/order/ilOrder/delete?id=${id}
-        url: `https://island.zhangshuiyi.com/island/order/ilOrder/delete`,
-        method: 'DELETE',
+        url: `https://island.zhangshuiyi.com/island/front/order/Cancel`,
+        method: 'GET',
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Access-Token': userStore.token
         },
-        // DELETE 请求也可以在 data 中传 query 参数
-        data: { id: order.id },
+        data: { orderId: order.orderId },
         success: (res) => {
           if (res.data && res.data.success) {
-            // 从列表中移除
-            orders.value = orders.value.filter(o => o.id !== order.id);
-            uni.showToast({ title: '删除成功', icon: 'success' });
+            getOrderList();
+            uni.showToast({ title: '订单已取消', icon: 'success' });
           } else {
             uni.showToast({
-              title: res.data?.message || '删除失败',
+              title: res.data?.message || '取消失败',
               icon: 'none'
             });
           }
         },
         fail: (err) => {
-          console.error('删除请求失败:', err);
-          uni.showToast({ title: '网络错误，删除失败', icon: 'none' });
+          console.error('取消请求失败:', err);
+          uni.showToast({ title: '网络错误，取消失败', icon: 'none' });
         },
         complete: () => {
           uni.hideLoading();
@@ -599,14 +579,18 @@ page {
 }
 
 .tabs-wrapper {
-  display: inline-flex;
+  display: flex;
+  width: 90%;
 }
 
 .tab-item {
-  padding: 20rpx 30rpx;
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
   font-size: 28rpx;
   color: #666;
   position: relative;
+  box-sizing: border-box;
 }
 
 .tab-item.active {

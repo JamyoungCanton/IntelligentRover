@@ -2,18 +2,18 @@
   <view class="page">
     <scroll-view class="content" scroll-y>
       <!-- 已登录 -->
-      <view class="user-info" v-if="token">
+      <view class="user-info" v-if="userStore.token" @click="goProfileView">
         <view class="avatar-container">
-          <image class="avatar" :src="userInfo.avatar" />
+          <image class="avatar" :src="userStore.userInfo.avatar" />
         </view>
         <view class="user-detail">
-          <text class="username">{{ userInfo.username }}</text>
-          <text class="phone">{{ userInfo.phone }}</text>
+          <text class="username">{{ userStore.userInfo.username }}</text>
+          <text class="signature">{{ (userStore.userInfo.signature || '').slice(0, 10) }}</text>
         </view>
         <uni-icons type="right" size="14" color="#999" />
       </view>
       <!-- 未登录 -->
-      <view class="user-info" v-if="!token">
+      <view class="user-info" v-else>
         <view class="avatar-container">
           <image class="avatar" src="/static/my/noLogin.png" />
         </view>
@@ -29,16 +29,6 @@
                   <image :src="item.img" mode="aspectFit" :style="item.Style" />
             </view>
             <text class="grid-text">{{ item.text }}</text>
-        </view>
-      </view>
-
-      <view class="menu-card">
-        <view class="menu-item">
-          <view class="menu-left">
-            <uni-icons type="list" size="18" color="#3B82F6" />
-            <text class="menu-text">全部订单</text>
-          </view>
-          <uni-icons type="right" size="14" color="#999" />
         </view>
       </view>
 
@@ -97,21 +87,21 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    img: 'https://wlmtsys.com:9000/travel/collectItinerary.png',
-    text: '收藏帖子',
+    img: 'https://wuminghui.top:9000/travel/collectItinerary.png',
+    text: '我的帖子',
     onClick: 'goCollectPost'
   },
   {
-    img: 'https://wlmtsys.com:9000/travel/historyOrder.png',
+    img: 'https://wuminghui.top:9000/travel/historyOrder.png',
     text: '历史订单',
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://wlmtsys.com:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
+    img: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
     text: '待出行',
   },
   {
-    img: 'https://wlmtsys.com:9000/travel/customerService.png',
+    img: 'https://wuminghui.top:9000/travel/customerService.png',
     text: '客服中心'
   }
 ]);
@@ -122,26 +112,6 @@ const goLogin = () => {
     url: '/pages/login/login',
   })
 }
-
-// 判断是否登录
-
-// 获取store当中的userInfo
-const userInfo = ref(null);
-onShow(() => {
-  userInfo.value = userStore.userInfo;
-  // console.log(userInfo.value);
-
-});
-
-
-// 获取store当中的token
-const token = ref(null);
-onShow(() => {
-  token.value = userStore.token;
-  // console.log(token.value);
-
-});
-
 
 // 跳转历史订单
 const gohisorder = () => {
@@ -155,7 +125,7 @@ const handleGridItemClick = (item) => {
   }
   if (item.onClick === 'goCollectPost') {
     uni.navigateTo({
-      url: '/pages/post/collectedPost',
+      url: '/pages/post/mypost',
     })
   }
 }
@@ -181,6 +151,11 @@ const goFeedback = () => {
 const goAboutUs = () => {
   uni.navigateTo({ url: '/pages/my/aboutUs' })
 }
+
+const goProfileView = () => {
+  // 跳转到changemine页面，只读模式
+  uni.navigateTo({ url: '/pages/my/changemine?mode=view' });
+};
 
 </script>
 
@@ -303,5 +278,12 @@ page {
 
 .border-bottom {
   border-bottom: 1px solid #F5F5F5;
+}
+
+.signature {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 2rpx;
+  display: block;
 }
 </style>

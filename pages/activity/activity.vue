@@ -10,7 +10,14 @@
       </view>
     </view>
 
-    <image :src="activity.image" class="activity-image"></image>
+    <view class="activity-image-wrapper">
+      <image :src="activity.image" class="activity-image"></image>
+      <image
+        :src="activity.isFavorite ? activity.icons.favoriteFilled : activity.icons.favorite"
+        class="favorite-btn"
+        @click="toggleFavorite"
+      />
+    </view>
 
     <view class="activity-info">
       <text class="activity-name">{{ activity.title }}</text>
@@ -24,14 +31,6 @@
           :size="activity.iconSize" :color="activity.starColor">
         </uni-icons>
         <text class="rating">{{ activity.ratingText }}</text>
-      </view>
-
-      <view class="favorite" @click="toggleFavorite">
-        <image :src="isFavorite ? activity.icons.favoriteFilled : activity.icons.favorite" class="favorite-icon">
-        </image>
-        <text :class="['favorite-text', isFavorite ? 'active' : '']">
-          {{ activity.favoriteText }}
-        </text>
       </view>
     </view>
 
@@ -99,8 +98,6 @@ const safeAreaInsets = ref({ bottom: 0 });
 const statusBarHeight = ref(0);
 const userStore = useUserStore();
 
-const isFavorite = ref(false);
-
 // 活动详情数据对象
 const activity = reactive({
   // 图标和图片路径
@@ -124,7 +121,7 @@ const activity = reactive({
 
   // 基本活动信息
   id: 1,
-  image: 'https://wlmtsys.com:9000/travel/diving.jpg',
+  image: 'https://wuminghui.top:9000/travel/diving.jpg',
   type: '深潜探索',
   title: '海底世界深潜体验',
   price: '¥368',
@@ -185,7 +182,9 @@ const activity = reactive({
       '往返交通费用',
       '个人消费项目'
     ]
-  }
+  },
+
+  isFavorite: false,
 });
 
 // 方法定义
@@ -201,7 +200,8 @@ const goToRegistration = (id) => {
 };
 
 const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value;
+  activity.isFavorite = !activity.isFavorite;
+  // 这里可加本地存储或接口调用
 };
 
 // 调用接口获取活动详细信息
@@ -301,10 +301,25 @@ onShow(() => {
   font-weight: bold;
 }
 
+.activity-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
 .activity-image {
   width: 100%;
   height: 240px;
   object-fit: cover;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 120%;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  z-index: 2;
 }
 
 .activity-info {
@@ -351,31 +366,6 @@ onShow(() => {
   margin-left: 10px;
   font-size: 14px;
   color: #666;
-}
-
-.favorite {
-  position: absolute;
-  right: 20px;
-  bottom: 70px;
-  display: flex;
-  flex-direction: column;
-  /* 垂直排列 */
-  align-items: center;
-}
-
-.favorite-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 5px;
-}
-
-.favorite-text {
-  font-size: 12px;
-  color: #666;
-}
-
-.favorite-text.active {
-  color: red;
 }
 
 .section-title {

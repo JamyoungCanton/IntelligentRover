@@ -107,7 +107,9 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">确认支付 ¥750</button>
+      <button class="confirm-btn" @click="handleConfirmPayment">
+        确认支付 ¥{{ hotelList.price }}
+      </button>
     </view>
   </view>
 </template>
@@ -163,28 +165,55 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
-
   const userStore = useUserStore();
   console.log(userStore.token);
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-    method: 'POST',
-    header:{
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token,
-    },
-    data: {
-      orderSn: orderSn.value,
-    },
-    success:(res)=>{
-      console.log(res.data);
-    },
-  })
-  
- 
+  payOrder(orderSn.value, userStore.token)
+    .then(data => {
+      console.log('支付接口返回：', data);
+      // 检查 data.result.orderStatus
+      // ...
+      uni.showToast({
+        title: '支付成功',
+        icon: 'success'
+      });
+      // 从后端返回的 data.result 里获取 amount 和 orderSn
+      const amount = data.result?.amount || hotelList.value.price;
+      const orderId = data.result?.orderSn || orderSn.value;
+      uni.navigateTo({
+        url: `/pages/pay_success/pay_success?amount=${amount}&orderId=${orderId}`
+      });
+    })
+    .catch(errMsg => {
+      uni.showToast({
+        title: errMsg,
+        icon: 'none'
+      });
+    });
+}
 
-  uni.navigateTo({
-    url: '/pages/pay_success/pay_success'
+function payOrder(orderSn, token) {
+  return new Promise((resolve, reject) => {
+  uni.request({
+      url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn}`,
+    method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': token
+    },
+      data: {},
+      success: (res) => {
+        if (res.statusCode === 200 && res.data.success) {
+          // 支付成功，订单状态已修改
+          resolve(res.data);
+        } else {
+          // 支付失败
+          reject(res.data.message || '支付失败');
+        }
+      },
+      fail: (err) => {
+        reject('网络错误');
+      }
+    });
   });
 }
 </script>

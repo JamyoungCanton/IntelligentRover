@@ -65,11 +65,6 @@
 
     <!-- 提交按钮 -->
     <button class="submit-btn" type="primary" @click="submit">提交反馈</button>
-
-    <!-- 反馈历史 -->
-    <view class="history-link" @click="goHistory">
-      查看反馈历史 &gt;
-    </view>
   </view>
 </template>
 
