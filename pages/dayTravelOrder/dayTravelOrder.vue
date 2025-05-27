@@ -108,6 +108,24 @@
           </view>
         </view>
       </view>
+
+      <!-- 订单时间选择 -->
+      <view class="card">
+        <view class="card-header">
+          <uni-icons type="calendar" size="20" color="#3B82F6" />
+          <text class="card-title">订单时间</text>
+        </view>
+        <view class="time-select-row">
+          <text class="time-label">开始时间</text>
+          <picker mode="date" :start="minDate" @change="onStartDateChange">
+            <view class="picker-value">{{ startDate || '请选择开始时间' }}</view>
+          </picker>
+        </view>
+        <view class="time-select-row">
+          <text class="time-label">持续时间</text>
+          <text class="picker-value">12小时</text>
+        </view>
+      </view>
     </view>
 
     <!-- 底部支付按钮 -->
@@ -140,6 +158,8 @@ const productDetail = ref({
 const phone = ref('');
 const remark = ref('');
 const selectedPayment = ref('wechat');
+const startDate = ref('');
+const minDate = ref('');
 
 onLoad((options) => {
   if (options.id) {
@@ -197,15 +217,56 @@ const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 
+// 页面加载时设置最小可选日期为明天
+onMounted(() => {
+  const now = new Date();
+  now.setDate(now.getDate() + 1); // 明天
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  minDate.value = `${yyyy}-${mm}-${dd}`;
+});
+
+const onStartDateChange = (e) => {
+  startDate.value = e.detail.value;
+};
+
 // 确认支付
 const handleConfirmPayment = () => {
+  // 手机号必填校验
+  if (!phone.value.trim()) {
+    uni.showToast({
+      title: '请输入手机号码',
+      icon: 'none'
+    });
+    return;
+  }
+  // 手机号格式校验
+  const phoneRegex = /^1[3-9]\d{9}$/;
+  if (!phoneRegex.test(phone.value.trim())) {
+    uni.showToast({
+      title: '请输入有效的手机号',
+      icon: 'none'
+    });
+    return;
+  }
+  // 开始时间必选校验
+  if (!startDate.value) {
+    uni.showToast({
+      title: '请选择订单开始时间',
+      icon: 'none'
+    });
+    return;
+  }
+
   const price = productDetail.value.price;
   const payment = selectedPayment.value;
   const orderId = new Date().getTime(); // 示例订单号，实际应来自后端
   const productName = encodeURIComponent(productDetail.value.title); // 防止中文乱码
+  const duration = 12; // 小时
 
   uni.navigateTo({
-    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}&productName=${productName}`
+    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}&productName=${productName}&startDate=${startDate.value}&duration=${duration}`
   });
 };
 
@@ -384,5 +445,22 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.time-select-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.time-label {
+  width: 120rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+.picker-value {
+  flex: 1;
+  color: #333;
+  font-size: 28rpx;
+  padding-left: 16rpx;
 }
 </style>

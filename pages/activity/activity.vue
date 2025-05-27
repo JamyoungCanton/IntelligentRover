@@ -10,7 +10,14 @@
       </view>
     </view>
 
-    <image :src="activity.image" class="activity-image"></image>
+    <view class="activity-image-wrapper">
+      <image :src="activity.image" class="activity-image"></image>
+      <image
+        :src="activity.isFavorite ? activity.icons.favoriteFilled : activity.icons.favorite"
+        class="favorite-btn"
+        @click="toggleFavorite"
+      />
+    </view>
 
     <view class="activity-info">
       <text class="activity-name">{{ activity.title }}</text>
@@ -175,7 +182,9 @@ const activity = reactive({
       '往返交通费用',
       '个人消费项目'
     ]
-  }
+  },
+
+  isFavorite: false,
 });
 
 // 方法定义
@@ -188,6 +197,11 @@ const goToRegistration = (id) => {
   uni.navigateTo({
     url: `/pages/activityRegistration/activityRegistration?id=${id}`
   });
+};
+
+const toggleFavorite = () => {
+  activity.isFavorite = !activity.isFavorite;
+  // 这里可加本地存储或接口调用
 };
 
 // 调用接口获取活动详细信息
@@ -287,10 +301,25 @@ onShow(() => {
   font-weight: bold;
 }
 
+.activity-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
 .activity-image {
   width: 100%;
   height: 240px;
   object-fit: cover;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 120%;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  z-index: 2;
 }
 
 .activity-info {

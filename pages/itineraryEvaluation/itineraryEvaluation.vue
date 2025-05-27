@@ -169,12 +169,30 @@ export default {
       });
     },
     deletePhoto(index) {
-      this.uploadedPhotos.splice(index, 1);
+      uni.showModal({
+        title: '提示',
+        content: '确定要删除这张图片吗？',
+        success: (res) => {
+          if (res.confirm) {
+            this.uploadedPhotos.splice(index, 1);
+          }
+        }
+      });
     },
     openPhotoLibrary() {
-      uni.showToast({
-        title: '请上传图片',
-        icon: 'none'
+      if (this.uploadedPhotos.length >= 9) {
+        uni.showToast({ title: '最多上传9张图片', icon: 'none' });
+        return;
+      }
+      uni.chooseImage({
+        count: 9 - this.uploadedPhotos.length,
+        sizeType: ['original', 'compressed'],
+        sourceType: ['album', 'camera'],
+        success: (chooseImageRes) => {
+          chooseImageRes.tempFilePaths.forEach(filePath => {
+            this.uploadImage(filePath);
+          });
+        }
       });
     },
     submitFeedback() {
@@ -194,6 +212,7 @@ export default {
         return;
       }
       
+      const photoUrls = this.uploadedPhotos.map(photo => photo.url);
       uni.showModal({
         title: '确认提交',
         content: '您确定要提交反馈吗？',
@@ -221,7 +240,26 @@ export default {
 	getSafeAreaInfo() {
 	    const systemInfo = uni.getSystemInfoSync();
 	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
-	}
+	},
+    uploadImage(filePath) {
+      uni.uploadFile({
+        url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
+        filePath: filePath,
+        name: 'file',
+        success: (uploadFileRes) => {
+          const res = JSON.parse(uploadFileRes.data);
+          if (res.success && res.result && res.result.url) {
+            this.uploadedPhotos.push({ url: res.result.url });
+            uni.showToast({ title: '上传成功', icon: 'success' });
+          } else {
+            uni.showToast({ title: res.message || '上传失败', icon: 'none' });
+          }
+        },
+        fail: () => {
+          uni.showToast({ title: '上传失败', icon: 'none' });
+        }
+      });
+    }
   }
 };
 </script>
