@@ -74,7 +74,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useUserStore } from '/store/modules/user.js';
+import { useUserStore } from '/store/modules/user';
 const userStore = useUserStore();
 
 // 时间戳
