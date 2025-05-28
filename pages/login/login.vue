@@ -263,7 +263,8 @@ const handleWechatLogin = () => {
           header: { 'Content-Type': 'application/json' },
           data: { code: loginRes.code },
           success: (res) => {
-            if (res.data.success && res.data.result) {
+            if (res.data.success && res.data.result && res.data.result.token) {
+              userStore.setToken(res.data.result.token);
               userStore.updateUserInfo(res.data.result);
               uni.showToast({ title: '微信登录成功', icon: 'success', duration: 1500 });
               uni.reLaunch({ url: '/pages/index/index' });
