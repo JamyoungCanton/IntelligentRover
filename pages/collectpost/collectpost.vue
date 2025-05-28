@@ -26,34 +26,38 @@
         class="post-card" 
         v-for="post in posts" 
         :key="post.id"
-        @tap="toDetail(post.id)"
       >
-        <view class="post-header">
-          <text class="post-title">{{ post.title || '未命名帖子' }}</text>
-          <text class="post-time">{{ formatTime(post.createTime) }}</text>
-        </view>
-        <view class="post-content">{{ post.content }}</view>
-        <image
-          v-if="post.images?.length"
-          :src="post.images[0].url"
-          class="post-image"
-          mode="aspectFill"
-        />
-
-        <!-- 底部信息 -->
-        <view class="item-bottom">
-          <view class="item-bottom-left">
-            <text class="left-data">
-              {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
-            </text>
+        <!-- 点击整个卡片跳详情 -->
+        <view @tap="toDetail(post.id)">
+          <view class="post-header">
+            <text class="post-title">{{ post.title || '未命名帖子' }}</text>
+            <text class="post-time">{{ formatTime(post.createTime) }}</text>
           </view>
-          <view class="item-bottom-right">
-            <uni-icons type="heart" size="18" color="#999" />
-            <text class="data-detail">{{ post.likes ?? 0 }}</text>
-            <uni-icons type="star" size="18" color="#999" />
-            <text class="data-detail">{{ post.focus ?? 0 }}</text>
-            <uni-icons type="chat" size="18" color="#999" />
-            <text class="data-detail">{{ post.comments ?? 0 }}</text>
+          <view class="post-content">{{ post.content }}</view>
+          <image
+            v-if="post.images?.length"
+            :src="post.images[0].url"
+            class="post-image"
+            mode="aspectFill"
+          />
+
+          <!-- 底部信息 -->
+          <view class="item-bottom">
+            <!-- 左侧：时间 · 分区 -->
+            <view class="item-bottom-left">
+              <text class="left-data">
+                {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
+              </text>
+            </view>
+            <!-- 右侧：点赞/关注/评论 -->
+            <view class="item-bottom-right">
+              <uni-icons type="heart" size="18" color="#999" />
+              <text class="data-detail">{{ post.likes ?? 0 }}</text>
+              <uni-icons type="star" size="18" color="#999" />
+              <text class="data-detail">{{ post.focus ?? 0 }}</text>
+              <uni-icons type="chat" size="18" color="#999" />
+              <text class="data-detail">{{ post.comments ?? 0 }}</text>
+            </view>
           </view>
         </view>
       </view>
@@ -65,21 +69,21 @@
 import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 
+const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
-const userStore = useUserStore();
 const currentTab = ref<'my' | 'collect'>('collect');
 
-
-// 时间格式化
+// 原生时间格式化
 const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
+// 截取到分钟
 const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
 
-// 获取收藏帖子列表
-async function fetchCollectedPosts() {
+// 拉收藏的帖子
+async function fetchCollectPosts() {
   loading.value = true;
   const token = uni.getStorageSync('token') || userStore.token;
-
+  console.log('当前token:', token);
   try {
     const res: any = await new Promise((resolve, reject) => {
       uni.request({
@@ -93,39 +97,49 @@ async function fetchCollectedPosts() {
         fail: reject
       });
     });
-
-    console.log('收藏接口返回', res);
-
+    console.log('收藏接口返回:', res);
     if (res.statusCode === 200 && res.data.success) {
-      const result = res.data.result;
-      posts.value = Array.isArray(result) ? result : (result?.list || []);
+      posts.value = res.data.result?.list || res.data.result?.records || [];
     } else {
       uni.showToast({ title: res.data.message || '获取失败', icon: 'none' });
     }
   } catch (e) {
-    console.error(e);
+    console.error('请求异常:', e);
     uni.showToast({ title: '网络异常', icon: 'none' });
   } finally {
     loading.value = false;
   }
 }
 
+// 跳详情
 function toDetail(id: string) {
   uni.navigateTo({
     url: `/pages/post/postDetail?id=${id}`
   });
 }
+// 切换跳转逻辑
 function switchTab(tab: 'my' | 'collect') {
   if (tab === currentTab.value) return;
+  // 切换到收藏时校验token
+  if (tab === 'collect') {
+    const token = uni.getStorageSync('token') || userStore.token;
+    if (!token) {
+      uni.showToast({ title: '请先登录', icon: 'none' });
+      setTimeout(() => {
+        uni.redirectTo({ url: '/pages/login/login' });
+      }, 800);
+      return;
+    }
+  }
   currentTab.value = tab;
-
   if (tab === 'my') {
-    uni.redirectTo({ url: '/pages/post/mypost' }); // 使用 redirectTo 而非 navigateTo
+    uni.redirectTo({ url: '/pages/post/mypost' });
   } else {
-    uni.redirectTo({ url: '/pages/post/collectpost' });
+    uni.redirectTo({ url: '/pages/collectpost/collectpost' });
   }
 }
-onMounted(fetchCollectedPosts);
+
+onMounted(fetchCollectPosts);
 </script>
 
 <style lang="scss" scoped>

@@ -242,14 +242,44 @@ const visibleSpots = computed(() => {
 const imageUrls = ref([]);
 const combinedArray = ref([]);
 
+const requestWithFallback = (options) => {
+  uni.request({
+    ...options,
+    header: {
+      ...options.header,
+      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+    },
+    success: (res) => {
+      if (res.data.success) {
+        options.success && options.success(res);
+      } else if (userStore.token) {
+        // token无效时，降级为不带token再请求一次
+        uni.request({
+          ...options,
+          header: { ...options.header },
+          success: options.success,
+          fail: options.fail
+        });
+      } else {
+        options.fail && options.fail(res);
+      }
+    },
+    fail: options.fail
+  });
+};
+
 const getSpotsList = (type) => {
+  if (!userStore.token) {
+    spots.value = [];
+    return;
+  }
   if (type === '景点攻略') {
     uni.request({
       url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+        'X-Access-Token': userStore.token
       },
       success: (res) => {
         if (res.data.success) {
@@ -281,7 +311,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+        'X-Access-Token': userStore.token
       },
       success: (res) => {
         console.log("酒店住宿响应数据", res)
@@ -314,7 +344,7 @@ const getSpotsList = (type) => {
       },
       header: {
         'Content-Type': 'application/json',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+        'X-Access-Token': userStore.token
       },
       success: (res) => {
         console.log("美食推荐响应数据", res)
@@ -414,6 +444,10 @@ const navigateToSpot = (type, id) => {
 };
 
 const getActivitiesList = () => {
+  if (!userStore.token) {
+    activities.value = [];
+    return;
+  }
   const params = {
     pageNo: 1,
     pageSize: 300
@@ -425,7 +459,7 @@ const getActivitiesList = () => {
     data: params,
     header: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+      'X-Access-Token': userStore.token
     },
     success: (res) => {
       if (res.data.success) {

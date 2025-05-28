@@ -128,11 +128,16 @@ export default {
       // 图片资源路径
       assets: {
         banner: 'https://wuminghui.top:9000/travel/beach.jpg'
-      }
+      },
+      productId: '10001'
     };
   },
-  onLoad() {
+  onLoad(options) {
     this.getSafeAreaInfo();
+    if (options.productId) {
+      this.productId = options.productId;
+      console.log('route页面收到的productId:', this.productId);
+    }
   },
   methods: {
     goBack() {
@@ -140,7 +145,7 @@ export default {
     },
     goToRegistration() {
       uni.navigateTo({
-        url: '/pages/routeRegistration/routeRegistration'
+        url: `/pages/routeRegistration/routeRegistration?productId=${this.productId}`
       });
     },
     getSafeAreaInfo() {

@@ -56,29 +56,12 @@
         <text class="section-title">景点实拍</text>
         <view class="attimg">
           <image
-            src="https://wuminghui.top:9000/travel/19.jpg"
+            v-for="(img, idx) in attractionImages"
+            :key="idx"
+            :src="img"
             mode="scaleToFill"
           />
-          <image
-            src="https://wuminghui.top:9000/travel/32.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/20.webp"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/18.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/12.jpg"
-            mode="scaleToFill"
-          />
+          <text v-if="!attractionImages.length" style="color:#999;font-size:14px;">暂无图片</text>
         </view>
       </view>
 
@@ -124,32 +107,55 @@
   const userStore = useUserStore();
   const hotelData = ref({});
   const id = ref(0);
+  const attractionImages = ref([]);
+
   onLoad((options) => {
     id.value = options.id;
-    console.log(id.value);
-    
   })
 
   // 根据id获取数据
   const getAttrictionDetail = () => {
     uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById',
+      url: `https://island.zhangshuiyi.com/island/front/product/attractions/${id.value}`,
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Access-Token': userStore.token || ''
       },
-      data: {
-        id: id.value
-      },
       success: (res) => {
-        console.log(res.data);
-        hotelData.value = res.data.result;
-        console.log(hotelData.value);
-        
+        hotelData.value = res.data;
       }
     })
   }
+
+  // 获取图片
+  const getAttractionImages = () => {
+    uni.request({
+      url: `https://island.zhangshuiyi.com/island/il-attractionsimages/attractions/${id.value}`,
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Access-Token': userStore.token || ''
+      },
+      success: (res) => {
+        if (res.data.code === 200 && Array.isArray(res.data.result)) {
+          attractionImages.value = res.data.result;
+          console.log('景点图片获取成功，数量：', attractionImages.value.length);
+          console.log('图片链接：', attractionImages.value);
+        } else {
+          attractionImages.value = [];
+          console.log('景点图片获取失败，code:', res.data.code);
+        }
+      },
+      fail: (err) => {
+        attractionImages.value = [];
+        console.log('景点图片接口请求失败', err);
+      },
+      complete: () => {
+        console.log('请求景点图片接口的ID:', id.value);
+      }
+    });
+  };
 
   // 创建订单
   // 跳转到订单页面并创建订单
@@ -235,6 +241,7 @@ fail: (err) => {
 
   onMounted(() => {
     getAttrictionDetail();
+    getAttractionImages();
   })
 
 </script>
