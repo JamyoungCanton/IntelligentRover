@@ -195,7 +195,7 @@
     <view class="ai-float-btn animate-pulse" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag"
       @touchend="endDrag" :style="{ left: dragX + 'px', top: dragY + 'px' }">
       <view class="ai-btn">
-        <img src="https://wuminghui.top:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
+        <img src="@/static/chat/AI导游 (无字版).png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>

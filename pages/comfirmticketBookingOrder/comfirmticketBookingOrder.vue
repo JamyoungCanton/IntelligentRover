@@ -132,6 +132,7 @@ const contactPhone = ref('');
 const remark = ref('');
 const selectedPayment = ref('wechat');
 const orderSn = ref('');
+const sailDate = ref('');
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -158,6 +159,7 @@ onLoad((options) => {
   if (options.price) selectedCabinPrice.value = parseFloat(options.price) || 0;
   if (options.cabinName) selectedCabinName.value = decodeURIComponent(options.cabinName);
   if (options.scheduleTime) selectedScheduleTime.value = decodeURIComponent(options.scheduleTime);
+  if (options.sailDate) sailDate.value = decodeURIComponent(options.sailDate);
 
   // 如果参数里有 cabinName 和 scheduleTime，说明是从 ticketDetails 跳转过来的，直接用参数，不要再覆盖
   if (options.cabinName && options.scheduleTime) {
@@ -285,7 +287,7 @@ const handleConfirmPayment = () => {
     items: [
       {
         bookInfo: {
-          date: selectedScheduleTime.value,
+          date: sailDate.value,
           fullname: contactName.value,
           idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
           idCardType: 'ID_CARD',
@@ -296,7 +298,9 @@ const handleConfirmPayment = () => {
         quantity: 1,
         price: selectedCabinPrice.value
       }
-    ]
+    ],
+    travelStartDate: sailDate.value,
+    travelEndDate: sailDate.value
   };
 
   console.log('提交订单数据：', orderData);

@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <image class="logo" src="https://wuminghui.top:9000/travel/logo.png" mode="aspectFit" />
+      <image class="logo" src="/static/chat/AI导游 (无字版).png" mode="aspectFit" />
       <text class="title">海岛智游侠</text>
     </view>
 
@@ -63,8 +63,10 @@
       <!-- 新增微信一键登录按钮 -->
       <view class="wechat-login-btn-wrap">
         <button class="wechat-login-btn" open-type="getUserInfo" @tap="handleWechatLogin">
-          <image src="https://wuminghui.top:9000/travel/wechat-icon.png" style="width:32rpx;height:32rpx;margin-right:12rpx;vertical-align:middle;" />
-          微信一键登录
+          <view class="wechat-btn-content">
+            <!-- <image src="https://wuminghui.top:9000/travel/wechat-icon.png" class="wechat-icon" /> -->
+            <text>微信一键登录</text>
+          </view>
         </button>
       </view>
 
@@ -433,6 +435,7 @@ button {
   justify-content: center;
   margin-top: 40rpx;
 }
+
 .wechat-login-btn {
   background-color: #07c160;
   color: #fff;
@@ -441,9 +444,26 @@ button {
   align-items: center;
   justify-content: center;
   border-radius: 50rpx;
-  width: 80%;
   height: 90rpx;
   margin: 0 auto;
   border: none;
+  box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.08);
+  padding: 0 48rpx;
+  min-width: 240rpx;
+  /* 让按钮宽度自适应内容 */
+  width: auto;
+}
+
+.wechat-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wechat-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 16rpx;
+  vertical-align: middle;
 }
 </style>

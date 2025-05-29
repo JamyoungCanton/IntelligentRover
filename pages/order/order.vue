@@ -509,11 +509,55 @@ const deleteOrder = (order) => {
 
 // 立即支付跳转支付页面
 const payOrder = (order) => {
-  console.log("orderSn为:", order.orderSn)
-  uni.navigateTo({
-    url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}`
-  })
-}
+	console.log('点击立即支付，order:', order);
+	uni.showLoading({ title: '刷新订单中...' });
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/' + order.orderSn,
+		method: 'GET',
+		header: { 'X-Access-Token': userStore.token },
+		success: (res) => {
+			console.log('订单详情返回:', res.data);
+			if (res.data.success && res.data.result.payStatus === 'UNPAID') {
+				const result = res.data.result;
+				const now = new Date();
+				const startDate = new Date(result.travelStartDate);
+				const endDate = new Date(result.travelEndDate);
+				console.log('接口返回travelStartDate:', result.travelStartDate, 'travelEndDate:', result.travelEndDate);
+				console.log('startDate:', startDate, 'endDate:', endDate, 'now:', now);
+				console.log('startDate.getTime():', startDate.getTime(), 'endDate.getTime():', endDate.getTime());
+				console.log('isNaN(startDate.getTime()):', isNaN(startDate.getTime()));
+				console.log('isNaN(endDate.getTime()):', isNaN(endDate.getTime()));
+				console.log('startDate <= now:', startDate <= now);
+				console.log('endDate < startDate:', endDate < startDate);
+				if (
+					isNaN(startDate.getTime()) ||
+					isNaN(endDate.getTime()) ||
+					startDate <= now ||
+					endDate < startDate
+				) {
+					uni.hideLoading();
+					console.log('日期校验不通过');
+					uni.showToast({ title: '旅游开始/结束时间无效，无法支付', icon: 'none' });
+					getOrderList();
+					return;
+				}
+				uni.hideLoading();
+				console.log('跳转到支付页:', order.orderSn);
+				uni.navigateTo({ url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}` });
+			} else {
+				uni.hideLoading();
+				console.log('订单状态不允许支付');
+				uni.showToast({ title: '订单状态已变更，请刷新订单列表', icon: 'none' });
+				getOrderList();
+			}
+		},
+		fail: (err) => {
+			uni.hideLoading();
+			console.log('请求失败:', err);
+			uni.showToast({ title: '网络异常，无法获取订单', icon: 'none' });
+		}
+	});
+};
 
 
 // 每次进入页面时调用

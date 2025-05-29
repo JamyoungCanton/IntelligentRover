@@ -57,6 +57,19 @@
         </view>
       </view> -->
 
+      <view class="date-picker">
+        <text>选择开始日期：</text>
+        <picker mode="date" :value="travelStartDate" @change="onStartDateChange">
+          <view class="picker-value">{{ travelStartDate || '请选择' }}</view>
+        </picker>
+      </view>
+      <view class="date-picker">
+        <text>选择结束日期：</text>
+        <picker mode="date" :value="travelEndDate" @change="onEndDateChange">
+          <view class="picker-value">{{ travelEndDate || '请选择' }}</view>
+        </picker>
+      </view>
+
       <view class="total-section">
         <view class="total-container">
           <view class="total-left">
@@ -109,8 +122,13 @@ export default {
         people: 2,
         payment: 'wechat',
         travelStartDate: '',
-        productId: ''
-      }
+        productId: '',
+        travelEndDate: '',
+        travelStartDate: '',
+        travelEndDate: ''
+      },
+      travelStartDate: '',
+      travelEndDate: ''
     };
   },
   onLoad(options) {
@@ -169,6 +187,13 @@ export default {
       }
       const userStore = useUserStore();
       const token = userStore.token;
+      if (!this.travelStartDate || !this.travelEndDate) {
+        uni.showToast({
+          title: '请选择开始和结束日期',
+          icon: 'none'
+        });
+        return;
+      }
       const orderData = {
         contract: {
           contractName: this.formData.name,
@@ -177,19 +202,19 @@ export default {
         items: [
           {
             bookInfo: {
-              date: this.formData.travelStartDate,
+              date: this.travelStartDate,
               fullname: this.formData.name,
               idCardNo: this.formData.idCard,
               idCardType: 'ID_CARD',
-              schedule: this.formData.travelStartDate
+              schedule: this.travelStartDate
             },
             productId: this.formData.productId,
             productType: 'FeaturedRoute',
             quantity: this.formData.people
           }
         ],
-        travelStartDate: this.formData.travelStartDate,
-        travelEndDate: this.formData.travelStartDate
+        travelStartDate: this.travelStartDate,
+        travelEndDate: this.travelEndDate
       };
       uni.showLoading({ title: '正在创建订单...' });
       uni.request({
@@ -204,17 +229,17 @@ export default {
           uni.hideLoading();
           if (res.data && res.data.code === 200 && res.data.result && res.data.result.orderSn) {
             const orderSn = res.data.result.orderSn;
-                  uni.showToast({
+            uni.showToast({
               title: '订单创建成功',
-                    icon: 'success',
-                    duration: 1500
-                  });
-                  setTimeout(() => {
-                    uni.navigateTo({
-                      url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
-                    });
-                  }, 1500);
-                } else {
+              icon: 'success',
+              duration: 1500
+            });
+            setTimeout(() => {
+              uni.navigateTo({
+                url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
+              });
+            }, 1500);
+          } else {
             uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
           }
         },
@@ -226,6 +251,12 @@ export default {
     },
     onTravelStartDateChange(e) {
       this.formData.travelStartDate = e.detail.value;
+    },
+    onStartDateChange(e) {
+      this.travelStartDate = e.detail.value;
+    },
+    onEndDateChange(e) {
+      this.travelEndDate = e.detail.value;
     }
   }
 };
@@ -400,9 +431,12 @@ export default {
   margin-right: 0;
 }
 
+.date-picker {
+  margin: 10px 0;
+}
 .picker-value {
+  display: inline-block;
   margin-left: 10px;
-  color: #1989fa;
-  font-size: 16px;
+  color: #007aff;
 }
 </style>
