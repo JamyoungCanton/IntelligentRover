@@ -268,22 +268,56 @@ const handleWechatLogin = () => {
             if (res.data.success && res.data.result && res.data.result.token) {
               userStore.setToken(res.data.result.token);
               userStore.updateUserInfo(res.data.result);
-              uni.showToast({ title: '微信登录成功', icon: 'success', duration: 1500 });
-              uni.reLaunch({ url: '/pages/index/index' });
+              // 显示登录成功提示，使用加载提示
+              uni.showLoading({
+                title: '登录成功',
+                mask: true
+              });
+              
+              // 延迟关闭加载提示并显示欢迎消息
+              setTimeout(() => {
+                uni.hideLoading();
+                uni.showToast({
+                  title: '欢迎回来！',
+                  icon: 'success',
+                  duration: 2000
+                });
+                
+                // 延迟跳转，让用户能看到欢迎消息
+                setTimeout(() => {
+                  uni.reLaunch({ url: '/pages/index/index' });
+                }, 1000);
+              }, 1000);
             } else {
-              uni.showToast({ title: res.data.message || '微信登录失败', icon: 'none' });
+              uni.showToast({ 
+                title: res.data.message || '微信登录失败', 
+                icon: 'none',
+                duration: 2000
+              });
             }
           },
           fail: () => {
-            uni.showToast({ title: '微信登录失败', icon: 'none' });
+            uni.showToast({ 
+              title: '网络连接失败，请检查网络后重试', 
+              icon: 'none',
+              duration: 2000 
+            });
           }
         });
       } else {
-        uni.showToast({ title: '获取微信code失败', icon: 'none' });
+        uni.showToast({ 
+          title: '获取微信授权失败，请重试', 
+          icon: 'none',
+          duration: 2000 
+        });
       }
     },
     fail: function () {
-      uni.showToast({ title: '微信登录失败', icon: 'none' });
+      uni.showToast({ 
+        title: '微信登录失败，请稍后重试', 
+        icon: 'none',
+        duration: 2000 
+      });
     }
   });
 };
