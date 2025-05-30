@@ -218,6 +218,8 @@ const sendAiRequest = (userInput) => {
               itemStr = itemStr.replace(/^"|"$/g, ''); 
               // 追加处理后的字符串和换行符
               allMessages += itemStr + '\n';
+
+              console.log("未处理替换标签前的 allMessages: ", allMessages);
               
 
               

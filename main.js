@@ -21,14 +21,16 @@ import Tabbar from './pages/Tabbar/Tabbar.vue'
 // import uView from 'uview-ui'
 
 
+
 export function createApp() {
   const app = createSSRApp(App)
   app.use(pinia)
   // app.use(uView)
-  
   // 全局注册Tabbar组件
   app.component('Tabbar', Tabbar)
   
+  // 全局变量
+  app.config.globalProperties.$themeColor = '#4290c3';
 
   
   return {
