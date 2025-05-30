@@ -25,12 +25,24 @@
     </view>
     
     <view class="section-title"><text>航班时刻</text></view>
+    <view class="date-picker">
+      <text>选择乘船日期：</text>
+      <picker mode="date" :value="sailDate" :start="todayStr" @change="onSailDateChange">
+        <view class="picker-value">{{ sailDate || '请选择' }}</view>
+      </picker>
+    </view>
     <view class="schedule-section">
       <view class="schedule-list">
-        <view class="schedule-item">
-          <text class="time">{{ parsedSchedule[0]?.time }}</text>
-          <text :class="['status', parsedSchedule[0]?.status === '余票充足' ? 'available' : 'limited']">
-            {{ parsedSchedule[0]?.status }}
+        <view
+          v-for="(item, idx) in parsedSchedule"
+          :key="idx"
+          class="schedule-item"
+          :class="{ selected: selectedScheduleIndex === idx }"
+          @click="selectSchedule(idx)"
+        >
+          <text class="time">{{ item.time }}</text>
+          <text :class="['status', item.status === '余票充足' ? 'available' : 'limited']">
+            {{ item.status }}
           </text>
         </view>
       </view>
@@ -91,8 +103,13 @@ const fromIslandName = ref(''); // 出发岛屿名称
 const toIslandName = ref(''); // 到达岛屿名称
 const orderSn = ref('');
 const selectedCabinName = ref('');
-const selectedScheduleTime = ref(parsedSchedule.value[0]?.time || '');
-const selectedScheduleIndex = ref(0); // 默认选中第一个
+const selectedScheduleTime = ref('');
+const selectedScheduleIndex = ref(0);
+const sailDate = ref('');
+
+const today = new Date();
+const pad = (n) => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -231,6 +248,11 @@ const createOrder = () => {
     return;
   }
 
+  if (!sailDate.value) {
+    uni.showToast({ title: '请选择乘船日期', icon: 'none' });
+    return;
+  }
+
   const orderData = {
     contract: {
       contractName: userStore.userInfo.realname || '默认联系人',
@@ -239,11 +261,10 @@ const createOrder = () => {
     items: [
       {
         bookInfo: {
-          date: parsedSchedule.value[0]?.time || '',
+          date: sailDate.value,
           fullname: userStore.userInfo.realname || '默认联系人',
           idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
-          idCardType: 'ID_CARD',
-          schedule: parsedSchedule.value[0]?.time || ''
+          idCardType: 'ID_CARD'
         },
         productId: ticketInfo.value.id,
         productType: 'Transportation',
@@ -251,7 +272,9 @@ const createOrder = () => {
         price: selectedCabinPrice.value,
         imageUrl: ticketInfo.value.imageUrl
       }
-    ]
+    ],
+    travelStartDate: sailDate.value,
+    travelEndDate: sailDate.value
   };
 
   console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
@@ -275,7 +298,7 @@ const createOrder = () => {
           duration: 1500
         });
         uni.navigateTo({
-          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&cabinName=${encodeURIComponent(cabinTypes.value[selectedCabinIndex.value]?.name || '')}&scheduleTime=${encodeURIComponent(parsedSchedule.value[0]?.time || '')}`
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&cabinName=${encodeURIComponent(cabinTypes.value[selectedCabinIndex.value]?.name || '')}&scheduleTime=${encodeURIComponent(selectedScheduleTime.value)}&sailDate=${encodeURIComponent(sailDate.value)}`
         });
       } else {
         uni.showToast({
@@ -294,8 +317,21 @@ const createOrder = () => {
   });
 };
 
+const onSailDateChange = (e) => {
+  sailDate.value = e.detail.value;
+};
+
+const selectSchedule = (idx) => {
+  selectedScheduleIndex.value = idx;
+  selectedScheduleTime.value = parsedSchedule.value[idx].time;
+};
+
 onMounted(() => {
   fetchOrderDetails();
+  if (parsedSchedule.value.length > 0) {
+    selectedScheduleIndex.value = 0;
+    selectedScheduleTime.value = parsedSchedule.value[0].time;
+  }
 });
 </script>
 
@@ -505,5 +541,39 @@ onMounted(() => {
 .schedule-item.selected {
   border: 2rpx solid #1890ff;
   background: #e6f7ff;
+}
+
+.date-picker {
+  display: flex;
+  align-items: center;
+  margin:16px 0 0 0;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: #f8faff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.date-picker text {
+  font-size: 15px;
+  color: #2560a7;
+  min-width: 90px;
+  font-weight: 500;
+  margin-left: 12px;
+}
+.picker-value {
+  display: inline-block;
+  margin-right: 12px;
+  color: #007aff;
+  font-size: 15px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 16px;
+  border: 1px solid #e0e0e0;
+  min-width: 90px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.picker-value:active,
+.picker-value:focus {
+  border-color: #007aff;
 }
 </style>

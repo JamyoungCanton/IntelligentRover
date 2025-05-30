@@ -73,6 +73,12 @@
 							</label>
 						</radio-group>
 					</view>
+
+					<view v-if="orderInfo">
+						<view class="order-status-tip">
+							当前订单状态：<text>{{ payStatusText }}</text>
+						</view>
+					</view>
 				</view>
 
 				<!-- <view v-if="orderInfo && (!orderInfo.items || orderInfo.items.length === 0)" class="empty">
@@ -85,13 +91,13 @@
 			<view class="total">
 				总计：<text class="amount">¥{{ totalAmount }}</text>
 			</view>
-			<button class="pay-btn" @click="handlePayment">立即支付</button>
+			<button class="pay-btn" :disabled="!canPay" @click="handlePayment">立即支付</button>
 		</view>
 	</view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
@@ -106,20 +112,26 @@ const isLoading = ref(true)
 const error = ref(null)
 const paymentMethod = ref('wechat')
 
+const canPay = computed(() => orderInfo.value && orderInfo.value.payStatus === 'UNPAID');
+const payStatusText = computed(() => {
+	if (!orderInfo.value) return '';
+	switch(orderInfo.value.payStatus) {
+		case 'UNPAID': return '待支付';
+		case 'PAID': return '已支付';
+		case 'CANCEL': return '已取消';
+		default: return orderInfo.value.payStatus || '未知';
+	}
+});
+
 const handlePaymentChange = (e) => {
 	paymentMethod.value = e.detail.value
 }
 
 onLoad((options) => {
-	orderSn.value = options.orderSn
-
-	console.log("传入的订单orderSn为:", orderSn.value)
+	orderSn.value = options.orderSn;
 	getOrderDetailById(orderSn.value);
-	uni.setNavigationBarTitle({
-		title: '支付订单'
-	})
-})
-
+	uni.setNavigationBarTitle({ title: '支付订单' });
+});
 
 const getOrderDetailById = (orderSn) => {
 	// 显示加载提示
@@ -142,13 +154,42 @@ const getOrderDetailById = (orderSn) => {
 			console.log('订单详情响应数据:', res.data);
 
 			if (res.data.success) {
-				// 确保数据结构与模板匹配
 				const result = res.data.result || {};
-				orderInfo.value = {
-					items: result.items || [], // 确保有items数组
-					...result
-				};
+				orderInfo.value = { items: result.items || [], ...result };
 				totalAmount.value = result.amount || 0;
+				if (result.payStatus !== 'UNPAID') {
+					uni.showModal({
+						title: '提示',
+						content: '订单已支付/已取消/已失效，无法支付',
+						showCancel: false,
+						success: () => { uni.switchTab({ url: '/pages/order/order' }); }
+					});
+				} else {
+					const now = new Date();
+					const startDate = new Date(result.travelStartDate);
+					const endDate = new Date(result.travelEndDate);
+
+					// 只比较日期，不比较具体时分秒
+					const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+					const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+					const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+					if (
+						isNaN(startDate.getTime()) ||
+						isNaN(endDate.getTime()) ||
+						startDateOnly < nowDate ||
+						endDateOnly < startDateOnly
+					) {
+						uni.hideLoading && uni.hideLoading();
+						uni.showModal({
+							title: '提示',
+							content: '旅游开始/结束时间无效，无法支付',
+							showCancel: false,
+							success: () => { uni.switchTab({ url: '/pages/order/order' }); }
+						});
+						return;
+					}
+				}
 			} else {
 				error.value = res.data.message || '获取订单失败';
 				uni.showToast({
@@ -172,7 +213,6 @@ const getOrderDetailById = (orderSn) => {
 	});
 }
 
-
 const goBack = () => {
 	uni.switchTab({
 		url: '/pages/index/index'
@@ -180,37 +220,17 @@ const goBack = () => {
 }
 
 const handlePayment = () => {
-	// 显示加载提示
-	// uni.showLoading({
-	// 	title: '支付处理中...'
-	// });
-
-	// 发起支付请求
+	uni.showLoading({ title: '支付处理中...' });
 	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+		url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn.value}`,
 		method: 'POST',
-		data: {
-			orderSn: orderSn.value,
-			payType: paymentMethod.value // 添加支付方式参数
-		},
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token
-		},
+		data: { payType: paymentMethod.value },
+		header: { 'X-Access-Token': userStore.token },
 		success: (res) => {
 			console.log('支付请求响应结果:', res.data);
-
-			// 根据响应处理支付结果
 			if (res.data.success) {
-				uni.showToast({
-					title: '支付成功',
-					icon: 'success'
-				});
-				setTimeout(() => {
-					uni.switchTab({
-						url: '/pages/order/order'
-					});
-				}, 1500);
+				uni.showToast({ title: '支付成功', icon: 'success' });
+				setTimeout(() => { uni.switchTab({ url: '/pages/order/order' }); }, 1500);
 			} else {
 				uni.showToast({
 					title: res.data.message || '支付失败',
@@ -220,16 +240,29 @@ const handlePayment = () => {
 		},
 		fail: (err) => {
 			console.error('支付请求失败:', err);
-			uni.showToast({
-				title: '支付请求失败',
-				icon: 'none'
-			});
+			uni.showToast({ title: '支付请求失败', icon: 'none' });
 		},
-		complete: () => {
-			uni.hideLoading();
-		}
+		complete: () => uni.hideLoading()
 	});
-}
+};
+
+const payOrder = (order) => {
+	uni.showLoading({ title: '刷新订单中...' });
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/' + order.orderSn,
+		method: 'GET',
+		header: { 'X-Access-Token': userStore.token },
+		success: (res) => {
+			if (res.data.success && res.data.result.payStatus === 'UNPAID') {
+				uni.navigateTo({ url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}` });
+			} else {
+				uni.showToast({ title: '订单状态已变更，请刷新订单列表', icon: 'none' });
+				getOrderList(); // 刷新订单列表
+			}
+		},
+		complete: () => uni.hideLoading()
+	});
+};
 </script>
 
 <style>
@@ -423,5 +456,11 @@ const handlePayment = () => {
 	border-radius: 40rpx;
 	padding: 0 40rpx;
 	margin-right: 0rpx;
+}
+
+.order-status-tip {
+	margin-bottom: 20rpx;
+	font-size: 28rpx;
+	color: #666;
 }
 </style>

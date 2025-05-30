@@ -6,8 +6,6 @@
     "versionCode" : "100",
     "transformPx" : false,
     "requestDomain" : [ "http://47.106.243.134" ],
-    // "http://47.106.243.134:7181/island/front/ai/chat/chatMessage"
-    /* 5+App特有相关 */
     "app-plus" : {
         "usingComponents" : true,
         "nvueStyleCompiler" : "uni-app",
@@ -18,11 +16,8 @@
             "autoclose" : true,
             "delay" : 0
         },
-        /* 模块配置 */
         "modules" : {},
-        /* 应用发布信息 */
         "distribute" : {
-            /* android打包配置 */
             "android" : {
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
@@ -42,17 +37,13 @@
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
                 ]
             },
-            /* ios打包配置 */
             "ios" : {},
-            /* SDK配置 */
             "sdkConfigs" : {}
         }
     },
-    /* 快应用特有相关 */
     "quickapp" : {},
-    /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "wx200ca5910f255867",
+        "appid" : "wx55a84081b960117b",
         "setting" : {
             "urlCheck" : false
         },
@@ -77,12 +68,11 @@
     "vueVersion" : "3",
     "h5" : {
         "devServer" : {
-            // "disableHostCheck": true,
             "historyApiFallback" : true,
             "port" : 8980,
             "proxy" : {
                 "/island" : {
-                    "target" : "http://island.zhangshuiyi.com/island", //测试环境
+                    "target" : "http://island.zhangshuiyi.com/island",
                     "changeOrigin" : true,
                     "secure" : false,
                     "pathRewrite" : {

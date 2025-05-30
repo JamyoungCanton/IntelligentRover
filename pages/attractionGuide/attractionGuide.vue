@@ -180,6 +180,20 @@ const goAttraction = (id) => {
     url: `/pages/attractionDetail/attractionDetail?id=${id}`
   });
 };
+
+const getAttrictionDetail = () => {
+  uni.request({
+    url: `https://island.zhangshuiyi.com/island/front/product/attractions/${id.value}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    success: (res) => {
+      hotelData.value = res.data;
+    }
+  })
+}
 </script>
 
 <style>

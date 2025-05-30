@@ -195,7 +195,7 @@
     <view class="ai-float-btn animate-pulse" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag"
       @touchend="endDrag" :style="{ left: dragX + 'px', top: dragY + 'px' }">
       <view class="ai-btn">
-        <img src="https://wuminghui.top:9000/travel/logo.png" alt="" style="width: 45px;height: 45px;">
+        <img src="@/static/chat/AI导游 (无字版).png" alt="" style="width: 45px;height: 45px;">
       </view>
       <text class="ai-text">智能导游</text>
     </view>
@@ -242,7 +242,37 @@ const visibleSpots = computed(() => {
 const imageUrls = ref([]);
 const combinedArray = ref([]);
 
+const requestWithFallback = (options) => {
+  uni.request({
+    ...options,
+    header: {
+      ...options.header,
+      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
+    },
+    success: (res) => {
+      if (res.data.success) {
+        options.success && options.success(res);
+      } else if (userStore.token) {
+        // token无效时，降级为不带token再请求一次
+        uni.request({
+          ...options,
+          header: { ...options.header },
+          success: options.success,
+          fail: options.fail
+        });
+      } else {
+        options.fail && options.fail(res);
+      }
+    },
+    fail: options.fail
+  });
+};
+
 const getSpotsList = (type) => {
+  if (!userStore.token) {
+    spots.value = [];
+    return;
+  }
   if (type === '景点攻略') {
     uni.request({
       url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
@@ -414,6 +444,10 @@ const navigateToSpot = (type, id) => {
 };
 
 const getActivitiesList = () => {
+  if (!userStore.token) {
+    activities.value = [];
+    return;
+  }
   const params = {
     pageNo: 1,
     pageSize: 300

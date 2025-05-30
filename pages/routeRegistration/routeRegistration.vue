@@ -23,6 +23,13 @@
       </view>
 
       <view class="form-item">
+        <text class="label">行程开始时间</text>
+        <picker mode="date" :value="formData.travelStartDate" @change="onTravelStartDateChange">
+          <view class="picker-value">{{ formData.travelStartDate || '请选择出发日期' }}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
         <text class="label">{{ texts.selectTravelers }}</text>
         <view class="counter">
           <button :class="['counter-btn', 'minus', { 'disabled': formData.people === 1 }]" @click="decreasePeople"
@@ -49,6 +56,19 @@
           </view>
         </view>
       </view> -->
+
+      <view class="date-picker">
+        <text>选择开始日期：</text>
+        <picker mode="date" :value="travelStartDate" @change="onStartDateChange">
+          <view class="picker-value">{{ travelStartDate || '请选择' }}</view>
+        </picker>
+      </view>
+      <view class="date-picker">
+        <text>选择结束日期：</text>
+        <picker mode="date" :value="travelEndDate" @change="onEndDateChange">
+          <view class="picker-value">{{ travelEndDate || '请选择' }}</view>
+        </picker>
+      </view>
 
       <view class="total-section">
         <view class="total-container">
@@ -100,12 +120,23 @@ export default {
         phone: '',
         idCard: '',
         people: 2,
-        payment: 'wechat'
-      }
+        payment: 'wechat',
+        travelStartDate: '',
+        productId: '',
+        travelEndDate: '',
+        travelStartDate: '',
+        travelEndDate: ''
+      },
+      travelStartDate: '',
+      travelEndDate: ''
     };
   },
-  onLoad() {
+  onLoad(options) {
     this.getSafeAreaInfo();
+    if (options.productId) {
+      this.formData.productId = options.productId;
+      console.log('报名页收到的productId:', this.formData.productId);
+    }
   },
   computed: {
     totalAmount() {
@@ -154,10 +185,15 @@ export default {
         });
         return;
       }
-
       const userStore = useUserStore();
       const token = userStore.token;
-      // 创建订单
+      if (!this.travelStartDate || !this.travelEndDate) {
+        uni.showToast({
+          title: '请选择开始和结束日期',
+          icon: 'none'
+        });
+        return;
+      }
       const orderData = {
         contract: {
           contractName: this.formData.name,
@@ -166,17 +202,19 @@ export default {
         items: [
           {
             bookInfo: {
-              date: new Date().toISOString().split('T')[0],
+              date: this.travelStartDate,
               fullname: this.formData.name,
               idCardNo: this.formData.idCard,
               idCardType: 'ID_CARD',
-              schedule: new Date().toISOString().split('T')[0]
+              schedule: this.travelStartDate
             },
-            productId: 'ROUTE_001',
-            productType: 'OneDay',
+            productId: this.formData.productId,
+            productType: 'FeaturedRoute',
             quantity: this.formData.people
           }
-        ]
+        ],
+        travelStartDate: this.travelStartDate,
+        travelEndDate: this.travelEndDate
       };
       uni.showLoading({ title: '正在创建订单...' });
       uni.request({
@@ -188,49 +226,37 @@ export default {
           'X-Access-Token': token
         },
         success: (res) => {
-          if (res.data && res.data.result && res.data.result.orderSn) {
+          uni.hideLoading();
+          if (res.data && res.data.code === 200 && res.data.result && res.data.result.orderSn) {
             const orderSn = res.data.result.orderSn;
-            // 支付订单
-            uni.request({
-              url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-              method: 'POST',
-              data: { orderSn },
-              header: {
-                'Content-Type': 'application/json',
-                'X-Access-Token': token
-              },
-              success: (payRes) => {
-                uni.hideLoading();
-                if (payRes.data && payRes.data.success) {
-                  uni.showToast({
-                    title: '报名并支付成功',
-                    icon: 'success',
-                    duration: 1500
-                  });
-                  setTimeout(() => {
-                    uni.navigateTo({
-                      url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
-                    });
-                  }, 1500);
-                } else {
-                  uni.showToast({ title: payRes.data.message || '支付失败', icon: 'none' });
-                }
-              },
-              fail: () => {
-                uni.hideLoading();
-                uni.showToast({ title: '支付失败', icon: 'none' });
-              }
+            uni.showToast({
+              title: '订单创建成功',
+              icon: 'success',
+              duration: 1500
             });
+            setTimeout(() => {
+              uni.navigateTo({
+                url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
+              });
+            }, 1500);
           } else {
-            uni.hideLoading();
             uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
           }
         },
-        fail: () => {
+        fail: (err) => {
           uni.hideLoading();
-          uni.showToast({ title: '订单创建失败', icon: 'none' });
+          uni.showToast({ title: '订单创建失败，请稍后重试', icon: 'none' });
         }
       });
+    },
+    onTravelStartDateChange(e) {
+      this.formData.travelStartDate = e.detail.value;
+    },
+    onStartDateChange(e) {
+      this.travelStartDate = e.detail.value;
+    },
+    onEndDateChange(e) {
+      this.travelEndDate = e.detail.value;
     }
   }
 };
@@ -403,5 +429,14 @@ export default {
   align-items: center;
   justify-content: center;
   margin-right: 0;
+}
+
+.date-picker {
+  margin: 10px 0;
+}
+.picker-value {
+  display: inline-block;
+  margin-left: 10px;
+  color: #007aff;
 }
 </style>

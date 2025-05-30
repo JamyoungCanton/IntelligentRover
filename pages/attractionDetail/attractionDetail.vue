@@ -56,29 +56,12 @@
         <text class="section-title">景点实拍</text>
         <view class="attimg">
           <image
-            src="https://wuminghui.top:9000/travel/19.jpg"
+            v-for="(img, idx) in attractionImages"
+            :key="idx"
+            :src="img"
             mode="scaleToFill"
           />
-          <image
-            src="https://wuminghui.top:9000/travel/32.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="http://island.zhangshuiyi.com/static_file/attractions/4灯塔.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/20.webp"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/18.jpg"
-            mode="scaleToFill"
-          />
-          <image
-            src="https://wuminghui.top:9000/travel/12.jpg"
-            mode="scaleToFill"
-          />
+          <text v-if="!attractionImages.length" style="color:#999;font-size:14px;">暂无图片</text>
         </view>
       </view>
 
@@ -112,6 +95,12 @@
       </view>
     </view>
     </view>
+    <view class="date-picker">
+      <text>选择游玩日期：</text>
+      <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
+        <view class="picker-value">{{ playDate || '请选择' }}</view>
+      </picker>
+    </view>
     <button @click="creaOrder(hotelData)" class="book-now">立即预订</button>
   </view>
 </template>
@@ -124,36 +113,71 @@
   const userStore = useUserStore();
   const hotelData = ref({});
   const id = ref(0);
+  const attractionImages = ref([]);
+  const playDate = ref('');
+
+  const today = new Date();
+  const pad = (n) => n < 10 ? '0' + n : n;
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
   onLoad((options) => {
     id.value = options.id;
-    console.log(id.value);
-    
   })
 
   // 根据id获取数据
   const getAttrictionDetail = () => {
     uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById',
+      url: `https://island.zhangshuiyi.com/island/front/product/attractions/${id.value}`,
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Access-Token': userStore.token || ''
       },
-      data: {
-        id: id.value
-      },
       success: (res) => {
-        console.log(res.data);
-        hotelData.value = res.data.result;
-        console.log(hotelData.value);
-        
+        hotelData.value = res.data;
       }
     })
   }
 
+  // 获取图片
+  const getAttractionImages = () => {
+    uni.request({
+      url: `https://island.zhangshuiyi.com/island/il-attractionsimages/attractions/${id.value}`,
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Access-Token': userStore.token || ''
+      },
+      success: (res) => {
+        if (res.data.code === 200 && Array.isArray(res.data.result)) {
+          attractionImages.value = res.data.result;
+          console.log('景点图片获取成功，数量：', attractionImages.value.length);
+          console.log('图片链接：', attractionImages.value);
+        } else {
+          attractionImages.value = [];
+          console.log('景点图片获取失败，code:', res.data.code);
+        }
+      },
+      fail: (err) => {
+        attractionImages.value = [];
+        console.log('景点图片接口请求失败', err);
+      },
+      complete: () => {
+        console.log('请求景点图片接口的ID:', id.value);
+      }
+    });
+  };
+
   // 创建订单
   // 跳转到订单页面并创建订单
 const creaOrder = (hotel) => {
+  if (!playDate.value) {
+    uni.showToast({
+      title: '请选择游玩日期',
+      icon: 'none'
+    });
+    return;
+  }
 
   if (hotel.ticketprice === 0) {
     // 使用模态对话框替代toast
@@ -171,28 +195,29 @@ const creaOrder = (hotel) => {
     return; // 直接返回，不执行后续逻辑
   }
 
-const orderData = ref({
-contract: {
-  contractName: userStore.userInfo.realname || '',
-  contractPhone: userStore.userInfo.phone || ''
-},
-items: [
-  {
-    bookInfo: {
-      date: new Date().toISOString().split('T')[0], // 添加默认日期
-      fullname: userStore.userInfo.realname || '',
-      idCardNo: userStore.userInfo.idCardNo || '',
-      idCardType: 'ID_CARD',
-      schedule: new Date().toISOString().split('T')[0] // 添加默认日期
-      
-    },
-    productId: hotel.id, // 初始为空字符串
-    productType: "Attractions",
-    imageUrl: hotel.imageUrl,
-    quantity: 1
-  }
-]
-})
+const orderData = {
+  contract: {
+    contractName: userStore.userInfo.realname || '',
+    contractPhone: userStore.userInfo.phone || ''
+  },
+  items: [
+    {
+      bookInfo: {
+        date: playDate.value,
+        fullname: userStore.userInfo.realname || '',
+        idCardNo: userStore.userInfo.idCardNo || '',
+        idCardType: 'ID_CARD',
+        schedule: playDate.value
+      },
+      productId: hotel.id,
+      productType: "Attractions",
+      imageUrl: hotel.imageUrl,
+      quantity: 1
+    }
+  ],
+  travelStartDate: playDate.value,
+  travelEndDate: playDate.value
+};
 
 
 uni.request({
@@ -202,7 +227,7 @@ header: {
   'Content-Type': 'application/json',
   'X-Access-Token': userStore.token
 },
-data: orderData.value,
+data: orderData,
 success: (res) => {
   console.log("订单创建结果："+res.data);
   
@@ -235,7 +260,12 @@ fail: (err) => {
 
   onMounted(() => {
     getAttrictionDetail();
+    getAttractionImages();
   })
+
+  const onPlayDateChange = (e) => {
+    playDate.value = e.detail.value;
+  };
 
 </script>
 
@@ -431,5 +461,38 @@ fail: (err) => {
   padding: 5px 4px;
   border-radius: 4px;
   width: 100%;
+}
+.date-picker {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 0 0;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: #f8faff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.date-picker text {
+  font-size: 15px;
+  color: #2560a7;
+  min-width: 90px;
+  font-weight: 500;
+  margin-left: 12px;
+}
+.picker-value {
+  display: inline-block;
+  margin-left: 12px;
+  color: #007aff;
+  font-size: 15px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 16px;
+  border: 1px solid #e0e0e0;
+  min-width: 90px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.picker-value:active,
+.picker-value:focus {
+  border-color: #007aff;
 }
 </style>
