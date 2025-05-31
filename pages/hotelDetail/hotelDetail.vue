@@ -135,6 +135,12 @@
       </view>
     </view>
     
+    <view class="date-picker-section">
+      <text>选择入住日期：</text>
+      <picker mode="date" :value="checkinDate" :start="todayStr" @change="onCheckinDateChange">
+        <view class="picker-value">{{ checkinDate || '请选择' }}</view>
+      </picker>
+    </view>
     <button @click="creaOrder(hotelData)" class="book-now">立即预订</button>
   </view>
 </template>
@@ -178,67 +184,78 @@ const getDetailList = () => {
 
 // 跳转到订单页面并创建订单
 const creaOrder = (hotel) => {
-
-  const orderData = ref({
-  contract: {
-    contractName: userStore.userInfo.realname || '',
-    contractPhone: userStore.userInfo.phone || ''
-  },
-  items: [
-    {
-      bookInfo: {
-        date: new Date().toISOString().split('T')[0], // 添加默认日期
-        fullname: userStore.userInfo.realname || '',
-        idCardNo: userStore.userInfo.idCardNo || '',
-        idCardType: 'ID_CARD',
-        schedule: new Date().toISOString().split('T')[0] // 添加默认日期
-      },
-      productId: hotel.id, // 初始为空字符串
-      productType: "Accommodations",
-      quantity: 1
-    }
-  ]
-})
-
+  if (!checkinDate.value) {
+    uni.showToast({ title: '请选择入住日期', icon: 'none' });
+    return;
+  }
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo.realname || '',
+      contractPhone: userStore.userInfo.phone || ''
+    },
+    items: [
+      {
+        bookInfo: {
+          date: checkinDate.value, // 只传年月日
+          fullname: userStore.userInfo.realname || '',
+          idCardNo: userStore.userInfo.idCardNo || '',
+          idCardType: 'ID_CARD',
+          schedule: '' // 不传时间段
+        },
+        productId: hotel.id,
+        productType: "Accommodations",
+        quantity: 1
+      }
+    ],
+    travelStartDate: checkinDate.value,
+    travelEndDate: checkinDate.value
+  };
 
   uni.request({
-  url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-  method: 'POST',
-  header: {
-    'Content-Type': 'application/json',
-    'X-Access-Token': userStore.token
-  },
-  data: orderData.value,
-  success: (res) => {
-    console.log(res.data);
-    
-    if (res.data.code === 200) {
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: orderData,
+    success: (res) => {
+      console.log(res.data);
+      
+      if (res.data.code === 200) {
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        const orderSn = res.data.result.orderSn; // 获取订单号
+        // 可以跳转到订单详情页或其他页面
+        uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+      } else {
+        uni.showToast({
+          title: res.data.message || '订单创建失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('创建订单失败', err);
       uni.showToast({
-        title: '订单创建成功',
-        icon: 'success',
-        duration: 1500
-      });
-      const orderSn = res.data.result.orderSn; // 获取订单号
-      // 可以跳转到订单详情页或其他页面
-      uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
-    } else {
-      uni.showToast({
-        title: res.data.message || '订单创建失败',
+        title: '创建订单失败，请稍后重试',
         icon: 'none'
       });
     }
-  },
-  fail: (err) => {
-    console.error('创建订单失败', err);
-    uni.showToast({
-      title: '创建订单失败，请稍后重试',
-      icon: 'none'
-    });
-  }
-});
+  });
+};
 
-}
+const checkinDate = ref('');
+const today = new Date();
+const pad = n => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
+const onCheckinDateChange = (e) => {
+  checkinDate.value = e.detail.value;
+};
 
 </script>
 
@@ -492,5 +509,21 @@ const creaOrder = (hotel) => {
   padding: 5px 4px;
   border-radius: 4px;
   width: 100%;
+}
+
+.date-picker-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.date-picker-section text {
+  margin-right: 8px;
+}
+
+.picker-value {
+  padding: 4px 8px;
+  border: 1px solid #dbeafe;
+  border-radius: 4px;
 }
 </style>

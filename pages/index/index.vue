@@ -242,132 +242,114 @@ const visibleSpots = computed(() => {
 const imageUrls = ref([]);
 const combinedArray = ref([]);
 
-const requestWithFallback = (options) => {
-  uni.request({
-    ...options,
-    header: {
-      ...options.header,
-      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
-    },
-    success: (res) => {
-      if (res.data.success) {
-        options.success && options.success(res);
-      } else if (userStore.token) {
-        // token无效时，降级为不带token再请求一次
-        uni.request({
-          ...options,
-          header: { ...options.header },
-          success: options.success,
-          fail: options.fail
-        });
-      } else {
-        options.fail && options.fail(res);
-      }
-    },
-    fail: options.fail
-  });
-};
-
 const getSpotsList = (type) => {
-  if (!userStore.token) {
-    spots.value = [];
-    return;
+  console.log('开始请求类型:', type);
+  
+  let url = '';
+  switch (type) {
+    case '景点攻略':
+      url = 'https://island.zhangshuiyi.com/island/product/ilAttractions/list';
+      break;
+    case '酒店住宿':
+      url = 'https://island.zhangshuiyi.com/island/product/ilAccommodations/list';
+      break;
+    case '美食推荐':
+      url = 'https://island.zhangshuiyi.com/island/product/ilDining/list';
+      break;
+    default:
+      console.error('未知的类型:', type);
+      return;
   }
-  if (type === '景点攻略') {
+
+  const params = {
+    pageNo: 1,
+    pageSize: 50
+  };
+  
+  console.log('请求参数:', params);
+  
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  };
+  if (userStore.token) {
+    headers['X-Access-Token'] = userStore.token;
+  }
+  
     uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
+    url: url,
       method: 'GET',
-      header: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
-      },
+    data: params,
+    header: headers,
       success: (res) => {
-        if (res.data.success) {
-          spots.value = res.data.result.records.map(item => ({
+      console.log(`${type}完整响应:`, {
+        statusCode: res.statusCode,
+        header: res.header,
+        data: res.data
+      });
+      
+      if (res.statusCode === 200 && res.data.success) {
+        // 添加空值检查
+        const records = res.data.result?.records || [];
+        console.log(`${type}数据解析前:`, records);
+        
+        spots.value = records.map(item => {
+          let price = '';
+          let comments = '';
+          
+          switch (type) {
+            case '景点攻略':
+              price = item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`;
+              comments = `${item.commentCount || 0}条评论`;
+              break;
+            case '酒店住宿':
+              price = item.price === 0 ? '免费' : `¥${item.price}/晚`;
+              comments = `${item.commentCount || 0}条评论`;
+              break;
+            case '美食推荐':
+              // 使用平均价格，如果没有则使用预定价格
+              const priceValue = item.priceaverage || item.price || 0;
+              price = priceValue === 0 ? '免费' : `¥${priceValue}/人`;
+              // 使用月销售量作为评论数
+              comments = `${item.monthSale || 0}条评论`;
+              break;
+          }
+          
+          const spot = {
             id: item.id || 0,
             name: item.name || '未知名称',
             image: item.imageUrl || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png',
             rating: (item.rating || 0) + '分',
-            comments: (item.commentCount || 0) + '条',
-            price: item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`
-          }));
-        }
-      },
-      fail: () => {
-        console.error('景点攻略数据请求失败');
-        uni.showToast({
-          title: '景点攻略数据加载失败',
-          icon: 'none'
+            comments: comments,
+            price: price,
+            // 保存原始数据，以备详情页使用
+            rawData: item
+          };
+          console.log('处理后的数据:', spot);
+          return spot;
         });
-      }
-    });
-  } else if (type === '酒店住宿') {
-    uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/list',
-      method: 'GET',
-      data: {
-        pageNo: 1,
-        pageSize: 50
-      },
-      header: {
-        'Content-Type': 'application/json',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
-      },
-      success: (res) => {
-        console.log("酒店住宿响应数据", res)
-        if (res.data.success) {
-          spots.value = res.data.result.records.map(item => ({
-            id: item.id || 0,
-            name: item.name || '未知名称',
-            image: item.imageUrl || '/static/index/retouch_2025032816113042(1).png',
-            rating: (item.rating || 0) + '分',
-            comments: (item.commentCount || 0) + '条',
-            price: item.price === 0 ? '免费' : `¥${item.price}/晚`
-          }));
+        console.log(`最终${type}列表数据:`, spots.value);
+      } else {
+        console.error(`${type}数据请求失败:`, {
+          statusCode: res.statusCode,
+          message: res.data.message,
+          data: res.data
+        });
+        uni.showToast({
+          title: res.data.message || `${type}数据加载失败`,
+          icon: 'none',
+          duration: 2000
+        });
         }
       },
       fail: (err) => {
-        console.error('酒店住宿请求失败', err);
+      console.error(`${type}请求失败:`, err);
         uni.showToast({
-          title: '加载失败，请稍后重试',
-          icon: 'none'
+        title: '网络请求失败，请稍后重试',
+        icon: 'none',
+        duration: 2000
         });
       }
     });
-  } else if (type === '美食推荐') {
-    uni.request({
-      url: 'https://island.zhangshuiyi.com/island/product/ilDining/list',
-      method: 'GET',
-      data: {
-        pageNo: 1,
-        pageSize: 50
-      },
-      header: {
-        'Content-Type': 'application/json',
-        ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
-      },
-      success: (res) => {
-        console.log("美食推荐响应数据", res)
-        if (res.data.success) {
-          spots.value = res.data.result.records.map(item => ({
-            id: item.id || 0,
-            name: item.name || '未知名称',
-            image: item.imageUrl || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png',
-            rating: (item.rating || 0) + '分',
-            comments: (item.commentCount || 0) + '条',
-            price: item.price === 0 ? '免费' : `¥${item.price}/人`
-          }));
-        }
-      },
-      fail: (err) => {
-        console.error('美食推荐请求失败', err);
-        uni.showToast({
-          title: '加载失败，请稍后重试',
-          icon: 'none'
-        });
-      }
-    });
-  }
 };
 
 const switchTab = (tab) => {
@@ -444,44 +426,70 @@ const navigateToSpot = (type, id) => {
 };
 
 const getActivitiesList = () => {
-  if (!userStore.token) {
-    activities.value = [];
-    return;
-  }
+  console.log('开始请求活动列表数据...');
+
   const params = {
     pageNo: 1,
     pageSize: 300
   };
 
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  };
+  if (userStore.token) {
+    headers['X-Access-Token'] = userStore.token;
+  }
+
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/product/ilActivities/list',
     method: 'GET',
     data: params,
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      ...(userStore.token ? { 'X-Access-Token': userStore.token } : {})
-    },
+    header: headers,
     success: (res) => {
-      if (res.data.success) {
-        activities.value = res.data.result.records.map(activity => {
+      console.log('活动列表完整响应:', {
+        statusCode: res.statusCode,
+        header: res.header,
+        data: res.data
+      });
+      
+      if (res.statusCode === 200 && res.data.success) {
+        // 添加空值检查
+        const records = res.data.result?.records || [];
+        activities.value = records.map(activity => {
           const priceNum = Number(activity.price) || 0;
-          const originalPrice = (priceNum * 1.2).toFixed(2); // 原价为现价*1.2
+          const originalPrice = (priceNum * 1.2).toFixed(2);
           return {
-            id: activity.id,
-            name: activity.type,
+            id: activity.id || 0,
+            name: activity.title || activity.type || '未知活动',
             image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
-            rating: '4.7分',
+            rating: (activity.rating || 0) + '分',
             comments: '1205条评论',
             priceNum,
-            discountPrice: priceNum.toFixed(2), // 优惠价就是现价
-            originalPrice: originalPrice,       // 原价为现价*1.2
+            discountPrice: priceNum.toFixed(2),
+            originalPrice: originalPrice,
             price: '¥' + priceNum + '/人起'
           };
         });
+      } else {
+        console.error('活动列表数据请求失败:', {
+          statusCode: res.statusCode,
+          message: res.data.message,
+          data: res.data
+        });
+        uni.showToast({
+          title: res.data.message || '活动列表加载失败',
+          icon: 'none',
+          duration: 2000
+        });
       }
     },
-    fail: () => {
-      console.error('网络请求失败');
+    fail: (err) => {
+      console.error('活动列表请求失败:', err);
+      uni.showToast({
+        title: '网络请求失败，请稍后重试',
+        icon: 'none',
+        duration: 2000
+      });
     }
   });
 };

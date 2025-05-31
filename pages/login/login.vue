@@ -77,6 +77,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useUserStore } from '/store/modules/user';
+import { onShow } from '@dcloudio/uni-app';
 const userStore = useUserStore();
 
 // 时间戳
@@ -101,6 +102,7 @@ const passwordVisible = ref(false);
 onMounted(() => {
   handleCode();
 });
+
 
 // 获取验证码
 const handleCode = async () => {

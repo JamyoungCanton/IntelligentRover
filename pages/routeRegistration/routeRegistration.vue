@@ -229,17 +229,17 @@ export default {
           uni.hideLoading();
           if (res.data && res.data.code === 200 && res.data.result && res.data.result.orderSn) {
             const orderSn = res.data.result.orderSn;
-            uni.showToast({
+                  uni.showToast({
               title: '订单创建成功',
-              icon: 'success',
-              duration: 1500
-            });
-            setTimeout(() => {
-              uni.navigateTo({
-                url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
-              });
-            }, 1500);
-          } else {
+                    icon: 'success',
+                    duration: 1500
+                  });
+                  setTimeout(() => {
+                    uni.navigateTo({
+                      url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
+                    });
+                  }, 1500);
+                } else {
             uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
           }
         },

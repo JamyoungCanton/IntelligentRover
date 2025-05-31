@@ -25,24 +25,6 @@
       </view>
     </view>
 
-    <!-- 日期选择区域 -->
-    <view class="section-container date-selection">
-      <view class="section-title">出行日期选择</view>
-      <view class="date-grid">
-        <view
-          class="date-item"
-          v-for="(item, index) in availableDates"
-          :key="index"
-          :class="{ 'date-selected': selectedDateIndex === index }"
-          @click="selectDate(index)"
-        >
-          <text class="date-day">{{ item.day }}</text>
-          <text class="date-week">{{ item.weekday }}</text>
-          <text class="date-price">{{ item.price }}</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 费用说明部分 -->
     <view class="usage-section">
       <view class="section-title">费用说明</view>
@@ -92,6 +74,20 @@
         <text class="price-desc">起/人</text>
       </view>
       <view class="buy-button" @click="handleBooking">立即预订</view>
+    </view>
+
+    <!-- 选择出行日期部分 -->
+    <view class="section-container">
+      <view class="section-title">选择出行日期</view>
+      <picker mode="date" :value="selectedDate" :start="todayStr" @change="onDateChange">
+        <view class="picker-value">{{ selectedDate || '请选择出行日期' }}</view>
+      </picker>
+    </view>
+
+    <!-- 新增：下单信息输入 -->
+    <view class="order-input-section">
+      <input v-model="realname" class="order-input" placeholder="请输入姓名" />
+      <input v-model="phone" class="order-input" placeholder="请输入手机号码" type="number" />
     </view>
   </view>
 </template>
@@ -157,14 +153,23 @@ const reviews = ref<Review[]>([
     content: '性价比很高，推荐给大家！'
   }
 ]);
-const selectedDateIndex = ref(0);
+const selectedDate = ref('');
+const today = new Date();
+const pad = (n: number) => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 const packageId = ref('');
+const startDate = ref('');
+const realname = ref('');
+const phone = ref('');
 
 // 页面加载时获取数据
 onLoad((options) => {
   if (options.id) {
     packageId.value = options.id;
     fetchProductDetail();
+  }
+  if (options.date) {
+    startDate.value = options.date; // 设置初始日期
   }
 });
 
@@ -210,7 +215,7 @@ const fetchProductDetail = async () => {
 
 // 日期选择
 const selectDate = (index: number) => {
-  selectedDateIndex.value = index;
+  selectedDate.value = availableDates.value[index].date;
 };
 
 // 行程图标
@@ -218,26 +223,44 @@ const getHighlightIcon = (iconPath: string) => iconPath;
 
 // 创建订单
 const createOrder = () => {
-  const selectedDate = availableDates.value[selectedDateIndex.value].date;
+  if (!selectedDate.value) {
+    uni.showToast({ title: '请选择出行日期', icon: 'none' });
+    return;
+  }
+  if (!realname.value.trim()) {
+    uni.showToast({ title: '请输入姓名', icon: 'none' });
+    return;
+  }
+  if (!phone.value.trim()) {
+    uni.showToast({ title: '请输入手机号码', icon: 'none' });
+    return;
+  }
+  const phoneRegex = /^1[3-9]\d{9}$/;
+  if (!phoneRegex.test(phone.value.trim())) {
+    uni.showToast({ title: '请输入有效的手机号', icon: 'none' });
+    return;
+  }
   const orderData = {
     contract: {
-      contractName: userStore.userInfo.realname || '',
-      contractPhone: userStore.userInfo.phone || ''
+      contractName: realname.value,
+      contractPhone: phone.value
     },
     items: [
       {
         bookInfo: {
-          date: selectedDate,
-          fullname: userStore.userInfo.realname || '',
-          idCardNo: userStore.userInfo.idCardNo || '',
+          date: selectedDate.value,
+          fullname: realname.value,
+          idCardNo: '',
           idCardType: 'ID_CARD',
-          schedule: selectedDate
+          schedule: ''
         },
         productId: productDetail.id.toString(),
         productType: "OneDay",
         quantity: 1
       }
-    ]
+    ],
+    travelStartDate: selectedDate.value,
+    travelEndDate: selectedDate.value
   };
 
   uni.request({
@@ -251,7 +274,9 @@ const createOrder = () => {
     success: (res) => {
       if (res.data.code === 200 && res.data.success) {
         uni.showToast({ title: '订单创建成功', icon: 'success' });
-        uni.navigateTo({ url: `/pages/dayTravelOrder/dayTravelOrder?id=${packageId.value}` });
+        uni.navigateTo({
+          url: `/pages/dayTravelOrder/dayTravelOrder?orderSn=${res.data.result.orderSn}&date=${selectedDate.value}&title=${encodeURIComponent(productDetail.title)}&price=${productDetail.price}&score=${productDetail.score}&soldSum=${productDetail.soldSum}&coverImage=${encodeURIComponent(productDetail.coverImage)}`
+        });
       } else {
         uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
       }
@@ -269,6 +294,10 @@ const handleBooking = () => {
     return;
   }
   createOrder();
+};
+
+const onDateChange = (e: any) => {
+  selectedDate.value = e.detail.value;
 };
 </script>
 
@@ -732,5 +761,21 @@ const handleBooking = () => {
   align-items: center;
   justify-content: center;
   border-radius: 10rpx;
+}
+
+/* 新增：下单信息输入 */
+.order-input-section {
+  padding: 20rpx;
+  background: #fff;
+  margin-top: 10px;
+}
+.order-input {
+  width: 100%;
+  height: 80rpx;
+  border: 1px solid #e5e5e5;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  margin-bottom: 16rpx;
+  padding: 0 20rpx;
 }
 </style>

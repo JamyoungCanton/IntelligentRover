@@ -29,14 +29,6 @@
 			</view>
 		</view>
 
-		<!-- 功能按钮 -->
-		<view class="function-buttons">
-			<view v-for="(button, index) in staticTexts.functionButtons" :key="index" class="function-item"
-				@click="handleFunctionButton(button.text)">
-				<uni-icons :type="button.icon" size="30" color="#007AFF"></uni-icons>
-				<text>{{ button.text }}</text>
-			</view>
-		</view>
 
 		<!-- 店铺详情 -->
 		<view class="shop-details">
@@ -95,7 +87,10 @@
 			<view class="section-title">店铺实拍</view>
 			<scroll-view class="photo-scroll" scroll-x enable-flex>
 				<view class="photo-item" v-for="(photo, index) in shopPhotos" :key="index">
-					<image :src="`https://wuminghui.top:9000/travel/${photo}`" mode="aspectFill"></image>
+					<view v-if="imageLoading" class="loading-placeholder">
+						<uni-icons type="image" size="30" color="#999"></uni-icons>
+					</view>
+					<image :src="`https://wuminghui.top:9000/travel/${photo}`" mode="aspectFill" @load="imageLoading = false" @error="handleImageError"></image>
 				</view>
 			</scroll-view>
 		</view>
@@ -148,6 +143,17 @@
 			</scroll-view>
 		</view>
 
+		<!-- 在推荐菜品后面，立即预订按钮前面添加时间选择部分 -->
+		<view class="time-picker-section">
+			<view class="section-title">选择用餐时间</view>
+			<view class="date-picker">
+				<text>选择用餐日期：</text>
+				<picker mode="date" :value="diningDate" :start="todayStr" @change="onDiningDateChange">
+					<view class="picker-value">{{ diningDate || '请选择' }}</view>
+				</picker>
+			</view>
+		</view>
+
 		<!-- 立即预订按钮 -->
 		<view class="book-now" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
 			<button class="book-button" @click="bookNow">立即预订</button>
@@ -161,14 +167,13 @@ import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
-
-
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const foodDetails = ref(null);
 const userStore = useUserStore();
 const id = ref('');
 
+const shopMainImage = ref('');
 
 // 更新页面显示的数据的函数
 const updatePageDetails = (details) => {
@@ -227,8 +232,6 @@ const renderStars = (rating) => {
 // 数据
 const isIntroUnfolded = ref(false);
 const shopPhotos = ref(['photo1.jpg', 'photo2.jpg', 'photo3.jpg']);
-// 静态文字变量
-const shopMainImage = ref('/static/foodDetails/shop.jpg');
 
 const staticTexts = ref({
 	// 页面基础信息
@@ -362,19 +365,148 @@ const viewAllReviews = () => {
 	console.log('查看全部评价');
 };
 
-const bookNow = () => {
-	console.log('立即预订');
-	uni.navigateTo({
-		url: `/pages/foodConfirm/foodConfirm?id=${id.value}`
-	});
+// 添加时间选择相关的响应式变量
+const diningDate = ref('');
+const diningTime = ref('');
+const timeRange = ref({
+	start: '10:00',
+	end: '22:00'
+});
 
+// 获取今天的日期字符串
+const today = new Date();
+const pad = (n) => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+// 格式化时间函数
+const formatTime = (timeString) => {
+	if (!timeString) return '';
+	const [hours, minutes] = timeString.split(':');
+	return `${hours}:${minutes || '00'}`;
 };
 
+// 日期选择处理函数
+const onDiningDateChange = (e) => {
+	diningDate.value = e.detail.value;
+	console.log('选择的日期:', diningDate.value);
+};
 
+// 修改 bookNow 函数
+const bookNow = () => {
+	console.log('点击预订按钮');
+	console.log('当前餐厅信息:', foodDetails.value);
+	
+	// 检查是否获取到了餐厅详情
+	if (!foodDetails.value || !foodDetails.value.id) {
+		uni.showToast({
+			title: '请先获取餐厅信息',
+			icon: 'none',
+			duration: 2000
+		});
+		return;
+	}
+
+	// 检查是否选择了日期
+	if (!diningDate.value) {
+		uni.showToast({
+			title: '请选择用餐日期',
+			icon: 'none',
+			duration: 2000
+		});
+		return;
+	}
+
+	console.log('开始创建订单，日期:', diningDate.value);
+	
+	// 构建订单数据
+	const orderData = {
+		contract: {
+			contractName: userStore.userInfo?.realname || '游客',
+			contractPhone: userStore.userInfo?.phone || '13800138000'
+		},
+		items: [
+			{
+				bookInfo: {
+					date: diningDate.value,
+					fullname: userStore.userInfo?.realname || '游客',
+					idCardNo: userStore.userInfo?.idCard || '110101199001011234',
+					idCardType: "ID_CARD",
+					schedule: ''
+				},
+				productId: foodDetails.value.id,
+				productType: "Dining",
+				quantity: 1
+			}
+		],
+		travelStartDate: diningDate.value,
+		travelEndDate: diningDate.value
+	};
+
+	console.log('订单数据:', orderData);
+
+	// 发送创建订单请求
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+		method: 'POST',
+		data: orderData,
+		header: {
+			'Content-Type': 'application/json',
+			'X-Access-Token': userStore.token || ''
+		},
+		success: (res) => {
+			console.log('创建订单响应:', res.data);
+			if (res.data.success) {
+				// 创建订单成功后跳转到确认页面
+				uni.navigateTo({
+					url: `/pages/foodConfirm/foodConfirm?id=${foodDetails.value.id}&date=${encodeURIComponent(diningDate.value)}&time=${encodeURIComponent(diningTime.value)}&orderId=${res.data.result.id}`
+				});
+			} else {
+				uni.showToast({
+					title: res.data.message || '预订失败',
+					icon: 'none',
+					duration: 2000
+				});
+			}
+		},
+		fail: (err) => {
+			console.error('创建订单失败:', err);
+			uni.showToast({
+				title: '网络错误，请重试',
+				icon: 'none',
+				duration: 2000
+			});
+		}
+	});
+};
 
 onLoad((options) => {
-	console.log('饮食详情页面收到的ID:', options.id);
+	console.log('饮食详情页面收到的参数:', options);
+	
+	// 确保id存在
+	if (!options.id) {
+		uni.showToast({
+			title: '参数错误',
+			icon: 'none',
+			duration: 2000
+		});
+		setTimeout(() => {
+			uni.navigateBack();
+		}, 2000);
+		return;
+	}
+	
 	id.value = options.id;
+	
+	// 如果有传入营业时间，则使用传入的时间
+	if (options.startTime && options.endTime) {
+		timeRange.value.start = formatTime(decodeURIComponent(options.startTime));
+		timeRange.value.end = formatTime(decodeURIComponent(options.endTime));
+	}
+
+	// 如果有传入图片URL，则使用传入的图片
+	if (options.imageURL) {
+		shopMainImage.value = decodeURIComponent(options.imageURL);
+	}
 
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
@@ -387,30 +519,34 @@ onMounted(() => {
 
 });
 
-
-
 // 调用接口获取餐厅信息
 const getRestaurantDetailsById = (id) => {
+	console.log('开始获取餐厅信息，ID:', id);
+	
+	const headers = {
+		'Content-Type': 'application/x-www-form-urlencoded'
+	};
+	if (userStore.token) {
+		headers['X-Access-Token'] = userStore.token;
+	}
+
 	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
+		url: `https://island.zhangshuiyi.com/island/front/product/dining/${id}`,
 		method: 'GET',
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token || ''
-		},
-		data: {
-			id: id
-		},
+		header: headers,
 		success: (res) => {
 			console.log("获取餐厅信息成功:", res.data);
-			if (res.data.code === 200 && res.data.result) {
-				const details = res.data.result;
-
+			if (res.data && res.data.id) {
+				const details = res.data;
+				
 				// 保存餐厅详情到foodDetails变量
 				foodDetails.value = details;
+				console.log('保存的餐厅信息:', foodDetails.value);
 
-				// 更新店铺主照片，优先使用imageUrl，如果没有则使用shopPhotos，最后使用默认图片
-				shopMainImage.value = details.imageUrl || details.shopPhotos || '/static/foodDetails/shop.jpg';
+				// 更新店铺主照片（如果没有从上一页传入图片，则使用接口返回的图片）
+				if (!shopMainImage.value) {
+					shopMainImage.value = details.imageUrl || '/static/foodDetails/shop.jpg';
+				}
 
 				// 更新店铺基本信息
 				staticTexts.value.shopName = details.name || staticTexts.value.shopName;
@@ -424,50 +560,24 @@ const getRestaurantDetailsById = (id) => {
 				staticTexts.value.address = details.address || staticTexts.value.address;
 				staticTexts.value.phone = details.phone || staticTexts.value.phone;
 
-				// 使用正则表达式提取时分
-				const formatTime = (timeString) => {
-					const match = timeString ? timeString.match(/(\d{2}:\d{2})/) : null;
-					return match ? match[1] : null;
-				};
+				// 如果没有从上一页传入时间，则使用接口返回的时间
+				if (!timeRange.value.start || !timeRange.value.end) {
+					timeRange.value.start = formatTime(details.starthour) || '10:00';
+					timeRange.value.end = formatTime(details.endhour) || '22:00';
+				}
 
-				const startTime = formatTime(details.starthour) || '10:00';
-				const endTime = formatTime(details.endhour) || '22:00';
-
-				// 更新营业时间
-				staticTexts.value.businessHours = `${startTime}-${endTime}`;
+				// 更新显示的营业时间
+				staticTexts.value.businessHours = `${timeRange.value.start}-${timeRange.value.end}`;
 
 				// 更新评分和价格信息
 				staticTexts.value.shopRating.rating = details.rating || staticTexts.value.shopRating.rating;
 				staticTexts.value.shopRating.monthlySales = `月售 ${details.monthSale || 0}`;
 				staticTexts.value.shopRating.averagePrice = `人均 ¥${details.priceaverage || 168}`;
 
-				// 更新推荐菜品
-				if (details.dishes && details.dishes.length > 0) {
-					recommendedDishes.value = details.dishes.slice(0, 3).map(dish => ({
-						image: dish.image || 'dish1.jpg',
-						name: dish.name || '未命名菜品',
-						desc: dish.description || '暂无描述',
-						price: dish.price || 0
-					}));
-				}
-
-				// 更新店铺实拍照片
-				if (details.shopPhotos && details.shopPhotos.length > 0) {
-					shopPhotos.value = details.shopPhotos.slice(0, 3).map(photo => photo || 'photo1.jpg');
-				}
-
-				// 更新用户评价
-				if (details.reviews && details.reviews.length > 0) {
-					reviews.value = details.reviews.slice(0, 2).map(review => ({
-						avatar: review.avatar || 'avatar1.jpg',
-						name: review.name || '匿名用户',
-						date: review.date || '2024-01-15',
-						content: review.content || '用户未填写评价',
-						rating: review.rating || 5,
-						images: review.images || null
-					}));
-				}
+				// 获取餐厅图片
+				getRestaurantImages(id);
 			} else {
+				console.error('获取餐厅信息失败: 返回数据格式不正确');
 				uni.showToast({
 					title: '获取餐厅信息失败',
 					icon: 'none',
@@ -476,99 +586,7 @@ const getRestaurantDetailsById = (id) => {
 			}
 		},
 		fail: (err) => {
-			// 在控制台打印错误信息
 			console.error('获取餐厅信息失败:', err);
-
-			uni.showToast({
-				title: '网络错误，请重试',
-				icon: 'none',
-				duration: 2000
-			});
-		}
-	})
-}
-
-// 创建订单函数
-const createOrder = () => {
-	// 检查是否获取到了餐厅详情
-	if (!foodDetails.value) {
-		uni.showToast({
-			title: '请先获取餐厅信息',
-			icon: 'none',
-			duration: 2000
-		});
-		return;
-	}
-
-	// 计算价格（使用人均价格）
-	const price = foodDetails.value.priceaverage || 100;  // 默认100元如果没有价格
-	const quantity = 1;  // 默认预订1份
-	const totalAmount = price * quantity;
-
-	// 构建订单数据
-	const orderData = {
-		contract: {
-			contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
-			contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
-		},
-		items: [
-			{
-				bookInfo: {
-					date: new Date().toISOString().split('T')[0], // 当前日期
-					fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
-					idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
-					idCardType: "ID_CARD",  // 默认为身份证
-					schedule: foodDetails.value.starthour || '12:00'  // 使用餐厅营业开始时间
-				},
-				productId: foodDetails.value.id,  // 餐厅ID
-				productType: "Dining",  // 餐饮类型
-				quantity: quantity,  // 预订数量
-				price: price,  // 单价
-				amount: totalAmount  // 总金额
-			}
-		]
-	};
-
-	// 在控制台打印订单信息
-	console.log('创建订单数据:', orderData);
-
-	// 发送创建订单请求
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-		method: 'POST',
-		data: orderData,
-		header: {
-			'Content-Type': 'application/json',
-			'X-Access-Token': userStore.token || ''
-		},
-		success: (res) => {
-			// 在控制台打印响应结果
-			console.log('创建订单响应:', res.data);
-
-			if (res.data.success) {
-				uni.showToast({
-					title: '预订成功',
-					icon: 'success',
-					duration: 2000
-				});
-				// 预订成功后跳转到订单页面
-				setTimeout(() => {
-					uni.navigateTo({
-						url: '/pages/order/order'
-					});
-				}, 2000);
-			} else {
-				uni.showToast({
-					title: res.data.message || '预订失败',
-					icon: 'none',
-					duration: 2000
-				});
-			}
-		},
-		fail: (err) => {
-			// 在控制台打印错误信息
-			console.error('创建订单失败:', err);
-
 			uni.showToast({
 				title: '网络错误，请重试',
 				icon: 'none',
@@ -577,6 +595,46 @@ const createOrder = () => {
 		}
 	});
 };
+
+// 获取餐厅图片
+const getRestaurantImages = (id) => {
+	const headers = {
+		'Content-Type': 'application/x-www-form-urlencoded'
+	};
+	if (userStore.token) {
+		headers['X-Access-Token'] = userStore.token;
+	}
+
+	uni.request({
+		url: `https://island.zhangshuiyi.com/island/il-ding-images/attractions/${id}`,
+		method: 'GET',
+		header: headers,
+		success: (res) => {
+			console.log("获取餐厅图片成功:", res.data);
+			if (res.data.success && res.data.result) {
+				// 限制最多显示6张图片
+				shopPhotos.value = res.data.result.slice(0, 6);
+			} else {
+				console.error('获取餐厅图片失败:', res.data.message);
+				// 使用默认图片
+				shopPhotos.value = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
+			}
+		},
+		fail: (err) => {
+			console.error('获取餐厅图片失败:', err);
+			// 使用默认图片
+			shopPhotos.value = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
+		}
+	});
+};
+
+const handleImageError = (e) => {
+	console.error('图片加载失败:', e);
+	// 可以设置一个默认图片
+	e.target.src = '/static/foodDetails/default.jpg';
+};
+
+const imageLoading = ref(true);
 </script>
 
 <style scoped>
@@ -980,13 +1038,15 @@ const createOrder = () => {
 /* 立即预订按钮 */
 .book-now {
 	padding: 15px;
+	margin-top: 10px;
+	padding-top: 35px;
 }
 
 .book-button {
 	background-color: #007AFF;
 	color: white;
 	border: none;
-	border-radius: 10px;
+order-radius: 10px;
 	/* 减小圆角半径，使其更接近长方形 */
 	padding: 15px 0;
 	font-size: 16px;
@@ -1005,5 +1065,63 @@ const createOrder = () => {
 	/* 点击时轻微缩小 */
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	/* 点击时阴影变浅 */
+}
+
+.time-picker-section {
+	background-color: #fff;
+	border-radius: 10rpx;
+	padding: 20rpx;
+	margin: 20rpx;
+	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.date-picker {
+	display: flex;
+	align-items: center;
+	margin: 16px 0;
+	padding: 8px 0;
+	border-radius: 8px;
+	background: #f8faff;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.date-picker text {
+	font-size: 15px;
+	color: #2560a7;
+	min-width: 90px;
+	font-weight: 500;
+	margin-left: 12px;
+}
+
+.picker-value {
+	display: inline-block;
+	margin-right: 12px;
+	color: #007aff;
+	font-size: 15px;
+	background: #fff;
+	border-radius: 6px;
+	padding: 6px 16px;
+	border: 1px solid #e0e0e0;
+	min-width: 90px;
+	text-align: center;
+	transition: border-color 0.2s;
+}
+
+.picker-value:active,
+.picker-value:focus {
+	border-color: #007aff;
+}
+
+.loading-placeholder {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(255, 255, 255, 0.8);
+	border-radius: 10px;
 }
 </style>

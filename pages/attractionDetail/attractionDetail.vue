@@ -196,24 +196,24 @@ const creaOrder = (hotel) => {
   }
 
 const orderData = {
-  contract: {
-    contractName: userStore.userInfo.realname || '',
-    contractPhone: userStore.userInfo.phone || ''
-  },
-  items: [
-    {
-      bookInfo: {
+contract: {
+  contractName: userStore.userInfo.realname || '',
+  contractPhone: userStore.userInfo.phone || ''
+},
+items: [
+  {
+    bookInfo: {
         date: playDate.value,
-        fullname: userStore.userInfo.realname || '',
-        idCardNo: userStore.userInfo.idCardNo || '',
-        idCardType: 'ID_CARD',
+      fullname: userStore.userInfo.realname || '',
+      idCardNo: userStore.userInfo.idCardNo || '',
+      idCardType: 'ID_CARD',
         schedule: playDate.value
-      },
+    },
       productId: hotel.id,
-      productType: "Attractions",
-      imageUrl: hotel.imageUrl,
-      quantity: 1
-    }
+    productType: "Attractions",
+    imageUrl: hotel.imageUrl,
+    quantity: 1
+  }
   ],
   travelStartDate: playDate.value,
   travelEndDate: playDate.value

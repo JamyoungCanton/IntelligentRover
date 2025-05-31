@@ -35,25 +35,6 @@
         </view>
       </view>
 
-      <!-- 游客信息 -->
-      <view class="card">
-        <view class="card-header">
-          <uni-icons type="person" size="20" color="#3B82F6" />
-          <text class="card-title">游客信息</text>
-        </view>
-        <view class="input-wrapper">
-          <input
-            type="number"
-            v-model="phone"
-            class="phone-input"
-            placeholder="请输入手机号码"
-          />
-          <view class="clear-icon" @click="clearPhone" v-if="phone">
-            <uni-icons type="clear" size="20" color="#999" />
-          </view>
-        </view>
-      </view>
-
       <!-- 备注信息 -->
       <view class="card">
         <view class="card-header">
@@ -117,9 +98,7 @@
         </view>
         <view class="time-select-row">
           <text class="time-label">开始时间</text>
-          <picker mode="date" :start="minDate" @change="onStartDateChange">
-            <view class="picker-value">{{ startDate || '请选择开始时间' }}</view>
-          </picker>
+          <view class="picker-value">{{ startDate || '未选择' }}</view>
         </view>
         <view class="time-select-row">
           <text class="time-label">持续时间</text>
@@ -144,74 +123,28 @@ import { useUserStore } from '@/store/modules/user';
 import { onLoad } from '@dcloudio/uni-app';
 
 const userStore = useUserStore();
-const packageId = ref('');
 const productDetail = ref({
-  id: '',
   title: '',
-  subtitle: '',
   coverImage: '',
   price: 0,
-  originalPrice: 0,
   score: 0,
   soldSum: 0
 });
-const phone = ref('');
 const remark = ref('');
 const selectedPayment = ref('wechat');
 const startDate = ref('');
 const minDate = ref('');
+const orderSn = ref('');
 
 onLoad((options) => {
-  if (options.id) {
-	console.log(options.id);
-    packageId.value = options.id;
-    fetchProductDetail();
-  }
+  if (options.orderSn) orderSn.value = options.orderSn;
+  if (options.date) startDate.value = options.date;
+  productDetail.value.title = options.title ? decodeURIComponent(options.title) : '';
+  productDetail.value.price = options.price ? Number(options.price) : 0;
+  productDetail.value.score = options.score ? Number(options.score) : 0;
+  productDetail.value.soldSum = options.soldSum ? Number(options.soldSum) : 0;
+  productDetail.value.coverImage = options.coverImage ? decodeURIComponent(options.coverImage) : '';
 });
-
-const fetchProductDetail = async () => {
-  try {
-    const res = await uni.request({
-      url: `https://island.zhangshuiyi.com/island/il-package/get/${packageId.value}`,
-      method: 'GET',
-      header: {
-        'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token || ''
-      }
-    });
-
-    // 检查请求是否成功
-    if (res.statusCode === 200 && res.data && res.data) {
-      const data = res.data.result;
-      productDetail.value = {
-        id: data.id,
-        title: data.title,
-        subtitle: data.packname,
-        coverImage: data.images && data.images[0] && data.images[0].url ? data.images[0].url.replace(/<[^>]+>/g, '') : '/static/daytravelDetail/man.png',
-        price: parseFloat(data.price),
-        originalPrice: parseFloat(data.priceDesc.split(',')[0]) || 0,
-        score: data.score,
-        soldSum: data.soldSum
-      };
-    } else {
-      console.error('获取产品详情失败:', res[1].data.message || '未知错误');
-      uni.showToast({
-        title: res[1].data.message || '获取产品详情失败',
-        icon: 'none'
-      });
-    }
-  } catch (error) {
-    console.error('请求失败:', error);
-    uni.showToast({
-      title: '网络异常，请稍后重试',
-      icon: 'none'
-    });
-  }
-};
-
-const clearPhone = () => {
-  phone.value = '';
-};
 
 const selectPayment = (payment) => {
   selectedPayment.value = payment;
@@ -227,30 +160,12 @@ onMounted(() => {
   minDate.value = `${yyyy}-${mm}-${dd}`;
 });
 
-const onStartDateChange = (e) => {
-  startDate.value = e.detail.value;
-};
-
 // 确认支付
-const handleConfirmPayment = () => {
-  // 手机号必填校验
-  if (!phone.value.trim()) {
-    uni.showToast({
-      title: '请输入手机号码',
-      icon: 'none'
-    });
+const handleConfirmPayment = async () => {
+  if (!orderSn.value) {
+    uni.showToast({ title: '订单号缺失', icon: 'none' });
     return;
   }
-  // 手机号格式校验
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  if (!phoneRegex.test(phone.value.trim())) {
-    uni.showToast({
-      title: '请输入有效的手机号',
-      icon: 'none'
-    });
-    return;
-  }
-  // 开始时间必选校验
   if (!startDate.value) {
     uni.showToast({
       title: '请选择订单开始时间',
@@ -259,17 +174,30 @@ const handleConfirmPayment = () => {
     return;
   }
 
-  const price = productDetail.value.price;
-  const payment = selectedPayment.value;
-  const orderId = new Date().getTime(); // 示例订单号，实际应来自后端
-  const productName = encodeURIComponent(productDetail.value.title); // 防止中文乱码
-  const duration = 12; // 小时
+  try {
+    const res = await uni.request({
+      url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn.value}`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token
+      }
+      // 不要有 data 字段
+    });
+    console.log('支付返回：', res.data);
 
-  uni.navigateTo({
-    url: `/pages/pay_success/pay_success?price=${price}&payment=${payment}&orderId=${orderId}&productName=${productName}&startDate=${startDate.value}&duration=${duration}`
-  });
+    if (res.statusCode === 200 && res.data && res.data.success) {
+      uni.showToast({ title: '支付成功', icon: 'success' });
+      uni.navigateTo({
+        url: `/pages/pay_success/pay_success?orderSn=${orderSn.value}`
+      });
+    } else {
+      uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });
+    }
+  } catch (error) {
+    uni.showToast({ title: '支付异常', icon: 'none' });
+  }
 };
-
 
 </script>
 
@@ -368,26 +296,6 @@ page {
   font-size: 36rpx;
   font-weight: 500;
   color: #3B82F6;
-}
-
-.input-wrapper {
-  position: relative;
-}
-
-.phone-input {
-  width: 100%;
-  height: 88rpx;
-  padding: 0 32rpx;
-  border: 1px solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 28rpx;
-}
-
-.clear-icon {
-  position: absolute;
-  right: 32rpx;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .remark-input {

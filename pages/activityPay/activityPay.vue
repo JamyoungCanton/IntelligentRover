@@ -48,7 +48,8 @@
 							<image class="item-image" :src="item.image" mode="aspectFill"></image>
 							<view class="item-info">
 								<text class="item-name">{{ item.name }}</text>
-								<text class="item-spec">{{ item.specs }}</text>
+								<text class="item-spec" v-if="item.specs">{{ item.specs }}</text>
+								<text class="item-spec" v-else>用餐日期：{{ orderInfo.travelStartDate }}</text>
 							</view>
 							<view class="item-right">
 								<text class="item-price">¥{{ item.price }}</text>
@@ -246,21 +247,26 @@ const handlePayment = () => {
 	});
 };
 
-const payOrder = (order) => {
-	uni.showLoading({ title: '刷新订单中...' });
+const payOrder = (orderSn) => {
 	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/' + order.orderSn,
-		method: 'GET',
-		header: { 'X-Access-Token': userStore.token },
+		url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
+		method: 'POST',
+		header: {
+			'Content-Type': 'application/json',
+			'X-Access-Token': userStore.token
+		},
+		data: { orderSn },
 		success: (res) => {
-			if (res.data.success && res.data.result.payStatus === 'UNPAID') {
-				uni.navigateTo({ url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}` });
+			if (res.data.success) {
+				uni.showToast({ title: '支付成功', icon: 'success' });
+				// 跳转到支付成功页或订单详情
 			} else {
-				uni.showToast({ title: '订单状态已变更，请刷新订单列表', icon: 'none' });
-				getOrderList(); // 刷新订单列表
+				uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });
 			}
 		},
-		complete: () => uni.hideLoading()
+		fail: (err) => {
+			uni.showToast({ title: '支付请求失败', icon: 'none' });
+		}
 	});
 };
 </script>

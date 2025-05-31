@@ -10,6 +10,16 @@
 		</view>
 
 		<view class="content">
+			<!-- 选择用餐日期 -->
+			<view class="card">
+				<view class="detail-item">
+					<text class="detail-label">用餐日期</text>
+					<picker mode="date" :value="diningDate" :start="todayStr" @change="onDiningDateChange">
+						<view class="picker-text">{{ diningDate || '请选择用餐日期' }}</view>
+					</picker>
+				</view>
+			</view>
+
 			<!-- 餐厅信息 -->
 			<view class="card">
 				<image class="restaurant-image" :src="foodDetails.image" mode="aspectFill"></image>
@@ -38,12 +48,6 @@
 							<text class="quantity-value">{{ quantity }}</text>
 							<button class="quantity-btn" @click="increaseQuantity">+</button>
 						</view>
-					</view>
-					<view class="detail-item">
-						<text class="detail-label">用餐时间</text>
-						<picker mode="time" @change="bindTimeChange" class="time-picker">
-							<view class="picker-text">{{ diningTime || '请选择用餐时间' }}</view>
-						</picker>
 					</view>
 				</view>
 			</view>
@@ -99,38 +103,18 @@ const foodDetails = ref({
 const quantity = ref(1);
 const contactName = ref('');
 const phone = ref('');
-const diningTime = ref('');
-const remark = ref('');
+const diningDate = ref('');
+const diningStartTime = ref('');
+const diningEndTime = ref('');
+const today = new Date();
+const pad = (n) => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
 
 
 
 const increaseQuantity = () => quantity.value++;
 const decreaseQuantity = () => quantity.value > 1 && quantity.value--;
-const bindTimeChange = (e) => {
-	const selectedTime = e.detail.value;
-	const [startHour, endHour] = foodDetails.value.businessHours.split('-');
-
-	// 将时间转换为分钟数便于比较
-	const timeToMinutes = (time) => {
-		const [h, m] = time.split(':').map(Number);
-		return h * 60 + m;
-	};
-
-	const selectedMinutes = timeToMinutes(selectedTime);
-	const startMinutes = timeToMinutes(startHour);
-	const endMinutes = timeToMinutes(endHour) - 30; // 结束前30分钟停止接单
-
-	if (selectedMinutes >= startMinutes && selectedMinutes <= endMinutes) {
-		diningTime.value = selectedTime;
-	} else {
-		uni.showToast({
-			title: `请选择${startHour}至${endHour.substring(0, 5)}之间的时间`,
-			icon: 'none'
-		});
-	}
-};
-
 const handleBack = () => {
 	uni.navigateBack();
 };
@@ -138,21 +122,21 @@ const handleBack = () => {
 const handleConfirmPayment = () => {
 	if (!contactName.value) return uni.showToast({ title: '请输入联系人姓名', icon: 'none' });
 	if (!phone.value) return uni.showToast({ title: '请输入手机号码', icon: 'none' });
-	if (!diningTime.value) return uni.showToast({ title: '请选择用餐时间', icon: 'none' });
+	if (!diningDate.value) return uni.showToast({ title: '请选择用餐日期', icon: 'none' });
 
 	const orderData = {
 		contract: {
-			contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
-			contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+			contractName: userStore.userInfo?.realname || '游客',
+			contractPhone: userStore.userInfo?.phone || '13800138000'
 		},
 		items: [
 			{
 				bookInfo: {
-					date: new Date().toISOString().split('T')[0], // 当前日期
-					fullname: contactName.value || '游客',  // 预订人姓名
-					idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
-					idCardType: "ID_CARD",  // 默认为身份证
-					schedule: diningTime.value || '12:00'  // 使用用户选择的时间
+					date: diningDate.value,
+					fullname: contactName.value || '游客',
+					idCardNo: userStore.userInfo?.idCard || '110101199001011234',
+					idCardType: "ID_CARD",
+					schedule: `${diningStartTime.value}-${diningEndTime.value}`
 				},
 				productId: id.value,
 				productType: "Dining",
@@ -161,63 +145,48 @@ const handleConfirmPayment = () => {
 				amount: foodDetails.value.price * quantity.value,
 				name: foodDetails.value.restaurant,
 				image: foodDetails.value.image,
-				specs: diningTime.value  // 这里我们把“用餐时间”作为规格传过去
+				specs: `${diningStartTime.value}-${diningEndTime.value}`
 			}
-		]
+		],
+		travelStartDate: `${diningDate.value} ${diningStartTime.value}`,
+		travelEndDate: `${diningDate.value} ${diningEndTime.value}`
 	};
 
-	createOrder(orderData);
-};
+	console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
 
-// 创建订单函数
-const createOrder = (orderData) => {
-
-	// 在控制台打印订单信息
-	console.log('创建订单数据:', orderData);
-
-	// 发送创建订单请求
 	uni.request({
 		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
 		method: 'POST',
-		data: orderData,
 		header: {
 			'Content-Type': 'application/json',
-			'X-Access-Token': userStore.token || ''
+			'X-Access-Token': userStore.token
 		},
+		data: orderData,
 		success: (res) => {
-			// 在控制台打印响应结果
-			console.log('创建订单响应:', res.data);
-
-			if (res.data.success) {
+			console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
+			if (res.data.code === 200 && res.data.result && res.data.result.orderSn) {
+				const orderSn = res.data.result.orderSn;
 				uni.showToast({
-					title: '预订成功',
+					title: '订单创建成功',
 					icon: 'success',
-					duration: 2000
+					duration: 1500
 				});
-				console.log("订单编号", res.data.result.orderSn)
-				// 预订成功后跳转到订单支付页面
-				setTimeout(() => {
-					uni.navigateTo({
-						url: `/pages/activityPay/activityPay?title=${foodDetails.value.title}&price=${foodDetails.value.price * quantity.value}&score=${foodDetails.value.score}&soldSum=${foodDetails.value.soldSum}&restaurant=${encodeURIComponent(foodDetails.value.restaurant)}&diningTime=${diningTime.value}&orderSn=${res.data.result.orderSn}`
-					})
-
-				}, 1000);
+				// 跳转到支付页，传递 orderSn 及必要信息
+				uni.navigateTo({
+					url: `/pages/activityPay/activityPay?orderSn=${orderSn}&title=${foodDetails.value.title}&price=${foodDetails.value.price * quantity.value}&restaurant=${encodeURIComponent(foodDetails.value.restaurant)}`
+				});
 			} else {
 				uni.showToast({
-					title: res.data.message || '预订失败',
-					icon: 'none',
-					duration: 2000
+					title: res.data.message || '订单创建失败',
+					icon: 'none'
 				});
 			}
 		},
 		fail: (err) => {
-			// 在控制台打印错误信息
-			console.error('创建订单失败:', err);
-
+			console.error('创建订单失败', err);
 			uni.showToast({
-				title: '网络错误，请重试',
-				icon: 'none',
-				duration: 2000
+				title: '创建订单失败，请稍后重试',
+				icon: 'none'
 			});
 		}
 	});
@@ -226,19 +195,16 @@ const createOrder = (orderData) => {
 // 调用接口获取餐厅信息
 const getRestaurantDetailsById = (id) => {
 	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
+		url: `https://island.zhangshuiyi.com/island/front/product/dining/${id}`,
 		method: 'GET',
 		header: {
 			'Content-Type': 'application/x-www-form-urlencoded',
 			'X-Access-Token': userStore.token || ''
 		},
-		data: {
-			id: id
-		},
 		success: (res) => {
 			console.log("获取餐厅信息成功:", res.data);
-			if (res.data.code === 200 && res.data.result) {
-				const details = res.data.result;
+			if (res.data && res.data.id) {
+				const details = res.data;
 
 				// 格式化营业时间(去除秒数)
 				const formatTime = (timeStr) => {
@@ -256,14 +222,26 @@ const getRestaurantDetailsById = (id) => {
 					businessHours: startHour && endHour
 						? `${startHour}-${endHour}`
 						: '10:00-22:00',
-					price: details.priceaverage || 168,
+					price: details.price || details.priceaverage || 150,
 					image: details.imageUrl || '/static/foodDetails/dish1.jpg',
 					startHour: startHour || '10:00',
-					endHour: endHour || '22:00'
+					endHour: endHour || '22:00',
+					title: details.name || '餐厅名称',
+					score: details.rating || 5,
+					soldSum: details.monthSale || 0,
+					description: details.description ? details.description.replace(/<\/?p>/g, '') : '',
+					phone: details.phone || ''
 				};
+
+				// 自动填充联系人信息
+				if (userStore.userInfo) {
+					contactName.value = userStore.userInfo.realname || '';
+					phone.value = userStore.userInfo.phone || '';
+				}
 			} else {
+				console.error('接口返回内容:', res.data);
 				uni.showToast({
-					title: '获取餐厅信息失败',
+					title: res.data.message || '获取餐厅信息失败',
 					icon: 'none',
 					duration: 2000
 				});
@@ -277,8 +255,18 @@ const getRestaurantDetailsById = (id) => {
 				duration: 2000
 			});
 		}
-	})
-}
+	});
+};
+
+const onDiningDateChange = (e) => {
+	diningDate.value = e.detail.value;
+};
+const onDiningStartTimeChange = (e) => {
+	diningStartTime.value = e.detail.value;
+};
+const onDiningEndTimeChange = (e) => {
+	diningEndTime.value = e.detail.value;
+};
 
 onLoad((options) => {
 	console.log('饮食详情页面收到的ID:', options.id);
@@ -286,6 +274,10 @@ onLoad((options) => {
 
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
+
+	if (options.date) {
+		diningDate.value = options.date;
+	}
 });
 onMounted(() => {
 	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();

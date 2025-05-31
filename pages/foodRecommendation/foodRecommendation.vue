@@ -253,33 +253,28 @@ const onSearchInput = () => {
 
 // 创建订单函数
 const createOrder = (restaurant) => {
-  // 计算价格（使用人均价格）
-  const price = restaurant.priceaverage || 100;  // 默认100元如果没有价格
-  const quantity = 1;  // 默认预订1份
-  const totalAmount = price * quantity;
-
   // 构建订单数据
   const orderData = {
     contract: {
-      contractName: userStore.userInfo?.realname || '游客',  // 从用户信息中获取姓名
-      contractPhone: userStore.userInfo?.phone || '13800138000'  // 从用户信息中获取电话
+      contractName: userStore.userInfo?.realname || '游客',
+      contractPhone: userStore.userInfo?.phone || '13800138000'
     },
     items: [
       {
         bookInfo: {
           date: new Date().toISOString().split('T')[0], // 当前日期
-          fullname: userStore.userInfo?.realname || '游客',  // 预订人姓名
-          idCardNo: userStore.userInfo?.idCard || '110101199001011234',  // 身份证号
-          idCardType: "ID_CARD",  // 默认为身份证
+          fullname: userStore.userInfo?.realname || '游客',
+          idCardNo: userStore.userInfo?.idCard || '110101199001011234',
+          idCardType: "ID_CARD",
           schedule: restaurant.starthour || '12:00'  // 使用餐厅营业开始时间
         },
-        productId: restaurant.id,  // 餐厅ID
-        productType: "Dining",  // 餐饮类型
-        quantity: quantity,  // 预订数量
-        price: price,  // 单价
-        amount: totalAmount  // 总金额
+        productId: restaurant.id,
+        productType: "Dining",
+        quantity: 1
       }
-    ]
+    ],
+    travelStartDate: new Date().toISOString().split('T')[0],
+    travelEndDate: new Date().toISOString().split('T')[0]
   };
 
   // 在控制台打印订单信息
@@ -296,7 +291,6 @@ const createOrder = (restaurant) => {
       'X-Access-Token': userStore.token || ''
     },
     success: (res) => {
-      // 在控制台打印响应结果
       console.log('创建订单响应:', res.data);
 
       if (res.data.success) {
@@ -320,9 +314,7 @@ const createOrder = (restaurant) => {
       }
     },
     fail: (err) => {
-      // 在控制台打印错误信息
       console.error('创建订单失败:', err);
-
       uni.showToast({
         title: '网络错误，请重试',
         icon: 'none',
@@ -337,7 +329,7 @@ const createOrder = (restaurant) => {
 const goToFoodDetails = (restaurant) => {
   console.log("跳转到餐厅详情页面")
   uni.navigateTo({
-    url: `/pages/foodDetails/foodDetails?id=${restaurant.id}`
+    url: `/pages/foodDetails/foodDetails?id=${restaurant.id}&startTime=${encodeURIComponent(restaurant.starthour)}&endTime=${encodeURIComponent(restaurant.endhour)}&imageURL=${encodeURIComponent(restaurant.imageURL)}`
   });
 };
 
@@ -370,7 +362,7 @@ const onBooking = (restaurant) => {
         console.log('用户确认预订');
         // 跳转到预订页面，并传递餐厅信息
         uni.navigateTo({
-          url: `/pages/foodConfirm/foodConfirm?id=${restaurant.id}`
+          url: `/pages/foodConfirm/foodConfirm?id=${restaurant.id}&startTime=${encodeURIComponent(restaurant.starthour)}&endTime=${encodeURIComponent(restaurant.endhour)}`
         });
         // createOrder(restaurant);
       } else {
@@ -415,17 +407,35 @@ const getFoodList = () => {
     },
     header: {
       'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
+      'X-Access-Token': userStore.token || ''
     },
     success: (res) => {
+      if (res.data.success) {
       restaurants.value = res.data.result.records;
+        // 使用默认图片数组
       combinedArray.value = restaurants.value.map((item, index) => ({
         ...item,
-        imageURL: imageUrls.value[index]
+          imageURL: imageUrls.value[index % imageUrls.value.length] // 循环使用默认图片
       }));
-    }
-  })
+      } else {
+        console.error('获取餐厅列表失败:', res.data.message);
+        uni.showToast({
+          title: '获取餐厅列表失败',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('获取餐厅列表失败:', err);
+      uni.showToast({
+        title: '网络错误，请重试',
+        icon: 'none',
+        duration: 2000
+      });
 }
+  });
+};
 </script>
 
 <style>
