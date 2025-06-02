@@ -67,34 +67,57 @@
       </view>
 
       <view class="reviews">
-      <text class="section-title">住客点评</text>
-      <view class="review-item">
-        <div class="comheader">
-          <div class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png"  style="width: 50px;height: 50px; margin-right: 5px;" alt="">
-            <div class="name-rating">
-              <text class="date">张女士</text>
-              <text class="rating">★★★★★</text>
-            </div>
-          </div>
-          <text class="time">2025-03-15</text>
-        </div>
-      <text class="comment">白天可体验刺激的水上项目，傍晚在观景台欣赏落日余晖，夜晚还有精彩的特色表演。</text>
-      </view>
-      <view class="review-item">
-        <view class="comheader">
-          <view class="ava-name-rating">
-            <img src="/static/hotel-attctive/ava.png " style="width: 50px;height: 50px; margin-right: 5px;" alt="">
-            <view class="name-rating">
-              <text class="date">黄女士</text>
-              <text class="rating">★★★★</text>
-            </view>
-          </view>
-          <text class="time">2025-02-27</text>
+        <text class="section-title">住客点评</text>
+
+        <!-- 评论列表 -->
+        <view v-if="!comments || comments.length === 0" class="no-comments">
+          <uni-icons type="chat" size="24" color="#999"></uni-icons>
+          <text>暂无评论，快来发表第一条评论吧！</text>
         </view>
-        <text class="comment">这里山海相拥，风光旖旎。碧蓝海水与奇石嶙峋的海岸线交相辉映，漫步沙滩可感受细软白沙的温柔触感。登高远眺，壮阔海景尽收眼底，是摄影爱好者的绝佳取景地</text>
+        <template v-else>
+          <view class="review-item" v-for="(comment, index) in displayedComments" :key="index">
+            <view class="comheader">
+              <view class="ava-name-rating">
+                <img :src="comment.avatar" style="width: 50px;height: 50px; margin-right: 5px;" alt="">
+                <view class="name-rating">
+                  <text class="date">{{ comment.userName }}</text>
+                  <text class="rating">{{ '★'.repeat(comment.rating || 5) }}</text>
+                </view>
+              </view>
+              <text class="time">{{ comment.createTime || '' }}</text>
+            </view>
+            <text class="comment">{{ comment.content }}</text>
+          </view>
+          
+          <!-- 显示更多按钮 -->
+          <view v-if="comments.length > 3" class="show-more" @click="toggleComments">
+            <text>{{ showAllComments ? '收起' : `显示更多(${comments.length - 3}条)` }}</text>
+            <uni-icons 
+              :type="showAllComments ? 'top' : 'bottom'" 
+              size="14" 
+              color="#3B82F6"
+            ></uni-icons>
+          </view>
+        </template>
+
+        <!-- 添加评论区域 -->
+        <view class="comment-input-area">
+          <textarea
+            v-model="newComment"
+            class="comment-textarea"
+            placeholder="写下你的评论..."
+            :maxlength="200"
+          />
+          <view class="comment-footer">
+            <text class="word-count">{{ newComment.length }}/200</text>
+            <button 
+              class="submit-btn" 
+              :disabled="!newComment.trim()"
+              @click="submitComment"
+            >发表评论</button>
+          </view>
+        </view>
       </view>
-    </view>
     </view>
     <view class="date-picker">
       <text>选择游玩日期：</text>
@@ -107,7 +130,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, computed } from 'vue'
   import { onLoad } from '@dcloudio/uni-app'
   import { useUserStore } from '@/store/modules/user'
 
@@ -116,6 +139,9 @@
   const id = ref(0);
   const attractionImages = ref([]);
   const playDate = ref('');
+  const comments = ref([]);
+  const newComment = ref('');
+  const showAllComments = ref(false);
 
   const today = new Date();
   const pad = (n) => n < 10 ? '0' + n : n;
@@ -123,6 +149,9 @@
 
   onLoad((options) => {
     id.value = options.id;
+    getAttrictionDetail();
+    getAttractionImages();
+    getComments();
   })
 
   // 根据id获取数据
@@ -136,6 +165,7 @@
       },
       success: (res) => {
         hotelData.value = res.data;
+        console.log('景点详情数据:', hotelData.value);
       }
     })
   }
@@ -278,6 +308,130 @@ fail: (err) => {
 
   const onPlayDateChange = (e) => {
     playDate.value = e.detail.value;
+  };
+
+  // 获取评论列表
+  const getComments = async () => {
+    try {
+      console.log('开始获取评论，景点ID:', id.value);
+      const res = await uni.request({
+        url: `https://island.zhangshuiyi.com/island/comments/${id.value}`,
+        method: 'GET',
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': userStore.token
+        }
+      });
+      
+      console.log('评论接口返回数据:', res.data);
+      
+      if (res.data.success) {
+        // 添加空值检查
+        if (res.data.result && Array.isArray(res.data.result)) {
+          comments.value = res.data.result.map(comment => ({
+            id: comment.id,
+            content: comment.content,
+            createTime: comment.createTime,
+            userName: comment.userVO?.realname || '匿名用户',
+            avatar: comment.userVO?.avatar || '/static/hotel-attctive/ava.png',
+            rating: 5, // 默认评分
+            children: comment.children || [] // 保存回复评论
+          }));
+        } else {
+          // 如果没有评论，设置为空数组
+          comments.value = [];
+        }
+        console.log('处理后的评论列表:', comments.value);
+      } else {
+        console.error('获取评论失败:', res.data.message);
+        uni.showToast({
+          title: res.data.message || '获取评论失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('获取评论异常：', error);
+      uni.showToast({
+        title: '获取评论失败',
+        icon: 'none'
+      });
+    }
+  };
+
+  // 提交评论
+  const submitComment = async () => {
+    if (!newComment.value.trim()) {
+      uni.showToast({
+        title: '评论内容不能为空',
+        icon: 'none'
+      });
+      return;
+    }
+
+    if (!userStore.token) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+
+    try {
+      const commentData = {
+        content: newComment.value,
+        postId: id.value, // 景点ID
+        fatherId: '', // 父评论ID，这里为空因为是直接评论景点
+        receiverId: '', // 接收者ID，这里为空因为是直接评论景点
+        repliedCommentId: '' // 回复的评论ID，这里为空因为是直接评论景点
+      };
+
+      console.log('提交评论数据:', commentData);
+
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/comments/save',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': userStore.token
+        },
+        data: commentData
+      });
+
+      console.log('评论提交响应:', res.data);
+
+      if (res.data.success) {
+        uni.showToast({
+          title: '评论成功',
+          icon: 'success'
+        });
+        newComment.value = ''; // 清空输入框
+        getComments(); // 刷新评论列表
+      } else {
+        uni.showToast({
+          title: res.data.message || '评论失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('评论提交异常：', error);
+      uni.showToast({
+        title: '评论失败，请稍后重试',
+        icon: 'none'
+      });
+    }
+  };
+
+  // 添加计算属性来控制显示的评论数量
+  const displayedComments = computed(() => {
+    if (showAllComments.value) {
+      return comments.value;
+    }
+    return comments.value.slice(0, 3);
+  });
+
+  // 添加切换显示状态的方法
+  const toggleComments = () => {
+    showAllComments.value = !showAllComments.value;
   };
 
 </script>
@@ -508,5 +662,82 @@ fail: (err) => {
 .picker-value:active,
 .picker-value:focus {
   border-color: #007aff;
+}
+.no-comments {
+  text-align: center;
+  padding: 40rpx 30rpx;
+  color: #999;
+  font-size: 28rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  margin: 20rpx 0;
+}
+
+.no-comments .uni-icons {
+  margin-bottom: 8rpx;
+}
+
+.comment-input-area {
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.comment-textarea {
+  width: 100%;
+  height: 100rpx;
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  border: 1px solid #e5e5e5;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.word-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.submit-btn {
+  background-color: #3B82F6;
+  color: #fff;
+  font-size: 28rpx;
+  margin-right: 3px;
+  padding: 4rpx 40rpx;
+  border-radius: 8rpx;
+  border: none;
+}
+
+.submit-btn[disabled] {
+  background-color: #ccc;
+  color: #fff;
+}
+
+.show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  color: #3B82F6;
+  font-size: 28rpx;
+  cursor: pointer;
+  gap: 8rpx;
+}
+
+.show-more:active {
+  opacity: 0.8;
 }
 </style>

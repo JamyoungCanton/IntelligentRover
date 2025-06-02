@@ -195,10 +195,9 @@ const handleLogin = async () => {
         });
         handleCode();
       } else {
-        userStore.updateUserInfo(res.data.result.userInfo);
         userStore.setToken(res.data.result.token);
-        console.log('登录返回用户信息:', res.data.result.userInfo);
         userStore.updateUserInfo(res.data.result.userInfo);
+        console.log('登录返回用户信息:', res.data.result.userInfo);
         uni.setStorageSync('userId', res.data.result.userInfo.id); // 保存 userId
         console.log('用户id',res.data.result.userInfo.id)
         uni.showToast({
@@ -268,9 +267,10 @@ const handleWechatLogin = () => {
           success: (res) => {
             if (res.data.success && res.data.result && res.data.result.token) {
               userStore.setToken(res.data.result.token);
+              userStore.updateUserInfo(res.data.result.userInfo);
               uni.setStorageSync('token', res.data.result.token);
               console.log('微信登录后存储的token:', res.data.result.token);
-              userStore.updateUserInfo(res.data.result.userInfo); // 只存userInfo
+              userStore.updateUserInfo(res.data.result.userInfo);
               uni.setStorageSync('userId', res.data.result.userInfo.id); // 持久化userId
               // 显示登录成功提示，使用加载提示
               uni.showLoading({

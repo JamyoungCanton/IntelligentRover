@@ -145,7 +145,11 @@ const goLanguage = () => {
 }
 // 意见反馈
 const goFeedback = () => {
-  uni.navigateTo({ url: '/pages/my/feedback' })
+  uni.showToast({
+    title: '未到营业时间',
+    icon: 'none',
+    duration: 2000
+  });
 }
 // 关于我们
 const goAboutUs = () => {

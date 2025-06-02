@@ -1068,7 +1068,7 @@ order-radius: 10px;
 }
 
 .time-picker-section {
-	background-color: #fff;
+	background-color: #ffffff;
 	border-radius: 10rpx;
 	padding: 20rpx;
 	margin: 20rpx;
@@ -1081,13 +1081,13 @@ order-radius: 10px;
 	margin: 16px 0;
 	padding: 8px 0;
 	border-radius: 8px;
-	background: #f8faff;
+	background: #fff9f9;
 	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 
 .date-picker text {
 	font-size: 15px;
-	color: #2560a7;
+	color: #141f2c;
 	min-width: 90px;
 	font-weight: 500;
 	margin-left: 12px;
@@ -1121,7 +1121,7 @@ order-radius: 10px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: rgb(255, 255, 255);
 	border-radius: 10px;
 }
 </style>

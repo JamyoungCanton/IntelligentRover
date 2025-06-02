@@ -139,6 +139,7 @@ onLoad((options) => {
   productDetail.value.score = options.score ? Number(options.score) : 0;
   productDetail.value.soldSum = options.soldSum ? Number(options.soldSum) : 0;
   productDetail.value.coverImage = options.coverImage ? decodeURIComponent(options.coverImage) : '';
+  console.log('orderSn:', orderSn.value);
 });
 
 const selectPayment = (payment) => {
@@ -151,9 +152,12 @@ const handleConfirmPayment = async () => {
     uni.showToast({ title: '订单号缺失', icon: 'none' });
     return;
   }
-
+  if (!userStore.token) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    return;
+  }
   try {
-    console.log('开始支付，订单号：', orderSn.value);
+    console.log('开始支付，订单号：', orderSn.value, 'token:', userStore.token);
     const res = await uni.request({
       url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn.value}`,
       method: 'POST',
@@ -162,13 +166,11 @@ const handleConfirmPayment = async () => {
         'X-Access-Token': userStore.token
       }
     });
-
     console.log('支付返回：', res.data);
-
     if (res.statusCode === 200 && res.data && res.data.success) {
       uni.showToast({ title: '支付成功', icon: 'success' });
-      uni.navigateTo({
-        url: `/pages/pay_success/pay_success?orderSn=${orderSn.value}`
+      uni.redirectTo({
+        url: `/pages/pay_success/pay_success?orderSn=${orderSn.value}&price=${productDetail.value.price}&title=${encodeURIComponent(productDetail.value.title)}`
       });
     } else {
       uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });

@@ -9,8 +9,8 @@ export default {
     const userStore = useUserStore();
     const token = uni.getStorageSync('token');
     if (token) userStore.setToken(token);
-    const userId = uni.getStorageSync('userId');
-    if (userId) userStore.updateUserInfo({ id: userId });
+    const user = uni.getStorageSync('user');
+    if (user && user.userInfo) userStore.updateUserInfo(user.userInfo);
   },
   onShow: function() {
     console.log('App Show');

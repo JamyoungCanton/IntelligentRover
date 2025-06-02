@@ -29,6 +29,13 @@
       <text class="section-title">{{ textData.sections.form }}</text>
 
       <view class="form-item">
+        <text class="label">选择活动日期</text>
+        <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
+          <view class="picker-value">{{ playDate || '请选择活动日期' }}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
         <text class="label">{{ textData.labels.name }}</text>
         <input v-model="form.name" class="input" :placeholder="textData.placeholders.name" maxlength="10" />
       </view>
@@ -168,6 +175,23 @@ const activityCost = computed(() => {
   return Number(price) * form.value.participants
 })
 
+// 在 script setup 中添加日期相关的状态
+const playDate = ref('');
+const today = new Date();
+const pad = (n) => n < 10 ? '0' + n : n;
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+// 修改日期选择处理函数
+const onPlayDateChange = (e) => {
+  // 将选择的日期转换为 YYYY-MM-DD 格式
+  const selectedDate = e.detail.value;
+  playDate.value = selectedDate;
+  
+  // 更新活动时间显示
+  const timePart = textData.value.activityTime.split(' ')[1] || '09:00-12:00';
+  textData.value.activityTime = `${selectedDate} ${timePart}`;
+};
+
 // 方法
 const goBack = () => {
   uni.navigateBack()
@@ -228,7 +252,17 @@ const submitRegistration = () => {
     })
     return
   }
-  // 构建完整的订单数据
+
+  // 添加日期验证
+  if (!playDate.value) {
+    uni.showToast({
+      title: '请选择活动日期',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 构建订单数据
   const orderData = {
     contract: {
       contractName: form.value.name,
@@ -236,57 +270,61 @@ const submitRegistration = () => {
     },
     items: [{
       bookInfo: {
-        date: new Date().toISOString().split('T')[0],
+        date: playDate.value,
         fullname: form.value.name,
-        idCardNo: '', // 需要用户输入身份证号
-        idCardType: "ID_CARD",
-        schedule: textData.value.activityTime.split(' ')[1] // 使用活动开始时间
+        idCardNo: '',
+        idCardType: 'ID_CARD',
+        schedule: playDate.value
       },
-      productId: activityId.value, // 使用从页面参数获取的活动ID
+      productId: activityId.value,
       productType: "Activities",
-      quantity: form.value.participants,
-      price: Number(textData.value.price.replace(/[^\d.]/g, '')),
-      amount: activityCost.value
-    }]
+      imageUrl: textData.value.activityImage,
+      quantity: form.value.participants
+    }],
+    travelStartDate: playDate.value,
+    travelEndDate: playDate.value
   }
+
   console.log('订单数据:', orderData)
 
-  // 提交订单到服务器
+  // 提交订单
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
     header: {
       'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token || ''
+      'X-Access-Token': userStore.token
     },
     data: orderData,
     success: (res) => {
+      console.log("订单创建结果：", res.data);
+      
       if (res.data.code === 200) {
         uni.showToast({
-          title: textData.value.validationMessages.submitSuccess,
-          icon: 'success'
-        })
-        console.log('订单创建成功:', res.data)
-        console.log('orderSn为:', res.data.result.orderSn)
-
-        uni.navigateTo({
-          url: `/pages/activityPay/activityPay?orderSn=${res.data.result.orderSn}`
-        })
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        // 修改跳转页面，直接跳转到支付页面
+        const orderSn = res.data.result.orderSn;
+        uni.navigateTo({ 
+          url: `/pages/activityPay/activityPay?orderSn=${orderSn}`
+        });
       } else {
         uni.showToast({
-          title: '订单创建失败: ' + res.data.message,
+          title: res.data.message || '订单创建失败',
           icon: 'none'
-        })
+        });
       }
     },
     fail: (err) => {
-      console.error('订单提交失败:', err)
+      console.error('创建订单失败', err);
       uni.showToast({
-        title: '网络错误，请重试',
+        title: '创建订单失败，请稍后重试',
         icon: 'none'
-      })
+      });
     }
-  })
+  });
 }
 
 
@@ -535,5 +573,23 @@ onLoad((options) => {
   padding: 15px;
   font-size: 16px;
   margin-top: 10px;
+}
+
+.picker-value {
+  display: inline-block;
+  color: #007aff;
+  font-size: 15px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 16px;
+  border: 1px solid #e0e0e0;
+  min-width: 90px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.picker-value:active,
+.picker-value:focus {
+  border-color: #007aff;
 }
 </style>
