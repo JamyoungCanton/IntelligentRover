@@ -47,25 +47,6 @@
       <text class="original-price">¥1,088 起/晚</text>
       <button class="discount">限时特惠</button>
     </view>
-    <view class="footer">
-      <view class="nav-btn">
-        <image src="/static/hotel-attctive/navigation.png" mode="aspectFill" class="nav-icon"></image>
-        <text class="nav-text">导航路线</text>
-      </view>
-      <view class="nav-btn">
-        <image src="/static/hotel-attctive/phone.png" mode="aspectFill" class="nav-icon"></image>
-        <text class="nav-text">联系电话</text>
-      </view>
-      <view class="nav-btn">
-        <image src="/static/hotel-attctive/start.png" mode="aspectFill" class="nav-icon"></image>
-        <text class="nav-text">收藏</text>
-      </view>
-      <view class="nav-btn">
-        <image src="/static/hotel-attctive/share.png" mode="aspectFill" class="nav-icon"></image>
-        <text class="nav-text">分享</text>
-      </view>
-    </view>
-
     <view class="hotel-facilities">
       <text class="section-title">酒店设施</text>
       <view class="facility-list">
@@ -158,12 +139,15 @@ let hotelData = ref({
 // 接收路由参数
 onLoad((options) => {
   hotelId.value = options.id
-  // console.log(hotelId.value);
+  console.log('onLoad userStore.token:', userStore.token);
+  console.log('onLoad 本地token:', uni.getStorageSync('token'));
   getDetailList()
 })
 
 // 获取酒店详情
 const getDetailList = () => {
+  console.log('getDetailList userStore.token:', userStore.token);
+  console.log('getDetailList 本地token:', uni.getStorageSync('token'));
   uni.request({
       url: `https://island.zhangshuiyi.com/island/front/product/accommodations/${hotelId.value}`,
       method: 'GET',
@@ -178,9 +162,10 @@ const getDetailList = () => {
      },
 })
 
-
-}
-
+console.log('userStore.token:', userStore.token);
+console.log('本地token:', uni.getStorageSync('token'));
+console.log('userStore.userInfo:', userStore.userInfo);
+console.log('本地userId:', uni.getStorageSync('userId'));
 
 // 跳转到订单页面并创建订单
 const creaOrder = (hotel) => {
@@ -189,63 +174,63 @@ const creaOrder = (hotel) => {
     return;
   }
   const orderData = {
-    contract: {
-      contractName: userStore.userInfo.realname || '',
-      contractPhone: userStore.userInfo.phone || ''
-    },
-    items: [
-      {
-        bookInfo: {
+  contract: {
+    contractName: userStore.userInfo.realname || '',
+    contractPhone: userStore.userInfo.phone || ''
+  },
+  items: [
+    {
+      bookInfo: {
           date: checkinDate.value, // 只传年月日
-          fullname: userStore.userInfo.realname || '',
-          idCardNo: userStore.userInfo.idCardNo || '',
-          idCardType: 'ID_CARD',
+        fullname: userStore.userInfo.realname || '',
+        idCardNo: userStore.userInfo.idCardNo || '',
+        idCardType: 'ID_CARD',
           schedule: '' // 不传时间段
-        },
+      },
         productId: hotel.id,
-        productType: "Accommodations",
-        quantity: 1
-      }
+      productType: "Accommodations",
+      quantity: 1
+    }
     ],
     travelStartDate: checkinDate.value,
     travelEndDate: checkinDate.value
   };
 
   uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
-    },
+  url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+  method: 'POST',
+  header: {
+    'Content-Type': 'application/json',
+    'X-Access-Token': userStore.token
+  },
     data: orderData,
-    success: (res) => {
-      console.log(res.data);
-      
-      if (res.data.code === 200) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
-        const orderSn = res.data.result.orderSn; // 获取订单号
-        // 可以跳转到订单详情页或其他页面
-        uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
-      } else {
-        uni.showToast({
-          title: res.data.message || '订单创建失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('创建订单失败', err);
+  success: (res) => {
+    console.log(res.data);
+    
+    if (res.data.code === 200) {
       uni.showToast({
-        title: '创建订单失败，请稍后重试',
+        title: '订单创建成功',
+        icon: 'success',
+        duration: 1500
+      });
+      const orderSn = res.data.result.orderSn; // 获取订单号
+      // 可以跳转到订单详情页或其他页面
+      uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+    } else {
+      uni.showToast({
+        title: res.data.message || '订单创建失败',
         icon: 'none'
       });
     }
-  });
+  },
+  fail: (err) => {
+    console.error('创建订单失败', err);
+    uni.showToast({
+      title: '创建订单失败，请稍后重试',
+      icon: 'none'
+    });
+  }
+});
 };
 
 const checkinDate = ref('');

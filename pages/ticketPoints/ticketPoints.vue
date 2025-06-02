@@ -95,7 +95,7 @@
               <uni-icons type="heart" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.likes }}</text>
               <uni-icons type="star" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.focus }}</text>
+              <text class="data-detail">{{ item.collect }}</text>
               <uni-icons type="chat" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.comments }}</text>
             </view>

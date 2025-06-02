@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <image class="logo" src="/static/chat/AI导游 (无字版).png" mode="aspectFit" />
+      <image class="logo" src="https://wuminghui.top:9000/wlmtsys/2025/06/02/c64d05235ba845b88ade471516742c80.png" mode="aspectFit" />
       <text class="title">海岛智游侠</text>
     </view>
 
@@ -14,7 +14,6 @@
           <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @blur="validateUsername" />
         </view>
         <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
-
         <view class="input-group">
           <uni-icons type="password" size="24" color="#999999" />
 
@@ -269,14 +268,15 @@ const handleWechatLogin = () => {
           success: (res) => {
             if (res.data.success && res.data.result && res.data.result.token) {
               userStore.setToken(res.data.result.token);
-              userStore.updateUserInfo(res.data.result);
+              uni.setStorageSync('token', res.data.result.token);
+              console.log('微信登录后存储的token:', res.data.result.token);
+              userStore.updateUserInfo(res.data.result.userInfo); // 只存userInfo
+              uni.setStorageSync('userId', res.data.result.userInfo.id); // 持久化userId
               // 显示登录成功提示，使用加载提示
               uni.showLoading({
                 title: '登录成功',
                 mask: true
               });
-              
-              // 延迟关闭加载提示并显示欢迎消息
               setTimeout(() => {
                 uni.hideLoading();
                 uni.showToast({
@@ -284,8 +284,6 @@ const handleWechatLogin = () => {
                   icon: 'success',
                   duration: 2000
                 });
-                
-                // 延迟跳转，让用户能看到欢迎消息
                 setTimeout(() => {
                   uni.reLaunch({ url: '/pages/index/index' });
                 }, 1000);

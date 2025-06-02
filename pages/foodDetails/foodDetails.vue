@@ -107,7 +107,7 @@
 			<view class="review-list">
 				<view class="review-item" v-for="(review, index) in reviews" :key="index">
 					<view class="reviewer-info">
-						<image class="avatar" :src="`/static/foodDetails/${review.avatar}`" mode="aspectFill"></image>
+						<image class="avatar" :src="review.avatar" mode="aspectFill"></image>
 						<view class="reviewer-name-rating">
 							<view class="reviewer-name">{{ review.name }}</view>
 							<view class="review-rating-date">
@@ -124,7 +124,7 @@
 					</view>
 					<view class="review-content">{{ review.content }}</view>
 					<view class="review-images" v-if="review.images">
-						<image :src="`/static/foodDetails/${review.images}`" mode="aspectFill"></image>
+						<image :src="review.images" mode="aspectFill"></image>
 					</view>
 				</view>
 			</view>
@@ -135,7 +135,7 @@
 			<view class="section-title">推荐菜品</view>
 			<scroll-view class="dishes-scroll" scroll-x enable-flex>
 				<view class="dish-item" v-for="(dish, index) in recommendedDishes" :key="index">
-					<image :src="`https://wuminghui.top:9000/travel/${dish.image}`" mode="aspectFill"></image>
+					<image :src="dish.image" mode="aspectFill"></image>
 					<view class="dish-name">{{ dish.name }}</view>
 					<view class="dish-desc">{{ dish.desc }}</view>
 					<view class="dish-price">¥{{ dish.price }}</view>
@@ -282,39 +282,39 @@ const staticTexts = ref({
 	// 用户评价相关文字
 	reviews: [
 		{
-			avatar: 'avatar1.jpg',
+			avatar: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/df90fbeb9bad4ae895a10deab1eeaa2c.jpg',
 			name: '李小姐',
 			date: '2024-01-15',
 			content: '海鲜非常新鲜，服务态度很好，环境也很干净，值得推荐！',
 			rating: 5,
-			images: 'review1.jpg'  // 添加图片字段
+			images: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/d1f51a32fb384ed79d5c788d931185b9.jpg'
 		},
 		{
-			avatar: 'avatar2.jpg',
+			avatar: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/38fc8a8cb33a4229b5fed00bdcedd7a9.jpg',
 			name: '张先生',
 			date: '2024-01-14',
 			content: '菜品味道不错，就是价格稍贵。总体来说还是很满意的。',
 			rating: 4,
-			images: null  // 对于没有图片的评论，设置为 null
+			images: null
 		}
 	]
 });
 
 const recommendedDishes = ref([
 	{
-		image: 'dish1.jpg',
+		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/32205ab6539049b79581d7080fb835d6.jpg',
 		name: '清蒸海斑',
 		desc: '新鲜海斑鱼，清蒸工艺',
 		price: 188
 	},
 	{
-		image: 'dish2.jpg',
+		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/7a9b523fe5804d3cbea93223c628a314.jpg',
 		name: '椒盐濑尿虾',
 		desc: '现捕濑尿虾，椒盐配方',
 		price: 98
 	},
 	{
-		image: 'dish3.jpg',
+		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/bfcbc05e156445198555de4204faf596.jpg',
 		name: '姜葱炒蟹',
 		desc: '新鲜花蟹，姜葱爆炒',
 		price: 138

@@ -59,7 +59,8 @@
             v-for="(img, idx) in attractionImages"
             :key="idx"
             :src="img"
-            mode="scaleToFill"
+            mode="aspectFill"
+            @click="previewImage(idx)"
           />
           <text v-if="!attractionImages.length" style="color:#999;font-size:14px;">暂无图片</text>
         </view>
@@ -150,9 +151,14 @@
       },
       success: (res) => {
         if (res.data.code === 200 && Array.isArray(res.data.result)) {
-          attractionImages.value = res.data.result;
+          // 如果返回的图片超过6张，随机选择6张
+          if (res.data.result.length > 6) {
+            const shuffled = [...res.data.result].sort(() => 0.5 - Math.random());
+            attractionImages.value = shuffled.slice(0, 6);
+          } else {
+            attractionImages.value = res.data.result;
+          }
           console.log('景点图片获取成功，数量：', attractionImages.value.length);
-          console.log('图片链接：', attractionImages.value);
         } else {
           attractionImages.value = [];
           console.log('景点图片获取失败，code:', res.data.code);
@@ -161,10 +167,17 @@
       fail: (err) => {
         attractionImages.value = [];
         console.log('景点图片接口请求失败', err);
-      },
-      complete: () => {
-        console.log('请求景点图片接口的ID:', id.value);
       }
+    });
+  };
+
+  // 预览图片
+  const previewImage = (index) => {
+    uni.previewImage({
+      urls: attractionImages.value,
+      current: index,
+      indicator: 'number',
+      loop: true
     });
   };
 
@@ -395,12 +408,13 @@ fail: (err) => {
   flex-wrap: wrap;
   justify-content: space-between;
   margin-top: 10px;
+  gap: 10px;
 }
 .attimg image {
-  width: 30%;
-  height: 100px;
-  margin-bottom: 10px;
+  width: calc(33.33% - 7px);
+  height: 200rpx;
   border-radius: 10px;
+  object-fit: cover;
 }
 .reviews {
   background-color: #fff;

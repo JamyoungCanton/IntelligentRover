@@ -24,14 +24,6 @@
             <text class="fee-name">价格</text>
             <text class="fee-value">¥{{ productDetail.price }}</text>
           </view>
-          <view class="fee-item">
-            <text class="fee-name">评分</text>
-            <text class="fee-value">{{ productDetail.score }}</text>
-          </view>
-          <view class="fee-item">
-            <text class="fee-name">已售数量</text>
-            <text class="fee-value">{{ productDetail.soldSum }}</text>
-          </view>
         </view>
       </view>
 
@@ -102,7 +94,7 @@
         </view>
         <view class="time-select-row">
           <text class="time-label">持续时间</text>
-          <text class="picker-value">12小时</text>
+          <text class="picker-value">10小时</text>
         </view>
       </view>
     </view>
@@ -133,12 +125,15 @@ const productDetail = ref({
 const remark = ref('');
 const selectedPayment = ref('wechat');
 const startDate = ref('');
-const minDate = ref('');
 const orderSn = ref('');
 
 onLoad((options) => {
   if (options.orderSn) orderSn.value = options.orderSn;
-  if (options.date) startDate.value = options.date;
+  if (options.date) {
+    // 格式化日期显示
+    const date = new Date(options.date);
+    startDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
   productDetail.value.title = options.title ? decodeURIComponent(options.title) : '';
   productDetail.value.price = options.price ? Number(options.price) : 0;
   productDetail.value.score = options.score ? Number(options.score) : 0;
@@ -150,31 +145,15 @@ const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 
-// 页面加载时设置最小可选日期为明天
-onMounted(() => {
-  const now = new Date();
-  now.setDate(now.getDate() + 1); // 明天
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  minDate.value = `${yyyy}-${mm}-${dd}`;
-});
-
 // 确认支付
 const handleConfirmPayment = async () => {
   if (!orderSn.value) {
     uni.showToast({ title: '订单号缺失', icon: 'none' });
     return;
   }
-  if (!startDate.value) {
-    uni.showToast({
-      title: '请选择订单开始时间',
-      icon: 'none'
-    });
-    return;
-  }
 
   try {
+    console.log('开始支付，订单号：', orderSn.value);
     const res = await uni.request({
       url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn.value}`,
       method: 'POST',
@@ -182,8 +161,8 @@ const handleConfirmPayment = async () => {
         'Content-Type': 'application/json',
         'X-Access-Token': userStore.token
       }
-      // 不要有 data 字段
     });
+
     console.log('支付返回：', res.data);
 
     if (res.statusCode === 200 && res.data && res.data.success) {
@@ -195,6 +174,7 @@ const handleConfirmPayment = async () => {
       uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });
     }
   } catch (error) {
+    console.error('支付异常：', error);
     uni.showToast({ title: '支付异常', icon: 'none' });
   }
 };
