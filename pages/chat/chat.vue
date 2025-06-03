@@ -322,7 +322,7 @@ const handleScroll = (e) => {
 <style>
 .container {
 	min-height: 100vh;
-	background-color: rgba(241, 252, 254);
+	background-color: #f6f7fa;
 	display: flex;
 	flex-direction: column;
 	position: relative;
@@ -330,14 +330,16 @@ const handleScroll = (e) => {
 
 .header {
 	padding: 20px;
-	background-color: rgba(241, 252, 254);
+	background-color: #fff;
 	z-index: 10;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+	border-radius: 0 0 18rpx 18rpx;
 }
 
 .header-top {
 	display: flex;
 	flex-direction: row; 
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 	align-items: center;
 }
 
@@ -346,6 +348,7 @@ const handleScroll = (e) => {
 	height: 20px;
 	display: block;
 }
+
 .header-top .logo-title {
 	width: 120px;
 	height: 20px;
@@ -354,14 +357,17 @@ const handleScroll = (e) => {
 
 .header-center {
 	background-color: #fff;
-	border-radius: 15px;
-	padding: 15px;
-	font-size: 14px;
-	margin-bottom: 15px;
+	border-radius: 18rpx;
+	padding: 24rpx;
+	font-size: 28rpx;
+	margin-bottom: 20px;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
 
 .header-center-text {
-	margin-bottom: 12px;
+	margin-bottom: 24rpx;
+	color: #222;
+	line-height: 1.6;
 }
 
 .header-center-function {
@@ -369,7 +375,7 @@ const handleScroll = (e) => {
 	align-items: center;
 	flex-direction: row;	
 	justify-content: space-between;
-	padding: 10px;
+	padding: 16rpx;
 	width: 100%;
 }
 
@@ -377,52 +383,60 @@ const handleScroll = (e) => {
 	display: flex;
 	align-items: center;
 	flex-direction: column;	
-	padding: 0px;
+	padding: 12rpx;
+	transition: transform 0.2s ease;
+}
+
+.function-item:active {
+	transform: scale(0.95);
 }
 
 .function-item image {
-	width: 30px;
-	height: 30px;
+	width: 80rpx;
+	height: 80rpx;
 }
 
 .function-item text {
-	margin-top: 15px;
-	font-size: 12px;
-	width: 50px;
-	color: #333;
+	margin-top: 16rpx;
+	font-size: 24rpx;
+	width: 120rpx;
+	color: #666;
+	text-align: center;
 }
 
 .header-bottom {
-	padding: 10px;
+	padding: 10rpx;
 }
 
 .header-span {
 	background-color: #fff;
-	border-radius: 10px;
-	padding: 10px;
-	width: 50%;
+	border-radius: 14rpx;
+	padding: 16rpx 24rpx;
+	width: fit-content;
 	border: none;
+	font-size: 28rpx;
+	color: #3b7cff;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
 
 .scroll-container {
 	flex: 1;
 	overflow-y: auto;
-	padding: 0 20px;
-	padding-bottom: 150px; /* 增加底部内边距，确保内容不被遮挡 */
+	padding: 0 32rpx;
+	padding-bottom: 150rpx;
 	margin-bottom: 0;
-	height: calc(100vh - 350px); /* 设置固定高度，减去header和bottom的高度 */
+	height: calc(100vh - 350px);
 }
 
 .chat-container {
 	width: 100%;
 	min-height: 100%;
-	padding-bottom: 20px; /* 添加一些底部间距 */
+	padding-bottom: 40rpx;
 }
 
-/* 聊天内容部分 */
 .message-item {
-	margin: 15px 0;
-	position: relative; /* 确保消息定位正确 */
+	margin: 24rpx 0;
+	position: relative;
 }
 
 .user-message {
@@ -438,80 +452,86 @@ const handleScroll = (e) => {
 .message-content,
 .typing-content {
 	max-width: 70%;
-	padding: 12px 18px;
-	border-radius: 20px;
+	padding: 24rpx 32rpx;
+	border-radius: 18rpx;
 	line-height: 1.6;
+	font-size: 28rpx;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
 
 .user-message .message-content {
-	background-color: #4285f4;
+	background-color: #3b7cff;
 	color: white;
 	align-self: flex-end;
 }
 
 .ai-message .typing-content {
-	background-color: #e5f5ff;
-	color: #333;
+	background-color: #fff;
+	color: #222;
 	position: relative;
 }
 
-/* 打字机光标效果 */
-.typing-content::after {
-	display: none; /* 隐藏光标 */
-}
-
-.typing .typing-content::after {
-	display: none; /* 隐藏光标 */
-}
-
-/* 底输入框 */
 .bottom {
 	position: fixed;
 	bottom: 50px;
 	left: 0;
 	right: 0;
-	padding: 10px 20px;
-	background-color: rgba(241, 252, 254);
+	padding: 20rpx 32rpx;
+	background-color: #fff;
 	z-index: 100;
-	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* 添加轻微阴影 */
+	box-shadow: 0 -2rpx 16rpx rgba(0,0,0,0.05);
 }
-.voiceMessage{
+
+.voiceMessage {
 	display: flex;
 	align-items: center;
 	flex-direction: row;
-	gap: 10px;
+	gap: 20rpx;
 }
+
 .voice-icon {
-	width: 40px;
-	height: 40px;
+	width: 80rpx;
+	height: 80rpx;
 	cursor: pointer;
 	transition: transform 0.2s ease;
 }
-.voice-icon:hover {
-	transform: scale(1.1);
+
+.voice-icon:active {
+	transform: scale(0.95);
 }
+
 .input-container {
 	display: flex;
 	align-items: center;
-	border: 1.7px solid rgba(97, 209, 255);
-	padding: 5px 15px;
-	border-radius: 20px;
+	border: 2rpx solid #3b7cff;
+	padding: 16rpx 24rpx;
+	border-radius: 36rpx;
 	flex: 1;
+	background: #fff;
+	box-shadow: 0 2rpx 8rpx rgba(59,124,255,0.08);
 }
+
 .input-container input {
 	flex: 1;
 	border: none;
 	outline: none;
 	background: transparent;
-	font-size: 14px;
+	font-size: 28rpx;
+	color: #222;
 }
+
+.input-container input::placeholder {
+	color: #999;
+}
+
 .send-icon {
-	width: 35px;
-	height: 35px;
+	width: 70rpx;
+	height: 70rpx;
 	cursor: pointer;
 	transition: transform 0.2s ease;
 }
-.send-icon:hover {
-	transform: scale(1.1);
+
+.send-icon:active {
+	transform: scale(0.95);
 }
 </style>

@@ -65,6 +65,7 @@ const goProfile = () => {
 const goPassword = () => {
   uni.navigateTo({ url: '/pages/my/changePassword' });
 };
+
 </script>
 
 <style scoped>
