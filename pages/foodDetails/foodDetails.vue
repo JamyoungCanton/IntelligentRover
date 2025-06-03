@@ -98,35 +98,59 @@
 		<!-- 用户评价 -->
 		<view class="user-reviews">
 			<view class="review-header">
-				<view class="review-title">用户评价 (1,234)</view>
-				<view class="view-all" @click="viewAllReviews">
-					<text>查看全部 ></text>
-				</view>
+				<view class="review-title">用户评价 ({{ comments.length }})</view>
 			</view>
 
 			<view class="review-list">
-				<view class="review-item" v-for="(review, index) in reviews" :key="index">
-					<view class="reviewer-info">
-						<image class="avatar" :src="review.avatar" mode="aspectFill"></image>
-						<view class="reviewer-name-rating">
-							<view class="reviewer-name">{{ review.name }}</view>
-							<view class="review-rating-date">
-								<view class="review-rating">
-									<view class="star-rating">
-										<template v-for="(star, index) in renderStars(review.rating)" :key="index">
-											<uni-icons :type="star.type" size="16" :color="star.color"></uni-icons>
-										</template>
-									</view>
-								</view>
-								<view class="review-date">{{ review.date }}</view>
-							</view>
-						</view>
+				<!-- 添加评论区域 -->
+				<view class="comment-input-area">
+					<view class="comment-user-info">
+						<image :src="userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
+						<text class="user-name">{{ userInfo.realname || userInfo.username || '游客' }}</text>
 					</view>
-					<view class="review-content">{{ review.content }}</view>
-					<view class="review-images" v-if="review.images">
-						<image :src="review.images" mode="aspectFill"></image>
+					<textarea
+						v-model="newComment"
+						class="comment-textarea"
+						placeholder="写下你的评论..."
+						:maxlength="200"
+					/>
+					<view class="comment-footer">
+						<text class="word-count">{{ newComment.length }}/200</text>
+						<button 
+							class="submit-btn" 
+							:disabled="!newComment.trim()"
+							@click="submitComment"
+						>发表评论</button>
 					</view>
 				</view>
+
+				<!-- 评论列表 -->
+				<view v-if="!comments || comments.length === 0" class="no-comments">
+					<uni-icons type="chat" size="24" color="#999"></uni-icons>
+					<text>暂无评论，快来发表第一条评论吧！</text>
+				</view>
+				<template v-else>
+					<view class="review-item" v-for="(comment, index) in displayedComments" :key="index">
+						<view class="review-user">
+							<image :src="comment.avatar" class="review-avatar"></image>
+							<view class="review-user-info">
+								<text class="review-username">{{ comment.userName }}</text>
+								<text class="review-time">{{ comment.createTime }}</text>
+							</view>
+						</view>
+						<text class="review-content">{{ comment.content }}</text>
+					</view>
+					
+					<!-- 显示更多按钮 -->
+					<view v-if="comments.length > 3" class="show-more" @click="toggleComments">
+						<text>{{ showAllComments ? '收起' : `显示更多(${comments.length - 3}条)` }}</text>
+						<uni-icons 
+							:type="showAllComments ? 'top' : 'bottom'" 
+							size="14" 
+							color="#3B82F6"
+						></uni-icons>
+					</view>
+				</template>
 			</view>
 		</view>
 
@@ -162,7 +186,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
@@ -479,6 +503,135 @@ const bookNow = () => {
 	});
 };
 
+// 在 script setup 中添加评论相关的状态
+const comments = ref([]);
+const newComment = ref('');
+const showAllComments = ref(false);
+
+// 添加获取评论列表的方法
+const getComments = async () => {
+	try {
+		console.log('开始获取评论，餐厅ID:', id.value);
+		const res = await uni.request({
+			url: `https://island.zhangshuiyi.com/island/comments/${id.value}`,
+			method: 'GET',
+			header: {
+				'Content-Type': 'application/json',
+				'X-Access-Token': userStore.token
+			}
+		});
+		
+		console.log('评论接口返回数据:', res.data);
+		
+		if (res.data.success) {
+			if (res.data.result && Array.isArray(res.data.result)) {
+				comments.value = res.data.result.map(comment => ({
+					id: comment.id,
+					content: comment.content,
+					createTime: comment.createTime,
+					userName: comment.userVO?.realname || comment.userVO?.username || '匿名用户',
+					avatar: comment.userVO && comment.userVO.avatar
+						? (comment.userVO.avatar.startsWith('http') ? comment.userVO.avatar : 'https://wuminghui.top:9000/' + comment.userVO.avatar.replace(/^\/+/, ''))
+						: (userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'),
+					rating: 5,
+					children: comment.children || []
+				}));
+			} else {
+				comments.value = [];
+			}
+			console.log('处理后的评论列表:', comments.value);
+		} else {
+			console.error('获取评论失败:', res.data.message);
+			uni.showToast({
+				title: res.data.message || '获取评论失败',
+				icon: 'none'
+			});
+		}
+	} catch (error) {
+		console.error('获取评论异常：', error);
+		uni.showToast({
+			title: '获取评论失败',
+			icon: 'none'
+		});
+	}
+};
+
+// 添加提交评论的方法
+const submitComment = async () => {
+	if (!newComment.value.trim()) {
+		uni.showToast({
+			title: '评论内容不能为空',
+			icon: 'none'
+		});
+		return;
+	}
+
+	if (!userStore.token) {
+		uni.showToast({
+			title: '请先登录',
+			icon: 'none'
+		});
+		return;
+	}
+
+	try {
+		const commentData = {
+			content: newComment.value,
+			postId: id.value,
+			fatherId: '',
+			receiverId: '',
+			repliedCommentId: ''
+		};
+
+		console.log('提交评论数据:', commentData);
+
+		const res = await uni.request({
+			url: 'https://island.zhangshuiyi.com/island/comments/save',
+			method: 'POST',
+			header: {
+				'Content-Type': 'application/json',
+				'X-Access-Token': userStore.token
+			},
+			data: commentData
+		});
+
+		console.log('评论提交响应:', res.data);
+
+		if (res.data.success) {
+			uni.showToast({
+				title: '评论成功',
+				icon: 'success'
+			});
+			newComment.value = '';
+			getComments();
+		} else {
+			uni.showToast({
+				title: res.data.message || '评论失败',
+				icon: 'none'
+			});
+		}
+	} catch (error) {
+		console.error('评论提交异常：', error);
+		uni.showToast({
+			title: '评论失败，请稍后重试',
+			icon: 'none'
+		});
+	}
+};
+
+// 添加计算属性来控制显示的评论数量
+const displayedComments = computed(() => {
+	if (showAllComments.value) {
+		return comments.value;
+	}
+	return comments.value.slice(0, 3);
+});
+
+// 添加切换显示状态的方法
+const toggleComments = () => {
+	showAllComments.value = !showAllComments.value;
+};
+
 onLoad((options) => {
 	console.log('饮食详情页面收到的参数:', options);
 	
@@ -510,6 +663,7 @@ onLoad((options) => {
 
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
+	getComments();
 });
 
 onMounted(() => {
@@ -635,6 +789,9 @@ const handleImageError = (e) => {
 };
 
 const imageLoading = ref(true);
+
+// 在 script setup 中添加
+const userInfo = computed(() => userStore.userInfo || {});
 </script>
 
 <style scoped>
@@ -904,69 +1061,149 @@ const imageLoading = ref(true);
 /* 用户评价 */
 .user-reviews {
 	background-color: #fff;
-	padding: 15px;
-	margin-bottom: 10px;
+	padding: 20rpx;
+	margin: 20rpx;
+	border-radius: 12rpx;
+	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
 .review-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 15px;
+	margin-bottom: 20rpx;
 }
 
-.view-all {
-	color: #007AFF;
-}
-
-.reviewer-info {
-	display: flex;
-	align-items: center;
-	margin-bottom: 10px;
-	margin-top: 20px;
-}
-
-.avatar {
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	margin-right: 10px;
-}
-
-.reviewer-name-rating {
-	margin-left: -10px;
-}
-
-.reviewer-name {
+.review-title {
+	font-size: 32rpx;
 	font-weight: bold;
-	margin-left: 10px;
+	color: #333;
 }
 
-.review-rating {
-	margin-left: 10px;
+.no-comments {
+	text-align: center;
+	padding: 40rpx 30rpx;
+	color: #999;
+	font-size: 26rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16rpx;
+	background-color: #f8f9fa;
+	border-radius: 12rpx;
+	margin: 20rpx 0;
 }
 
-.review-date {
-	margin-left: 10px;
+.comment-input-area {
+	background-color: #f8f9fa;
+	border-radius: 12rpx;
+	padding: 20rpx;
+	margin-bottom: 30rpx;
+}
+
+.comment-user-info {
+	display: flex;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
+
+.user-avatar {
+	width: 60rpx;  /* 减小头像尺寸 */
+	height: 60rpx;
+	border-radius: 50%;
+	margin-right: 16rpx;
+}
+
+.user-name {
+	font-size: 26rpx;  /* 减小字体大小 */
+	color: #333;
+	font-weight: 500;
+}
+
+.comment-textarea {
+	width: 100%;
+	height: 160rpx;
+	background-color: #fff;
+	border-radius: 8rpx;
+	padding: 20rpx;
+	font-size: 28rpx;
+	box-sizing: border-box;
+	border: 1px solid #e5e5e5;
+	margin-bottom: 20rpx;
+}
+
+/* 评论列表样式 */
+.review-item {
+	padding: 20rpx 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.review-user {
+	display: flex;
+	align-items: center;
+	margin-bottom: 16rpx;
+}
+
+.review-avatar {
+	width: 60rpx;  /* 减小头像尺寸 */
+	height: 60rpx;
+	border-radius: 50%;
+	margin-right: 16rpx;
+}
+
+.review-user-info {
+	flex: 1;
+}
+
+.review-username {
+	font-size: 26rpx;  /* 减小字体大小 */
+	color: #333;
+	font-weight: 500;
+	margin-bottom: 4rpx;
+}
+
+.review-time {
+	font-size: 22rpx;  /* 减小字体大小 */
 	color: #999;
 }
 
 .review-content {
+	font-size: 28rpx;
+	color: #333;
 	line-height: 1.6;
-	margin-bottom: 10px;
+	margin-left: 76rpx;  /* 调整内容缩进，与头像对齐 */
 }
 
-.review-images {
-	width: 100px;
-	height: 100px;
-	border-radius: 5px;
-	overflow: hidden;
+.comment-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 16rpx;
 }
 
-.review-images image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+.word-count {
+	font-size: 24rpx;
+	color: #999;
+}
+
+.submit-btn {
+	background-color: #3B82F6;
+	color: #fff;
+	font-size: 26rpx;
+	padding: 8rpx 32rpx;
+	border-radius: 8rpx;
+	border: none;
+}
+
+.submit-btn[disabled] {
+	background-color: #ccc;
+}
+
+.show-more {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20rpx 0;
+	color: #3B82F6;
+	font-size: 26rpx;
+	gap: 8rpx;
 }
 
 /* 推荐菜品 */
@@ -1046,7 +1283,7 @@ const imageLoading = ref(true);
 	background-color: #007AFF;
 	color: white;
 	border: none;
-order-radius: 10px;
+	order-radius: 10px;
 	/* 减小圆角半径，使其更接近长方形 */
 	padding: 15px 0;
 	font-size: 16px;

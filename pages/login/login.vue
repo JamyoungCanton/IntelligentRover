@@ -265,18 +265,35 @@ const handleWechatLogin = () => {
           header: { 'Content-Type': 'application/json' },
           data: { code: loginRes.code },
           success: (res) => {
-            if (res.data.success && res.data.result && res.data.result.token) {
-              userStore.setToken(res.data.result.token);
-              userStore.updateUserInfo(res.data.result.userInfo);
-              uni.setStorageSync('token', res.data.result.token);
-              console.log('微信登录后存储的token:', res.data.result.token);
-              userStore.updateUserInfo(res.data.result.userInfo);
-              uni.setStorageSync('userId', res.data.result.userInfo.id); // 持久化userId
-              // 显示登录成功提示，使用加载提示
+            console.log('微信登录返回数据:', res.data);
+            
+            if (res.data.success && res.data.result) {
+              const { id, token, username } = res.data.result;
+              
+              // 存储 token
+              if (token) {
+                userStore.setToken(token);
+                uni.setStorageSync('token', token);
+              }
+
+              // 存储用户信息
+              const userInfo = {
+                id,
+                username,
+                // 其他必要的用户信息字段
+              };
+              
+              userStore.updateUserInfo(userInfo);
+              if (id) {
+                uni.setStorageSync('userId', id);
+              }
+
+              // 显示登录成功提示
               uni.showLoading({
                 title: '登录成功',
                 mask: true
               });
+
               setTimeout(() => {
                 uni.hideLoading();
                 uni.showToast({
@@ -296,7 +313,8 @@ const handleWechatLogin = () => {
               });
             }
           },
-          fail: () => {
+          fail: (err) => {
+            console.error('微信登录请求失败:', err);
             uni.showToast({ 
               title: '网络连接失败，请检查网络后重试', 
               icon: 'none',
@@ -312,7 +330,8 @@ const handleWechatLogin = () => {
         });
       }
     },
-    fail: function () {
+    fail: function (err) {
+      console.error('微信登录失败:', err);
       uni.showToast({ 
         title: '微信登录失败，请稍后重试', 
         icon: 'none',
