@@ -97,8 +97,9 @@ const gridItems = ref([
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/712db376d9ae469c829f04a5087a240a.png',
-    text: '待出行',
+    img: 'https://wuminghui.top:9000/travel/activityCollect.png',
+    text: '活动收藏',
+    onClick: 'goActivityCollect'
   },
   {
     img: 'https://wuminghui.top:9000/travel/customerService.png',
@@ -127,6 +128,11 @@ const handleGridItemClick = (item) => {
     uni.navigateTo({
       url: '/pages/post/mypost',
     })
+  }
+  if (item.onClick === 'goActivityCollect') {
+    uni.navigateTo({
+      url: '/pages/activityCollect/activityCollect'
+    });
   }
 }
 // 退出登录页

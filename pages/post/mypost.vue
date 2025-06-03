@@ -27,7 +27,9 @@
         v-for="post in posts" 
         :key="post.id"
       >
-        <text class="delete-text" @tap.stop="handleDelete(post.id)">删除</text>
+        <view class="delete-btn" @tap.stop="handleDelete(post.id)">
+          <uni-icons type="trash" size="22" color="#fff" />
+        </view>
 
         <!-- 点击整个卡片跳详情 -->
         <view @tap="toDetail(post.id)">
@@ -56,7 +58,7 @@
               <uni-icons type="heart" size="18" color="#999" />
               <text class="data-detail">{{ post.likes ?? 0 }}</text>
               <uni-icons type="star" size="18" color="#999" />
-              <text class="data-detail">{{ post.focus ?? 0 }}</text>
+              <text class="data-detail">{{ post.collect ?? 0 }}</text>
               <uni-icons type="chat" size="18" color="#999" />
               <text class="data-detail">{{ post.comments ?? 0 }}</text>
             </view>
@@ -163,7 +165,7 @@ function switchTab(tab: 'my' | 'collect') {
   if (tab === 'collect') {
     uni.redirectTo({ url: '/pages/collectpost/collectpost' });
   } else {
-    uni.redirectTo({ url: '/pages/post/mypost' }); // 替换为你实际的“我的发布”路径
+    uni.redirectTo({ url: '/pages/post/mypost' }); // 替换为你实际的"我的发布"路径
   }
 }
 
@@ -261,12 +263,23 @@ onMounted(fetchMyPosts);
   border-radius: 16rpx;
   box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
 }
-.delete-text {
+.delete-btn {
   position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-  font-size: 28rpx;
-  color: #f56c6c;
+  top: 12rpx;
+  right: 12rpx;
+  width: 44rpx;
+  height: 44rpx;
+  background: rgba(255, 77, 79, 0.85); /* 红色半透明 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2rpx 8rpx rgba(255,77,79,0.12);
+  transition: background 0.2s;
+}
+.delete-btn:active {
+  background: #ff4d4f;
 }
 .post-header {
   display: flex;

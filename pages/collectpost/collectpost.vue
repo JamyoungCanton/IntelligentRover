@@ -66,7 +66,7 @@
               </view>
               <view class="right-data">
                 <uni-icons type="star" size="18" color="#999" />
-                <text class="data-detail">{{ post.focus ?? 0 }}</text>
+                <text class="data-detail">{{ post.collect ?? post.focus ?? 0 }}</text>
               </view>
               <view class="right-data">
                 <uni-icons type="chat" size="18" color="#999" />
@@ -114,8 +114,10 @@ async function fetchCollectPosts() {
       }
     });
 
+    console.log('收藏接口返回：', res.data);
+
     if (res.statusCode === 200 && res.data.success) {
-      posts.value = res.data.result?.list || res.data.result?.records || [];
+      posts.value = Array.isArray(res.data.result?.result) ? res.data.result.result : [];
     } else {
       uni.showToast({ 
         title: res.data.message || '获取收藏失败', 

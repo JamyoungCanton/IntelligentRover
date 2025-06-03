@@ -199,9 +199,51 @@ const goToRegistration = (id) => {
   });
 };
 
-const toggleFavorite = () => {
-  activity.isFavorite = !activity.isFavorite;
-  // 这里可加本地存储或接口调用
+const toggleFavorite = async () => {
+  // 1. 切换本地收藏状态（可选，建议等接口成功后再切换）
+  // activity.isFavorite = !activity.isFavorite;
+
+  // 2. 组装请求体
+  const operation = activity.isFavorite ? 0 : 1; // 当前已收藏则取消，否则收藏
+  const dto = {
+    operation,
+    productId: activity.id,
+    productName: activity.title,
+    priductImage: activity.image,
+    productType: 'FeaturedRoute', // 或其他类型，按实际业务
+    userId: userStore.userInfo?.id || ''
+  };
+
+  // 3. 发起请求
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/island/productCollect/collectProduct',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: dto,
+    success: (res) => {
+      if (res.data.code === 200 && res.data.success) {
+        activity.isFavorite = !activity.isFavorite;
+        uni.showToast({
+          title: operation === 1 ? '已收藏' : '已取消收藏',
+          icon: 'success'
+        });
+      } else {
+        uni.showToast({
+          title: res.data.message || '操作失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      uni.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
+    }
+  });
 };
 
 // 调用接口获取活动详细信息
