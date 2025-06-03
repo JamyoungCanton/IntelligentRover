@@ -1,119 +1,49 @@
 <template>
-  <view class="container">
-
-
-    <!-- 顶部区域 -->
-    <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
-      <!-- <view class="header"> -->
-
-      <!-- 顶部导航 -->
-      <view class="nav-bar fixed-top flex-row items-center px-32" :style="{ paddingTop: safeAreaInsets.top + 'px' }"
-        style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999;">
-        <view class="flex-row items-center text-white">
-          <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
-          <text class="nav-title"
-            style="color: #FFFFFF; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;">海岛智游侠</text>
-          <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
-        </view>
-      </view>
-
+  <view class="index-container">
+    <!-- 顶部导航栏 -->
+    <view class="nav-bar-wrapper" :style="{ paddingTop: `${statusBarHeight}px` }">
+      <!-- 顶部导航栏标题 -->
+      <view class="nav-bar-title" :style="{ paddingTop: safeAreaInsets.top + 'px' }">海岛智游侠</view>
       <!-- 轮播图 -->
-      <swiper class="banner-swiper" :autoplay="true" :interval="3000" :circular="true">
-        <swiper-item v-for="(item, index) in bannerList" :key="index">
-          <image class="banner" :src="item" mode="widthFix"></image>
+      <swiper class="banner-swiper" :autoplay="true" :interval="3000" circular>
+        <swiper-item v-for="item in bannerList" :key="item">
+          <image class="banner-item" :src="item" mode="widthFix"></image>
         </swiper-item>
       </swiper>
-
-      <!-- <view class="logo">
-      <image class="logo-img" src="https://wuminghui.top:9000/travel/LOGO.png"></image>
-      <text class="logo-text">海岛智游侠</text>
-      </view> -->
     </view>
 
     <!-- 主要内容区 -->
-    <view class="content-box">
-
+    <view class="index-main-wrapper">
       <!-- 通知栏 -->
-      <view class="notice">
-        <view class="notice-content">
-          <view class="notice-icon">通知</view>
-          <view class="notice-text-container">
-            <view class="notice-text">欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~</view>
-          </view>
+      <view class="notice-wrapper">
+        <view class="notice-tag">通知</view>
+        <view class="notice-text-container">
+          <view class="notice-text">欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~</view>
         </view>
       </view>
 
       <!-- 图标导航 -->
-      <view class="icon-nav">
-        <view class="icon-item" @click="navigateTo('景点攻略')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-景点攻略.svg"></image>
+      <view class="icon-nav-wrapper">
+        <view v-for="item in navButtonList" :key="item.name" class="icon-item" @click="toPage(item.path)">
+          <view class="icon-btn">
+            <image :src="item.icon"></image>
           </view>
-          <text class="icon-text">景点攻略</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('船票预订')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-船票预订.svg"></image>
-          </view>
-          <text class="icon-text">船票预订</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('美食推荐')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-美食推荐.svg"></image>
-          </view>
-          <text class="icon-text">美食推荐</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('酒店住宿')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-酒店住宿.svg"></image>
-          </view>
-          <text class="icon-text">酒店住宿</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('停车收费')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-停车收费.svg"></image>
-          </view>
-          <text class="icon-text">停车收费</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('一日畅游')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-一日畅游.svg"></image>
-          </view>
-          <text class="icon-text">一日畅游</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('社区互动')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-社区互动.svg"></image>
-          </view>
-          <text class="icon-text">社区互动</text>
-        </view>
-        <view class="icon-item" @click="navigateTo('更多服务')">
-          <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-更多服务.svg"></image>
-          </view>
-          <text class="icon-text">更多服务</text>
+          <text class="icon-text">{{ item.name }}</text>
         </view>
       </view>
 
-      <!-- 会员充值卡片 -->
-      <!-- <view class="member-card" @click="navigateToMembership">
-        <view class="member-card-left">
-          <view class="member-title">会员专享</view>
-          <view class="member-desc">享受更多折扣与特权</view>
-        </view>
-        <view class="member-btn">立即充值</view>
-      </view> -->
-
       <!-- 热门活动 -->
-      <view class="section">
-        <view class="section-header">
-          <text class="section-title">热门活动</text>
-          <text class="section-more" @click="viewMore('热门活动')">查看更多 ></text>
-        </view>
-        <view class="activity-list">
-          <view class="activity-item" v-for="activity in activities" :key="activity.id"
-            @click="navigateToActivity(activity.id)">
-            <image class="activity-img" :src="activity.image"></image>
+      <view class="section-wrapper">
+        <view class="section-title">热门活动</view>
+        <view class="section-more" @click="viewMore('热门活动')">查看更多 ></view>
+      </view>
+      <view class="activity-wrapper">
+        <template v-if="!activityLoading">
+          <view class="activity-card" v-for="activity in activities" :key="activity.id"
+            @click="toActivity(activity.id)">
+            <view class="activity-img">
+              <image :src="activity.image"></image>
+            </view>
             <view class="activity-info">
               <text class="activity-name">{{ activity.name }}</text>
               <view class="activity-rating">
@@ -121,61 +51,76 @@
                 <text class="comments">{{ activity.comments }}</text>
               </view>
               <view class="price-container">
-                <text class="discount-price">优惠价 ¥{{ activity.discountPrice }}</text>
-                <text class="original-price">¥{{ activity.originalPrice }}</text>
+                <text class="original-price">优惠价 ¥{{ activity.discountPrice }}</text>
+                <text class="discount-price">¥{{ activity.originalPrice }}</text>
               </view>
             </view>
           </view>
-        </view>
+        </template>
+        <template v-else>
+          <uv-skeletons :loading="activityLoading" :skeleton="activitySkeleton"></uv-skeletons>
+        </template>
       </view>
+
 
       <!-- 精选路线 -->
-      <view class="section">
-        <view class="section-header">
-          <text class="section-title">精选路线</text>
-          <text class="section-more" @click="viewMore('精选路线')">查看更多 ></text>
-        </view>
-        <view class="route-item" @click="navigateToRoute(1)">
-          <view class="route-hot-tag">
-            <image class="hot-img" src="https://wuminghui.top:9000/travel/角标-推荐.svg"></image>
-          </view>
-          <image class="route-img" src="https://wuminghui.top:9000/travel/首页-精选路线.jpg"></image>
-          <view class="route-info">
-            <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
-            <view class="route-rating">
-              <text class="rating">4.7分</text>
-              <text class="comments"> 1205条评论</text>
-            </view>
-            <text class="route-price">¥688.00起</text>
-          </view>
-        </view>
+      <!-- <view class="section-wrapper">
+        <view class="section-title">精选路线</view>
+        <view class="section-more" @click="viewMore('精选路线')">查看更多 ></view>
       </view>
+      <view class="route-item" @click="navigateToRoute(1)">
+        <view class="route-hot-tag">
+          <image class="hot-img" src="https://wuminghui.top:9000/travel/角标-推荐.svg"></image>
+        </view>
+        <image class="route-img" src="https://wuminghui.top:9000/travel/首页-精选路线.jpg"></image>
+        <view class="route-info">
+          <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
+          <view class="route-rating">
+            <text class="rating">4.7分</text>
+            <text class="comments"> 1205条评论</text>
+          </view>
+          <text class="route-price">¥688.00起</text>
+        </view>
+      </view> -->
 
       <!-- 景点攻略部分 -->
-      <view class="spot-section">
-        <view class="tabs">
-          <view class="tab" :class="{ active: activeTab === '景点攻略' }" @click="switchTab('景点攻略')">景点攻略</view>
-          <view class="tab" :class="{ active: activeTab === '酒店住宿' }" @click="switchTab('酒店住宿')">酒店住宿</view>
-          <view class="tab" :class="{ active: activeTab === '美食推荐' }" @click="switchTab('美食推荐')">美食推荐</view>
-        </view>
-
-        <view class="spot-list">
-          <view class="spot-item" v-for="(spot, index) in visibleSpots" :key="index"
-            @click="navigateToSpot(activeTab, spot.id)">
-            <image class="spot-img"
-              :src="spot.image || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png'"></image>
-            <view class="spot-info">
-              <view class="spot-name-row">
-                <text class="spot-name">{{ spot.name }}</text>
-                <text class="spot-rating">{{ spot.rating }}</text>
+      <view class="section-wrapper mb-30">
+        <uv-tabs :list="tabList" @click="handleChangeTab" :lineColor="themeColor" :scrollable="false"
+          :activeStyle="{ color: '#303133', fontWeight: 'bold', transform: 'scale(1.05)' }"></uv-tabs>
+      </view>
+      <view v-if="!spotLoading" class="spot-wrapper">
+        <view class="spot-item" v-for="spot in spotList" :key="spot.id" @click="navigateToSpot(activeTab, spot.id)">
+          <image class="spot-img" :src="spot.imageUrl ? spot.imageUrl : defaultImage"></image>
+          <view class="spot-info">
+            <view class="spot-name">{{ spot.name }} <uv-tags v-if="spot.type" :text="spot.type" size="mini" key="" plain
+                plainFill />
+            </view>
+            <template v-if="activeTab == '景点攻略'">
+              <view class="spot-desc">
+                <uv-icon name="map" :top="1" :size="12"></uv-icon> <text class="mr-20">{{ spot.location }}</text>
+                <uv-icon name="clock" :top="1" :size="12"></uv-icon> <text>{{ spot.time }}</text>
               </view>
-              <view class="spot-price-row">
-                <text class="spot-price">{{ spot.price }}</text>
-                <text class="spot-comments">{{ spot.comments }}</text>
+              <view class="spot-desc" v-html="spot.description"></view>
+            </template>
+            <template v-if="activeTab == '酒店住宿'">
+              <view class="spot-desc">
+                <uv-icon name="phone" :top="2" :size="12"></uv-icon> <text>{{ spot.bookingmethod }}</text>
               </view>
+            </template>
+            <template v-if="activeTab == '美食推荐'">
+              <view class="spot-desc">
+                <uv-icon name="map" :top="1" :size="12"></uv-icon> <text class="mr-20">{{ spot.address }}</text>
+                <uv-icon name="clock" :top="1" :size="12"></uv-icon> <text>{{ spot.time }}</text>
+              </view>
+              <view class="spot-desc" v-html="spot.description"></view>
+            </template>
+            <view class="spot-rating">
+              <uv-rate v-model="spot.rating" :size="14" activeColor="#ffb800" allowHalf></uv-rate>
+              <text class="spot-price">{{ spot.price }}</text>
             </view>
           </view>
         </view>
+
         <!-- 注释掉展开更多按钮但保留代码 -->
         <!-- <view class="expand-btn" @click="toggleExpand">
           <text>{{ isExpanded ? '收起' : '展开更多' }}</text>
@@ -183,6 +128,9 @@
             :src="isExpanded ? 'https://wuminghui.top:9000/travel/up.png' : 'https://wuminghui.top:9000/travel/down.png'">
           </image>
         </view> -->
+      </view>
+      <view v-else class="spot-wrapper" style="margin: 0 20rpx;">
+        <uv-skeletons :loading="spotLoading" :skeleton="spotSkeleton"></uv-skeletons>
       </view>
     </view>
 
@@ -203,191 +151,184 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useUserStore } from '@/store/modules/user';
+// ---------------- import ----------------
+import { ref, computed, onMounted, reactive } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import Tabbar from '../Tabbar/Tabbar.vue';
-
-
+import request from '@/utils/request.js'; // 导入请求函数
+// ---------------- setup ----------------
+onShow(() => {
+  handleGetActivityList();
+  handleGetSpotsList('景点攻略'); // 默认加载景点数据
+});
+onMounted(() => {
+  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
+  statusBarHeight.value = sbHeight;
+  safeAreaInsets.value = insets;
+});
+// ---------------- data ----------------
+// 导航按钮列表
+const navButtonList = reactive([{
+  name: '景点攻略',
+  icon: 'https://wuminghui.top:9000/travel/首页-景点攻略.svg',
+  path: '/pages/spot/spot'
+}, {
+  name: '船票预订',
+  icon: 'https://wuminghui.top:9000/travel/首页-船票预订.svg',
+  path: '/pages/ticketBooking/ticketBooking'
+}, {
+  name: '美食推荐',
+  icon: 'https://wuminghui.top:9000/travel/首页-美食推荐.svg',
+  path: '/pages/foodRecommendation/foodRecommendation'
+}, {
+  name: '酒店住宿',
+  icon: 'https://wuminghui.top:9000/travel/首页-酒店住宿.svg',
+  path: '/pages/hotelBooking/hotelBooking'
+}, {
+  name: '停车收费',
+  icon: 'https://wuminghui.top:9000/travel/首页-停车收费.svg',
+  path: '/pages/parkingFees/parkingFees'
+}, {
+  name: '一日畅游',
+  icon: 'https://wuminghui.top:9000/travel/首页-一日畅游.svg',
+  path: '/pages/dayTravel/dayTravel'
+}, {
+  name: '社区互动',
+  icon: 'https://wuminghui.top:9000/travel/首页-社区互动.svg',
+  path: '/pages/ticketPoints/ticketPoints'
+}, {
+  name: '更多服务',
+  icon: 'https://wuminghui.top:9000/travel/首页-更多服务.svg',
+  path: '/pages/moreServices/moreServices'
+}
+]);
+const tabList = reactive([{
+  name: '景点攻略',
+}, {
+  name: '酒店住宿',
+}, {
+  name: '美食推荐'
+}])
+const activeTab = ref('景点攻略'); // 默认选中的标签
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const bannerList = ref([
   'https://wuminghui.top:9000/travel/Banner1.jpg',
   'https://wuminghui.top:9000/travel/Banner2.jpg',
   'https://wuminghui.top:9000/travel/Banner3.jpg'
-
 ]);
-
-const userStore = useUserStore();
-const activeTab = ref('景点攻略');
-const isExpanded = ref(false);
 const activities = ref([]);
-const spots = ref([
-  { id: 1, name: '鱼仓海市', rating: '4.7分', comments: '1205条', price: '218/人' },
-  { id: 2, name: '鱼仓海市', rating: '4.7分', comments: '1205条', price: '218/人' },
-  { id: 3, name: '鱼仓海市', rating: '4.7分', comments: '1205条', price: '218/人' },
-  { id: 4, name: '鱼仓海市', rating: '4.7分', comments: '1205条', price: '218/人' },
-]);
-
-const visibleSpots = computed(() => {
-  // return isExpanded.value ? spots.value : spots.value.slice(0, 4);
-  return spots.value; // 修改为始终返回全部景点
-});
-
+const activityLoading = ref(false); // 活动列表加载状态
+const activitySkeleton = ref([{
+  type: 'flex',
+  children: [{
+    type: 'custom',
+    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;'
+  }, {
+    type: 'custom',
+    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;marginLeft:20rpx;'
+  }, {
+    type: 'custom',
+    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;marginLeft:20rpx;'
+  }]
+}])
+const spotList = ref([]); // 景点列表数据
+const spotSkeleton = ref([{
+  type: 'flex',
+  num: 3,
+  children: [{
+    type: 'custom',
+    num: 1,
+    style: 'width:150rpx;height:150rpx;marginRight: 30rpx;marginLeft: 20rpx;'
+  }, {
+    type: 'line',
+    num: 3,
+    style: [null, 'width:360rpx;', 'width:200rpx;']
+  }]
+}]);
+const spotLoading = ref(false); // 景点列表加载状态
+// 缺省图片
+const defaultImage = ref('https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png');
 // 注释掉但保留展开/收起方法
 // const toggleExpand = () => {
 //   isExpanded.value = !isExpanded.value;
 // };
-
-const imageUrls = ref([]);
-const combinedArray = ref([]);
-
-const getSpotsList = (type) => {
-  console.log('开始请求类型:', type);
-  
-  let url = '';
-  switch (type) {
-    case '景点攻略':
-      url = 'https://island.zhangshuiyi.com/island/product/ilAttractions/list';
-      break;
-    case '酒店住宿':
-      url = 'https://island.zhangshuiyi.com/island/product/ilAccommodations/list';
-      break;
-    case '美食推荐':
-      url = 'https://island.zhangshuiyi.com/island/product/ilDining/list';
-      break;
-    default:
-      console.error('未知的类型:', type);
-      return;
+// ---------------- methods ----------------
+// 管理接口
+const handleGetSpotsList = async (type) => {
+  spotLoading.value = true;
+  let res;
+  if (type === '景点攻略') {
+    res = await request(`/product/ilAttractions/list`);
+  } else if (type === '酒店住宿') {
+    res = await request(`/product/ilAccommodations/list`, { pageNo: 1, pageSize: 50 });
+  } else if (type === '美食推荐') {
+    res = await request(`/product/ilDining/list`, { pageNo: 1, pageSize: 50 });
   }
-
-  const params = {
-    pageNo: 1,
-    pageSize: 50
-  };
-  
-  console.log('请求参数:', params);
-  
-  const headers = {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  };
-  if (userStore.token) {
-    headers['X-Access-Token'] = userStore.token;
-  }
-  
-    uni.request({
-    url: url,
-      method: 'GET',
-    data: params,
-    header: headers,
-      success: (res) => {
-      console.log(`${type}完整响应:`, {
-        statusCode: res.statusCode,
-        header: res.header,
-        data: res.data
-      });
-      
-      if (res.statusCode === 200 && res.data.success) {
-        // 添加空值检查
-        const records = res.data.result?.records || [];
-        console.log(`${type}数据解析前:`, records);
-        
-        spots.value = records.map(item => {
-          let price = '';
-          let comments = '';
-          
-          switch (type) {
-            case '景点攻略':
-              price = item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`;
-              comments = `${item.commentCount || 0}条评论`;
-              break;
-            case '酒店住宿':
-              price = item.price === 0 ? '免费' : `¥${item.price}/晚`;
-              comments = `${item.commentCount || 0}条评论`;
-              break;
-            case '美食推荐':
-              // 使用平均价格，如果没有则使用预定价格
-              const priceValue = item.priceaverage || item.price || 0;
-              price = priceValue === 0 ? '免费' : `¥${priceValue}/人`;
-              // 使用月销售量作为评论数
-              comments = `${item.monthSale || 0}条评论`;
-              break;
-          }
-          
-          const spot = {
-            id: item.id || 0,
-            name: item.name || '未知名称',
-            image: item.imageUrl || 'https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png',
-            rating: (item.rating || 0) + '分',
-            comments: comments,
-            price: price,
-            // 保存原始数据，以备详情页使用
-            rawData: item
-          };
-          console.log('处理后的数据:', spot);
-          return spot;
-        });
-        console.log(`最终${type}列表数据:`, spots.value);
-      } else {
-        console.error(`${type}数据请求失败:`, {
-          statusCode: res.statusCode,
-          message: res.data.message,
-          data: res.data
-        });
-        uni.showToast({
-          title: res.data.message || `${type}数据加载失败`,
-          icon: 'none',
-          duration: 2000
-        });
-        }
-      },
-      fail: (err) => {
-      console.error(`${type}请求失败:`, err);
-        uni.showToast({
-        title: '网络请求失败，请稍后重试',
-        icon: 'none',
-        duration: 2000
-        });
-      }
-    });
+  // 数据处理
+  spotList.value = res.records.map(item => {
+    if (type === '景点攻略') {
+      item.price = item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`
+      // 06:00:00 - 18:00:00  -> 06:00 - 18:00
+      item.time = item.starttime.replace(/:00$/, '') + ' - ' + item.endtime.replace(/:00$/, '')
+    } else if (type === '酒店住宿') {
+      item.type = item.hoteltheme;
+      item.price = item.price === 0 ? '免费' : `¥${item.price}/人`
+    } else if (type === '美食推荐') {
+      item.time = item.starthour.replace(/:00$/, '') + ' - ' + item.endhour.replace(/:00$/, '')
+      item.price = item.price === 0 ? '免费' : `¥${item.price}/人`
+    }
+    return item;
+  });
+  spotLoading.value = false;
 };
 
-const switchTab = (tab) => {
-  activeTab.value = tab;
-  getSpotsList(tab);
+// 获取活动列表
+const handleGetActivityList = async () => {
+  activityLoading.value = true;
+  const res = await request(`/product/ilActivities/list`, { pageNo: 1, pageSize: 300 });
+  activities.value = res.records.map(activity => {
+    const priceNum = Number(activity.price) || 0;
+    const originalPrice = (priceNum * 1.2).toFixed(2); // 原价为现价*1.2
+    return {
+      id: activity.id,
+      name: activity.type,
+      image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
+      rating: '4.7分',
+      comments: '1205条评论',
+      priceNum,
+      discountPrice: priceNum.toFixed(2), // 优惠价就是现价
+      originalPrice: originalPrice,       // 原价为现价*1.2
+      price: '¥' + priceNum + '/人起'
+    };
+  });
+  activityLoading.value = false;
 };
 
+// 换页   
+const handleChangeTab = (tab) => {
+  activeTab.value = tab.name;
+  handleGetSpotsList(tab.name);
+};
+
+// 查看更多
 const viewMore = (type) => {
   uni.navigateTo({
     url: `/pages/${type === '热门活动' ? 'activity/activity' : 'itinerary/itinerary'}`
   });
 };
 
-const navigateTo = (destination) => {
-  const routes = {
-    '景点攻略': '/pages/attractionGuide/attractionGuide',
-    '船票预订': '/pages/ticketBooking/ticketBooking',
-    '美食推荐': '/pages/foodRecommendation/foodRecommendation',
-    '酒店住宿': '/pages/hotelBooking/hotelBooking',
-    '停车收费': '/pages/parkingFees/parkingFees',
-    '一日畅游': '/pages/dayTravel/dayTravel',
-    '社区互动': '/pages/ticketPoints/ticketPoints',
-    '更多服务': '/pages/moreServices/moreServices'
-  };
-  if (destination === '社区互动') {
+const toPage = (path) => {
+  if (path === '/pages/ticketPoints/ticketPoints') {
     // 如果是社区互动页面，使用 uni.switchTab
-    uni.switchTab({
-      url: routes[destination]
-    });
+    uni.switchTab({ url: path });
   } else {
     // 其他页面使用 uni.navigateTo
-    uni.navigateTo({
-      url: routes[destination]
-    });
+    uni.navigateTo({ url: path });
   }
 };
 
-const navigateToActivity = (id) => {
+const toActivity = (id) => {
   console.log("跳转到活动详情页面");
   console.log(`/pages/activity/activity?id=${id}`);
   uni.navigateTo({
@@ -424,76 +365,6 @@ const navigateToSpot = (type, id) => {
     url: url
   });
 };
-
-const getActivitiesList = () => {
-  console.log('开始请求活动列表数据...');
-
-  const params = {
-    pageNo: 1,
-    pageSize: 300
-  };
-
-  const headers = {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  };
-  if (userStore.token) {
-    headers['X-Access-Token'] = userStore.token;
-  }
-
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/product/ilActivities/list',
-    method: 'GET',
-    data: params,
-    header: headers,
-    success: (res) => {
-      console.log('活动列表完整响应:', {
-        statusCode: res.statusCode,
-        header: res.header,
-        data: res.data
-      });
-      
-      if (res.statusCode === 200 && res.data.success) {
-        // 添加空值检查
-        const records = res.data.result?.records || [];
-        activities.value = records.map(activity => {
-          const priceNum = Number(activity.price) || 0;
-          const originalPrice = (priceNum * 1.2).toFixed(2);
-          return {
-            id: activity.id || 0,
-            name: activity.title || activity.type || '未知活动',
-            image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
-            rating: (activity.rating || 0) + '分',
-            comments: '1205条评论',
-            priceNum,
-            discountPrice: priceNum.toFixed(2),
-            originalPrice: originalPrice,
-            price: '¥' + priceNum + '/人起'
-          };
-        });
-      } else {
-        console.error('活动列表数据请求失败:', {
-          statusCode: res.statusCode,
-          message: res.data.message,
-          data: res.data
-        });
-        uni.showToast({
-          title: res.data.message || '活动列表加载失败',
-          icon: 'none',
-          duration: 2000
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('活动列表请求失败:', err);
-      uni.showToast({
-        title: '网络请求失败，请稍后重试',
-        icon: 'none',
-        duration: 2000
-      });
-    }
-  });
-};
-
 
 // AI悬浮窗
 const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
@@ -547,16 +418,6 @@ const navigateToMembership = () => {
   });
 };
 
-onShow(() => {
-  getActivitiesList();
-  getSpotsList('景点攻略'); // 默认加载景点数据
-});
-onMounted(() => {
-  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
-  statusBarHeight.value = sbHeight;
-  safeAreaInsets.value = insets;
-});
-
 // 提取纯数字价格
 const getOriginalPrice = (priceStr) => {
   // 只取第一个数字
@@ -569,32 +430,308 @@ const getDiscountPrice = (priceStr) => {
 };
 </script>
 
-<style scoped>
-.container {
-  background-color: #f5f5f5;
-}
-
-/* 顶部区域 */
-.header {
+<style lang="scss" scoped>
+.index-container {
   position: relative;
-  height: 260rpx;
-  background-color: transparent;
-}
 
-.banner-swiper {
-  width: 100%;
-  height: 500rpx;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
+  /* 顶部导航栏 */
+  .nav-bar-wrapper {
+    position: relative;
+    height: 260rpx;
+    background-color: transparent;
+  }
 
-.banner {
-  width: 100%;
-  height: 260rpx;
-  position: absolute;
-  top: 0;
-  left: 0;
+  /* 顶部导航栏标题 */
+  .nav-bar-title {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999; // 确保在顶部
+    color: #FFFFFF;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    text-align: center;
+    text-shadow: 0 3px 9px #666;
+  }
+
+  /* 轮播图 */
+  .banner-swiper {
+    width: 100%;
+    height: 500rpx;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    .banner-item {
+      width: 100%;
+      height: 260rpx;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  }
+
+  /* 主要内容区 */
+  .index-main-wrapper {
+    width: 100%;
+    position: relative;
+
+    /* 通知栏 */
+    .notice-wrapper {
+      width: 650rpx;
+      position: absolute;
+      top: -50rpx;
+      display: flex;
+      align-items: center;
+      background-color: #00b2b2;
+      color: white;
+      padding: 20rpx;
+      margin: 20rpx;
+      border-radius: 10rpx;
+      box-shadow: $app-shadow;
+      overflow: hidden;
+
+      .notice-tag {
+        font-size: 28rpx;
+        font-weight: bold;
+        background-color: white;
+        color: #00b2b2;
+        padding: 5rpx 10rpx;
+        border-radius: 8rpx;
+        flex-shrink: 0;
+        margin-right: 20rpx;
+      }
+
+      .notice-text-container {
+        flex: 1;
+        overflow: hidden;
+
+        .notice-text {
+          font-size: 28rpx;
+          white-space: nowrap;
+          animation: marquee 15s linear infinite;
+
+          // 滚动动画
+          @keyframes marquee {
+            0% {
+              transform: translateX(100%);
+            }
+
+            100% {
+              transform: translateX(-200%);
+            }
+          }
+        }
+      }
+    }
+
+    /* 图标导航 */
+    .icon-nav-wrapper {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20rpx;
+      padding: 0 20rpx;
+      padding-top: 40px;
+      margin: 20rpx;
+
+      .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+
+      // 按钮大小
+      .icon-btn {
+        width: 60rpx;
+        height: 60rpx;
+
+        // 图标大小
+        image {
+          width: 100%;
+          height: 100%;
+        }
+      }
+
+      .icon-text {
+        font-size: 24rpx;
+        color: #333;
+      }
+    }
+  }
+
+  /* 节标题 */
+  .section-wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40rpx;
+    margin-bottom: 20rpx;
+    padding: 0 20rpx;
+
+    .section-title {
+      @include title;
+    }
+
+    .section-more {
+      @include more;
+    }
+  }
+
+
+  /* 热门活动的卡片样式 */
+  .activity-wrapper {
+    display: flex;
+    width: 100%;
+    overflow-x: scroll;
+    gap: 20rpx;
+    padding: 20rpx;
+    scrollbar-width: none;
+    /* 隐藏滚动条 */
+    -webkit-overflow-scrolling: touch;
+
+    /* iOS平滑滚动 */
+    &::-webkit-scrollbar {
+      display: none;
+      /* 隐藏滚动条 */
+    }
+
+    // 活动卡片样式
+    .activity-card {
+      width: 300rpx;
+      flex-shrink: 0;
+      background-color: #fff;
+      border-radius: 25rpx;
+      overflow: hidden;
+      box-shadow: $app-shadow;
+
+      // 活动图片
+      .activity-img {
+        width: 100%;
+        height: 250rpx;
+
+        image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      // 活动信息
+      .activity-info {
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 5rpx 20rpx;
+
+        // 活动名称
+        .activity-name {
+          width: 100%;
+          color: #111827;
+          font-size: $fs-base;
+          font-weight: bold;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        // 活动评分
+        .activity-rating {
+          display: flex;
+          align-items: center;
+          font-size: $fs-small;
+          color: #666;
+
+          // 丨分割线
+          .rating::after {
+            content: "|";
+            margin: 0 4rpx;
+          }
+        }
+
+        /* 添加热门活动价格容器样式 */
+        .price-container {
+          display: flex;
+          align-items: flex-end;
+          gap: 8rpx;
+
+
+          // 原价
+          .original-price {
+            color: #FF9500;
+            font-size: $fs-small;
+            margin-right: 8rpx;
+            white-space: nowrap;
+          }
+
+          .discount-price {
+            color: #999;
+            font-size: $fs-tiny;
+            text-decoration: line-through;
+          }
+        }
+      }
+    }
+  }
+
+  // 热门景点
+  .spot-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
+
+    .spot-item {
+      display: flex;
+      background-color: white;
+      overflow: hidden;
+      padding: 20rpx 40rpx;
+      border-bottom: 1px solid #f5f5f5;
+
+      .spot-img {
+        width: 150rpx;
+        height: 150rpx;
+        flex-shrink: 0;
+        border-radius: 15rpx;
+      }
+
+      .spot-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-left: 30rpx;
+
+        .spot-name {
+          display: flex;
+          align-items: center;
+          gap: 10rpx;
+          font-size: $fs-large;
+          font-weight: bold;
+          line-height: 1em;
+        }
+
+        .spot-desc {
+          display: flex;
+          align-items: center;
+          gap: 5rpx;
+          font-size: $fs-small;
+          color: #999;
+        }
+
+        .spot-rating {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .spot-price {
+            color: #ff5757;
+            font-size: $fs-base;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
 }
 
 .logo {
@@ -616,113 +753,6 @@ const getDiscountPrice = (priceStr) => {
   font-size: 36rpx;
   font-weight: bold;
   color: #003366;
-}
-
-/* 主要内容区 */
-.content-box {
-  position: relative;
-  width: 100%;
-  /* padding: 30rpx 0 0 0; */
-  background-color: rgb(224, 250, 255);
-  /* 淡蓝色背景 */
-  border-radius: 50rpx 50rpx 0 0;
-  /* 顶部左右角圆角 */
-  z-index: 10;
-  /* 主要内容区的层级高于顶部区域 */
-  top: 0rpx;
-}
-
-/* 通知栏 */
-.notice {
-  display: flex;
-  align-items: center;
-  background-color: #00b2b2;
-  color: white;
-  padding: 20rpx;
-  margin: 20rpx;
-  border-radius: 10rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  position: relative;
-}
-
-.notice-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.notice-icon {
-  font-size: 28rpx;
-  font-weight: bold;
-  background-color: white;
-  color: #00b2b2;
-  padding: 5rpx 10rpx;
-  border-radius: 5rpx;
-  flex-shrink: 0;
-  margin-right: 20rpx;
-}
-
-.notice-text-container {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-  height: 40rpx;
-}
-
-.notice-text {
-  font-size: 28rpx;
-  white-space: nowrap;
-  position: absolute;
-  animation: marquee 15s linear infinite;
-}
-
-@keyframes marquee {
-  0% {
-    left: 100%;
-    transform: translateX(0);
-  }
-
-  100% {
-    left: 0;
-    transform: translateX(-100%);
-  }
-}
-
-/* 图标导航 */
-.icon-nav {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20rpx;
-  padding: 0 20rpx;
-  margin: 20rpx;
-}
-
-.icon-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20rpx;
-}
-
-.icon-bg {
-  background-color: white;
-  width: 100%;
-  height: 100rpx;
-  border-radius: 20rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10rpx;
-}
-
-.icon {
-  width: 80rpx;
-  height: 80rpx;
-}
-
-.icon-text {
-  font-size: 24rpx;
 }
 
 /* 会员充值卡片 */
@@ -795,116 +825,6 @@ const getDiscountPrice = (priceStr) => {
   position: relative;
   z-index: 2;
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
-}
-
-/* 热门活动和精选路线的背景颜色与内容区一致 */
-.section {
-  margin: 20rpx;
-  background-color: transparent;
-  border-radius: 10rpx;
-  padding: 20rpx;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-}
-
-.section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-}
-
-.section-more {
-  color: #999;
-  font-size: 24rpx;
-}
-
-/* 热门活动的卡片样式 */
-.activity-list {
-  display: flex;
-  overflow-x: auto;
-  gap: 30rpx;
-  padding: 20rpx 0;
-  scrollbar-width: none;
-  /* 隐藏滚动条 */
-  -webkit-overflow-scrolling: touch;
-  /* iOS平滑滚动 */
-}
-
-.activity-list::-webkit-scrollbar {
-  display: none;
-  /* 隐藏滚动条 */
-}
-
-.activity-item {
-  flex: 0 0 280rpx;
-  background-color: white;
-  border-radius: 20rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.activity-img {
-  width: 100%;
-  height: 200rpx;
-  object-fit: cover;
-}
-
-.activity-info {
-  padding: 10rpx;
-}
-
-.activity-name {
-  font-size: 28rpx;
-  margin: 10rpx 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.activity-rating {
-  display: flex;
-  align-items: center;
-  font-size: 24rpx;
-  color: #666;
-  margin-bottom: 10rpx;
-}
-
-.activity-rating .rating::after {
-  content: "|";
-  margin: 0 8rpx;
-  color: #ccc;
-}
-
-.activity-price {
-  color: #ff6600;
-  font-size: 28rpx;
-  font-weight: bold;
-}
-
-/* 添加热门活动价格容器样式 */
-.price-container {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  margin-top: 6rpx;
-}
-
-.discount-price {
-  color: #FF9500;
-  font-size: 25rpx;
-  font-weight: bold;
-  margin-right: 8rpx;
-  white-space: nowrap;
-  display: inline-block;
-}
-
-.original-price {
-  color: #999;
-  font-size: 22rpx;
-  text-decoration: line-through;
 }
 
 /* 会员价样式 */
@@ -998,7 +918,7 @@ const getDiscountPrice = (priceStr) => {
 
 .route-rating .rating::after {
   content: "|";
-  margin: 0 8rpx;
+  margin: 0 4rpx;
   color: #ccc;
 }
 
@@ -1037,12 +957,7 @@ const getDiscountPrice = (priceStr) => {
   border-bottom: 4rpx solid #1e9eff;
 }
 
-.spot-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
-  margin-bottom: 20rpx;
-}
+
 
 .expand-btn {
   display: flex;
@@ -1060,58 +975,6 @@ const getDiscountPrice = (priceStr) => {
   width: 24rpx;
   height: 24rpx;
   margin-left: 10rpx;
-}
-
-.spot-item {
-  background-color: white;
-  border-radius: 10rpx;
-  overflow: hidden;
-}
-
-.spot-img {
-  width: 100%;
-  height: 180rpx;
-}
-
-.spot-info {
-  padding: 10rpx;
-  display: flex;
-  flex-direction: column;
-}
-
-.spot-name-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8rpx;
-}
-
-.spot-name {
-  font-size: 28rpx;
-  flex: 1;
-}
-
-.spot-rating {
-  font-size: 24rpx;
-  color: #1e9eff;
-  /* 淡蓝色 */
-}
-
-.spot-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.spot-price {
-  color: #ff6600;
-  font-size: 28rpx;
-  font-weight: bold;
-}
-
-.spot-comments {
-  font-size: 24rpx;
-  color: #666;
 }
 
 /* 底部导航 */
@@ -1201,24 +1064,5 @@ const getDiscountPrice = (priceStr) => {
   width: 70rpx;
   height: 70rpx;
   object-fit: contain;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 90rpx;
-  background-color: transparent;
-  /* Changed from blue to transparent */
-  background-image: none;
-  /* Removed gradient */
-  z-index: 100;
-  box-sizing: border-box;
-}
-
-.nav-title {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  /* Added text shadow for better visibility against banner */
 }
 </style>

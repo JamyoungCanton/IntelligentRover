@@ -1,0 +1,128 @@
+/* ---- 公共样式变量 ---- */
+
+/* 主题色 */
+$theme-color: #4290c3;
+$theme-color-light: #74b3e0;
+$theme-color-dark: #0d4b7e;
+$theme-color-bg: #a6d6ec;
+
+/* 统一阴影样式 */
+$app-shadow: 0 3px 9px #eee;
+
+/* 字体大小 */
+$fs-tiny: 20rpx;
+$fs-small: 24rpx;
+$fs-base: 28rpx;
+$fs-large: 32rpx;
+
+/* 除去页内边距的最大宽度 */
+$container-padding-width: 25rpx;
+$container-padding-height: 20rpx;
+$max-width: 750rpx - $container-padding-width * 2;
+
+/**
+ * @Author: 廖耀华
+ * @Descrtion: 原子CSS
+ */
+/* 定义一个映射，包含想要生成的所有值 */
+$spacing-values: (
+	'0': 0,
+	'5': 5,
+	'10': 10,
+	'15': 15,
+	'20': 20,
+	'25': 25,
+	'30': 30
+);
+
+/* 为padding和margin生成原子类 
+ * 例如 mr-5 => margin-right: 5rpx; pt-10 => padding-top: 10rpx;
+ */
+/* 单方向 */
+@each $property, $abbrev in (padding: 'p', margin: 'm') {
+	@each $direction, $dirabbrev in (top: 't', right: 'r', bottom: 'b', left: 'l') {
+		@each $class, $value in $spacing-values {
+			.#{$abbrev}#{$dirabbrev}-#{$class} {
+				#{$property}-#{$direction}: #{$value}rpx;
+			}
+		}
+	}
+}
+
+// 四个方向
+@each $property, $abbrev in (padding: 'p', margin: 'm') {
+	@each $class, $value in $spacing-values {
+		.#{$abbrev}-#{$class} {
+			#{$property}: #{$value}px;
+		}
+	}
+}
+
+/* ---- 公共样式组 ---- */
+.d-flex {
+	display: flex;
+}
+
+.is-red {
+	color: #cf1222;
+}
+
+@mixin title {
+	font-size: $fs-large;
+	font-weight: bold;
+	color: #333;
+}
+
+@mixin more {
+	font-size: $fs-base;
+	font-weight: normal;
+	color: $theme-color;
+}
+
+/* 页面背景 */
+// page {
+// 	background: #f8f8f8;
+// }
+
+/* 页面公共样式 */
+.app-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: $container-padding-height $container-padding-width;
+	color: #333;
+}
+
+.app-title {
+	font-size: $fs-large;
+	font-weight: bold;
+	color: #333;
+}
+
+.app-more {
+	font-size: $fs-base;
+	font-weight: normal;
+	color: $theme-color;
+}
+
+.app-content {
+	font-size: $fs-base;
+	margin: 20rpx 0;
+	color: #666;
+}
+
+.app-avatar {
+	width: 60rpx;
+	height: 60rpx;
+	margin-right: 20rpx;
+	border-radius: 100%;
+}
+
+.app-box {
+	width: $max-width - 2 * 20rpx;
+	border-radius: 30rpx;
+	background-color: #fff;
+	padding: 20rpx;
+	margin: 20rpx 0;
+	box-shadow: 0 3rpx 9rpx #eee;
+}
