@@ -24,7 +24,9 @@ export const useUserStore = defineStore('user', () => {
   });
 
   function updateUserInfo(newUserInfo) {
-    userInfo.value = newUserInfo;
+    // 过滤掉 token 字段，避免 userInfo 里有 token
+    const { token, ...pureUserInfo } = newUserInfo || {};
+    userInfo.value = pureUserInfo;
   }
 
   // 获取token
@@ -33,7 +35,22 @@ export const useUserStore = defineStore('user', () => {
     token.value = newToken;
   }
 
-  return { userInfo, updateUserInfo, token, setToken };
+  function clearUser() {
+    token.value = '';
+    userInfo.value = {
+      avatar: '',
+      username: '',
+      phone: '',
+      bio: '',
+      gender: 0,
+      birthday: '',
+      email: '',
+      realname: '',
+      idCardNo: ''
+    };
+  }
+
+  return { userInfo, updateUserInfo, token, setToken, clearUser };
 }, {
   persist: {
     storage: {

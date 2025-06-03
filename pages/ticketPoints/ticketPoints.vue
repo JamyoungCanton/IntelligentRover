@@ -95,7 +95,7 @@
               <uni-icons type="heart" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.likes }}</text>
               <uni-icons type="star" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.focus }}</text>
+              <text class="data-detail">{{ item.collect }}</text>
               <uni-icons type="chat" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.comments }}</text>
             </view>
@@ -103,7 +103,10 @@
         </view>
       </view>
       
-      <view v-if="filteredPostList.length === 0" class="empty-state">
+      <view v-if="!userStore.token" class="empty-state">
+        <text>请先登录后查看帖子</text>
+      </view>
+      <view v-else-if="filteredPostList.length === 0" class="empty-state">
         <text>暂无相关内容</text>
       </view>
     </view>
@@ -361,21 +364,15 @@ const getPostLst = () => {
         order:1,
         pageNo: 1,
         pageSize: 50
-        // sortBy: 'id'
       },
       success: (res) => {
         if(res.data.code === 401){
-          uni.showModal({
-            title: '请重新登录',
-            content: '',
-            showCancel: false,
-            confirmText: '确定',
-            success: (res) => {
-              if (res.confirm) {
-                uni.navigateTo({ url: '/pages/login/login' });
-              }
-            },
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+            duration: 2000
           });
+          return;
         }
         
         else if (res.statusCode === 200) {

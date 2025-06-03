@@ -142,7 +142,6 @@
 import { ref, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
-import { add } from 'lodash';
 
 const userStore = useUserStore();
 
@@ -291,35 +290,45 @@ const addLikes = async () => {
 
 // 收藏
 const addCollect = async () => {
-  let operation = ref(0);
-    if (postDetailList.value.collected === false) {
-      operation.value = 1;
-    } else {
-      operation.value = 0;
-    }
-
+  const operation = postDetailList.value.collected ? 0 : 1;
   const res = await uni.request({
     url: 'https://island.zhangshuiyi.com/island/posts/collect',
     method: 'POST',
     data: {
-      // 	1 收藏 --- 0 取消收藏
-      operation: operation.value,
-      postsId: postId.value.id,
-      type: 0
+      operation,
+      postsId: postId.value.id
     },
     header: {
       'Content-Type': 'application/json',
       'X-Access-Token': userStore.token
     }
-  })
+  });
+  console.log('收藏接口返回数据:', res.data);
   if (res.data.code === 200) {
-    console.log(res.data);
-    
-    operation.value = 0;
-    postDetailList.value.collected =!postDetailList.value.collected;
-    postDetailList.value.collect = postDetailList.value.collected? postDetailList.value.collect + 1 : postDetailList.value.collect - 1;
+    postDetailList.value.collected = !postDetailList.value.collected;
+    if (postDetailList.value.collected) {
+      postDetailList.value.collect += 1;
+    } else {
+      postDetailList.value.collect = Math.max(0, postDetailList.value.collect - 1);
+    }
+    uni.showToast({ title: operation === 1 ? '已收藏' : '已取消收藏', icon: 'success' });
+  } else {
+    // 添加更友好的错误提示
+    if (res.data.code === 500 && res.data.message.includes('product_id')) {
+      uni.showToast({ 
+        title: '收藏功能暂时不可用，请稍后再试', 
+        icon: 'none',
+        duration: 2000
+      });
+    } else {
+      uni.showToast({ 
+        title: res.data.message || '操作失败', 
+        icon: 'none',
+        duration: 2000
+      });
+    }
   }
-}
+};
 
 // 获取评论个数
 const commentCount = ref(0)

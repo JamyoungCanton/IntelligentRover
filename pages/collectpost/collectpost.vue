@@ -19,16 +19,28 @@
       </view>
     </view>
 
-    <view v-if="loading" class="loading">加载中...</view>
-    <view v-else-if="posts.length === 0" class="no-posts">你还没有收藏任何帖子</view>
-    <view v-else class="post-list">
-      <view 
-        class="post-card" 
-        v-for="post in posts" 
-        :key="post.id"
-      >
-        <!-- 点击整个卡片跳详情 -->
-        <view @tap="toDetail(post.id)">
+    <scroll-view 
+      scroll-y 
+      class="scroll-container"
+      @refresherrefresh="onRefresh"
+      refresher-enabled
+      :refresher-triggered="isRefreshing"
+    >
+      <view v-if="loading && !isRefreshing" class="loading">
+        <uni-icons type="spinner-cycle" size="24" color="#666"></uni-icons>
+        <text>加载中...</text>
+      </view>
+      <view v-else-if="posts.length === 0" class="no-posts">
+        <uni-icons type="star" size="48" color="#999"></uni-icons>
+        <text>你还没有收藏任何帖子</text>
+      </view>
+      <view v-else class="post-list">
+        <view 
+          class="post-card" 
+          v-for="post in posts" 
+          :key="post.id"
+          @tap="toDetail(post.id)"
+        >
           <view class="post-header">
             <text class="post-title">{{ post.title || '未命名帖子' }}</text>
             <text class="post-time">{{ formatTime(post.createTime) }}</text>
@@ -41,27 +53,30 @@
             mode="aspectFill"
           />
 
-          <!-- 底部信息 -->
           <view class="item-bottom">
-            <!-- 左侧：时间 · 分区 -->
             <view class="item-bottom-left">
               <text class="left-data">
                 {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
               </text>
             </view>
-            <!-- 右侧：点赞/关注/评论 -->
             <view class="item-bottom-right">
-              <uni-icons type="heart" size="18" color="#999" />
-              <text class="data-detail">{{ post.likes ?? 0 }}</text>
-              <uni-icons type="star" size="18" color="#999" />
-              <text class="data-detail">{{ post.focus ?? 0 }}</text>
-              <uni-icons type="chat" size="18" color="#999" />
-              <text class="data-detail">{{ post.comments ?? 0 }}</text>
+              <view class="right-data">
+                <uni-icons type="heart" size="18" color="#999" />
+                <text class="data-detail">{{ post.likes ?? 0 }}</text>
+              </view>
+              <view class="right-data">
+                <uni-icons type="star" size="18" color="#999" />
+                <text class="data-detail">{{ post.focus ?? 0 }}</text>
+              </view>
+              <view class="right-data">
+                <uni-icons type="chat" size="18" color="#999" />
+                <text class="data-detail">{{ post.comments ?? 0 }}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
-    </view>
+    </scroll-view>
   </view>
 </template>
 
@@ -72,58 +87,72 @@ import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
+const isRefreshing = ref(false);
 const currentTab = ref<'my' | 'collect'>('collect');
 
-// 原生时间格式化
+// 格式化时间
 const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
-// 截取到分钟
 const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
 
-// 拉收藏的帖子
+// 获取收藏帖子
 async function fetchCollectPosts() {
-  loading.value = true;
-  const token = uni.getStorageSync('token') || userStore.token;
-  console.log('当前token:', token);
+  if (!userStore.token) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    setTimeout(() => {
+      uni.redirectTo({ url: '/pages/login/login' });
+    }, 800);
+    return;
+  }
+
   try {
-    const res: any = await new Promise((resolve, reject) => {
-      uni.request({
-        url: 'https://island.zhangshuiyi.com/island/collectRecord',
-        method: 'GET',
-        header: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Access-Token': token
-        },
-        success: resolve,
-        fail: reject
-      });
+    const res: any = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/collectRecord',
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Access-Token': userStore.token
+      }
     });
-    console.log('收藏接口返回:', res);
+
     if (res.statusCode === 200 && res.data.success) {
       posts.value = res.data.result?.list || res.data.result?.records || [];
     } else {
-      uni.showToast({ title: res.data.message || '获取失败', icon: 'none' });
+      uni.showToast({ 
+        title: res.data.message || '获取收藏失败', 
+        icon: 'none' 
+      });
     }
   } catch (e) {
-    console.error('请求异常:', e);
-    uni.showToast({ title: '网络异常', icon: 'none' });
+    console.error('获取收藏异常:', e);
+    uni.showToast({ 
+      title: '网络异常，请稍后重试', 
+      icon: 'none' 
+    });
   } finally {
     loading.value = false;
+    isRefreshing.value = false;
   }
 }
 
-// 跳详情
+// 下拉刷新
+async function onRefresh() {
+  isRefreshing.value = true;
+  await fetchCollectPosts();
+}
+
+// 跳转详情
 function toDetail(id: string) {
   uni.navigateTo({
     url: `/pages/post/postDetail?id=${id}`
   });
 }
-// 切换跳转逻辑
+
+// 切换标签
 function switchTab(tab: 'my' | 'collect') {
   if (tab === currentTab.value) return;
-  // 切换到收藏时校验token
+  
   if (tab === 'collect') {
-    const token = uni.getStorageSync('token') || userStore.token;
-    if (!token) {
+    if (!userStore.token) {
       uni.showToast({ title: '请先登录', icon: 'none' });
       setTimeout(() => {
         uni.redirectTo({ url: '/pages/login/login' });
@@ -131,6 +160,7 @@ function switchTab(tab: 'my' | 'collect') {
       return;
     }
   }
+  
   currentTab.value = tab;
   if (tab === 'my') {
     uni.redirectTo({ url: '/pages/post/mypost' });
@@ -143,6 +173,18 @@ onMounted(fetchCollectPosts);
 </script>
 
 <style lang="scss" scoped>
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-container {
+  flex: 1;
+  height: calc(100vh - 120rpx);
+}
+
 .post-type-buttons {
   display: flex;
   justify-content: space-between;
@@ -172,31 +214,6 @@ onMounted(fetchCollectPosts);
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
-.type-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-  transform: translateX(-100%);
-  transition: 0.6s;
-  z-index: 1;
-}
-
-.type-button:hover::before {
-  transform: translateX(100%);
-}
-
-.type-button text {
-  margin-left: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  position: relative;
-  z-index: 2;
-}
-
 .type-button.active {
   background: linear-gradient(135deg, #0080ff, #0066CC);
   color: #fff;
@@ -205,105 +222,96 @@ onMounted(fetchCollectPosts);
   border: none;
 }
 
-.type-button:active {
-  transform: scale(0.98);
-}
-.container {
-  padding: 30rpx;
-  background-color: #f8f8f8;
-  min-height: 100vh;
-  padding-bottom: 100px;
-}
 .loading, .no-posts {
-  text-align: center;
-  margin-top: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
   color: #888;
-  font-size: 32rpx;
+  font-size: 28rpx;
+  gap: 20rpx;
 }
+
 .post-list {
+  padding: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 30rpx;
 }
+
 .post-card {
-  position: relative;
-  padding: 20rpx;
   background: #fff;
   border-radius: 16rpx;
+  padding: 30rpx;
   box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
 }
-.delete-text {
-  position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-  font-size: 28rpx;
-  color: #f56c6c;
+
+.post-card:active {
+  transform: scale(0.98);
 }
+
 .post-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10rpx;
+  align-items: center;
+  margin-bottom: 20rpx;
 }
+
 .post-title {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: bold;
+  color: #333;
 }
+
 .post-time {
   font-size: 24rpx;
-  color: #aaa;
+  color: #999;
 }
+
 .post-content {
   font-size: 28rpx;
-  margin-bottom: 10rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+  line-height: 1.6;
 }
+
 .post-image {
   width: 100%;
   height: 300rpx;
   border-radius: 12rpx;
   object-fit: cover;
+  margin-bottom: 20rpx;
 }
 
-.item-bottom{
+.item-bottom {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
-  border-top: solid 1px #f0f0f0;
-  margin-top: 5px;
-  background: linear-gradient(to bottom, rgba(250,250,250,0.5), rgba(255,255,255,0.8));
+  padding-top: 20rpx;
+  border-top: 1px solid #f0f0f0;
 }
 
-.item-bottom-left{
-  font-size: 13px;
+.item-bottom-left {
+  font-size: 24rpx;
   color: #999;
 }
 
-.item-bottom-right{
+.item-bottom-right {
   display: flex;
-  align-items: center;
+  gap: 20rpx;
 }
 
-.right-data{
+.right-data {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  color: #666;
-  
-  /* 交互按钮增强 */
-  .uni-icons {
-    transition: all 0.2s ease;
-    padding: 5px;
-    border-radius: 50%;
-    
-    &:active {
-      background-color: rgba(0, 0, 0, 0.05);
-      transform: scale(1.1);
-    }
-  }
+  gap: 8rpx;
 }
 
-.data-detail{
-  margin: 0 12px 0 4px;
+.data-detail {
+  font-size: 24rpx;
+  color: #999;
 }
 </style>
+

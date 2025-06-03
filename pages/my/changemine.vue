@@ -126,17 +126,21 @@ function uploadAvatar(filePath) {
     success: (uploadFileRes) => {
       try {
         const data = JSON.parse(uploadFileRes.data)
-        if (data.success && data.result && data.result.url) {
-          avatar.value = data.result.url
+        console.log('上传头像响应:', data)
+        if (data.success && data.result) {
+          avatar.value = data.result
           uni.showToast({ title: '上传成功', icon: 'success' })
         } else {
-          uni.showToast({ title: '上传失败', icon: 'none' })
+          console.error('上传头像失败:', data.message)
+          uni.showToast({ title: data.message || '上传失败', icon: 'none' })
         }
       } catch (e) {
+        console.error('解析上传响应失败:', e)
         uni.showToast({ title: '上传失败', icon: 'none' })
       }
     },
-    fail: () => {
+    fail: (err) => {
+      console.error('上传头像请求失败:', err)
       uni.showToast({ title: '上传失败', icon: 'none' })
     }
   })

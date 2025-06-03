@@ -89,6 +89,7 @@
 
 <script>
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
+import { useUserStore } from '@/store/modules/user.js';
 
 function getImagePath(imageName) {
   return `/static/itinerary/${imageName}`;
@@ -242,21 +243,77 @@ export default {
 	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
 	},
     uploadImage(filePath) {
+      const userStore = useUserStore();
+      const token = userStore.token;
+
+      if (!token) {
+        uni.showToast({
+          title: '未获取到认证信息，请重新登录',
+          icon: 'none'
+        });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          });
+        }, 500);
+        return;
+      }
+
       uni.uploadFile({
         url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
         filePath: filePath,
         name: 'file',
-        success: (uploadFileRes) => {
-          const res = JSON.parse(uploadFileRes.data);
-          if (res.success && res.result && res.result.url) {
-            this.uploadedPhotos.push({ url: res.result.url });
-            uni.showToast({ title: '上传成功', icon: 'success' });
+        header: {
+          'X-Access-Token': token
+        },
+        success: (res) => {
+          if (res.statusCode === 200) {
+            try {
+              const data = JSON.parse(res.data);
+              if ((data.code === 0 || data.code === 200) && data.success && data.result && data.result.url) {
+                this.uploadedPhotos.push({ url: data.result.url });
+                uni.showToast({
+                  title: '上传成功',
+                  icon: 'success'
+                });
+              } else if (data.code === 401) {
+                uni.showModal({
+                  title: '登录失效',
+                  content: '您的登录已过期，请重新登录',
+                  showCancel: false,
+                  confirmText: '去登录',
+                  success: (modalRes) => {
+                    if (modalRes.confirm) {
+                      uni.navigateTo({ url: '/pages/login/login' });
+                    }
+                  }
+                });
+              } else {
+                uni.showToast({
+                  title: data.message || '图片上传失败',
+                  icon: 'none'
+                });
+              }
+            } catch (e) {
+              console.error('解析响应数据失败:', e);
+              uni.showToast({
+                title: '图片上传失败',
+                icon: 'none'
+              });
+            }
           } else {
-            uni.showToast({ title: res.message || '上传失败', icon: 'none' });
+            uni.showToast({
+              title: `上传失败，状态码: ${res.statusCode}`,
+              icon: 'none'
+            });
           }
         },
-        fail: () => {
-          uni.showToast({ title: '上传失败', icon: 'none' });
+        fail: (err) => {
+          console.error('图片上传失败:', err);
+          uni.showToast({
+            title: '图片上传失败',
+            icon: 'none'
+          });
         }
       });
     }

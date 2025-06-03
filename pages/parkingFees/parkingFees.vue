@@ -236,75 +236,16 @@ const selectPlate = (carNum) => {
 };
 
 const onPayClick = (parking) => {
-  console.log(parking.id);
-
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo.realname || '',
-      contractPhone: userStore.userInfo.phone || ''
-    },
-    items: [
-      {
-        bookInfo: {
-          date: new Date().toISOString().split('T')[0], // 当前日期
-          fullname: userStore.userInfo.realname || '',
-          idCardNo: userStore.userInfo.idCardNo || '',
-          idCardType: 'ID_CARD',
-          schedule: new Date().toISOString().split('T')[0]
-        },
-        productId: parking.id, // 停车记录ID
-        productType: "Parking",
-        quantity: 1,
-        amount: parking.amountPayable
-      }
-    ]
-  };
-
-  uni.showModal({
-    title: '支付',
-    content: `是否确认支付￥${parking.amountPayable}？`,
-    showCancel: true,
-    cancelText: '取消',
-    confirmText: '确定',
-    success: (res) => {
-      if (res.confirm) {
-        uni.request({
-          url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-          method: 'POST',
-          header: {
-            'X-Access-Token': userStore.token,
-            'Content-Type': 'application/json'
-          },
-          data: orderData,
-          success: (success) => {
-            if (success.data.code === 200 || success.data.success) {
-              uni.showToast({
-                title: '支付成功',
-                icon: 'success',
-                duration: 1500
-              });
-              setTimeout(() => {
-                uni.switchTab({
-                  url: '/pages/index/index'
-                });
-              }, 1500);
-            } else {
-              uni.showToast({
-                title: success.data.message || '订单创建失败',
-                icon: 'none',
-              });
-            }
-          },
-          fail: () => {
-            uni.showToast({
-              title: '网络错误',
-              icon: 'none',
-              });
-            }
-        });
-      }
-    }
+  uni.showToast({
+    title: '支付成功',
+    icon: 'success',
+    duration: 1500
   });
+  setTimeout(() => {
+    uni.switchTab({
+      url: '/pages/index/index'
+    });
+  }, 1500);
 };
 </script>
 

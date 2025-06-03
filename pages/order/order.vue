@@ -165,10 +165,21 @@ const filteredOrders = computed(() => {
 
   // 根据标签筛选
   if (currentTab.value !== 0) {
-    const status = statusMap[currentTab.value];
+    if (currentTab.value === 1) { // 待支付
+      result = result.filter(order => order.payStatus === 'UNPAID');
+    } else if (currentTab.value === 2) { // 进行中
+      result = result.filter(order => {
+        const now = new Date();
+        const endDate = new Date(order.travelEndDate);
+        return order.payStatus === 'PAID' && endDate > now;
+      });
+    } else if (currentTab.value === 3) { // 已完成
     result = result.filter(order => {
-      return Object.entries(status).every(([key, value]) => order[key] === value);
+        const now = new Date();
+        const endDate = new Date(order.travelEndDate);
+        return order.payStatus === 'PAID' && endDate <= now;
     });
+    }
   }
 
   // 根据搜索关键词筛选
@@ -181,51 +192,17 @@ const filteredOrders = computed(() => {
     );
   }
 
-  // 只显示未取消的订单
-  if (currentTab.value === 1) { // 待支付
-    result = result.filter(order => {
-      // 主对象和mainOrder对象的orderStatus/payStatus都要判断
-      const status1 = order.orderStatus;
-      const status2 = order.payStatus;
-      const mainOrderStatus = order.mainOrder?.orderStatus;
-      const mainPayStatus = order.mainOrder?.payStatus;
-      return !['CANCEL', 'CANCELLED'].includes(status2)
-        && status1 !== 'CANCELLED'
-        && mainOrderStatus !== 'CANCELLED'
-        && !['CANCEL', 'CANCELLED'].includes(mainPayStatus);
-    });
-  }
-
-  // 过滤掉已取消订单（兼容 orderStatus 字段）
+  // 过滤掉已取消订单
   result = result.filter(order => {
-    // 只要有一个orderStatus为CANCELLED就过滤掉
     return order.orderStatus !== 'CANCELLED' && order.mainOrder?.orderStatus !== 'CANCELLED';
   });
 
   // 按照创建时间排序，最近的在前
   result.sort((a, b) => {
-    // 兼容 iOS 的日期解析
     const parseDate = (dateStr) => {
       if (!dateStr) return new Date(0);
-
-      // 尝试多种格式解析
-      const formats = [
-        'yyyy/MM/dd HH:mm:ss',
-        'yyyy-MM-dd HH:mm:ss',
-        'yyyy/MM/dd',
-        'yyyy-MM-dd',
-        'yyyy-MM-ddTHH:mm:ss',
-        'yyyy-MM-ddTHH:mm:ssZ'
-      ];
-
-      for (const format of formats) {
         const parsedDate = new Date(dateStr.replace(/-/g, '/'));
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate;
-        }
-      }
-
-      return new Date(0); // 如果所有格式都解析失败，返回最早的日期
+      return isNaN(parsedDate.getTime()) ? new Date(0) : parsedDate;
     };
 
     const dateA = parseDate(a.createTime);
