@@ -1,76 +1,91 @@
-// // utils/request.js
-// import { ref } from 'vue';
-// import { useUserStore } from '@/store/modules/user'; // 确保引入 userStore
+/**
+ * axios封装
+ * 请求拦截、响应拦截、错误统一处理
+ */
 
-// const userStore = useUserStore(); // 获取用户存储
+import { useUserStore } from '@/store/modules/user';
+const userStore = useUserStore();
 
-// // 基地址
-// const BASE_URL = 'https://island.zhangshuiyi.com';
+export const baseurl = 'https://island.zhangshuiyi.com/island'; // 服务器
 
-// // 请求拦截器
-// const request = (options) => {
-//   return new Promise((resolve, reject) => {
-//     // 添加统一的请求头
-//     const header = { ...options.header };
-//     header['Content-Type'] = 'application/x-www-form-urlencoded'; // 设置为表单格式
-//     header['X-Access-Token'] = userStore.token; // 添加 token
+const exceptUrl = []; // 不需要token的接口
 
-//     // 处理数据为 URL 编码格式
-//     const data = new URLSearchParams(options.data).toString();
+const request = (url, data = {}, method = 'GET') => {
+	let header = {
+		'Content-Type': 'application/json'
+	};
+	if (userStore.token) {
+		header['X-Access-Token'] = userStore.token;
+	}
 
-//     // 发起请求
-//     uni.request({
-//       ...options,
-//       url: `${BASE_URL}${options.url}`, // 拼接完整请求地址
-//       header,
-//       data, // 使用处理后的数据
-//       success: (res) => {
-//         if (res.data.success === true) {
-//           resolve(res.data.result || res.data); // 请求成功，返回数据
-//         } else {
-//           // 处理其他状态码
-//           uni.showToast({
-//             title: `请求失败，状态码：${res.data.code}`,
-//             icon: 'none',
-//           });
-//           reject(res.data);
-//         }
-//       },
-//       fail: (err) => {
-//         // 请求失败
-//         uni.showToast({
-//           title: '请求失败，请稍后再试',
-//           icon: 'none',
-//         });
-//         reject(err);
-//       },
-//     });
-//   });
-// };
+	return new Promise((resolve, reject) => {
+		uni.request({
+			url: baseurl + url, //接口地址
+			data,
+			method,
+			header,
+			success: (res) => {
+				resolve(res.data.result);
+			},
+			fail: (res) => {
+				console.error(res);
+				reject(res);
+			}
+		});
+	});
+};
 
-// // 统一处理响应
-// const handleResponse = async (response) => {
-//   console.log('进入 handleResponse,响应数据：', response);
-//   if (response && response.code === 401) {
-//     // 如果返回状态码为401，提示并跳转到登录页
-//     uni.showToast({
-//       title: '未登录或登录已过期，请重新登录',
-//       icon: 'none',
-//     });
-//     setTimeout(() => {
-//       uni.redirectTo({ url: '/pages/login/login' }); // 假设登录页路径为 /pages/login/login
-//     }, 1500);
-//     return Promise.reject(response);
-//   }
-//   return response;
-// };
+export default request;
 
-// // 封装请求方法
-// const http = {
-//   get: (url, data = {}) => request({ url, method: 'GET', data }).then(handleResponse),
-//   post: (url, data = {}) => request({ url, method: 'POST', data }).then(handleResponse),
-//   put: (url, data = {}) => request({ url, method: 'PUT', data }).then(handleResponse),
-//   delete: (url, data = {}) => request({ url, method: 'DELETE', data }).then(handleResponse),
-// };
+export const StreamRequest = (url, data = {}, method = 'GET', callbackMethod) => {
+	const token = uni.getStorageSync('token');
+	const userId = uni.getStorageSync('userId');
 
-// export default http;
+	if (token || exceptUrl.includes(url)) {
+		return new Promise(async (resolve, reject) => {
+			// 实际API调用示例
+			const task = await uni.request({
+				url: baseurl + url,
+				data,
+				method,
+				// 启用流式响应
+				enableChunked: true, //开启 transfer-encoding chunked
+				responseType: 'arraybuffer', //设置响应的数据类型。合法值：text、arraybuffer
+				header: {
+					'content-type': 'application/json'
+				},
+				success: (res) => {
+					resolve(res.data);
+				},
+				fail: (err) => {
+					console.error('AI响应错误:', err);
+				}
+			});
+			task.onChunkReceived((response) => {
+				try {
+					// 二进制转字符串
+					const uint8Array = new Uint8Array(response.data);
+					const chunkStr = new TextDecoder('utf-8').decode(uint8Array);
+					// 切割字符串，只获取data:data:部分
+					let dataStr = chunkStr.split('\n').filter((line) => line.includes('data:data:'))[0];
+					if (dataStr) {
+						// 去掉data:data:
+						dataStr = dataStr.replace('data:data:', '');
+						const dataObj = JSON.parse(dataStr);
+						callbackMethod(dataObj);
+					}
+				} catch (e) {
+					console.error('解析异常:', e);
+				}
+			});
+		});
+	} else {
+		uni.showToast({
+			title: '请先登录',
+			icon: 'none'
+		});
+		uni.navigateTo({
+			url: '/pages/Login/LoginPage'
+		});
+	}
+};

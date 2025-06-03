@@ -142,6 +142,7 @@ const sendAiRequest = (userInput) => {
     data: requestData,
     responseType: 'arraybuffer',
     enableChunked: true,
+    timeout: 600000,
     success: () => {},
     fail: (err) => {
       console.error('请求失败：', err);
@@ -163,8 +164,9 @@ const sendAiRequest = (userInput) => {
   };
 
 
-  // 监听接收消息
-  requestTask.value.onChunkReceived((res) => {
+  if (requestTask.value && requestTask.value.onChunkReceived) {
+  	  // 监听接收消息
+  requestTask.value?.onChunkReceived((res) => {
     try {
       const arrayBuffer = new Uint8Array(res.data);
       const chunkStr = decoder.decode(arrayBuffer);
@@ -218,6 +220,8 @@ const sendAiRequest = (userInput) => {
               itemStr = itemStr.replace(/^"|"$/g, ''); 
               // 追加处理后的字符串和换行符
               allMessages += itemStr + '\n';
+
+              console.log("未处理替换标签前的 allMessages: ", allMessages);
               
 
               
@@ -262,6 +266,10 @@ const sendAiRequest = (userInput) => {
   requestTask.value.onComplete?.(() => {
     isTyping.value = false;
   });
+  }
+
+
+
 };
 
 // 解析SSE文本事件
@@ -459,7 +467,7 @@ const handleScroll = (e) => {
 /* 底输入框 */
 .bottom {
 	position: fixed;
-	bottom: 90px;
+	bottom: 50px;
 	left: 0;
 	right: 0;
 	padding: 10px 20px;

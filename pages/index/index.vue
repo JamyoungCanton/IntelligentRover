@@ -47,49 +47,49 @@
       <view class="icon-nav">
         <view class="icon-item" @click="navigateTo('景点攻略')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-景点攻略.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/beach.png"></image>
           </view>
           <text class="icon-text">景点攻略</text>
         </view>
         <view class="icon-item" @click="navigateTo('船票预订')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-船票预订.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/sail-boat.png"></image>
           </view>
           <text class="icon-text">船票预订</text>
         </view>
         <view class="icon-item" @click="navigateTo('美食推荐')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-美食推荐.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/restaurant.png"></image>
           </view>
           <text class="icon-text">美食推荐</text>
         </view>
         <view class="icon-item" @click="navigateTo('酒店住宿')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-酒店住宿.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/5-star-hotel.png"></image>
           </view>
           <text class="icon-text">酒店住宿</text>
         </view>
         <view class="icon-item" @click="navigateTo('停车收费')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-停车收费.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/parking.png"></image>
           </view>
           <text class="icon-text">停车收费</text>
         </view>
         <view class="icon-item" @click="navigateTo('一日畅游')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-一日畅游.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/beach-umbrella.png"></image>
           </view>
           <text class="icon-text">一日畅游</text>
         </view>
         <view class="icon-item" @click="navigateTo('社区互动')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-社区互动.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/communication.png"></image>
           </view>
           <text class="icon-text">社区互动</text>
         </view>
         <view class="icon-item" @click="navigateTo('更多服务')">
           <view class="icon-bg">
-            <image class="icon" src="https://wuminghui.top:9000/travel/首页-更多服务.svg"></image>
+            <image class="icon" src="https://img.icons8.com/fluency/96/more.png"></image>
           </view>
           <text class="icon-text">更多服务</text>
         </view>
@@ -317,6 +317,7 @@ const getSpotsList = (type) => {
             // 保存原始数据，以备详情页使用
             rawData: item
           };
+          // console.log('处理后的数据:', spot);
           return spot;
         });
       } else {
@@ -609,7 +610,7 @@ const getDiscountPrice = (priceStr) => {
   position: relative;
   width: 100%;
   /* padding: 30rpx 0 0 0; */
-  background-color: rgb(224, 250, 255);
+  background-color: rgb(224, 250, 255,0.5);
   /* 淡蓝色背景 */
   border-radius: 50rpx 50rpx 0 0;
   /* 顶部左右角圆角 */
@@ -679,36 +680,54 @@ const getDiscountPrice = (priceStr) => {
 .icon-nav {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20rpx;
-  padding: 0 20rpx;
+  gap: 24rpx;
+  padding: 20rpx;
   margin: 20rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.03);
 }
 
 .icon-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx;
+  padding: 16rpx;
+  transition: transform 0.2s ease;
+}
+
+.icon-item:active {
+  transform: scale(0.95);
 }
 
 .icon-bg {
-  background-color: white;
-  width: 100%;
-  height: 100rpx;
-  border-radius: 20rpx;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 28rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.04);
+  transition: all 0.3s ease;
 }
 
 .icon {
-  width: 80rpx;
-  height: 80rpx;
+  width: 72rpx;
+  height: 72rpx;
+  transition: transform 0.3s ease;
+}
+
+.icon-item:active .icon {
+  transform: scale(0.9);
 }
 
 .icon-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  margin-top: 8rpx;
 }
 
 /* 会员充值卡片 */
