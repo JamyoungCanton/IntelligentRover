@@ -76,17 +76,14 @@
         </view>
         <template v-else>
           <view class="review-item" v-for="(comment, index) in displayedComments" :key="index">
-            <view class="comheader">
-              <view class="ava-name-rating">
-                <img :src="comment.avatar" style="width: 50px;height: 50px; margin-right: 5px;" alt="">
-                <view class="name-rating">
-                  <text class="date">{{ comment.userName }}</text>
-                  <text class="rating">{{ '★'.repeat(comment.rating || 5) }}</text>
-                </view>
+            <view class="review-user">
+              <image :src="comment.avatar" class="review-avatar"></image>
+              <view class="review-user-info">
+                <text class="review-username">{{ comment.userName }}</text>
+                <text class="review-time">{{ comment.createTime }}</text>
               </view>
-              <text class="time">{{ comment.createTime || '' }}</text>
             </view>
-            <text class="comment">{{ comment.content }}</text>
+            <text class="review-content">{{ comment.content }}</text>
           </view>
           
           <!-- 显示更多按钮 -->
@@ -102,6 +99,10 @@
 
         <!-- 添加评论区域 -->
         <view class="comment-input-area">
+          <view class="comment-user-info">
+            <image :src="userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
+            <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
+          </view>
           <textarea
             v-model="newComment"
             class="comment-textarea"
@@ -313,7 +314,6 @@ fail: (err) => {
   // 获取评论列表
   const getComments = async () => {
     try {
-      console.log('开始获取评论，景点ID:', id.value);
       const res = await uni.request({
         url: `https://island.zhangshuiyi.com/island/comments/${id.value}`,
         method: 'GET',
@@ -322,35 +322,29 @@ fail: (err) => {
           'X-Access-Token': userStore.token
         }
       });
-      
-      console.log('评论接口返回数据:', res.data);
-      
       if (res.data.success) {
-        // 添加空值检查
         if (res.data.result && Array.isArray(res.data.result)) {
           comments.value = res.data.result.map(comment => ({
             id: comment.id,
             content: comment.content,
             createTime: comment.createTime,
-            userName: comment.userVO?.realname || '匿名用户',
-            avatar: comment.userVO?.avatar || '/static/hotel-attctive/ava.png',
-            rating: 5, // 默认评分
-            children: comment.children || [] // 保存回复评论
+            userName: comment.userVO?.realname || comment.userVO?.username || '匿名用户',
+            avatar: comment.userVO && comment.userVO.avatar
+              ? (comment.userVO.avatar.startsWith('http') ? comment.userVO.avatar : 'https://wuminghui.top:9000/' + comment.userVO.avatar.replace(/^\/+/, ''))
+              : (userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'),
+            rating: 5,
+            children: comment.children || []
           }));
         } else {
-          // 如果没有评论，设置为空数组
           comments.value = [];
         }
-        console.log('处理后的评论列表:', comments.value);
       } else {
-        console.error('获取评论失败:', res.data.message);
         uni.showToast({
           title: res.data.message || '获取评论失败',
           icon: 'none'
         });
       }
     } catch (error) {
-      console.error('获取评论异常：', error);
       uni.showToast({
         title: '获取评论失败',
         icon: 'none'
@@ -573,54 +567,128 @@ fail: (err) => {
 .reviews {
   background-color: #fff;
   border: solid 1px #dbeafe;
-  padding: 15px;
-  margin-top: 10px;
-  border-radius: 10px;
+  padding: 20rpx;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
-.review-item {
+.review-header {
+  margin-bottom: 20rpx;
+}
+.review-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+.no-comments {
+  text-align: center;
+  padding: 40rpx 30rpx;
+  color: #999;
+  font-size: 26rpx;
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #dbeafe;
+  align-items: center;
+  gap: 16rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  margin: 20rpx 0;
 }
-.comheader{
+.comment-input-area {
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 30rpx;
+}
+.comment-user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.user-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+}
+.user-name {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+.comment-textarea {
+  width: 100%;
+  height: 160rpx;
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  border: 1px solid #e5e5e5;
+  margin-bottom: 20rpx;
+}
+.comment-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  margin-top: 16rpx;
 }
-.ava-name-rating{
-  display: flex;
-  flex-direction: row;
-}
-.ava-name-rating img{
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-.name-rating{
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.name-rating .rating{
-  font-size: 20px;
-  color: #ff9800;
-  height: 12px;
-}
-.name-rating .date{
-  font-size: 12px;
-}
-.time{
-  font-size: 12px;
+.word-count {
+  font-size: 24rpx;
   color: #999;
 }
-.comment{
-  font-size: 15px;
-  /* 首行缩进两字符 */
-  text-indent: 2em;
-  margin-bottom: 8px;
+.submit-btn {
+  background-color: #3B82F6;
+  color: #fff;
+  font-size: 26rpx;
+  padding: 8rpx 32rpx;
+  border-radius: 8rpx;
+  border: none;
+}
+.submit-btn[disabled] {
+  background-color: #ccc;
+}
+.review-item {
+  padding: 20rpx 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.review-user {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.review-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+}
+.review-user-info {
+  flex: 1;
+}
+.review-username {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+.review-time {
+  font-size: 22rpx;
+  color: #999;
+}
+.review-content {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  margin-left: 76rpx;
+}
+.show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  color: #3B82F6;
+  font-size: 26rpx;
+  gap: 8rpx;
 }
 .book-now {
   background-color: #ff5722;
@@ -662,82 +730,5 @@ fail: (err) => {
 .picker-value:active,
 .picker-value:focus {
   border-color: #007aff;
-}
-.no-comments {
-  text-align: center;
-  padding: 40rpx 30rpx;
-  color: #999;
-  font-size: 28rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16rpx;
-  background-color: #f8f8f8;
-  border-radius: 12rpx;
-  margin: 20rpx 0;
-}
-
-.no-comments .uni-icons {
-  margin-bottom: 8rpx;
-}
-
-.comment-input-area {
-  background-color: #f8f8f8;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 10rpx;
-}
-
-.comment-textarea {
-  width: 100%;
-  height: 100rpx;
-  background-color: #fff;
-  border-radius: 8rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
-  box-sizing: border-box;
-  border: 1px solid #e5e5e5;
-}
-
-.comment-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20rpx;
-}
-
-.word-count {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.submit-btn {
-  background-color: #3B82F6;
-  color: #fff;
-  font-size: 28rpx;
-  margin-right: 3px;
-  padding: 4rpx 40rpx;
-  border-radius: 8rpx;
-  border: none;
-}
-
-.submit-btn[disabled] {
-  background-color: #ccc;
-  color: #fff;
-}
-
-.show-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20rpx 0;
-  color: #3B82F6;
-  font-size: 28rpx;
-  cursor: pointer;
-  gap: 8rpx;
-}
-
-.show-more:active {
-  opacity: 0.8;
 }
 </style>
