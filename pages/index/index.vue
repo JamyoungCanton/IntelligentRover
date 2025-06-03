@@ -243,7 +243,6 @@ const imageUrls = ref([]);
 const combinedArray = ref([]);
 
 const getSpotsList = (type) => {
-  console.log('开始请求类型:', type);
   
   let url = '';
   switch (type) {
@@ -266,7 +265,6 @@ const getSpotsList = (type) => {
     pageSize: 50
   };
   
-  console.log('请求参数:', params);
   
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
@@ -281,16 +279,11 @@ const getSpotsList = (type) => {
     data: params,
     header: headers,
       success: (res) => {
-      console.log(`${type}完整响应:`, {
-        statusCode: res.statusCode,
-        header: res.header,
-        data: res.data
-      });
+
       
       if (res.statusCode === 200 && res.data.success) {
         // 添加空值检查
         const records = res.data.result?.records || [];
-        console.log(`${type}数据解析前:`, records);
         
         spots.value = records.map(item => {
           let price = '';
@@ -324,10 +317,8 @@ const getSpotsList = (type) => {
             // 保存原始数据，以备详情页使用
             rawData: item
           };
-          console.log('处理后的数据:', spot);
           return spot;
         });
-        console.log(`最终${type}列表数据:`, spots.value);
       } else {
         console.error(`${type}数据请求失败:`, {
           statusCode: res.statusCode,
@@ -446,11 +437,6 @@ const getActivitiesList = () => {
     data: params,
     header: headers,
     success: (res) => {
-      console.log('活动列表完整响应:', {
-        statusCode: res.statusCode,
-        header: res.header,
-        data: res.data
-      });
       
       if (res.statusCode === 200 && res.data.success) {
         // 添加空值检查

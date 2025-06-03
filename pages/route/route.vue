@@ -60,6 +60,13 @@
         </view>
       </view>
 
+      <view class="date-picker">
+        <text class="section-title">选择出发日期：</text>
+        <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
+          <view class="picker-value">{{ playDate || '请选择' }}</view>
+        </picker>
+      </view>
+
       <view class="action-buttons">
         <view class="total-price">
           <text class="total-label">{{ priceInfo.totalLabel }}</text>
@@ -129,7 +136,26 @@ export default {
       assets: {
         banner: 'https://wuminghui.top:9000/travel/beach.jpg'
       },
-      productId: '10001'
+      productId: '10001',
+      playDate: '',
+      todayStr: (() => {
+        const today = new Date();
+        const pad = n => n < 10 ? '0' + n : n;
+        return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      })(),
+      featuredRoutes: [
+        {
+          id: '10001',
+          name: '浪漫双岛游',
+          description: '东澳岛-外伶仃岛2日游，体验海岛风情。',
+          price: 688.00,
+          features: '含住宿,含餐饮,含门票',
+          duration_days: 2,
+          suitable_crowd: '情侣、家庭、朋友',
+          notes: '请携带有效身份证件,建议携带防晒用品,请遵守导游安排,注意安全，听从工作人员指挥',
+          image_url: 'https://wuminghui.top:9000/travel/beach.jpg'
+        }
+      ]
     };
   },
   onLoad(options) {
@@ -144,13 +170,81 @@ export default {
       uni.navigateBack();
     },
     goToRegistration() {
-      uni.navigateTo({
-        url: `/pages/routeRegistration/routeRegistration?productId=${this.productId}`
-      });
+      if (!this.playDate) {
+        uni.showToast({ title: '请选择出发日期', icon: 'none' });
+        return;
+      }
+      // 这里直接创建订单
+      this.createOrder();
     },
     getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
       this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
+    },
+    onPlayDateChange(e) {
+      this.playDate = e.detail.value;
+    },
+    createOrder() {
+      // 假设你有 userStore.userInfo
+      const userInfo = getApp().globalData.userInfo || {};
+      const orderData = {
+        contract: {
+          contractName: userInfo.realname || userInfo.username || '',
+          contractPhone: userInfo.phone || ''
+        },
+        items: [
+          {
+            bookInfo: {
+              date: this.playDate,
+              fullname: userInfo.realname || userInfo.username || '',
+              idCardNo: userInfo.idCardNo || '',
+              idCardType: 'ID_CARD',
+              schedule: this.playDate
+            },
+            productId: this.productId,
+            productType: "FeaturedRoute",
+            quantity: 1
+          }
+        ],
+        travelStartDate: this.playDate,
+        travelEndDate: this.playDate
+      };
+
+      uni.request({
+        url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': uni.getStorageSync('token')
+        },
+        data: orderData,
+        success: (res) => {
+          if (res.data.code === 200) {
+            uni.showToast({
+              title: '订单创建成功',
+              icon: 'success',
+              duration: 1500
+            });
+            // 跳转到订单详情页
+            const orderSn = res.data.result.orderSn;
+            const priceNumber = this.priceInfo.price.replace(/[¥￥]/g, '');
+            uni.navigateTo({
+              url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?orderSn=${orderSn}&routeName=${encodeURIComponent(this.texts.routeName)}&price=${priceNumber}&playDate=${this.playDate}&image_url=${encodeURIComponent(this.assets.banner)}`
+            });
+          } else {
+            uni.showToast({
+              title: res.data.message || '订单创建失败',
+              icon: 'none'
+            });
+          }
+        },
+        fail: (err) => {
+          uni.showToast({
+            title: '创建订单失败，请稍后重试',
+            icon: 'none'
+          });
+        }
+      });
     }
   }
 };
@@ -361,5 +455,14 @@ export default {
 .register-text {
   color: white;
   font-size: 16px;
+}
+
+.date-picker {
+  margin-bottom: 20px;
+}
+
+.picker-value {
+  padding: 5px 10px;
+  border-radius: 5px;
 }
 </style>

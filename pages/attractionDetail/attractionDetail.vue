@@ -149,6 +149,7 @@
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
   onLoad((options) => {
+    console.log('页面onLoad时token:', userStore.token);
     id.value = options.id;
     getAttrictionDetail();
     getAttractionImages();

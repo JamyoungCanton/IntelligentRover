@@ -11,12 +11,12 @@
       <view class="card">
         <view class="card-header">
           <uni-icons type="calendar" size="20" color="#3B82F6"/>
-          <text class="hotalName">{{hotelList.name}}</text>
+          <text class="hotalName">{{ routeName || hotelList.name }}</text>
         </view>
        
       </view>
 
-      <view class="card">
+      <view class="card" v-if="!isFeaturedRoute">
         <view class="card-header">
           <uni-icons type="list" size="20" color="#3B82F6"/>
           <text class="card-title">景点明细</text>
@@ -57,7 +57,7 @@
             </view>
             <view class="fee-line">
               <text class="fee-name-highlight">实付金额</text>
-              <text class="fee-final">¥{{hotelList.ticketprice}}</text>
+              <text class="fee-final">{{ price || hotelList.ticketprice }}</text>
             </view>
           </view>
         </view>
@@ -106,11 +106,16 @@
           </view>
         </view>
       </view>
+
+      <view class="fee-item">
+        <text class="fee-name">出发日期</text>
+        <text class="fee-value">{{ playDate }}</text>
+      </view>
     </view>
 
     <view class="bottom-bar">
       <button class="confirm-btn" @click="handleConfirmPayment">
-        确认支付 ¥{{ hotelList.ticketprice }}
+        确认支付¥  {{ isFeaturedRoute ? price : hotelList.ticketprice }}
       </button>
     </view>
   </view>
@@ -125,12 +130,25 @@ const userStore = useUserStore();
 const id = ref(''); 
 const orderSn = ref(''); 
 const hotelList = ref([]);
+const routeName = ref('');
+const price = ref('');
+const playDate = ref('');
+const image_url = ref('');
+const isFeaturedRoute = ref(false);
 
 onLoad((options) => {
    id.value = options.id;
-   orderSn.value = options.orderSn;
-  console.log('接收的 id:', id);
-  console.log('接收的 orderSn:', orderSn);
+   orderSn.value = options.orderSn || '';
+   routeName.value = options.routeName ? decodeURIComponent(options.routeName) : '';
+   price.value = options.price || '';
+   playDate.value = options.playDate || '';
+   image_url.value = options.image_url ? decodeURIComponent(options.image_url) : '';
+   console.log('接收的 id:', id);
+   console.log('接收的 orderSn:', orderSn);
+   // 判断是否为精选路线
+   if (options.routeName && options.price && options.playDate) {
+     isFeaturedRoute.value = true;
+   }
 })
 onMounted(() => {
   
@@ -190,7 +208,7 @@ const handleConfirmPayment = () => {
  
 
   uni.navigateTo({
-    url: `/pages/pay_success/pay_success?amount=${hotelList.value.ticketprice}&orderId=${orderSn.value}`
+    url: `/pages/pay_success/pay_success?amount=${isFeaturedRoute.value ? price.value : hotelList.value.ticketprice}&orderId=${orderSn.value}`
   });
 };
 // 退出

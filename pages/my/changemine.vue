@@ -82,7 +82,14 @@ const navBarStyle = computed(() => {
 onLoad((options) => {
   isEdit.value = options.mode === 'edit'
   const info = userStore.userInfo
-  avatar.value = info.avatar
+  
+  // 处理头像URL
+  avatar.value = info.avatar 
+    ? (info.avatar.startsWith('http') 
+      ? info.avatar 
+      : `https://wuminghui.top:9000/${info.avatar.replace(/^\/+/, '')}`)
+    : '';
+    
   nickname.value = info.username || ''
   gender.value = info.gender || 0
   bio.value = info.bio || ''
@@ -92,6 +99,11 @@ onLoad((options) => {
   signature.value = info.signature || ''
   if (birthday.value) {
     age.value = calcAge(birthday.value)
+  }
+
+  if (!userStore.token) {
+    const token = uni.getStorageSync('token');
+    if (token) userStore.setToken(token);
   }
 })
 watch(birthday, (val) => {
@@ -116,6 +128,7 @@ function chooseAvatar() {
   })
 }
 function uploadAvatar(filePath) {
+  console.log('上传头像时token:', userStore.token)
   uni.uploadFile({
     url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
     filePath: filePath,
@@ -128,22 +141,41 @@ function uploadAvatar(filePath) {
         const data = JSON.parse(uploadFileRes.data)
         console.log('上传头像响应:', data)
         if (data.success && data.result) {
-          avatar.value = data.result
-          uni.showToast({ title: '上传成功', icon: 'success' })
+          const imageUrl = data.result.startsWith('http') 
+            ? data.result 
+            : `https://wuminghui.top:9000/${data.result.replace(/^\/+/, '')}`;
+            
+          avatar.value = imageUrl;
+          
+          userStore.userInfo.avatar = imageUrl;
+          
+          uni.showToast({ 
+            title: '上传成功', 
+            icon: 'success' 
+          });
         } else {
           console.error('上传头像失败:', data.message)
-          uni.showToast({ title: data.message || '上传失败', icon: 'none' })
+          uni.showToast({ 
+            title: data.message || '上传失败', 
+            icon: 'none' 
+          });
         }
       } catch (e) {
         console.error('解析上传响应失败:', e)
-        uni.showToast({ title: '上传失败', icon: 'none' })
+        uni.showToast({ 
+          title: '上传失败', 
+          icon: 'none' 
+        });
       }
     },
     fail: (err) => {
       console.error('上传头像请求失败:', err)
-      uni.showToast({ title: '上传失败', icon: 'none' })
+      uni.showToast({ 
+        title: '上传失败', 
+        icon: 'none' 
+      });
     }
-  })
+  });
 }
 function saveProfile() {
   // 手机号校验

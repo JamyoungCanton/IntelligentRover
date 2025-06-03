@@ -5,70 +5,72 @@
       <text class="title">海岛智游侠</text>
     </view>
 
-    <view class="login-form">
-      
-
-      <view class="phone-login">
-        <view class="input-group">
-          <uni-icons type="username" size="24" color="#999999" />
-          <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @blur="validateUsername" />
+    <!-- 微信一键登录区域 -->
+    <view class="wechat-login-btn-wrap">
+      <button class="wechat-login-btn" open-type="getUserInfo" @tap="handleWechatLogin">
+        <view class="wechat-btn-content">
+          <text>微信一键登录</text>
         </view>
-        <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
-        <view class="input-group">
-          <uni-icons type="password" size="24" color="#999999" />
+      </button>
+    </view>
+    
 
-          <input
-            :type="passwordVisible ? 'text' : 'password'"
-            placeholder="请输入密码"
-            maxlength="16"
-            v-model="formData.password"
-            :class="{ 'password-input': !passwordVisible && formData.password }"
-            @blur="validatePassword"
-          />
-          <uni-icons
-            :type="passwordVisible ? 'eye' : 'eye-slash'"
-            size="24"
-            color="#999999"
-            @tap="togglePasswordVisibility"
-            class="toggle-password-icon"
-          />
-        </view>
-
-        <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
-
-        <view class="verify-code">
-          <view class="code-input-wrap">
-            <view class="input-group">
-              <uni-icons type="locked" size="24" color="#999999" />
-              <input type="text" placeholder="请输入验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" />
-            </view>
-            <image
-              :src="codeImg"
-              mode="scaleToFill"
-              @tap="handleChangeCode"
-              style="width: 190rpx;height: 90rpx; margin-top: 20rpx;"
-            />
+    <!-- 账号登录区域 -->
+    <view
+      class="phone-login"
+      :class="{ 'disabled-login': !accountLoginEnabled }"
+    >
+      <view class="input-group">
+        <uni-icons type="username" size="24" color="#999999" />
+        <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @blur="validateUsername" :disabled="!accountLoginEnabled" />
+      </view>
+      <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
+      <view class="input-group">
+        <uni-icons type="password" size="24" color="#999999" />
+        <input
+          :type="passwordVisible ? 'text' : 'password'"
+          placeholder="请输入密码"
+          maxlength="16"
+          v-model="formData.password"
+          :class="{ 'password-input': !passwordVisible && formData.password }"
+          @blur="validatePassword"
+          :disabled="!accountLoginEnabled"
+        />
+        <uni-icons
+          :type="passwordVisible ? 'eye' : 'eye-slash'"
+          size="24"
+          color="#999999"
+          @tap="togglePasswordVisibility"
+          class="toggle-password-icon"
+          :disabled="!accountLoginEnabled"
+        />
+      </view>
+      <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
+      <view class="verify-code">
+        <view class="code-input-wrap">
+          <view class="input-group">
+            <uni-icons type="locked" size="24" color="#999999" />
+            <input type="text" placeholder="请输入验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" :disabled="!accountLoginEnabled" />
           </view>
+          <image
+            :src="codeImg"
+            mode="scaleToFill"
+            @tap="handleChangeCode"
+            style="width: 190rpx;height: 90rpx; margin-top: 20rpx;"
+            :disabled="!accountLoginEnabled"
+          />
         </view>
-        <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
-
-        <button class="login-btn" @tap="handleLogin">登录</button>
       </view>
+      <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
+      <button class="login-btn" @tap="handleLogin" :disabled="!accountLoginEnabled">登录</button>
+    </view>
 
-      <view class="actions">
-        <text class="action-link" @tap="handleRegister">注册账号</text>
-        <text class="action-link" @tap="handleForgetPassword">忘记密码</text>
-      </view>
-      <!-- 新增微信一键登录按钮 -->
-      <view class="wechat-login-btn-wrap">
-        <button class="wechat-login-btn" open-type="getUserInfo" @tap="handleWechatLogin">
-          <view class="wechat-btn-content">
-            <!-- <image src="https://wuminghui.top:9000/travel/wechat-icon.png" class="wechat-icon" /> -->
-            <text>微信一键登录</text>
-          </view>
-        </button>
-      </view>
-
+    <view class="switch-login-tip">
+      <text
+        class="switch-login-link"
+        v-if="!accountLoginEnabled"
+        @tap="accountLoginEnabled = true"
+      >使用账号登录</text>
     </view>
   </view>
 </template>
@@ -97,6 +99,8 @@ const errors = reactive({
 });
 // 密码可见性
 const passwordVisible = ref(false);
+const showAccountLogin = ref(false);
+const accountLoginEnabled = ref(false);
 
 onMounted(() => {
   handleCode();
@@ -381,12 +385,9 @@ page {
   flex-direction: column;
 }
 
-
-
 .divider::after {
   content: '';
   position: absolute;
-
   top: 50%;
   left: 0;
   right: 0;
@@ -431,8 +432,6 @@ button {
   height: 104rpx;
 }
 
-
-
 .code-btn {
   flex-shrink: 0;
   background-color: #f5f5f5;
@@ -446,8 +445,6 @@ button {
   color: #ffffff;
   margin-top: 40rpx;
 }
-
-
 
 .actions {
   display: flex;
@@ -486,25 +483,20 @@ button {
 .wechat-login-btn-wrap {
   display: flex;
   justify-content: center;
-  margin-top: 40rpx;
+  margin-top: 80rpx;
+  margin-bottom: 40rpx;
 }
 
 .wechat-login-btn {
   background-color: #07c160;
   color: #fff;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
   border-radius: 50rpx;
-  height: 90rpx;
+  height: 100rpx;
+  width: 80%;
   margin: 0 auto;
-  border: none;
   box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.08);
-  padding: 0 48rpx;
-  min-width: 240rpx;
-  /* 让按钮宽度自适应内容 */
-  width: auto;
 }
 
 .wechat-btn-content {
@@ -518,5 +510,49 @@ button {
   height: 32rpx;
   margin-right: 16rpx;
   vertical-align: middle;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 40rpx 0 20rpx 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+.divider-text {
+  margin: 0 20rpx;
+  color: #999;
+  font-size: 14px;
+}
+
+.phone-login {
+  font-size: 90%;
+}
+
+.switch-login-tip {
+  margin-top: 40rpx;
+  text-align: center;
+  width: 100%;
+}
+.switch-login-link {
+  color: #3B82F6;
+  font-size: 18px;
+  font-weight: 500;
+  text-decoration: underline;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.phone-login.disabled-login {
+  opacity: 0.5;
+  filter: grayscale(1);
+  pointer-events: none; /* 禁止点击 */
 }
 </style>
