@@ -1,13 +1,13 @@
 <template>
   <view class="container">
-    <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
-      <view class="back-btn" @click="goBack">
-        <uni-icons :type="activity.icons.back" :size="activity.iconSize"></uni-icons>
-      </view>
-      <text class="title">{{ activity.type }}</text>
-      <view class="share-btn">
-        <uni-icons :type="activity.icons.share" :size="activity.iconSize"></uni-icons>
-      </view>
+    <view class="fixed-activity-title-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <uni-icons
+        type="back"
+        size="22"
+        class="back-btn"
+        @click="goBack"
+      />
+      <text class="fixed-activity-title">{{ activity.title }}</text>
     </view>
 
     <view class="activity-image-wrapper">
@@ -20,7 +20,6 @@
     </view>
 
     <view class="activity-info">
-      <text class="activity-name">{{ activity.title }}</text>
       <view class="price-container">
         <text class="price">{{ activity.price }}</text>
         <text class="price-unit">{{ activity.priceUnit }}</text>
@@ -86,6 +85,8 @@
         <text class="register-text">{{ activity.registerText }}</text>
       </button>
     </view>
+
+    <view style="height: 70px;"></view>
   </view>
 </template>
 
@@ -371,18 +372,11 @@ onShow(() => {
   position: relative;
 }
 
-.activity-name {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
 .price-container {
   display: flex;
   align-items: baseline;
   margin-bottom: 10px;
 }
-
 
 .price {
   font-size: 24px;
@@ -516,13 +510,19 @@ onShow(() => {
 }
 
 .bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
   background-color: #fff;
-  margin-top: 20px;
   border-top: 1px solid #eee;
+  /* 可选：加阴影提升悬浮感 */
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
 }
 
 .price-info {
@@ -563,5 +563,36 @@ onShow(() => {
   border: none;
   margin-left: auto;
   margin-right: 10px;
+}
+
+.fixed-activity-title-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: #fff;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.back-btn {
+  position: absolute;
+  left: 18px;
+  top: 80%;
+  transform: translateY(-50%);
+  color: #222;
+}
+
+.fixed-activity-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #222;
+  text-align: center;
+  flex: 1;
 }
 </style>

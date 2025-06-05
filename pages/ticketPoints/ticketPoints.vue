@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <view style="height: 10px;"></view>
     <!-- 顶部轮播图 -->
     <view class="banner-section">
       <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
@@ -13,33 +14,42 @@
     </view>
     
     <!-- 帖子类型按钮 -->
-    <view class="post-type-buttons">
-      <view 
-        class="type-button" 
-        :class="{ active: currentPostType === 'public' }" 
-        @click="currentPostType === 'public' ? goToCreatePost() : switchPostType('public')"
-      >
-        <uni-icons type="paperplane" size="18" :color="currentPostType === 'public' ? '#fff' : '#666'"></uni-icons>
-        <text>{{ currentPostType === 'public' ? '发布帖子' : '看帖子' }}</text>
-      </view>
-      <view 
-        class="type-button" 
-        :class="{ active: currentPostType === 'mine' }" 
-        @click="switchPostType('mine')"
-      >
-        <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
-        <text>我的信息</text>
+    <view class="fixed-bottom-btns">
+      <view class="post-type-buttons">
+        <view 
+          class="type-button" 
+          :class="{ active: currentPostType === 'public' }" 
+          @click="currentPostType === 'public' ? goToCreatePost() : switchPostType('public')"
+        >
+          <uni-icons type="paperplane" size="18" :color="currentPostType === 'public' ? '#fff' : '#666'"></uni-icons>
+          <text>{{ currentPostType === 'public' ? '发布帖子' : '看帖子' }}</text>
+        </view>
+        <view 
+          class="type-button" 
+          :class="{ active: currentPostType === 'mine' }" 
+          @click="switchPostType('mine')"
+        >
+          <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
+          <text>我的信息</text>
+        </view>
       </view>
     </view>
     
     <view class="postTypeSelect">
-      <scroll-view class="type-scroll" scroll-x show-scrollbar="false">
-        <view 
-          v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList" 
+      <scroll-view
+        class="type-scroll"
+        scroll-x
+        show-scrollbar="false"
+        :scroll-into-view="scrollIntoViewId"
+        scroll-with-animation
+      >
+        <view
+          v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList"
           :key="index"
           class="type-item"
           :class="{ active: activeType === type.value }"
-          @click="selectType(type.value)"
+          @click="selectType(type.value, index)"
+          :id="'type-item-' + index"
         >
           {{ type.label }}
         </view>
@@ -111,7 +121,8 @@
       </view>
     </view>
     
-    <Tabbar /> 
+    <Tabbar v-if="showTabbar" /> 
+    <view style="height: 50px;"></view>
   </view>
 </template>
 
@@ -198,13 +209,15 @@ const filteredPostList = computed(() => {
 });
 
 const activeType = ref('all');
+const scrollIntoViewId = ref('');
 
-const selectType = (type) => {
-  activeType.value = type;
+const selectType = (typeValue, index) => {
+  activeType.value = typeValue;
+  scrollIntoViewId.value = 'type-item-' + index;
   // 这里可以添加选择类型后的逻辑
   // 根据贴字的类型进行筛选
   if (currentPostType.value === 'mine') {
-    if (type === 'collect') {
+    if (typeValue === 'collect') {
       getUserCollectedPosts(); 
     } else {
       getUserNotifications();
@@ -572,14 +585,10 @@ const getUserCollectedPosts = () => {
   justify-content: space-between;
   padding: 12px 15px;
   background-color: #fff;
-  margin: 0 15px;
-  border-radius: 14px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-  margin-top: -25px;
-  position: relative;
-  z-index: 2;
-  border: 1px solid #f0f0f0;
-  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+  border-radius: 14px 14px 0 0;
+  box-shadow: none;
+  margin: 0;
+  border: none;
 }
 
 .type-button {
@@ -657,6 +666,7 @@ const getUserCollectedPosts = () => {
   white-space: nowrap;
   padding: 5px 0;
   margin-left: 15px;
+  scroll-behavior: smooth;
 }
 
 .type-item {
@@ -668,7 +678,7 @@ const getUserCollectedPosts = () => {
   color: #666;
   font-size: 14px;
   font-weight: 400;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s, transform 0.2s;
   position: relative;
   overflow: hidden;
   
@@ -990,5 +1000,16 @@ const getUserCollectedPosts = () => {
     box-shadow: 0 2px 4px rgba(0, 102, 204, 0.15);
     font-weight: 500;
   }
+}
+
+.fixed-bottom-btns {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1002;
+  background: #fff;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  padding-bottom: env(safe-area-inset-bottom); /* 适配iPhone底部安全区 */
 }
 </style>

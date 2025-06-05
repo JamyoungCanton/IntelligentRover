@@ -15,33 +15,31 @@
 		{
 			"path": "pages/membership/membership",
 			"style": {
-				"navigationBarTitleText": "会员充值",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/itinerary/itinerary",
 			"style": {
-				"navigationBarTitleText": "itinerary",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/oneCodePass/oneCodePass",
 			"style": {
-				"navigationBarTitleText": "oneCodePass"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/order/order",
 			"style": {
-				"navigationBarTitleText": "订单"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/my",
 			"style": {
-				"navigationBarTitleText": "我的"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -71,7 +69,7 @@
 		{
 			"path": "pages/ticketDetails/ticketDetails",
 			"style": {
-				"navigationBarTitleText": "交通详情",
+				"navigationBarTitleText": "",
 				"navigationBarBackgroundColor": "#ffffff",
 				"navigationBarTextStyle": "black"
 			}
@@ -79,26 +77,26 @@
 		{
 			"path": "pages/attractionGuide/attractionGuide",
 			"style": {
-				"navigationBarTitleText": "景点攻略",
+				"navigationBarTitleText": "",
 				"navigationBarTextStyle": "black"
 			}
 		},
 		{
 			"path": "pages/hotelBooking/hotelBooking",
 			"style": {
-				"navigationBarTitleText": "住宿预订"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/navbar/navbar",
 			"style": {
-				"navigationBarTitleText": "navbar"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
-				"navigationBarTitleText": "社区互动"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -111,56 +109,48 @@
 		{
 			"path": "pages/foodRecommendation/foodRecommendation",
 			"style": {
-				"navigationBarTitleText": "",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/itineraryDetails/itineraryDetails",
 			"style": {
-				"navigationBarTitleText": "itineraryDetails",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/itineraryEvaluation/itineraryEvaluation",
 			"style": {
-				"navigationBarTitleText": "itineraryEvaluation",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/activity/activity",
 			"style": {
-				"navigationBarTitleText": "activity",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/activityRegistration/activityRegistration",
 			"style": {
-				"navigationBarTitleText": "activityRegistration",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/route/route",
 			"style": {
-				"navigationBarTitleText": "route",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/routeRegistration/routeRegistration",
 			"style": {
-				"navigationBarTitleText": "routeRegistration",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/routeRegistrationSuccess/routeRegistrationSuccess",
 			"style": {
-				"navigationBarTitleText": "routeRegistrationSuccess",
 				"navigationStyle": "custom"
 			}
 		},
@@ -185,50 +175,49 @@
 		{
 			"path": "pages/test/test",
 			"style": {
-				"navigationBarTitleText": "test"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/login/login",
 			"style": {
-				"navigationBarTitleText": "登录"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/register/register",
 			"style": {
-				"navigationBarTitleText": "注册"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/loginOut/loginOut",
 			"style": {
-				"navigationBarTitleText": "loginOut"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/confirmHotelOrder/confirmHotelOrder",
 			"style": {
-				"navigationBarTitleText": "酒店订单确认"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/dingingDetail/dingingDetail",
 			"style": {
-				"navigationBarTitleText": "dingingDetail"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/foodDetails/foodDetails",
 			"style": {
-				"navigationBarTitleText": "foodDetails",
-				"navigationStyle": "custom"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/hotelDetail/hotelDetail",
 			"style": {
-				"navigationBarTitleText": "hotelDetail"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -252,51 +241,49 @@
 		{
 			"path": "pages/comfirmAttractionOrder/confirmAttrationOrder",
 			"style": {
-				"navigationBarTitleText": "attractionConfirm",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/foodConfirm/foodConfirm",
 			"style": {
-				"navigationBarTitleText": "foodConfirm",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/post/createPost",
 			"style": {
-				"navigationBarTitleText": "创建帖子"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/post/createActivity",
 			"style": {
-				"navigationBarTitleText": "创建活动"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/post/postDetail",
 			"style": {
-				"navigationBarTitleText": "帖子详情"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/historical-Orders/historical-Orders",
 			"style": {
-				"navigationBarTitleText": "历史订单"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/post/mypost",
 			"style": {
-				"navigationBarTitleText": "我的帖子"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/collectpost/collectpost",
 			"style": {
-				"navigationBarTitleText": "收藏帖子"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
@@ -308,64 +295,61 @@
 		{
 			"path": "pages/activityPay/activityPay",
 			"style": {
-				"navigationBarTitleText": "activityPay",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/my/aboutUs",
 			"style": {
-				"navigationBarTitleText": "关于我们"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/selectLanguage",
 			"style": {
-				"navigationBarTitleText": "语言选择"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/setNotice",
 			"style": {
-				"navigationBarTitleText": "通知设置"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/setAccount",
 			"style": {
-				"navigationBarTitleText": "账号设置"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/feedback",
 			"style": {
-				"navigationBarTitleText": "意见反馈"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/my/changemine",
 			"style": {
-				"navigationBarTitleText": "个人信息",
 				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/my/changePassword",
 			"style": {
-				"navigationBarTitleText": "修改密码"
+				"navigationBarTitleText": ""
 			}
 		},
 		{
-			"path" : "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
-			"style" : 
-			{
-				"navigationBarTitleText" : ""
+			"path": "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
+			"style": {
+				"navigationBarTitleText": ""
 			}
 		},
 		{
 			"path": "pages/activityCollect/activityCollect",
 			"style": {
-				"navigationBarTitleText": "活动收藏"
+				"navigationBarTitleText": ""
 			}
 		}
 	],
@@ -383,12 +367,6 @@
 		"list": [
 			{
 				"pagePath": "pages/index/index"
-			},
-			{
-				"pagePath": "pages/ticketPoints/ticketPoints"
-			},
-			{
-				"pagePath": "pages/chat/chat"
 			},
 			{
 				"pagePath": "pages/order/order"

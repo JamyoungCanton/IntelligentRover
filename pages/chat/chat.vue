@@ -1,5 +1,6 @@
 <template>
 	<view class="container">
+    <view style="height: 10px;"></view>
 		<view class="header">
 			<view class="header-top">
 				<image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17843786381807740873AI导游 (无字版).png" mode="widthFix" class="logo"></image>
@@ -48,7 +49,7 @@
 				</div>
 			</div>
 		</div>
-		<Tabbar />
+    <Tabbar v-if="showTabbar" /> 
 	</view>
 </template>
 
@@ -315,7 +316,9 @@ const handleScroll = (e) => {
   currentScrollTop = e.detail.scrollTop;
 };
 
-
+const goBack = () => {
+  uni.navigateBack();
+};
 
 </script>
 

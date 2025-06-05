@@ -3,13 +3,20 @@
     <!-- 头部导航栏 -->
     <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
       <view class="header-content">
-        <view class="back-icon">
-          <uni-icons type="back" size="24" color="#333" @click="goBack"></uni-icons>
+        <view class="back-icon" @click="goBack">
+          <uni-icons type="back" size="24" color="#333"></uni-icons>
         </view>
         <text class="header-title">美食推荐</text>
       </view>
       <view class="search-box">
-        <input type="text" v-model="searchKeyword" placeholder="搜索餐厅" class="search-input" @input="onSearchInput" />
+        <input 
+          type="text" 
+          v-model="searchKeyword" 
+          placeholder="搜索餐厅" 
+          class="search-input" 
+          @confirm="onSearch"
+          confirm-type="search"
+        />
         <uni-icons type="search" size="24" color="#333" @click="onSearch" />
       </view>
     </view>
@@ -225,7 +232,15 @@ const selectSort = (index) => {
 };
 
 const goBack = () => {
-  uni.navigateBack();
+  uni.navigateBack({
+    delta: 1,
+    fail: () => {
+      // 如果返回失败（没有上一页），则跳转到首页
+      uni.switchTab({
+        url: '/pages/index/index'
+      });
+    }
+  });
 };
 
 const onSearch = () => {
@@ -238,12 +253,19 @@ const onSearch = () => {
     return;
   }
 
-  // 显示搜索成功提示
+  // 执行搜索
   const count = displayedRestaurants.value.length;
-  uni.showToast({
-    title: `找到${count}家相关餐厅`,
-    icon: 'success'
-  });
+  if (count > 0) {
+    uni.showToast({
+      title: `找到${count}家相关餐厅`,
+      icon: 'success'
+    });
+  } else {
+    uni.showToast({
+      title: '未找到相关餐厅',
+      icon: 'none'
+    });
+  }
 };
 
 const onSearchInput = () => {
@@ -473,6 +495,8 @@ page {
 .back-icon {
   position: absolute;
   left: 0;
+  padding: 10rpx;
+  z-index: 101;
 }
 
 .search-box {
@@ -490,6 +514,7 @@ page {
   font-size: 28rpx;
   background: transparent;
   margin-right: 8rpx;
+  padding: 0 10rpx;
 }
 
 .header-title {
@@ -501,7 +526,7 @@ page {
 
 .main {
   flex: 1;
-  margin-top: 88rpx;
+  margin-top: calc(88rpx + var(--status-bar-height));
   padding: 0 32rpx;
   overflow: hidden;
 }

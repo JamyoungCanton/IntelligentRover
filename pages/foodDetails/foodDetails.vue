@@ -1,17 +1,9 @@
 <template>
 	<view class="container">
-		<!-- 顶部导航栏 -->
-		<view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
-			<view class="back-icon">
-				<uni-icons type="back" size="24" color="#333" @click="goBack"></uni-icons>
-			</view>
-			<view class="title">店铺详情</view>
-			<view class="share-icon">
-				<uni-icons type="share" size="24" color="#333" @click="share"></uni-icons>
-			</view>
-		</view>
+		<!-- 顶部导航栏 --> 
+		
 
-		<!-- 店铺图片 -->
+		<!--  店铺图片 -->
 		<view class="shop-image">
 			<image :src="shopMainImage" mode="widthFix"></image>
 			<view class="shop-info-overlay">
@@ -94,6 +86,7 @@
 				</view>
 			</scroll-view>
 		</view>
+
 
 		<!-- 用户评价 -->
 		<view class="user-reviews">
@@ -842,30 +835,48 @@ const userInfo = computed(() => userStore.userInfo || {});
 
 /* 顶部导航栏 */
 .header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 15px;
-	background-color: #fff;
-	position: sticky;
+	position: fixed;
 	top: 0;
+	left: 0;
+	right: 0;
+	background-color: #fff;
 	z-index: 100;
 }
 
-.back-icon,
-.share-icon {
-	width: 40px;
-	height: 40px;
+.header-content {
 	display: flex;
-	justify-content: center;
+	justify-content: space-between;
 	align-items: center;
+	height: 88rpx;
+	padding: 0 32rpx;
+	position: relative;
 }
 
-.title {
-	font-size: 18px;
-	font-weight: bold;
+.back-icon {
+	position: absolute;
+	left: 32rpx;
+	padding: 10rpx;
+	z-index: 101;
+}
+
+.share-icon {
+	position: absolute;
+	right: 32rpx;
+	padding: 10rpx;
+	z-index: 101;
+}
+
+.header-title {
 	flex: 1;
 	text-align: center;
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #333;
+}
+
+/* 确保主内容区域不被头部遮挡 */
+.main {
+	margin-top: calc(88rpx + var(--status-bar-height));
 }
 
 /* 店铺图片 */

@@ -95,20 +95,22 @@ const setTabBarLayout = () => {
     }
 };
 
+const tabBarPages = [
+    '/pages/index/index',
+    '/pages/order/order',
+    '/pages/my/my'
+];
+
 const handlePush = (item, index) => {
     const pages = getCurrentPages();
     const currentPage = pages[pages.length - 1];
     const currentRoute = '/' + currentPage.route;
 
-    console.log('Current Route:', currentRoute, 'Target Path:', item.pagePath);
-
     if (item.pagePath === currentRoute) {
-        console.log("Already on this page.");
         return;
     }
 
-    if (item.isTabPage) {
-        console.log("Switching Tab to:", item.pagePath);
+    if (tabBarPages.includes(item.pagePath)) {
         uni.switchTab({
             url: item.pagePath,
             fail: (err) => {
@@ -116,11 +118,10 @@ const handlePush = (item, index) => {
             }
         });
     } else {
-        console.log("Navigating to:", item.pagePath);
-        uni.navigateTo({
+        uni.reLaunch({
             url: item.pagePath,
             fail: (err) => {
-                console.error("NavigateTo failed:", err);
+                console.error("reLaunch failed:", err);
             }
         });
     }

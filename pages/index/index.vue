@@ -355,6 +355,12 @@ const viewMore = (type) => {
   });
 };
 
+const tabBarPages = [
+  '/pages/index/index',
+  '/pages/order/order',
+  '/pages/my/my'
+];
+
 const navigateTo = (destination) => {
   const routes = {
     '景点攻略': '/pages/attractionGuide/attractionGuide',
@@ -366,16 +372,11 @@ const navigateTo = (destination) => {
     '社区互动': '/pages/ticketPoints/ticketPoints',
     '更多服务': '/pages/moreServices/moreServices'
   };
-  if (destination === '社区互动') {
-    // 如果是社区互动页面，使用 uni.switchTab
-    uni.switchTab({
-      url: routes[destination]
-    });
+  const url = routes[destination];
+  if (tabBarPages.includes(url)) {
+    uni.switchTab({ url });
   } else {
-    // 其他页面使用 uni.navigateTo
-    uni.navigateTo({
-      url: routes[destination]
-    });
+    uni.navigateTo({ url });
   }
 };
 
@@ -491,7 +492,7 @@ const offsetX = ref(0);
 const offsetY = ref(0);
 // 跳转到 chat 页面
 const navigateToChat = () => {
-  uni.switchTab({
+  uni.navigateTo({
     url: '/pages/chat/chat'
   });
 };
@@ -899,7 +900,7 @@ const getDiscountPrice = (priceStr) => {
 
 .discount-price {
   color: #FF9500;
-  font-size: 25rpx;
+  font-size: 23rpx;
   font-weight: bold;
   margin-right: 8rpx;
   white-space: nowrap;
@@ -908,7 +909,7 @@ const getDiscountPrice = (priceStr) => {
 
 .original-price {
   color: #999;
-  font-size: 22rpx;
+  font-size: 16rpx;
   text-decoration: line-through;
 }
 
