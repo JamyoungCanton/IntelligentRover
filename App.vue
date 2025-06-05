@@ -11,13 +11,13 @@ export default {
     if (token) userStore.setToken(token);
     const user = uni.getStorageSync('user');
     if (user && user.userInfo) userStore.updateUserInfo(user.userInfo);
-  },
-  onShow: function() {
-    console.log('App Show');
-  },
-  onHide: function() {
-    console.log('App Hide');
-  },
+    },
+    onShow: function() {
+        console.log('App Show');
+    },
+    onHide: function() {
+        console.log('App Hide');
+    },
 };
 </script>
 

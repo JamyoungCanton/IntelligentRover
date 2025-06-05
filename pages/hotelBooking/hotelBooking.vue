@@ -70,7 +70,7 @@
                 <text class="price-label">起价</text>
                 <text class="price-amount">¥{{ hotel.price }}</text>
               </view>
-              <button class="book-btn" @click="createHotelOrder(hotel)">立即预订</button>
+              <button class="book-btn" @click="goHotelDetail(hotel)">立即预订</button>
             </view>
           </view>
         </view>
@@ -154,7 +154,7 @@ onMounted(() => {
 
 const goHotelDetail = (hotel) => {
   uni.navigateTo({
-    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}`
+    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}&images=${encodeURIComponent(JSON.stringify(hotel.images))}`
   });
 }
 const hasToken = () => {
@@ -189,6 +189,7 @@ const getHotelList = () => {
       hotelList.value = res.data.result.records;
       combinedArray.value = hotelList.value.map((item, index) => ({
         ...item,
+        images: [imageUrls.value[index]],
         imageURL: imageUrls.value[index]
       }));
     },
@@ -306,7 +307,7 @@ if (!range.value || range.value.length !== 2) {
 // 跳转详情页面
 const  goHotelDetail = (hotel) => {
  uni.navigateTo({
-    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}`
+    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}&images=${encodeURIComponent(JSON.stringify(hotel.images))}`
   }) 
 }
 

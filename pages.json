@@ -361,6 +361,12 @@
 			{
 				"navigationBarTitleText" : ""
 			}
+		},
+		{
+			"path": "pages/activityCollect/activityCollect",
+			"style": {
+				"navigationBarTitleText": "活动收藏"
+			}
 		}
 	],
 	"globalStyle": {

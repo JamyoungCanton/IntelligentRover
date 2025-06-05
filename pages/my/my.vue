@@ -97,7 +97,7 @@ const gridItems = ref([
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://wuminghui.top:9000/travel/activityCollect.png',
+    img: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/386345760d1f4c23af9f7c4219530fb9.png',
     text: '活动收藏',
     onClick: 'goActivityCollect'
   },
