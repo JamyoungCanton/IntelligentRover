@@ -1,6 +1,38 @@
 <template>
   <view class="container">
-    <view style="height: 10px;"></view>
+    <!-- 自定义顶部导航栏 -->
+    <view
+      class="custom-nav"
+      :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight }px;`"
+    >
+      <view class="nav-left" @click="goBack">
+        <uni-icons type="back" size="28" color="#333" />
+      </view>
+      <view class="nav-title">社区</view>
+      <view class="nav-right"></view>
+    </view>
+    <!-- 帖子分类区不再固定在顶部 -->
+    <view class="postTypeSelect">
+      <scroll-view
+        class="type-scroll"
+        scroll-x
+        show-scrollbar="false"
+        :scroll-into-view="scrollIntoViewId"
+        scroll-with-animation
+      >
+        <view
+          v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList"
+          :key="index"
+          class="type-item"
+          :class="{ active: activeType === type.value }"
+          @click="selectType(type.value, index)"
+          :id="'type-item-' + index"
+        >
+          {{ type.label }}
+        </view>
+      </scroll-view>
+    </view>
+    
     <!-- 顶部轮播图 -->
     <view class="banner-section">
       <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
@@ -33,27 +65,6 @@
           <text>我的信息</text>
         </view>
       </view>
-    </view>
-    
-    <view class="postTypeSelect">
-      <scroll-view
-        class="type-scroll"
-        scroll-x
-        show-scrollbar="false"
-        :scroll-into-view="scrollIntoViewId"
-        scroll-with-animation
-      >
-        <view
-          v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList"
-          :key="index"
-          class="type-item"
-          :class="{ active: activeType === type.value }"
-          @click="selectType(type.value, index)"
-          :id="'type-item-' + index"
-        >
-          {{ type.label }}
-        </view>
-      </scroll-view>
     </view>
     
     <view class="postContent">
@@ -127,12 +138,19 @@
 </template>
 
 <script setup>
-import { ref,computed } from 'vue';
+import { ref,computed, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { onShow } from '@dcloudio/uni-app';
+import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 const userStore = useUserStore();
+
+const statusBarHeight = ref(0);
+
+onMounted(() => {
+  statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0;
+});
 
 // 看帖子页面的筛选条件
 const publicTypeList = ref([
@@ -537,7 +555,17 @@ const getUserCollectedPosts = () => {
   });
 };
 
-  
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+  } else {
+    uni.switchTab({
+      url: '/pages/index/index'
+    });
+  }
+}
+
 </script>
 
 <style lang="scss">
@@ -546,7 +574,7 @@ const getUserCollectedPosts = () => {
   width: 100%;
   height: 200px;
   position: relative;
-  margin-bottom: 15px;
+  margin-top: 30px;
 }
 
 .banner-swiper {
@@ -650,16 +678,13 @@ const getUserCollectedPosts = () => {
 }
 
 .postTypeSelect {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  padding: 8px 0;
+  /* 取消 sticky/fixed 和 margin-top，恢复普通流式布局 */
+  position: static;
+  margin-top: 0;
   background-color: #fff;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  margin-top: 5px;
   border-radius: 12px 12px 0 0;
+  padding: 8px 0;
 }
 
 .type-scroll {
@@ -1011,5 +1036,36 @@ const getUserCollectedPosts = () => {
   background: #fff;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   padding-bottom: env(safe-area-inset-bottom); /* 适配iPhone底部安全区 */
+}
+
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 999;
+  border-bottom: 1px solid #f0f0f0;
+  /* 高度和padding-top由内联style动态设置 */
+}
+
+.nav-left {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.nav-right {
+  width: 60rpx;
 }
 </style>

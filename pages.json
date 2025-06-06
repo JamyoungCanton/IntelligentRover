@@ -96,14 +96,15 @@
 		{
 			"path": "pages/ticketPoints/ticketPoints",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationStyle": "custom",
+				"showTabBar": true
 			}
 		},
 		{
 			"path": "pages/chat/chat",
 			"style": {
-				"navigationBarTitleText": "",
-				"showTabBar": false
+				"navigationStyle": "custom",
+				"showTabBar": true
 			}
 		},
 		{

@@ -41,7 +41,7 @@
       </view>
       <view class="form-item">
         <text class="label">手机号</text>
-        <input class="input" v-model="phone" :disabled="!isEdit" placeholder="请输入手机号" maxlength="11" />
+        <input class="input" v-model="phone" :disabled="!isEdit" placeholder="请输入手机号" maxlength="11" type="text" />
       </view>
       <view class="form-item">
         <text class="label">邮箱</text>
@@ -179,21 +179,51 @@ function uploadAvatar(filePath) {
 }
 function saveProfile() {
   // 手机号校验
-  if (!/^1\d{10}$/.test(phone.value)) {
-    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
-    return
+  const phoneStr = String(phone.value).replace(/\\s/g, '');
+  console.log('手机号原始值:', phone.value, '处理后:', phoneStr);
+  if (!phoneStr) {
+    uni.showToast({ title: '请输入手机号', icon: 'none' });
+    return;
   }
-  userStore.userInfo.avatar = avatar.value
-  userStore.userInfo.username = nickname.value
-  userStore.userInfo.gender = gender.value
-  userStore.userInfo.bio = bio.value
-  userStore.userInfo.birthday = birthday.value
-  userStore.userInfo.phone = phone.value
-  userStore.userInfo.email = email.value
-  userStore.userInfo.signature = signature.value
-  uni.$emit && uni.$emit('updateNickname', nickname.value)
-  uni.showToast({ title: '保存成功', icon: 'success' })
-  setTimeout(() => uni.navigateBack(), 800)
+  if (!/^1[3-9]\d{9}$/.test(phoneStr)) {
+    uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+    return;
+  }
+
+  // 构造请求体
+  const sysRoleIndex = {
+    // 这里填你要提交的字段，比如
+    component: '', // 组件名
+    createBy: userStore.userInfo.username || '', // 当前用户名
+    id: userStore.userInfo.id || '', // 用户id
+    roleCode: '', // 角色编码
+    status: '', // 状态
+    sysOrgCode: '', // 部门
+    updateBy: userStore.userInfo.username || '', // 当前用户名
+    url: '', // 路由地址
+    // 你可以根据实际需求补充其它字段
+  };
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/sysRoleIndex/edit',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: { sysRoleIndex },
+    success: (res) => {
+      if (res.data.success) {
+        uni.showToast({ title: '保存成功', icon: 'success' });
+        setTimeout(() => uni.navigateBack(), 800);
+      } else {
+        uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
+      }
+    },
+    fail: (err) => {
+      uni.showToast({ title: '网络错误', icon: 'none' });
+    }
+  });
 }
 function onGenderChange(e) {
   gender.value = e.detail.value

@@ -1,6 +1,15 @@
 <template>
 	<view class="container">
-    <view style="height: 10px;"></view>
+		<!-- 自定义顶部导航栏 -->
+		<view class="custom-nav">
+			<view class="nav-left" @click="goBack">
+				<uni-icons type="back" size="28" color="#333" />
+			</view>
+			<view class="nav-title">AI助手</view>
+			<view class="nav-right"></view>
+		</view>
+		
+		<view style="height: 10px;"></view>
 		<view class="header">
 			<view class="header-top">
 				<image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17843786381807740873AI导游 (无字版).png" mode="widthFix" class="logo"></image>
@@ -50,6 +59,7 @@
 			</div>
 		</div>
     <Tabbar v-if="showTabbar" /> 
+
 	</view>
 </template>
 
@@ -58,6 +68,7 @@ import Tabbar from '../Tabbar/Tabbar.vue';
 import { ref, nextTick, onMounted, watch } from 'vue';
 import {useUserStore} from '@/store/modules/user';
 import * as TextEncoding from 'text-encoding-shim'
+import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 
 
 const headerCenterFunction = [
@@ -73,6 +84,7 @@ const chatMessages = ref([]);
 let isTyping = ref(false);  //在 AI 处理请求期间标识加载状态
 const userStore = useUserStore();
 let currentScrollTop = 0
+const showTabbar = ref(false); // 添加showTabbar变量
 
 // 滚动到底部函数
 const scrollToBottom = async () => {
@@ -317,7 +329,15 @@ const handleScroll = (e) => {
 };
 
 const goBack = () => {
-  uni.navigateBack();
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+  } else {
+    // 如果没有上一页，则跳转到首页
+    uni.switchTab({
+      url: '/pages/index/index'
+    });
+  }
 };
 
 </script>
@@ -331,7 +351,46 @@ const goBack = () => {
 	position: relative;
 }
 
+/* 自定义导航栏样式 */
+.custom-nav {
+	position: fixed;
+	top: 70rpx;
+	left: 0;
+	right: 0;
+	height: 88rpx;
+	background-color: #F1FCFE;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 30rpx;
+	z-index: 999;
+}
+
+.nav-left {
+	width: 60rpx;
+	height: 60rpx;
+	display: flex;
+	align-items: center;
+}
+
+.back-icon {
+	width: 40rpx;
+	height: 40rpx;
+}
+
+.nav-title {
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #333;
+}
+
+.nav-right {
+	width: 60rpx;
+}
+
+/* 为顶部导航栏留出空间 */
 .header {
+	margin-top: 88rpx;
 	padding: 20px;
 	background-color: rgba(241, 252, 254);
 	z-index: 10;

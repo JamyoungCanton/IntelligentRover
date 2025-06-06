@@ -47,10 +47,37 @@
     </view>
 
     <!-- 用户评论区域 -->
-    <view class="section-container" v-if="reviews.length > 0" style="margin-top: 5px;">
+    <view class="section-container" style="margin-top: 5px;">
       <view class="section-title">用户点评</view>
       <view class="comment-list">
-        <view class="comment-item" v-for="(review, index) in reviews" :key="index">
+        <view v-if="allowComment">
+          <!-- 评论输入区 -->
+          <view class="comment-input-area">
+            <view class="comment-user-info">
+              <image :src="userStore.userInfo.avatar || '/static/daytravelDetail/man.png'" class="user-avatar" mode="aspectFill"></image>
+              <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
+            </view>
+            <textarea
+              v-model="newComment"
+              class="comment-textarea"
+              placeholder="写下你的评论..."
+              :maxlength="200"
+            />
+            <view class="comment-footer">
+              <text class="word-count">{{ newComment.length }}/200</text>
+              <button 
+                class="submit-btn" 
+                :disabled="!newComment.trim()"
+                @click="submitComment"
+              >发表评论</button>
+            </view>
+          </view>
+        </view>
+        <view v-else style="color:#999;text-align:center;padding:20px 0;">
+          仅限已支付该一日游订单的用户评论
+        </view>
+        <!-- 评论列表 -->
+        <view v-for="(review, index) in reviews" :key="index" class="comment-item">
           <view class="comment-header">
             <image class="user-avatar" :src="review.avatar" mode="aspectFill"></image>
             <view class="user-info">
@@ -141,18 +168,7 @@ interface AvailableDate {
 const availableDates = ref<AvailableDate[]>([]);
 const usageList = ref<string[]>([]);
 const notesList = ref<Note[]>([]);
-const reviews = ref<Review[]>([
-  {
-    avatar: '/static/daytravelDetail/man.png',
-    username: '用户1',
-    content: '非常喜欢这个行程，景色很美，导游也很专业！'
-  },
-  {
-    avatar: '/static/daytravelDetail/man.png',
-    username: '用户2',
-    content: '性价比很高，推荐给大家！'
-  }
-]);
+const reviews = ref<Review[]>([]);
 const selectedDate = ref('');
 const today = new Date();
 const pad = (n: number) => n < 10 ? '0' + n : n;
@@ -161,6 +177,8 @@ const packageId = ref('');
 const startDate = ref('');
 const realname = ref('');
 const phone = ref('');
+const allowComment = ref(false); // 是否允许评论
+const newComment = ref('');
 
 // 页面加载时获取数据
 onLoad((options) => {
@@ -171,6 +189,7 @@ onLoad((options) => {
   if (options.date) {
     startDate.value = options.date; // 设置初始日期
   }
+  checkOrderPaid(); // 检查是否支付过该商品
 });
 
 // 获取产品详情
@@ -210,6 +229,38 @@ const fetchProductDetail = async () => {
   } catch (err) {
     console.error('请求失败：', err);
     uni.showToast({ title: '网络异常', icon: 'none' });
+  }
+};
+
+// 检查是否支付过该商品
+const checkOrderPaid = async () => {
+  if (!userStore.token) {
+    allowComment.value = false;
+    return;
+  }
+  try {
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data: {
+        pageNo: 1,
+        pageSize: 100
+      }
+    });
+    if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
+      // 只要有 payStatus === 'PAID' 且 goodsId === 当前商品id
+      allowComment.value = res.data.result.records.some(item =>
+        String(item.goodsId) === String(productDetail.id) && item.payStatus === 'PAID'
+      );
+    } else {
+      allowComment.value = false;
+    }
+  } catch (e) {
+    allowComment.value = false;
   }
 };
 
@@ -298,6 +349,33 @@ const handleBooking = () => {
 
 const onDateChange = (e: any) => {
   selectedDate.value = e.detail.value;
+};
+
+const submitComment = async () => {
+  if (!allowComment.value) {
+    uni.showToast({
+      title: '仅限已支付该一日游订单的用户评论',
+      icon: 'none'
+    });
+    return;
+  }
+  if (!newComment.value.trim()) {
+    uni.showToast({
+      title: '评论内容不能为空',
+      icon: 'none'
+    });
+    return;
+  }
+  if (!userStore.token) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    });
+    return;
+  }
+  // 这里补充你的评论提交接口逻辑
+  // ...
+  newComment.value = '';
 };
 </script>
 
@@ -778,5 +856,62 @@ const onDateChange = (e: any) => {
   font-size: 28rpx;
   margin-bottom: 16rpx;
   padding: 0 20rpx;
+}
+
+/* 新增：评论输入区域样式 */
+.comment-input-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.comment-user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.user-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.comment-textarea {
+  width: 100%;
+  height: 120rpx;
+  border: 1px solid #e5e5e5;
+  border-radius: 10rpx;
+  padding: 10rpx;
+  margin-bottom: 10px;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.word-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.submit-btn {
+  width: 120rpx;
+  height: 80rpx;
+  background-color: #4dabf7;
+  color: #fff;
+  font-size: 32rpx;
+  border-radius: 10rpx;
 }
 </style>

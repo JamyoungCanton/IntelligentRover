@@ -96,7 +96,7 @@
 
 			<view class="review-list">
 				<!-- 添加评论区域 -->
-				<view class="comment-input-area">
+				<view v-if="allowComment" class="comment-input-area">
 					<view class="comment-user-info">
 						<image :src="userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
 						<text class="user-name">{{ userInfo.realname || userInfo.username || '游客' }}</text>
@@ -115,6 +115,9 @@
 							@click="submitComment"
 						>发表评论</button>
 					</view>
+				</view>
+				<view v-else style="color:#999;text-align:center;padding:20px 0;">
+					仅限已支付该商品订单的用户评论
 				</view>
 
 				<!-- 评论列表 -->
@@ -550,7 +553,48 @@ const getComments = async () => {
 };
 
 // 添加提交评论的方法
+const allowComment = ref(false); // 是否允许评论
+
+// 检查是否支付过该商品
+const checkOrderPaid = async () => {
+	if (!userStore.token) {
+		allowComment.value = false;
+		return;
+	}
+	try {
+		const res = await uni.request({
+			url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
+			method: 'GET',
+			header: {
+				'X-Access-Token': userStore.token,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			data: {
+				pageNo: 1,
+				pageSize: 100
+			}
+		});
+		if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
+			// 只要有 payStatus === 'PAID' 且 goodsId === 当前商品id
+			allowComment.value = res.data.result.records.some(item =>
+				String(item.goodsId) === String(id.value) && item.payStatus === 'PAID'
+			);
+		} else {
+			allowComment.value = false;
+		}
+	} catch (e) {
+		allowComment.value = false;
+	}
+};
+
 const submitComment = async () => {
+	if (!allowComment.value) {
+		uni.showToast({
+			title: '仅限已支付该商品订单的用户评论',
+			icon: 'none'
+		});
+		return;
+	}
 	if (!newComment.value.trim()) {
 		uni.showToast({
 			title: '评论内容不能为空',
@@ -558,7 +602,6 @@ const submitComment = async () => {
 		});
 		return;
 	}
-
 	if (!userStore.token) {
 		uni.showToast({
 			title: '请先登录',
@@ -566,7 +609,6 @@ const submitComment = async () => {
 		});
 		return;
 	}
-
 	try {
 		const commentData = {
 			content: newComment.value,
@@ -575,9 +617,6 @@ const submitComment = async () => {
 			receiverId: '',
 			repliedCommentId: ''
 		};
-
-		console.log('提交评论数据:', commentData);
-
 		const res = await uni.request({
 			url: 'https://island.zhangshuiyi.com/island/comments/save',
 			method: 'POST',
@@ -587,9 +626,6 @@ const submitComment = async () => {
 			},
 			data: commentData
 		});
-
-		console.log('评论提交响应:', res.data);
-
 		if (res.data.success) {
 			uni.showToast({
 				title: '评论成功',
@@ -604,7 +640,6 @@ const submitComment = async () => {
 			});
 		}
 	} catch (error) {
-		console.error('评论提交异常：', error);
 		uni.showToast({
 			title: '评论失败，请稍后重试',
 			icon: 'none'
@@ -657,6 +692,7 @@ onLoad((options) => {
 	// 调用接口获取餐厅信息
 	getRestaurantDetailsById(options.id);
 	getComments();
+	checkOrderPaid(); // 检查是否支付过该商品
 });
 
 onMounted(() => {

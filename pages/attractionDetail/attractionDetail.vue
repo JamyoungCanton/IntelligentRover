@@ -98,7 +98,7 @@
         </template>
 
         <!-- 添加评论区域 -->
-        <view class="comment-input-area">
+        <view v-if="allowComment" class="comment-input-area">
           <view class="comment-user-info">
             <image :src="userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
             <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
@@ -117,6 +117,9 @@
               @click="submitComment"
             >发表评论</button>
           </view>
+        </view>
+        <view v-else style="color:#999;text-align:center;padding:20px 0;">
+          仅限已支付该景点订单的用户评论
         </view>
       </view>
     </view>
@@ -143,6 +146,7 @@
   const comments = ref([]);
   const newComment = ref('');
   const showAllComments = ref(false);
+  const allowComment = ref(false); // 是否允许评论
 
   const today = new Date();
   const pad = (n) => n < 10 ? '0' + n : n;
@@ -154,6 +158,7 @@
     getAttrictionDetail();
     getAttractionImages();
     getComments();
+    checkOrderPaid(); // 检查是否支付过该商品
   })
 
   // 根据id获取数据
@@ -353,8 +358,47 @@ fail: (err) => {
     }
   };
 
+  // 检查是否支付过该商品
+  const checkOrderPaid = async () => {
+    if (!userStore.token) {
+      allowComment.value = false;
+      return;
+    }
+    try {
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
+        method: 'GET',
+        header: {
+          'X-Access-Token': userStore.token,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        data: {
+          pageNo: 1,
+          pageSize: 100
+        }
+      });
+      if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
+        // 只要有 payStatus === 'PAID' 且 goodsId === 当前景点id
+        allowComment.value = res.data.result.records.some(item =>
+          String(item.goodsId) === String(id.value) && item.payStatus === 'PAID'
+        );
+      } else {
+        allowComment.value = false;
+      }
+    } catch (e) {
+      allowComment.value = false;
+    }
+  };
+
   // 提交评论
   const submitComment = async () => {
+    if (!allowComment.value) {
+      uni.showToast({
+        title: '仅限已支付该景点订单的用户评论',
+        icon: 'none'
+      });
+      return;
+    }
     if (!newComment.value.trim()) {
       uni.showToast({
         title: '评论内容不能为空',
@@ -362,7 +406,6 @@ fail: (err) => {
       });
       return;
     }
-
     if (!userStore.token) {
       uni.showToast({
         title: '请先登录',
@@ -370,7 +413,6 @@ fail: (err) => {
       });
       return;
     }
-
     try {
       const commentData = {
         content: newComment.value,
@@ -379,9 +421,7 @@ fail: (err) => {
         receiverId: '', // 接收者ID，这里为空因为是直接评论景点
         repliedCommentId: '' // 回复的评论ID，这里为空因为是直接评论景点
       };
-
       console.log('提交评论数据:', commentData);
-
       const res = await uni.request({
         url: 'https://island.zhangshuiyi.com/island/comments/save',
         method: 'POST',
@@ -391,9 +431,7 @@ fail: (err) => {
         },
         data: commentData
       });
-
       console.log('评论提交响应:', res.data);
-
       if (res.data.success) {
         uni.showToast({
           title: '评论成功',
@@ -557,6 +595,7 @@ fail: (err) => {
   flex-wrap: wrap;
   justify-content: space-between;
   margin-top: 10px;
+  margin-bottom: 20px;
   gap: 10px;
 }
 .attimg image {
@@ -565,13 +604,14 @@ fail: (err) => {
   border-radius: 10px;
   object-fit: cover;
 }
-.reviews {
-  background-color: #fff;
-  border: solid 1px #dbeafe;
-  padding: 20rpx;
-  margin: 20rpx;
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+.reviews, .user-reviews, .review-list {
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
 }
 .review-header {
   margin-bottom: 20rpx;
@@ -582,6 +622,13 @@ fail: (err) => {
   color: #333;
 }
 .no-comments {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: -20rpx;
+  margin-right: -20rpx;
+  background: none;
+  border-radius: 0;
+  box-sizing: border-box;
   text-align: center;
   padding: 40rpx 30rpx;
   color: #999;
@@ -595,10 +642,15 @@ fail: (err) => {
   margin: 20rpx 0;
 }
 .comment-input-area {
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: -20rpx;
+  margin-right: -20rpx;
+  background: none;
+  border-radius: 0;
+  padding: 0;
   margin-bottom: 30rpx;
+  box-sizing: border-box;
 }
 .comment-user-info {
   display: flex;
@@ -702,23 +754,26 @@ fail: (err) => {
 .date-picker {
   display: flex;
   align-items: center;
-  margin: 16px 0 0 0;
+  margin: 16px 0;
   padding: 8px 0;
   border-radius: 8px;
-  background: #f8faff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  background: #fff;
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
 }
+
 .date-picker text {
   font-size: 15px;
-  color: #2560a7;
+  color: #141f2c;
   min-width: 90px;
   font-weight: 500;
   margin-left: 12px;
 }
+
 .picker-value {
   display: inline-block;
-  margin-left: 12px;
-  color: #007aff;
+  margin-right: 12px;
+  color: #333;
   font-size: 15px;
   background: #fff;
   border-radius: 6px;
@@ -728,8 +783,9 @@ fail: (err) => {
   text-align: center;
   transition: border-color 0.2s;
 }
+
 .picker-value:active,
 .picker-value:focus {
-  border-color: #007aff;
+  border-color: #bbb;
 }
 </style>

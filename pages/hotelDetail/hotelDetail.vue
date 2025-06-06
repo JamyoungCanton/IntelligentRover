@@ -86,7 +86,7 @@
       <text class="section-title">住客点评</text>
       <!-- 用户输入评论 -->
       <view class="comment-input-wrapper">
-        <view class="comment-input-area">
+        <view v-if="allowComment" class="comment-input-area">
           <view class="comment-user-row">
             <image :src="userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
             <text class="user-name">{{ userInfo.realname || userInfo.username || '游客' }}</text>
@@ -105,6 +105,9 @@
               @click="submitComment"
             >发表评论</button>
           </view>
+        </view>
+        <view v-else style="color:#999;text-align:center;padding:20px 0;">
+          仅限已支付该酒店订单的用户评论
         </view>
       </view>
       <!-- 评论列表 -->
@@ -167,6 +170,40 @@ const onCheckinDateChange = (e) => {
   checkinDate.value = e.detail.value;
 };
 
+const allowComment = ref(false); // 是否允许评论
+
+// 检查是否支付过该商品
+const checkOrderPaid = async () => {
+  if (!userStore.token) {
+    allowComment.value = false;
+    return;
+  }
+  try {
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data: {
+        pageNo: 1,
+        pageSize: 100
+      }
+    });
+    if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
+      // 只要有 payStatus === 'PAID' 且 goodsId === 当前酒店id
+      allowComment.value = res.data.result.records.some(item =>
+        String(item.goodsId) === String(hotelId.value) && item.payStatus === 'PAID'
+      );
+    } else {
+      allowComment.value = false;
+    }
+  } catch (e) {
+    allowComment.value = false;
+  }
+};
+
 onLoad((options) => {
   hotelId.value = options.id
   if (options.images) {
@@ -177,6 +214,7 @@ onLoad((options) => {
     }
   }
   getDetailList()
+  checkOrderPaid(); // 检查是否支付过该商品
 })
 
 const getDetailList = () => {
@@ -282,6 +320,13 @@ const displayedComments = computed(() => {
 });
 
 const submitComment = () => {
+  if (!allowComment.value) {
+    uni.showToast({
+      title: '仅限已支付该酒店订单的用户评论',
+      icon: 'none'
+    });
+    return;
+  }
   // 实现提交评论的逻辑
   console.log('Submitting comment:', newComment.value);
   newComment.value = '';
