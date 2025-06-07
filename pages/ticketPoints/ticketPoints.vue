@@ -84,7 +84,7 @@
             <text class="itemlv" v-if="currentPostType !== 'mine'">lv3</text>
             <text class="notification-type" v-if="currentPostType === 'mine'">{{ item.area }}</text>
           </view>
-          <view class="follow-button" v-if="currentPostType !== 'mine'" @click.stop="followUser(item)">
+          <view class="follow-button" v-if="currentPostType !== 'mine'" @click.stop="followUser(item, $event)">
             <text :class="{'following': item.isFollowing}">{{ item.isFollowing ? '已关注' : '+ 关注' }}</text>
           </view>
         </view>
@@ -341,39 +341,52 @@ const postList = ref([]);
 const notificationList = ref([]);
 
 // 关注用户
-const followUser = (post) => {
-  // 阻止事件冒泡，避免触发帖子点击事件
-  event.stopPropagation();
-  
-  // 切换关注状态
+const followUser = (post, event) => {
+  if (event) event.stopPropagation();
+
+  const originalStatus = post.isFollowing;
   post.isFollowing = !post.isFollowing;
-  
-  // 发送关注请求到服务器
+
+  // 兼容不同字段名
+  const focusId = post.userVO?.userId || post.userVO?.id || post.userId || post.id;
+  const operation = post.isFollowing ? 1 : 2;
+
+  console.log('关注参数：', { focusId, operation, token: userStore.token });
+
+  if (!focusId) {
+    uni.showToast({ title: '用户ID无效，无法关注', icon: 'none' });
+    post.isFollowing = originalStatus;
+    return;
+  }
+
   uni.request({
-    url: `https://island.zhangshuiyi.com/island/user/follow/${post.userVO.userId}`,
-    method: post.isFollowing ? 'POST' : 'DELETE',
+    url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+    method: 'POST',
     header: {
       'X-Access-Token': userStore.token,
       'Content-Type': 'application/json'
     },
+    data: {
+      focusId,
+      operation
+    },
     success: (res) => {
-      if(res.data.code === 200) {
+      console.log('关注接口返回：', res);
+      if (res.statusCode === 200 && res.data.success) {
         uni.showToast({
           title: post.isFollowing ? '已关注' : '已取消关注',
           icon: 'none'
         });
       } else {
-        // 如果请求失败，回滚UI状态
-        post.isFollowing = !post.isFollowing;
+        post.isFollowing = originalStatus;
         uni.showToast({
-          title: '操作失败，请重试',
+          title: res.data.message || '操作失败，请重试',
           icon: 'none'
         });
       }
     },
     fail: () => {
-      // 如果请求失败，回滚UI状态
-      post.isFollowing = !post.isFollowing;
+      post.isFollowing = originalStatus;
       uni.showToast({
         title: '网络请求失败',
         icon: 'none'

@@ -63,6 +63,9 @@
       </view>
       <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
       <button class="login-btn" @tap="handleLogin" :disabled="!accountLoginEnabled">登录</button>
+      
+      <!-- 新增注册按钮 -->
+      <button class="register-btn" @tap="handleRegister" :disabled="!accountLoginEnabled">注册账号</button>
     </view>
 
     <view class="switch-login-tip">
@@ -554,5 +557,19 @@ button {
   opacity: 0.5;
   filter: grayscale(1);
   pointer-events: none; /* 禁止点击 */
+}
+
+.register-btn {
+  background-color: #fff;
+  color: #07c160;
+  border: 1px solid #07c160;
+  margin-top: 20rpx;
+  width: 80%;
+  margin-left: 10%;
+  border-radius: 50rpx;
+  height: 100rpx;
+  font-size: 20px;
+  font-weight: bold;
+  box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.04);
 }
 </style>

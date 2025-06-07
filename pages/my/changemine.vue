@@ -48,6 +48,10 @@
         <input class="input" v-model="email" :disabled="!isEdit" placeholder="请输入邮箱" />
       </view>
       <view class="form-item">
+        <text class="label">真实姓名</text>
+        <input class="input" v-model="realname" :disabled="!isEdit" placeholder="请输入真实姓名" />
+      </view>
+      <view class="form-item">
         <text class="label">简介</text>
         <textarea class="textarea" v-model="bio" :disabled="!isEdit" placeholder="填写简介更容易获得关注哦" maxlength="500" />
         <view class="textarea-count">{{ bio.length }}/500</view>
@@ -70,6 +74,7 @@ const age = ref('')
 const phone = ref('')
 const email = ref('')
 const signature = ref('')
+const realname = ref('')
 const genderText = computed(() => ['男','女','保密'][gender.value])
 const today = computed(() => {
   const d = new Date()
@@ -97,6 +102,7 @@ onLoad((options) => {
   phone.value = info.phone || ''
   email.value = info.email || ''
   signature.value = info.signature || ''
+  realname.value = info.realname || ''
   if (birthday.value) {
     age.value = calcAge(birthday.value)
   }
@@ -179,8 +185,7 @@ function uploadAvatar(filePath) {
 }
 function saveProfile() {
   // 手机号校验
-  const phoneStr = String(phone.value).replace(/\\s/g, '');
-  console.log('手机号原始值:', phone.value, '处理后:', phoneStr);
+  const phoneStr = String(phone.value).replace(/\s/g, '');
   if (!phoneStr) {
     uni.showToast({ title: '请输入手机号', icon: 'none' });
     return;
@@ -189,33 +194,46 @@ function saveProfile() {
     uni.showToast({ title: '手机号格式不正确', icon: 'none' });
     return;
   }
-
-  // 构造请求体
-  const sysRoleIndex = {
-    // 这里填你要提交的字段，比如
-    component: '', // 组件名
-    createBy: userStore.userInfo.username || '', // 当前用户名
-    id: userStore.userInfo.id || '', // 用户id
-    roleCode: '', // 角色编码
-    status: '', // 状态
-    sysOrgCode: '', // 部门
-    updateBy: userStore.userInfo.username || '', // 当前用户名
-    url: '', // 路由地址
-    // 你可以根据实际需求补充其它字段
+  // 构造请求体，补全所有字段
+  const sysUserIdvo = {
+    avatar: avatar.value,
+    birthday: birthday.value,
+    email: email.value,
+    id: userStore.userInfo.id || '',
+    phone: phoneStr,
+    realname: realname.value,
+    sex: Number(gender.value),
+    username: nickname.value,
+    signature: signature.value,
+    bio: bio.value
   };
-
   uni.request({
-    url: 'https://island.zhangshuiyi.com/island/sys/sysRoleIndex/edit',
-    method: 'POST',
+    url: 'https://island.zhangshuiyi.com/island/sys/user/update',
+    method: 'PUT',
     header: {
       'Content-Type': 'application/json',
       'X-Access-Token': userStore.token
     },
-    data: { sysRoleIndex },
+    data: { sysUserIdvo },
     success: (res) => {
+      console.log('个人信息保存接口返回：', res);
       if (res.data.success) {
-        uni.showToast({ title: '保存成功', icon: 'success' });
-        setTimeout(() => uni.navigateBack(), 800);
+        // 保存成功后，立刻用 select 接口查一次
+        uni.request({
+          url: `https://island.zhangshuiyi.com/island/sys/user/select/${userStore.userInfo.id}`,
+          method: 'GET',
+          header: {
+            'X-Access-Token': userStore.token
+          },
+          success: (res2) => {
+            console.log('保存后拉取最新个人信息：', res2);
+            if (res2.data.success && res2.data.result) {
+              userStore.userInfo = res2.data.result
+            }
+            uni.showToast({ title: '保存成功', icon: 'success' });
+            setTimeout(() => uni.navigateBack(), 800);
+          }
+        })
       } else {
         uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
       }

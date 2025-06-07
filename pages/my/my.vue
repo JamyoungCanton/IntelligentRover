@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { onShow} from '@dcloudio/uni-app';
+import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user.js';
 import Tabbar from '../Tabbar/Tabbar.vue';
 const userStore = useUserStore();
@@ -166,6 +166,62 @@ const goProfileView = () => {
   // 跳转到changemine页面，只读模式
   uni.navigateTo({ url: '/pages/my/changemine?mode=view' });
 };
+
+onShow(() => {
+  if (userStore.token && userStore.userInfo.id) {
+    uni.request({
+      url: `https://island.zhangshuiyi.com/island/sys/user/select/${userStore.userInfo.id}`,
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token
+      },
+      success: (res) => {
+        console.log('后端返回个人信息:', res);
+        if (res.data.success && res.data.result) {
+          // 推荐用 Object.assign 保证响应式
+          Object.assign(userStore.userInfo, res.data.result)
+        }
+      }
+    })
+  }
+})
+
+function saveProfile() {
+  // ...原有校验和请求体构造
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/update',
+    method: 'PUT',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: { sysUserIdvo },
+    success: (res) => {
+      if (res.data.success) {
+        // 保存成功后，立刻拉取后端数据
+        uni.request({
+          url: `https://island.zhangshuiyi.com/island/sys/user/select/${userStore.userInfo.id}`,
+          method: 'GET',
+          header: {
+            'X-Access-Token': userStore.token
+          },
+          success: (res2) => {
+            if (res2.data.success && res2.data.result) {
+              userStore.userInfo = res2.data.result
+            }
+            uni.showToast({ title: '保存成功', icon: 'success' });
+            setTimeout(() => uni.navigateBack(), 800);
+          }
+        })
+      } else {
+        uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
+      }
+    },
+    fail: (err) => {
+      uni.showToast({ title: '网络错误', icon: 'none' });
+    }
+  });
+}
 
 </script>
 

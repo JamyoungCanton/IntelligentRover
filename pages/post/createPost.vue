@@ -205,8 +205,6 @@ const deleteImage = (index) => {
   uploadedFiles.value.splice(index, 1);
 };
 
-
-
 const goBack = () => {
   uni.navigateBack();
 };
@@ -258,7 +256,7 @@ const createPost = () => {
     success: (res) => {
       console.log("创建帖子成功，响应数据:", res.data);
       // 跳转到帖子页面
-      uni.switchTab({
+      uni.redirectTo({
         url: '/pages/ticketPoints/ticketPoints'
       });
     },
@@ -273,7 +271,6 @@ const createPost = () => {
       });
     }
   })
-
 }
 </script>
 

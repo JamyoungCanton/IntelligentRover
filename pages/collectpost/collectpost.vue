@@ -114,10 +114,16 @@ async function fetchCollectPosts() {
       }
     });
 
-    console.log('收藏接口返回：', res.data);
+    console.log('收藏接口返回原始数据：', res.data);
 
     if (res.statusCode === 200 && res.data.success) {
-      posts.value = Array.isArray(res.data.result?.result) ? res.data.result.result : [];
+      let arr = [];
+      if (Array.isArray(res.data.result)) {
+        arr = res.data.result;
+      } else if (Array.isArray(res.data.result?.result)) {
+        arr = res.data.result.result;
+      }
+      posts.value = arr;
     } else {
       uni.showToast({ 
         title: res.data.message || '获取收藏失败', 
