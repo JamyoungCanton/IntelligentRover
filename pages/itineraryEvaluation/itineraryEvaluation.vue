@@ -154,7 +154,7 @@ export default {
   onLoad(options) {
 	this.getSafeAreaInfo();
     this.productId = options.productId || '';
-    this.type = options.type || 'itinerary';
+    this.type = options.type || '';
   },
   methods: {
     getImagePath(imageName) {

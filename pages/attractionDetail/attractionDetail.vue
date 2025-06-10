@@ -141,6 +141,7 @@
 
   onLoad((options) => {
     id.value = options.id;
+    console.log('onLoad 传入的 id:', id.value);
     getAttrictionDetail();
     checkOrderPaid();
     getCommentDetail(options.id);
@@ -158,6 +159,8 @@
       success: (res) => {
         if (res.data.success && res.data.result) {
           hotelData.value = res.data.result;
+          // 这里打印 productId
+          console.log('当前景点 productId:', hotelData.value.id);
           // 处理图片
           if (Array.isArray(res.data.result.images) && res.data.result.images.length > 0) {
             attractionImages.value = res.data.result.images;
@@ -185,6 +188,7 @@
 
   // 创建订单
   const creaOrder = (hotel) => {
+    console.log('预订时的 productId:', hotel.id);
     if (!playDate.value) {
       uni.showToast({ title: '请选择游玩日期', icon: 'none' });
       return;
