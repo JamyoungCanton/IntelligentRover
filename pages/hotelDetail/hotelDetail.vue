@@ -144,9 +144,15 @@
         <view class="picker-value">{{ checkinDate || '请选择' }}</view>
       </picker>
     </view>
+    <view class="date-picker-section">
+      <text>选择退房日期：</text>
+      <picker mode="date" :value="checkoutDate" :start="checkinDate || todayStr" @change="onCheckoutDateChange">
+        <view class="picker-value">{{ checkoutDate || '请选择' }}</view>
+      </picker>
+    </view>
     <!-- 预订按钮吸底 -->
     <view class="book-bar">
-      <button class="book-now-btn" @click="creaOrder(hotelData)">立即预订</button>
+      <button class="book-now-btn" @click="createOrder(hotelData)">立即预订</button>
     </view>
   </view>
 </template>
@@ -162,12 +168,24 @@ let hotelData = ref({})
 const hotelImages = ref([])
 
 const checkinDate = ref('');
+const checkoutDate = ref('');
 const today = new Date();
 const pad = n => n < 10 ? '0' + n : n;
 const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
 const onCheckinDateChange = (e) => {
   checkinDate.value = e.detail.value;
+  // 如果退房日期早于入住日期，自动清空退房日期
+  if (checkoutDate.value && checkoutDate.value <= checkinDate.value) {
+    checkoutDate.value = '';
+  }
+};
+const onCheckoutDateChange = (e) => {
+  if (e.detail.value <= checkinDate.value) {
+    uni.showToast({ title: '退房日期不能早于入住日期', icon: 'none' });
+    return;
+  }
+  checkoutDate.value = e.detail.value;
 };
 
 const allowComment = ref(false); // 是否允许评论
@@ -231,11 +249,19 @@ const getDetailList = () => {
   })
 }
 
-const creaOrder = (hotel) => {
+const createOrder = (hotel) => {
   if (!checkinDate.value) {
     uni.showToast({ title: '请选择入住日期', icon: 'none' });
     return;
   }
+  if (!checkoutDate.value) {
+    uni.showToast({ title: '请选择退房日期', icon: 'none' });
+    return;
+  }
+  // 拼接入住和退房时间
+  const travelStartDate = `${checkinDate.value} 14:00:00`;
+  const travelEndDate = `${checkoutDate.value} 12:00:00`;
+
   const orderData = {
     contract: {
       contractName: userStore.userInfo.realname || '',
@@ -255,8 +281,8 @@ const creaOrder = (hotel) => {
         quantity: 1
       }
     ],
-    travelStartDate: checkinDate.value,
-    travelEndDate: checkinDate.value
+    travelStartDate,
+    travelEndDate
   };
 
   uni.request({

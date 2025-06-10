@@ -146,11 +146,15 @@ export default {
       feedbackText: '',
       uploadedPhotos: [],
       isVoiceInputActive: false,
-      selectedSatisfaction: null
+      selectedSatisfaction: null,
+      productId: '',
+      type: 'itinerary'
     };
   },
-  onLoad() {
+  onLoad(options) {
 	this.getSafeAreaInfo();
+    this.productId = options.productId || '';
+    this.type = options.type || 'itinerary';
   },
   methods: {
     getImagePath(imageName) {
@@ -198,32 +202,78 @@ export default {
     },
     submitFeedback() {
       if (!this.selectedSatisfaction) {
-        uni.showToast({
-          title: '请选择整体满意度',
-          icon: 'none'
-        });
+        uni.showToast({ title: '请选择整体满意度', icon: 'none' });
         return;
       }
-      
       if (!this.feedbackText.trim()) {
-        uni.showToast({
-          title: '请输入详细反馈',
-          icon: 'none'
-        });
+        uni.showToast({ title: '请输入详细反馈', icon: 'none' });
         return;
       }
-      
-      const photoUrls = this.uploadedPhotos.map(photo => photo.url);
+
+      // 获取用户信息
+      const userStore = useUserStore();
+      const userInfo = userStore.userInfo || {};
+
+      // 获取商品/订单ID和类型（建议通过路由参数或页面传参传递）
+      const productId = this.$route?.params?.productId || ''; // 或其它方式获取
+      const type = this.$route?.params?.type || 'itinerary'; // 建议根据业务传递
+
+      // 拼接评分内容
+      const ratings = this.ratingItems.map(item => `${item.name}:${item.ratings}`).join('，');
+      // 拼接图片url
+      const photoUrls = this.uploadedPhotos.map(photo => photo.url).join(',');
+
+      // 组装评论内容
+      let commentContent = `满意度：${this.satisfactionOptions.find(opt => opt.value === this.selectedSatisfaction)?.label || ''}\n`;
+      commentContent += `评分：${ratings}\n`;
+      commentContent += `反馈：${this.feedbackText}`;
+      if (photoUrls) {
+        commentContent += `\n图片：${photoUrls}`;
+      }
+
+      const dto = {
+        avatar: userInfo.avatar || '',
+        comment: commentContent,
+        productId: productId,
+        type: type,
+        userId: userInfo.id || '',
+        username: userInfo.username || userInfo.realname || ''
+      };
+
       uni.showModal({
         title: '确认提交',
         content: '您确定要提交反馈吗？',
         success: (res) => {
           if (res.confirm) {
-            uni.showToast({
-              title: '提交成功',
-              icon: 'success'
+            uni.request({
+              url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
+              method: 'POST',
+              header: {
+                'Content-Type': 'application/json',
+                'X-Access-Token': userStore.token
+              },
+              data: { dto },
+              success: (res) => {
+                if ((res.data.code === 0 || res.data.code === 200) && res.data.success) {
+                  uni.showToast({
+                    title: '提交成功',
+                    icon: 'success'
+                  });
+                  this.resetForm();
+                } else {
+                  uni.showToast({
+                    title: res.data.message || '提交失败',
+                    icon: 'none'
+                  });
+                }
+              },
+              fail: (err) => {
+                uni.showToast({
+                  title: '网络错误',
+                  icon: 'none'
+                });
+              }
             });
-            this.resetForm();
           }
         }
       });

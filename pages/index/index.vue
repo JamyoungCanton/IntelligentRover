@@ -34,14 +34,14 @@
     <view class="content-box">
 
       <!-- 通知栏 -->
-      <view class="notice">
+      <!-- <view class="notice">
         <view class="notice-content">
           <view class="notice-icon">通知</view>
           <view class="notice-text-container">
             <view class="notice-text">欢迎来到海岛智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~</view>
           </view>
         </view>
-      </view>
+      </view> -->
 
       <!-- 图标导航 -->
       <view class="icon-nav">

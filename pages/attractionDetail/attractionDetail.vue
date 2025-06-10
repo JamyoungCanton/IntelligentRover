@@ -1,135 +1,119 @@
 <template>
   <view class="container">
-    <view class="header">
-      <img :src="hotelData.imageUrl" alt="" style="width: 100%;height: 100%;object-fit: cover;">
-      <view class="title-name">
-        <text class="title">{{ hotelData.name }}</text>
-        <view class="rating">
-          <uni-rate :value="4.5" size="16" readonly></uni-rate>
-          <text>4.5</text>
-        </view>
+    <!-- 顶部图片轮播 -->
+    <swiper v-if="attractionImages.length > 0" class="header-swiper" :indicator-dots="true" :autoplay="false" :circular="true" :interval="4000" :duration="500">
+      <swiper-item v-for="(img, idx) in attractionImages" :key="idx">
+        <image :src="img.url || img" mode="aspectFill" style="width:100%;height:230px;object-fit:cover;" />
+      </swiper-item>
+    </swiper>
+    <view v-else class="no-image-placeholder">
+      <uni-icons type="image" size="60" color="#ccc" />
+      <text style="color:#999;">暂无图片</text>
+    </view>
+
+    <!-- 信息栏 -->
+    <view class="info-bar">
+      <view class="price-row">
+        <text class="price-main">￥{{ hotelData.ticketprice || '--' }}</text>
+        <text class="price-desc">起/人</text>
+      </view>
+      <view class="info-row">
+        <uni-icons type="location" size="18" color="#3B82F6" />
+        <text class="info-label">交通路线：</text>
+        <text class="info-value">{{ hotelData.location }}</text>
       </view>
     </view>
-    <view class="content">
-      <view class="section">
+
+    <!-- 景点介绍 -->
+    <view class="section">
+      <view>
         <text class="section-title">景点介绍</text>
-        <text class="section-content">{{ hotelData.description.replace(/<[^>]*>/g, '') }}</text>
       </view>
-      <view class="location">
-        <!-- 位置图标 -->
-        <uni-icons
-          type="location"
-          color="blue"
-          size="24"
-        />
-        <view class="locationDetail">
-          <text class="location-title">交通路线</text>
-          <text class="location-content">{{ hotelData.location }}</text>
-        </view>
-      </view>
-      <view class="location">
-        <uni-icons
-          type="color"
-          color=""
-          size="24"
-        />
-        <view class="locationDetail">
-          <text class="location-title">开放时间</text>
-          <text class="location-content">每天{{ hotelData.starttime }}-{{ hotelData.endtime }}</text>
-          <text class="location-content">全年开放</text>
-        </view>
-      </view>
-      <view class="location">
-          <!-- 票的图标 -->
-          <uni-icons
-            type="color"
-            color=""
-            size="24"
-          />
-          <view class="locationDetail">
-            <text class="location-title" >门票费用</text>
-            <text class="location-contentprice" v-if="hotelData.ticketprice === 0" style="color:red">免费</text>
-            <text class="location-contentprice"  v-if="hotelData.ticketprice !== 0" style="color:red">￥{{ hotelData.ticketprice }}.00</text>
-          </view>
-      </view>
-      <view class="attractionimg">
-        <text class="section-title">景点实拍</text>
-        <view class="attimg">
-          <image
-            v-for="(img, idx) in attractionImages"
-            :key="idx"
-            :src="img"
-            mode="aspectFill"
-            @click="previewImage(idx)"
-          />
-          <text v-if="!attractionImages.length" style="color:#999;font-size:14px;">暂无图片</text>
-        </view>
-      </view>
+      <text class="section-content">{{ hotelData.description.replace(/<[^>]*>/g, '') }}</text>
+    </view>
 
-      <view class="reviews">
-        <text class="section-title">住客点评</text>
+    <!-- 日期选择 -->
+    <view class="booking-card">
+      <view class="booking-row">
+        <uni-icons type="calendar" size="22" color="#3B82F6" />
+        <text class="booking-label">游玩日期</text>
+        <picker
+          mode="date"
+          :value="playDate"
+          :start="monthStart"
+          :end="monthEnd"
+          @change="onPlayDateChange"
+        >
+          <text class="booking-value">{{ playDate || '请选择' }}</text>
+        </picker>
+      </view>
+      <view class="booking-divider"></view>
+      <view class="booking-row end-row">
+        <uni-icons type="flag" size="20" color="#3B82F6" />
+        <text class="booking-label">运营时间</text>
+        <text class="booking-value">{{ hotelData.starttime || '--:--' }} - {{ hotelData.endtime || '--:--' }}</text>
+      </view>
+    </view>
 
-        <!-- 评论列表 -->
-        <view v-if="!comments || comments.length === 0" class="no-comments">
-          <uni-icons type="chat" size="24" color="#999"></uni-icons>
-          <text>暂无评论，快来发表第一条评论吧！</text>
-        </view>
-        <template v-else>
-          <view class="review-item" v-for="(comment, index) in displayedComments" :key="index">
-            <view class="review-user">
-              <image :src="comment.avatar" class="review-avatar"></image>
-              <view class="review-user-info">
-                <text class="review-username">{{ comment.userName }}</text>
-                <text class="review-time">{{ comment.createTime }}</text>
-              </view>
+    <!-- 评价区 -->
+    <view class="reviews">
+      <text class="section-title">点评</text>
+
+      <!-- 评论详情展示（只展示一条，按新接口commentDetail） -->
+      <template v-if="commentDetail">
+        <view class="comment-card">
+          <view class="comment-header">
+            <image :src="commentDetail.avatar || (commentDetail.sysUser && commentDetail.sysUser.avatar) || 'https://wuminghui.top:9000/default-avatar.png'" class="comment-avatar" />
+            <view class="comment-user-info">
+              <text class="comment-username">{{ commentDetail.username || (commentDetail.sysUser && commentDetail.sysUser.realname) || '匿名用户' }}</text>
+              <text class="comment-time">{{ commentDetail.createTime }}</text>
             </view>
-            <text class="review-content">{{ comment.content }}</text>
+            <!-- 右侧查看更多按钮 -->
+            <view class="comment-more" @click="goToAllComments(commentDetail.productId)">查看更多</view>
           </view>
-          
-          <!-- 显示更多按钮 -->
-          <view v-if="comments.length > 3" class="show-more" @click="toggleComments">
-            <text>{{ showAllComments ? '收起' : `显示更多(${comments.length - 3}条)` }}</text>
-            <uni-icons 
-              :type="showAllComments ? 'top' : 'bottom'" 
-              size="14" 
-              color="#3B82F6"
-            ></uni-icons>
+          <view class="comment-score-row">
+            <uni-rate :value="commentDetail.score || 5" readonly size="20" />
+            <text class="comment-score">{{ commentDetail.score || 10 }}分</text>
+            <text class="comment-score-desc">{{ commentDetail.type || '非常满意' }}</text>
           </view>
-        </template>
-
-        <!-- 添加评论区域 -->
-        <view v-if="allowComment" class="comment-input-area">
-          <view class="comment-user-info">
-            <image :src="userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
-            <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
-          </view>
-          <textarea
-            v-model="newComment"
-            class="comment-textarea"
-            placeholder="写下你的评论..."
-            :maxlength="200"
-          />
-          <view class="comment-footer">
-            <text class="word-count">{{ newComment.length }}/200</text>
-            <button 
-              class="submit-btn" 
-              :disabled="!newComment.trim()"
-              @click="submitComment"
-            >发表评论</button>
-          </view>
+          <view class="comment-content">{{ commentDetail.comment }}</view>
         </view>
-        <view v-else style="color:#999;text-align:center;padding:20px 0;">
-          仅限已支付该景点订单的用户评论
+      </template>
+      <view v-else class="no-comments">
+        <uni-icons type="chat" size="24" color="#999"></uni-icons>
+        <text>暂无内容，期待你留下宝贵的评论</text>
+      </view>
+
+      <!-- 添加评论区域 -->
+      <view v-if="allowComment" class="comment-input-area">
+        <view class="comment-user-info">
+          <image :src="userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
+          <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
+        </view>
+        <textarea
+          v-model="newComment"
+          class="comment-textarea"
+          placeholder="写下你的评论..."
+          :maxlength="200"
+        />
+        <view class="comment-footer">
+          <text class="word-count">{{ newComment.length }}/200</text>
+          <button 
+            class="submit-btn" 
+            :disabled="!newComment.trim()"
+            @click="submitComment"
+          >发表评论</button>
         </view>
       </view>
+      <view v-else style="color:#999;text-align:center;padding:20px 0;">
+        仅限已支付该景点订单的用户评论
+      </view>
     </view>
-    <view class="date-picker">
-      <text>选择游玩日期：</text>
-      <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
-        <view class="picker-value">{{ playDate || '请选择' }}</view>
-      </picker>
+
+    <!-- 底部按钮 -->
+    <view class="fixed-bottom-bar">
+      <button class="book-now-btn" @click="creaOrder(hotelData)">立即预订</button>
     </view>
-    <button @click="creaOrder(hotelData)" class="book-now">立即预订</button>
   </view>
 </template>
 
@@ -140,70 +124,51 @@
 
   const userStore = useUserStore();
   const hotelData = ref({});
-  const id = ref(0);
   const attractionImages = ref([]);
-  const playDate = ref('');
   const comments = ref([]);
+  const id = ref(0);
+  const playDate = ref('');
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const pad = n => n < 10 ? '0' + n : n;
+  const monthStart = `${year}-${pad(month)}-01`;
+  const monthEnd = `${year}-${pad(month)}-${pad(new Date(year, month, 0).getDate())}`;
   const newComment = ref('');
   const showAllComments = ref(false);
   const allowComment = ref(false); // 是否允许评论
-
-  const today = new Date();
-  const pad = (n) => n < 10 ? '0' + n : n;
-  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const commentDetail = ref(null);
 
   onLoad((options) => {
-    console.log('页面onLoad时token:', userStore.token);
     id.value = options.id;
     getAttrictionDetail();
-    getAttractionImages();
-    getComments();
-    checkOrderPaid(); // 检查是否支付过该商品
+    checkOrderPaid();
+    getCommentDetail(options.id);
   })
 
-  // 根据id获取数据
   const getAttrictionDetail = () => {
     uni.request({
-      url: `https://island.zhangshuiyi.com/island/front/product/attractions/${id.value}`,
+      url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById',
       method: 'GET',
       header: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Access-Token': userStore.token || ''
       },
+      data: { id: id.value },
       success: (res) => {
-        hotelData.value = res.data;
-        console.log('景点详情数据:', hotelData.value);
-      }
-    })
-  }
-
-  // 获取图片
-  const getAttractionImages = () => {
-    uni.request({
-      url: `https://island.zhangshuiyi.com/island/il-attractionsimages/attractions/${id.value}`,
-      method: 'GET',
-      header: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Access-Token': userStore.token || ''
-      },
-      success: (res) => {
-        if (res.data.code === 200 && Array.isArray(res.data.result)) {
-          // 如果返回的图片超过6张，随机选择6张
-          if (res.data.result.length > 6) {
-            const shuffled = [...res.data.result].sort(() => 0.5 - Math.random());
-            attractionImages.value = shuffled.slice(0, 6);
+        if (res.data.success && res.data.result) {
+          hotelData.value = res.data.result;
+          // 处理图片
+          if (Array.isArray(res.data.result.images) && res.data.result.images.length > 0) {
+            attractionImages.value = res.data.result.images;
+          } else if (res.data.result.imageUrl) {
+            attractionImages.value = [res.data.result.imageUrl];
           } else {
-            attractionImages.value = res.data.result;
+            attractionImages.value = [];
           }
-          console.log('景点图片获取成功，数量：', attractionImages.value.length);
-        } else {
-          attractionImages.value = [];
-          console.log('景点图片获取失败，code:', res.data.code);
+          // 处理评论
+          comments.value = res.data.result.comments || [];
         }
-      },
-      fail: (err) => {
-        attractionImages.value = [];
-        console.log('景点图片接口请求失败', err);
       }
     });
   };
@@ -219,143 +184,93 @@
   };
 
   // 创建订单
-  // 跳转到订单页面并创建订单
-const creaOrder = (hotel) => {
-  if (!playDate.value) {
-    uni.showToast({
-      title: '请选择游玩日期',
-      icon: 'none'
-    });
-    return;
-  }
+  const creaOrder = (hotel) => {
+    if (!playDate.value) {
+      uni.showToast({ title: '请选择游玩日期', icon: 'none' });
+      return;
+    }
+    if (hotel.ticketprice === 0) {
+      // ...免费逻辑
+      return;
+    }
+    // 获取餐厅运营时间
+    const startTime = (hotel.starttime || '10:00').length === 5
+      ? hotel.starttime + ':00'
+      : hotel.starttime || '10:00:00';
+    const endTime = (hotel.endtime || '22:00').length === 5
+      ? hotel.endtime + ':00'
+      : hotel.endtime || '22:00:00';
 
-  if (hotel.ticketprice === 0) {
-    // 使用模态对话框替代toast
-    uni.showModal({
-      title: '免费景点',
-      content: '该景点免费，无需预订门票',
-      showCancel: false,
-      confirmText: '我知道了',
-      success: function (res) {
-        if (res.confirm) {
-          console.log('用户点击确定');
+    // 拼接完整的开始和结束时间
+    const startDateTime = `${playDate.value} ${startTime}`;
+    const endDateTime = `${playDate.value} ${endTime}`;
+
+    const orderData = {
+      contract: {
+        contractName: userStore.userInfo?.realname || '游客',
+        contractPhone: userStore.userInfo?.phone || '13800138000'
+      },
+      items: [
+        {
+          bookInfo: {
+            date: playDate.value,
+            fullname: userStore.userInfo?.realname || '游客',
+            idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
+            idCardType: "ID_CARD",
+            schedule: startTime
+          },
+          productId: hotel.id,
+          productType: "Attractions",
+          imageUrl: hotel.imageUrl,
+          quantity: 1
         }
+      ],
+      travelStartDate: startDateTime,
+      travelEndDate: endDateTime
+    };
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token
+      },
+      data: orderData,
+      success: (res) => {
+        console.log("订单创建结果："+res.data);
+        
+        if (res.data.code === 200) {
+          uni.showToast({
+            title: '订单创建成功',
+            icon: 'success',
+            duration: 1500
+          });
+          // 可以跳转到订单详情页或其他页面
+          const orderSn = res.data.result.orderSn;
+          uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+        } else {
+          uni.showToast({
+            title: '未开放，维护中',
+            icon: 'none'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('创建订单失败', err);
+        uni.showToast({
+          title: '创建订单失败，请稍后重试',
+          icon: 'none'
+        });
       }
     });
-    return; // 直接返回，不执行后续逻辑
   }
-
-const orderData = {
-contract: {
-  contractName: userStore.userInfo.realname || '',
-  contractPhone: userStore.userInfo.phone || ''
-},
-items: [
-  {
-    bookInfo: {
-        date: playDate.value,
-      fullname: userStore.userInfo.realname || '',
-      idCardNo: userStore.userInfo.idCardNo || '',
-      idCardType: 'ID_CARD',
-        schedule: playDate.value
-    },
-      productId: hotel.id,
-    productType: "Attractions",
-    imageUrl: hotel.imageUrl,
-    quantity: 1
-  }
-  ],
-  travelStartDate: playDate.value,
-  travelEndDate: playDate.value
-};
-
-
-uni.request({
-url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-method: 'POST',
-header: {
-  'Content-Type': 'application/json',
-  'X-Access-Token': userStore.token
-},
-data: orderData,
-success: (res) => {
-  console.log("订单创建结果："+res.data);
-  
-  if (res.data.code === 200) {
-    uni.showToast({
-      title: '订单创建成功',
-      icon: 'success',
-      duration: 1500
-    });
-    // 可以跳转到订单详情页或其他页面
-    const orderSn = res.data.result.orderSn;
-    uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
-  } else {
-    uni.showToast({
-      title: '未开放，维护中',
-      icon: 'none'
-    });
-  }
-},
-fail: (err) => {
-  console.error('创建订单失败', err);
-  uni.showToast({
-    title: '创建订单失败，请稍后重试',
-    icon: 'none'
-  });
-}
-});
-
-}
 
   onMounted(() => {
     getAttrictionDetail();
-    getAttractionImages();
   })
 
   const onPlayDateChange = (e) => {
     playDate.value = e.detail.value;
-  };
-
-  // 获取评论列表
-  const getComments = async () => {
-    try {
-      const res = await uni.request({
-        url: `https://island.zhangshuiyi.com/island/comments/${id.value}`,
-        method: 'GET',
-        header: {
-          'Content-Type': 'application/json',
-          'X-Access-Token': userStore.token
-        }
-      });
-      if (res.data.success) {
-        if (res.data.result && Array.isArray(res.data.result)) {
-          comments.value = res.data.result.map(comment => ({
-            id: comment.id,
-            content: comment.content,
-            createTime: comment.createTime,
-            userName: comment.userVO?.realname || comment.userVO?.username || '匿名用户',
-            avatar: comment.userVO && comment.userVO.avatar
-              ? (comment.userVO.avatar.startsWith('http') ? comment.userVO.avatar : 'https://wuminghui.top:9000/' + comment.userVO.avatar.replace(/^\/+/, ''))
-              : (userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'),
-            rating: 5,
-            children: comment.children || []
-          }));
-        } else {
-          comments.value = [];
-        }
-      } else {
-        uni.showToast({
-          title: res.data.message || '获取评论失败',
-          icon: 'none'
-        });
-      }
-    } catch (error) {
-      uni.showToast({
-        title: '获取评论失败',
-        icon: 'none'
-      });
-    }
   };
 
   // 检查是否支付过该商品
@@ -438,7 +353,7 @@ fail: (err) => {
           icon: 'success'
         });
         newComment.value = ''; // 清空输入框
-        getComments(); // 刷新评论列表
+        getAttrictionDetail(); // 刷新评论列表
       } else {
         uni.showToast({
           title: res.data.message || '评论失败',
@@ -467,142 +382,185 @@ fail: (err) => {
     showAllComments.value = !showAllComments.value;
   };
 
+  const getCommentDetail = (id) => {
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/il-user-comments/CommentsDetail',
+      method: 'GET',
+      header: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Access-Token': userStore.token || ''
+      },
+      data: { id },
+      success: (res) => {
+        if (res.data.success && res.data.result) {
+          commentDetail.value = res.data.result;
+        }
+      }
+    });
+  };
+
+  const goToAllComments = (id) => {
+    // 实现跳转到所有评论页面的逻辑
+    console.log('跳转到所有评论页面', id);
+  };
+
+  if (!hotelData.value.starttime || !hotelData.value.endtime) {
+    hotelData.value.starttime = '10:00';
+    hotelData.value.endtime = '22:00';
+  }
+
 </script>
 
 <style scoped>
 .container {
   width: 100%;
-  height: 100vh;
-  background-color: #fff;
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 30px;
 }
-.header {
-  width: 100%;
+.header-swiper {
+  width: 100vw;
   height: 230px;
-  background-color: #fff;
-  position: relative;
-  overflow: hidden;
+  background: #eee;
 }
-.header img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  margin-left: 0px;
+.info-bar {
+  background: #fff;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 4px 24px rgba(59,130,246,0.06);
+  margin-top: -5px;
+  padding: 18px 20px 10px 20px;
 }
-.title-name {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  color: #fff;
-  font-weight: bold;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-.title {
-  font-size: 24px;
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   margin-bottom: 10px;
 }
-.rating {
+.price-main {
+  color: #FF9800;
+  font-size: 28px;
+  font-weight: bold;
+}
+.price-desc {
+  color: #888;
+  font-size: 15px;
+  margin-right: 10px;
+}
+.child-price {
+  color: #FF9800;
+  font-size: 16px;
+  margin-left: 10px;
+}
+.sold-count {
+  margin-left: auto;
+  color: #999;
   font-size: 14px;
-
 }
-.rating uni-rate {
-  margin-left: 50px;
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
 }
-.content {
-  padding: 0px 20px;
-  background-color: #fff;
-  border-radius: 10px;
+.info-label {
+  color: #333;
+  font-size: 15px;
+  margin-left: 6px;
+}
+.info-value {
+  color: #666;
+  font-size: 15px;
+  margin-left: 4px;
 }
 .section {
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  margin-top: 20px;
-  /* align-items: center; */
+  margin: 24px 0 0 0;
+  padding: 18px 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.04);
 }
 .section-title {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
-  text-align: start;
+  color: #333;
 
 }
 .section-content {
-  /* // 首行缩进两个字符 */
-  text-indent: 2em; 
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
-  text-align: justify;
+  font-size: 15px;
+  color: #444;
+  line-height: 1.7;
 }
-.location {
+.booking-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(59,130,246,0.06);
+  margin: 32px 0 24px 0;
+  padding: 0;
+  overflow: hidden;
+  width: 90vw;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.booking-row {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
-  flex-direction: row;
-  /* 底边线距离上边线距离20px */
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 10px;
-  margin-top: 25px;
+  padding: 18px 20px;
+  background: #fff;
+  position: relative;
+  min-height: 48px;
 }
-
-.locationDetail {
-  display: flex;
-  flex-direction: column;
-  margin-left: 20px;
-}
-.locatuon uni-icons {
-  margin-right: 10px;
-  color: #007AFF;
-  font-size: 24px;
-}
-
-.location-title {
-  font-size: 14px;
-  font-weight: bold;
+.booking-label {
+  font-size: 16px;
   color: #333;
+  margin-left: 12px;
+  flex-shrink: 0;
+  font-weight: 500;
 }
-.location-content {
-  font-size: 14px;
-  color: #333;
-  margin-top: 5px;
+.booking-value {
+  margin-left: auto;
+  font-size: 16px;
+  color: #3B82F6;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
 }
-.location-contentprice{
-  font-size: 24px;
-  margin-top: 5px;
+.booking-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 20px;
+}
+.end-row {
+  background: #f8faff;
+}
+.fixed-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  padding: 12px 20px 18px 20px;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+}
+.book-now-btn {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  color: #3B82F6;
+  border: 2px solid #3B82F6;
+  border-radius: 12px;
+  font-size: 18px;
   font-weight: bold;
-
+  padding: 14px 0;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  transition: background 0.2s, color 0.2s;
 }
-.openTime {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-direction: row;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 10px;
-}
-.attractionimg {
-  display: flex;
-  flex-direction: column;
-  margin-top: 20px;
-}
-.attimg {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-top: 10px;
-  margin-bottom: 20px;
-  gap: 10px;
-}
-.attimg image {
-  width: calc(33.33% - 7px);
-  height: 200rpx;
-  border-radius: 10px;
-  object-fit: cover;
+.book-now-btn:active {
+  background: #3B82F6;
+  color: #fff;
 }
 .reviews, .user-reviews, .review-list {
   width: 100%;
@@ -743,49 +701,24 @@ fail: (err) => {
   font-size: 26rpx;
   gap: 8rpx;
 }
-.book-now {
-  background-color: #ff5722;
-  color: #fff;
-  border: none;
-  padding: 5px 4px;
-  border-radius: 4px;
+.no-image-placeholder {
   width: 100%;
-}
-.date-picker {
+  height: 230px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  margin: 16px 0;
-  padding: 8px 0;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: none;
-  border: 1px solid #e0e0e0;
+  background-color: #f8f8f8;
 }
-
-.date-picker text {
-  font-size: 15px;
-  color: #141f2c;
-  min-width: 90px;
-  font-weight: 500;
-  margin-left: 12px;
-}
-
-.picker-value {
-  display: inline-block;
-  margin-right: 12px;
-  color: #333;
-  font-size: 15px;
-  background: #fff;
-  border-radius: 6px;
-  padding: 6px 16px;
-  border: 1px solid #e0e0e0;
-  min-width: 90px;
-  text-align: center;
-  transition: border-color 0.2s;
-}
-
-.picker-value:active,
-.picker-value:focus {
-  border-color: #bbb;
-}
+.comment-card { background: #fff; border-radius: 12px; padding: 20rpx; margin: 20rpx 0; }
+.comment-header { display: flex; align-items: center; }
+.comment-avatar { width: 60rpx; height: 60rpx; border-radius: 50%; margin-right: 16rpx; }
+.comment-user-info { flex: 1; }
+.comment-username { font-size: 28rpx; color: #333; font-weight: 500; }
+.comment-time { font-size: 22rpx; color: #999; margin-left: 10rpx; }
+.comment-more { color: #3B82F6; font-size: 26rpx; padding: 0 10rpx; }
+.comment-score-row { display: flex; align-items: center; margin: 10rpx 0; }
+.comment-score { color: #FF9800; font-size: 28rpx; font-weight: bold; margin-left: 10rpx; }
+.comment-score-desc { color: #888; font-size: 24rpx; margin-left: 10rpx; }
+.comment-content { font-size: 28rpx; color: #333; line-height: 1.7; margin-top: 10rpx; }
 </style>

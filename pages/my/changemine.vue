@@ -16,12 +16,12 @@
     <view class="form-section">
       <view class="form-item">
         <text class="label">昵称</text>
-        <input class="input" v-model="nickname" :disabled="!isEdit" placeholder="请输入昵称" />
+        <input class="input" v-model="nickname" disabled placeholder="昵称不可修改" />
       </view>
       <view class="form-item">
         <text class="label">个性签名</text>
-        <input class="input" v-model="signature" :disabled="!isEdit" placeholder="请输入个性签名" maxlength="10" />
-        <view class="signature-count">{{ signature.length }}/10</view>
+        <input class="input" v-model="openid" :disabled="!isEdit" placeholder="请输入个性签名" maxlength="10" />
+        <view class="signature-count">{{ openid.length }}/10</view>
       </view>
       <view class="form-item">
         <text class="label">性别</text>
@@ -36,10 +36,6 @@
         </picker>
       </view>
       <view class="form-item">
-        <text class="label">年龄</text>
-        <text class="readonly">{{ age ? age + '岁' : '未填写' }}</text>
-      </view>
-      <view class="form-item">
         <text class="label">手机号</text>
         <input class="input" v-model="phone" :disabled="!isEdit" placeholder="请输入手机号" maxlength="11" type="text" />
       </view>
@@ -50,11 +46,6 @@
       <view class="form-item">
         <text class="label">真实姓名</text>
         <input class="input" v-model="realname" :disabled="!isEdit" placeholder="请输入真实姓名" />
-      </view>
-      <view class="form-item">
-        <text class="label">简介</text>
-        <textarea class="textarea" v-model="bio" :disabled="!isEdit" placeholder="填写简介更容易获得关注哦" maxlength="500" />
-        <view class="textarea-count">{{ bio.length }}/500</view>
       </view>
     </view>
   </view>
@@ -68,12 +59,11 @@ const isEdit = ref(true)
 const avatar = ref('')
 const nickname = ref('')
 const gender = ref(0)
-const bio = ref('')
 const birthday = ref('')
 const age = ref('')
 const phone = ref('')
 const email = ref('')
-const signature = ref('')
+const openid = ref('')
 const realname = ref('')
 const genderText = computed(() => ['男','女','保密'][gender.value])
 const today = computed(() => {
@@ -84,8 +74,9 @@ const navBarStyle = computed(() => {
   const statusBarHeight = uni.getSystemInfoSync().statusBarHeight || 0
   return `margin-top:${statusBarHeight}px;`
 })
-onLoad((options) => {
+onLoad(async (options) => {
   isEdit.value = options.mode === 'edit'
+  await fetchUserInfoFromServer();
   const info = userStore.userInfo
   
   // 处理头像URL
@@ -97,11 +88,10 @@ onLoad((options) => {
     
   nickname.value = info.username || ''
   gender.value = info.gender || 0
-  bio.value = info.bio || ''
   birthday.value = info.birthday || ''
   phone.value = info.phone || ''
   email.value = info.email || ''
-  signature.value = info.signature || ''
+  openid.value = info.openid || ''
   realname.value = info.realname || ''
   if (birthday.value) {
     age.value = calcAge(birthday.value)
@@ -194,18 +184,14 @@ function saveProfile() {
     uni.showToast({ title: '手机号格式不正确', icon: 'none' });
     return;
   }
-  // 构造请求体，补全所有字段
-  const sysUserIdvo = {
+  const sysUser = {
     avatar: avatar.value,
     birthday: birthday.value,
     email: email.value,
-    id: userStore.userInfo.id || '',
     phone: phoneStr,
     realname: realname.value,
     sex: Number(gender.value),
-    username: nickname.value,
-    signature: signature.value,
-    bio: bio.value
+    openid: openid.value
   };
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/sys/user/update',
@@ -214,31 +200,19 @@ function saveProfile() {
       'Content-Type': 'application/json',
       'X-Access-Token': userStore.token
     },
-    data: { sysUserIdvo },
+    data: sysUser,
     success: (res) => {
-      console.log('个人信息保存接口返回：', res);
-      if (res.data.success) {
-        // 保存成功后，立刻用 select 接口查一次
-        uni.request({
-          url: `https://island.zhangshuiyi.com/island/sys/user/select/${userStore.userInfo.id}`,
-          method: 'GET',
-          header: {
-            'X-Access-Token': userStore.token
-          },
-          success: (res2) => {
-            console.log('保存后拉取最新个人信息：', res2);
-            if (res2.data.success && res2.data.result) {
-              userStore.userInfo = res2.data.result
-            }
-            uni.showToast({ title: '保存成功', icon: 'success' });
-            setTimeout(() => uni.navigateBack(), 800);
-          }
-        })
+      if (res.data && res.data.success) {
+        // 保存成功后，强制重新查一次用户信息
+        fetchUserInfoFromServer().then(() => {
+          uni.showToast({ title: '保存成功', icon: 'success' });
+          isEdit.value = false;
+        });
       } else {
         uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
       }
     },
-    fail: (err) => {
+    fail: () => {
       uni.showToast({ title: '网络错误', icon: 'none' });
     }
   });
@@ -248,6 +222,19 @@ function onGenderChange(e) {
 }
 function onBirthdayChange(e) {
   birthday.value = e.detail.value
+}
+async function fetchUserInfoFromServer() {
+  // 伪代码，按你实际接口写
+  const res = await uni.request({
+    url: `https://island.zhangshuiyi.com/island/sys/user/select/${userStore.userInfo.id}`,
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token
+    }
+  });
+  if (res.data && res.data.success) {
+    userStore.userInfo = res.data.result;
+  }
 }
 </script>
 

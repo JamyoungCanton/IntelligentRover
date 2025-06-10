@@ -9,7 +9,7 @@
 import { useUserStore } from '/store/modules/user'
 const userStore = useUserStore()
 
-const goLogibOut =async () => {
+const goLogibOut = async () => {
   const userStore = useUserStore()
   // 弹窗是否退出登录
    uni.showModal({
@@ -17,20 +17,34 @@ const goLogibOut =async () => {
     content: '是否退出登录？',
      success: (res) => {
       if (res.confirm) {
-
-        // 确认退出登录
+        // 调用后端退出登录接口
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/sys/logout',
+          method: 'POST',
+          header: {
+            'X-Access-Token': userStore.token
+          },
+          success: (logoutRes) => {
+            // 无论成功与否都清除本地token
+            userStore.token = '';
+            uni.removeStorageSync('token');
+            uni.showToast({ title: '已退出登录', icon: 'success' });
+            setTimeout(() => {
+              uni.navigateBack({ delta: 1 });
+            }, 800);
+          },
+          fail: () => {
        userStore.token = '';
-       console.log(userStore.token);
-
-       uni.navigateBack({
-    delta: 1
-  });
-       
-      }
-      console.log(userStore.token);
+            uni.removeStorageSync('token');
+            uni.showToast({ title: '已退出登录', icon: 'success' });
+            setTimeout(() => {
+              uni.navigateBack({ delta: 1 });
+            }, 800);
     }
   });
- 
+      }
+    }
+  });
 }
 
 

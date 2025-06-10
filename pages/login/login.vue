@@ -212,6 +212,7 @@ const handleLogin = async () => {
           icon: 'success',
           duration: 1500
         });
+        uni.setStorageSync('userPassword', formData.password); // 临时保存密码
         // 获取存储的目标页面路径
         uni.getStorage({
           key: 'loginRedirectUrl',

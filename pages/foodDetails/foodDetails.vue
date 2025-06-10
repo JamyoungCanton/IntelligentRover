@@ -438,7 +438,17 @@ const bookNow = () => {
 
 	console.log('开始创建订单，日期:', diningDate.value);
 	
-	// 构建订单数据
+	// 拼接营业时间
+	const startTime = (timeRange.value.start || '10:00').length === 5
+		? timeRange.value.start + ':00'
+		: timeRange.value.start || '10:00:00';
+	const endTime = (timeRange.value.end || '22:00').length === 5
+		? timeRange.value.end + ':00'
+		: timeRange.value.end || '22:00:00';
+
+	const startDateTime = `${diningDate.value} ${startTime}`;
+	const endDateTime = `${diningDate.value} ${endTime}`;
+
 	const orderData = {
 		contract: {
 			contractName: userStore.userInfo?.realname || '游客',
@@ -449,17 +459,22 @@ const bookNow = () => {
 				bookInfo: {
 					date: diningDate.value,
 					fullname: userStore.userInfo?.realname || '游客',
-					idCardNo: userStore.userInfo?.idCard || '110101199001011234',
+					idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
 					idCardType: "ID_CARD",
-					schedule: ''
+					schedule: `${startTime}-${endTime}`
 				},
 				productId: foodDetails.value.id,
 				productType: "Dining",
-				quantity: 1
+				quantity: 1,
+				price: foodDetails.value.price,
+				amount: foodDetails.value.price * 1,
+				name: foodDetails.value.name,
+				image: foodDetails.value.image,
+				specs: `${startTime}-${endTime}`
 			}
 		],
-		travelStartDate: diningDate.value,
-		travelEndDate: diningDate.value
+		travelStartDate: startDateTime,
+		travelEndDate: endDateTime
 	};
 
 	console.log('订单数据:', orderData);
@@ -478,7 +493,7 @@ const bookNow = () => {
 			if (res.data.success) {
 				// 创建订单成功后跳转到确认页面
 				uni.navigateTo({
-					url: `/pages/foodConfirm/foodConfirm?id=${foodDetails.value.id}&date=${encodeURIComponent(diningDate.value)}&time=${encodeURIComponent(diningTime.value)}&orderId=${res.data.result.id}`
+					url: `/pages/foodConfirm/foodConfirm?id=${foodDetails.value.id}&date=${encodeURIComponent(diningDate.value)}&startDateTime=${encodeURIComponent(startDateTime)}&endDateTime=${encodeURIComponent(endDateTime)}&orderId=${res.data.result.id}`
 				});
 			} else {
 				uni.showToast({

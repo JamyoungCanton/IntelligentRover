@@ -1,5 +1,5 @@
 <template>
-  <view class="container">
+  <view class="container" :style="`padding-top: ${statusBarHeight + 44}px;`">
     <!-- 自定义顶部导航栏 -->
     <view
       class="custom-nav"
@@ -11,6 +11,19 @@
       <view class="nav-title">社区</view>
       <view class="nav-right"></view>
     </view>
+    
+    <!-- 轮播图（放在筛选栏上面） -->
+    <view class="banner-section">
+      <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
+        <swiper-item v-for="(item, index) in bannerList" :key="index">
+          <image :src="item.imageUrl" mode="aspectFill" class="banner-image" />
+          <view class="banner-title">
+            <text>{{ item.title }}</text>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+    
     <!-- 帖子分类区不再固定在顶部 -->
     <view class="postTypeSelect">
       <scroll-view
@@ -33,18 +46,6 @@
       </scroll-view>
     </view>
     
-    <!-- 顶部轮播图 -->
-    <view class="banner-section">
-      <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
-        <swiper-item v-for="(item, index) in bannerList" :key="index">
-          <image :src="item.imageUrl" mode="aspectFill" class="banner-image" />
-          <view class="banner-title">
-            <text>{{ item.title }}</text>
-          </view>
-        </swiper-item>
-      </swiper>
-    </view>
-    
     <!-- 帖子类型按钮 -->
     <view class="fixed-bottom-btns">
       <view class="post-type-buttons">
@@ -62,42 +63,41 @@
           @click="switchPostType('mine')"
         >
           <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
-          <text>我的信息</text>
+          <text>我的好友</text>
         </view>
       </view>
     </view>
     
     <view class="postContent">
+      <!-- 看帖子tab：渲染帖子列表（带图片、标题、内容等） -->
+      <template v-if="currentPostType === 'public'">
       <view class="postItem" 
         v-for="(item, index) in filteredPostList" 
         :key="index" 
         @click="navigateToPostDetail(item)"
-        :class="{'notification-item': currentPostType === 'mine'}"
       >
         <view class="postHeader">
           <image class="itemava"
-            src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg"
+              :src="item.userVO?.avatar || defaultAvatar"
             mode="aspectFill"
           />
           <view class="user-info">
-            <text class="itemname">{{ item.userVO.username }}</text>
-            <text class="itemlv" v-if="currentPostType !== 'mine'">lv3</text>
-            <text class="notification-type" v-if="currentPostType === 'mine'">{{ item.area }}</text>
+              <text class="itemname">{{ item.userVO?.username }}</text>
+              <text class="itemlv">lv3</text>
           </view>
-          <view class="follow-button" v-if="currentPostType !== 'mine'" @click.stop="followUser(item, $event)">
-            <text :class="{'following': item.isFollowing}">{{ item.isFollowing ? '已关注' : '+ 关注' }}</text>
+            <view class="follow-button" @click.stop="followUser(item, $event)">
+              <text :class="{'following': isFollowing(item)}">
+                {{ isFollowing(item) ? '已关注' : '+ 关注' }}
+              </text>
           </view>
         </view>
-        
         <view class="postTitle">
-          <text>{{ currentPostType === 'mine' ? '收到新的互动' : item.title }}</text>
+            <text>{{ item.title }}</text>
         </view>
-        
         <view class="postP">
           <text>{{ item.content }}</text>
         </view>
-        
-        <view class="postImage" v-if="item.images && item.images.length > 0 && currentPostType !== 'mine'">
+          <view class="postImage" v-if="item.images && item.images.length > 0">
           <image
             v-for="(img, imgIndex) in item.images" 
             :key="imgIndex"
@@ -106,12 +106,11 @@
             :style="getImageStyle(item.images.length, imgIndex)"
           />
         </view>
-        
         <view class="item-bottom">
           <view class="item-bottom-left">
             <text class="left-data">{{ formatCreateTime(item.createTime) }} · {{ item.area }}</text>
           </view>
-          <view class="item-bottom-right" v-if="currentPostType !== 'mine'">
+            <view class="item-bottom-right">
             <view class="right-data">
               <uni-icons type="heart" size="18" color="#999"></uni-icons>
               <text class="data-detail">{{ item.likes }}</text>
@@ -123,13 +122,56 @@
           </view>
         </view>
       </view>
-      
-      <view v-if="!userStore.token" class="empty-state">
-        <text>请先登录后查看帖子</text>
+        <view v-if="filteredPostList.length === 0" class="empty-state">
+          <text>暂无相关内容</text>
+        </view>
+      </template>
+
+      <!-- 我的好友tab：关注 -->
+      <template v-if="currentPostType === 'mine' && activeType === 'follow'">
+        <view class="fans-list-section">
+          <view class="fans-header">
+            共 <text class="fans-count">{{ focusTotal }}</text> 个关注
       </view>
-      <view v-else-if="filteredPostList.length === 0" class="empty-state">
-        <text>暂无相关内容</text>
+          <view v-if="focusList.length === 0" class="empty-state">
+            <text>暂无关注</text>
       </view>
+          <view v-else>
+            <view v-for="user in focusList" :key="user.id" class="fan-item">
+              <image :src="user.avatar || defaultAvatar" class="fan-avatar" />
+              <view class="fan-info">
+                <text class="fan-name">{{ user.username }}</text>
+                <text class="fan-desc">{{ (user.fans || 0) + '粉丝' }}</text>
+              </view>
+              <button class="follow-back-btn" @click="followBack(user)">已关注</button>
+            </view>
+            <view class="fans-footer">不能再往下滑了~</view>
+          </view>
+        </view>
+      </template>
+
+      <!-- 我的好友tab：粉丝 -->
+      <template v-if="currentPostType === 'mine' && activeType === 'fans'">
+        <view class="fans-list-section">
+          <view class="fans-header">
+            共 <text class="fans-count">{{ fansTotal }}</text> 个粉丝
+          </view>
+          <view v-if="fansList.length === 0" class="empty-state">
+            <text>暂无粉丝</text>
+          </view>
+          <view v-else>
+            <view v-for="fan in fansList" :key="fan.id" class="fan-item">
+              <image :src="fan.avatar || defaultAvatar" class="fan-avatar" />
+              <view class="fan-info">
+                <text class="fan-name">{{ fan.username }}</text>
+                <text class="fan-desc">{{ (fan.fans || 0) + '粉丝' }}</text>
+              </view>
+              <button class="follow-back-btn" @click="followBack(fan)">回关</button>
+            </view>
+            <view class="fans-footer">不能再往下滑了~</view>
+          </view>
+        </view>
+      </template>
     </view>
     
     <Tabbar v-if="showTabbar" /> 
@@ -163,11 +205,8 @@ const publicTypeList = ref([
 
 // 我的信息页面的筛选条件
 const mineTypeList = ref([
-  { label: '全部', value: 'all' },
-  { label: '点赞', value: 'like' },
-  { label: '评论', value: 'comment' },
   { label: '关注', value: 'follow' },
-  { label: '收藏', value: 'collect' }
+  { label: '粉丝', value: 'fans' }
 ]);
 
 const bannerList = ref([
@@ -212,12 +251,6 @@ const filteredPostList = computed(() => {
   } 
   // 我的信息筛选逻辑
   else if (currentPostType.value === 'mine') {
-    if (activeType.value === 'like') {
-      return postList.value.filter(post => post.area === '点赞');
-    }
-    if (activeType.value === 'comment') {
-      return postList.value.filter(post => post.area === '评论');
-    }
     if (activeType.value === 'follow') {
       return postList.value.filter(post => post.area === '关注');
     }
@@ -226,19 +259,17 @@ const filteredPostList = computed(() => {
   return postList.value;
 });
 
-const activeType = ref('all');
+const activeType = ref('like');
 const scrollIntoViewId = ref('');
 
 const selectType = (typeValue, index) => {
   activeType.value = typeValue;
   scrollIntoViewId.value = 'type-item-' + index;
-  // 这里可以添加选择类型后的逻辑
-  // 根据贴字的类型进行筛选
   if (currentPostType.value === 'mine') {
-    if (typeValue === 'collect') {
-      getUserCollectedPosts(); 
-    } else {
-      getUserNotifications();
+    if (typeValue === 'fans') {
+      getFansList();
+    } else if (typeValue === 'follow') {
+      getFocusList();
     }
   }
 };
@@ -315,13 +346,11 @@ const navigateToPostDetail = (post) => {
 
 const switchPostType = (type) => {
   currentPostType.value = type;
-  // 切换类型时重置为全部
-  activeType.value = 'all';
-  
-  // 获取我的信息
   if (type === 'mine') {
-    getUserNotifications();
+    activeType.value = mineTypeList.value[0].value; // 'follow'
+    getFocusList();
   } else {
+    activeType.value = 'all';
     getPostLst();
   }
 };
@@ -343,19 +372,18 @@ const notificationList = ref([]);
 // 关注用户
 const followUser = (post, event) => {
   if (event) event.stopPropagation();
-
-  const originalStatus = post.isFollowing;
-  post.isFollowing = !post.isFollowing;
-
-  // 兼容不同字段名
-  const focusId = post.userVO?.userId || post.userVO?.id || post.userId || post.id;
-  const operation = post.isFollowing ? 1 : 2;
-
-  console.log('关注参数：', { focusId, operation, token: userStore.token });
-
+  
+  const focusId = String(post.userVO?.id || post.userVO?.userId);
   if (!focusId) {
     uni.showToast({ title: '用户ID无效，无法关注', icon: 'none' });
-    post.isFollowing = originalStatus;
+    return;
+  }
+  if (focusId === String(userStore.userInfo.id)) {
+    uni.showToast({ title: '不能关注自己', icon: 'none' });
+    return;
+  }
+  if (isFollowing(post)) {
+    uni.showToast({ title: '已关注', icon: 'none' });
     return;
   }
 
@@ -368,29 +396,18 @@ const followUser = (post, event) => {
     },
     data: {
       focusId,
-      operation
+      operation: 1
     },
     success: (res) => {
-      console.log('关注接口返回：', res);
-      if (res.statusCode === 200 && res.data.success) {
-        uni.showToast({
-          title: post.isFollowing ? '已关注' : '已取消关注',
-          icon: 'none'
-        });
+      if (res.data.success) {
+        uni.showToast({ title: '已关注', icon: 'none' });
+        getFocusList(); // 关注成功后重新拉取关注列表，刷新 focusIdSet
       } else {
-        post.isFollowing = originalStatus;
-        uni.showToast({
-          title: res.data.message || '操作失败，请重试',
-          icon: 'none'
-        });
+        uni.showToast({ title: res.data.message || '操作失败', icon: 'none' });
       }
     },
     fail: () => {
-      post.isFollowing = originalStatus;
-      uni.showToast({
-        title: '网络请求失败',
-        icon: 'none'
-      });
+      uni.showToast({ title: '网络请求失败', icon: 'none' });
     }
   });
 };
@@ -410,6 +427,7 @@ const getPostLst = () => {
         pageSize: 50
       },
       success: (res) => {
+      console.log('获取到的帖子数据：', res.data);
         if(res.data.code === 401){
           uni.showToast({
             title: '请先登录',
@@ -418,26 +436,14 @@ const getPostLst = () => {
           });
           return;
         }
-        
         else if (res.statusCode === 200) {
-          console.log('获取到的帖子信息:', res.data);
-          
-          // 处理获取到的帖子信息
-          postList.value = res.data.result.list.map(post => {
-            // 为每个帖子添加关注状态属性
-            return {
+        postList.value = res.data.result.list.map(post => ({
               ...post,
-              isFollowing: false // 默认未关注状态
-            };
-          });
-          
-          // 获取关注状态
-          getFollowingStatus();
-          
-          console.log('处理后的帖子信息:', postList.value);
-          
+          isFollowing: false
+        }));
+        // 关键：拉取关注列表，保证按钮状态正确
+        getFocusList();
         } else {
-          console.error('获取帖子信息失败，状态码:', res.data.code);
           uni.showToast({
             title: '获取帖子信息失败',
             icon: 'none'
@@ -445,7 +451,6 @@ const getPostLst = () => {
         }
       },
       fail: (err) => {
-        console.error('请求出错:', err);
         uni.showToast({
           title: '网络请求出错',
           icon: 'none'
@@ -466,11 +471,8 @@ const getFollowingStatus = () => {
     success: (res) => {
       if (res.statusCode === 200 && res.data.code === 200) {
         const followingList = res.data.result || [];
-        
-        // 更新帖子的关注状态
         postList.value.forEach(post => {
           if (post.userVO && post.userVO.userId) {
-            // 检查帖子作者是否在关注列表中
             post.isFollowing = followingList.some(item => item.userId === post.userVO.userId);
           }
         });
@@ -579,6 +581,77 @@ function goBack() {
   }
 }
 
+const fansList = ref([]);
+const fansTotal = ref(0);
+
+const getFansList = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/queryFansList',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    success: (res) => {
+      if (res.statusCode === 200 && res.data.code === 200) {
+        fansList.value = res.data.result?.records || [];
+        fansTotal.value = res.data.result?.total || 0;
+      } else {
+        fansList.value = [];
+        fansTotal.value = 0;
+        uni.showToast({
+          title: '获取粉丝失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: () => {
+      fansList.value = [];
+      fansTotal.value = 0;
+      uni.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
+    }
+  });
+};
+
+const focusList = ref([]);
+const focusIdSet = ref(new Set());
+
+const getFocusList = () => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/queryFocusList',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    success: (res) => {
+      if (res.statusCode === 200 && res.data.code === 200) {
+        focusList.value = res.data.result?.records || [];
+        updatePostFollowingStatus();
+      }
+    }
+  });
+};
+
+const defaultAvatar = 'https://static-typical-avatar-url.png';
+
+const isFollowing = (post) => {
+  const authorId = String(post.userVO?.id || post.userVO?.userId);
+  return focusIdSet.value.has(authorId);
+};
+
+// 拉取关注列表后，更新帖子作者的 isFollowing 状态
+const updatePostFollowingStatus = () => {
+  focusIdSet.value = new Set(focusList.value.map(user => String(user.id)));
+  postList.value.forEach(post => {
+    const authorId = String(post.userVO?.id || post.userVO?.userId);
+    post.isFollowing = focusIdSet.value.has(authorId);
+  });
+};
+  
 </script>
 
 <style lang="scss">
@@ -865,7 +938,7 @@ function goBack() {
   }
 }
 
-.postP{
+.postP {
   text-indent: 2em;
   font-size: 15px;
   padding: 0 15px 12px;
@@ -874,11 +947,8 @@ function goBack() {
   letter-spacing: 0.3px;
   
   text {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: block;
+    white-space: pre-line;
   }
 }
 
@@ -1080,5 +1150,80 @@ function goBack() {
 
 .nav-right {
   width: 60rpx;
+}
+
+.fan-item {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #f5f5f5;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fan-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  margin-right: 18px;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+
+.fan-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.fan-name {
+  font-size: 18px;
+  color: #222;
+  font-weight: 500;
+}
+
+.fan-desc {
+  font-size: 14px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.follow-back-btn {
+  border: 1.5px solid #007aff;
+  color: #007aff;
+  background: #fff;
+  border-radius: 20px;
+  padding: 6px 22px;
+  font-size: 16px;
+  margin-left: 10px;
+  line-height: 1.8;
+}
+
+.fans-list-section {
+  background: #fff;
+  border-radius: 0;
+  margin: 0;
+  padding: 0 0 10px 0;
+  width: 100%;
+}
+
+.fans-header {
+  font-size: 15px;
+  color: #333;
+  padding: 16px 20px 8px 20px;
+  font-weight: 500;
+}
+
+.fans-count {
+  color: #007aff;
+  font-weight: bold;
+}
+
+.fans-footer {
+  text-align: center;
+  color: #bbb;
+  font-size: 14px;
+  padding: 18px 0 6px 0;
 }
 </style>

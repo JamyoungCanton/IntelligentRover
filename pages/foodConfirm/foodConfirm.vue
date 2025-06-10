@@ -134,9 +134,9 @@ const handleConfirmPayment = () => {
 				bookInfo: {
 					date: diningDate.value,
 					fullname: contactName.value || '游客',
-					idCardNo: userStore.userInfo?.idCard || '110101199001011234',
+					idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
 					idCardType: "ID_CARD",
-					schedule: `${diningStartTime.value}-${diningEndTime.value}`
+					schedule: '' // 可选
 				},
 				productId: id.value,
 				productType: "Dining",
@@ -144,12 +144,11 @@ const handleConfirmPayment = () => {
 				price: foodDetails.value.price,
 				amount: foodDetails.value.price * quantity.value,
 				name: foodDetails.value.restaurant,
-				image: foodDetails.value.image,
-				specs: `${diningStartTime.value}-${diningEndTime.value}`
+				image: foodDetails.value.image
 			}
 		],
-		travelStartDate: `${diningDate.value} ${diningStartTime.value}`,
-		travelEndDate: `${diningDate.value} ${diningEndTime.value}`
+		travelStartDate: diningStartTime.value, // 已经是正常格式
+		travelEndDate: diningEndTime.value
 	};
 
 	console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
@@ -276,7 +275,13 @@ onLoad((options) => {
 	getRestaurantDetailsById(options.id);
 
 	if (options.date) {
-		diningDate.value = options.date;
+		diningDate.value = decodeURIComponent(options.date);
+	}
+	if (options.startDateTime) {
+		diningStartTime.value = decodeURIComponent(options.startDateTime);
+	}
+	if (options.endDateTime) {
+		diningEndTime.value = decodeURIComponent(options.endDateTime);
 	}
 });
 onMounted(() => {

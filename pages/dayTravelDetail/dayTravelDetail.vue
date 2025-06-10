@@ -291,6 +291,17 @@ const createOrder = () => {
     uni.showToast({ title: '请输入有效的手机号', icon: 'none' });
     return;
   }
+  // 固定年份为今年，拼接时间
+  const year = new Date().getFullYear();
+  let [month, day] = selectedDate.value.split('-').slice(1);
+  if (!month || !day) {
+    // 兼容用户选择格式为yyyy-mm-dd
+    const arr = selectedDate.value.split('-');
+    month = arr[1];
+    day = arr[2];
+  }
+  const startDateStr = `${year}-${month}-${day} 08:00:00`;
+  const endDateStr = `${year}-${month}-${day} 22:00:00`;
   const orderData = {
     contract: {
       contractName: realname.value,
@@ -299,7 +310,7 @@ const createOrder = () => {
     items: [
       {
         bookInfo: {
-          date: selectedDate.value,
+          date: `${year}-${month}-${day}`,
           fullname: realname.value,
           idCardNo: '',
           idCardType: 'ID_CARD',
@@ -310,8 +321,8 @@ const createOrder = () => {
         quantity: 1
       }
     ],
-    travelStartDate: selectedDate.value,
-    travelEndDate: selectedDate.value
+    travelStartDate: startDateStr,
+    travelEndDate: endDateStr
   };
 
   uni.request({
@@ -326,7 +337,7 @@ const createOrder = () => {
       if (res.data.code === 200 && res.data.success) {
         uni.showToast({ title: '订单创建成功', icon: 'success' });
         uni.navigateTo({
-          url: `/pages/dayTravelOrder/dayTravelOrder?orderSn=${res.data.result.orderSn}&date=${selectedDate.value}&title=${encodeURIComponent(productDetail.title)}&price=${productDetail.price}&score=${productDetail.score}&soldSum=${productDetail.soldSum}&coverImage=${encodeURIComponent(productDetail.coverImage)}`
+          url: `/pages/dayTravelOrder/dayTravelOrder?orderSn=${res.data.result.orderSn}&date=${year}-${month}-${day}&title=${encodeURIComponent(productDetail.title)}&price=${productDetail.price}&score=${productDetail.score}&soldSum=${productDetail.soldSum}&coverImage=${encodeURIComponent(productDetail.coverImage)}`
         });
       } else {
         uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });

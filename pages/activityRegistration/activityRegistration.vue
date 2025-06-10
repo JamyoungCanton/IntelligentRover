@@ -29,9 +29,11 @@
       <text class="section-title">{{ textData.sections.form }}</text>
 
       <view class="form-item">
-        <text class="label">选择活动日期</text>
         <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
-          <view class="picker-value">{{ playDate || '请选择活动日期' }}</view>
+          <view class="picker-value">
+            <uni-icons type="calendar" size="18" color="#007aff" style="margin-right:6px;" />
+            {{ playDate || '请选择活动日期' }}
+          </view>
         </picker>
       </view>
 
@@ -224,9 +226,10 @@ const submitRegistration = () => {
     })
     return
   }
-  if (!/^[\u4e00-\u9fa5a-zA-Z]{2,10}$/.test(form.value.name)) {
+  const name = form.value.name.trim();
+  if (!/^[\u4e00-\u9fa5a-zA-Z·]{2,20}$/.test(name)) {
     uni.showToast({
-      title: '姓名需为2-10位中英文字符',
+      title: '姓名需为2-20位中英文字符',
       icon: 'none'
     })
     return
@@ -262,6 +265,10 @@ const submitRegistration = () => {
     return;
   }
 
+  // 拼接完整的时间字符串
+  const startDateTime = `${playDate.value} 09:00:00`;
+  const endDateTime = `${playDate.value} 21:00:00`;
+
   // 构建订单数据
   const orderData = {
     contract: {
@@ -281,8 +288,8 @@ const submitRegistration = () => {
       imageUrl: textData.value.activityImage,
       quantity: form.value.participants
     }],
-    travelStartDate: playDate.value,
-    travelEndDate: playDate.value
+    travelStartDate: startDateTime, // 必须是 yyyy-MM-dd HH:mm:ss
+    travelEndDate: endDateTime      // 必须是 yyyy-MM-dd HH:mm:ss
   }
 
   console.log('订单数据:', orderData)
@@ -406,6 +413,7 @@ onLoad((options) => {
   align-items: center;
   padding: 10px 0;
   background-color: #007AFF;
+  margin-bottom: 7px;
 }
 
 .title {
@@ -577,19 +585,22 @@ onLoad((options) => {
 
 .picker-value {
   display: inline-block;
-  color: #007aff;
-  font-size: 15px;
-  background: #fff;
-  border-radius: 6px;
-  padding: 6px 16px;
-  border: 1px solid #e0e0e0;
-  min-width: 90px;
+  color: #333;
+  font-size: 16px;
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 10px 20px;
+  border: 2px solid #007aff;
+  min-width: 120px;
   text-align: center;
-  transition: border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.08);
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .picker-value:active,
 .picker-value:focus {
-  border-color: #007aff;
+  border-color: #005ecb;
+  background: #e6f0ff;
 }
 </style>

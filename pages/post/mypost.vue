@@ -28,18 +28,17 @@
         :key="post.id"
       >
         <view class="delete-btn" @tap.stop="handleDelete(post.id)">
-          <uni-icons type="trash" size="22" color="#fff" />
+          <image src="https://wuminghui.top:9000/wlmtsys/2025/06/10/5079bce8f2094183a05d5bc41c37d35f.png" style="width: 22px; height: 22px;" mode="aspectFit" />
         </view>
 
         <!-- 点击整个卡片跳详情 -->
         <view @tap="toDetail(post.id)">
           <view class="post-header">
             <text class="post-title">{{ post.title || '未命名帖子' }}</text>
-            <text class="post-time">{{ formatTime(post.createTime) }}</text>
           </view>
           <view class="post-content">{{ post.content }}</view>
           <image
-            v-if="post.images?.length"
+            v-if="Array.isArray(post.images) && post.images.length"
             :src="post.images[0].url"
             class="post-image"
             mode="aspectFill"
@@ -87,8 +86,9 @@ const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
 // 拉我的帖子
 async function fetchMyPosts() {
   loading.value = true;
-  const userId = uni.getStorageSync('userId');
+  const userId = String(uni.getStorageSync('userId') || userStore.userInfo.userId || userStore.userInfo.id);
   const token = uni.getStorageSync('token') || userStore.token;
+  console.log('查询我的帖子用的 userId:', userId, typeof userId);
   try {
     const res: any = await new Promise((resolve, reject) => {
       uni.request({
@@ -103,7 +103,9 @@ async function fetchMyPosts() {
         fail: reject
       });
     });
-    if (res.statusCode === 200 && res.data.success) {
+    console.log('接口返回:', res);
+    if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 0)) {
+      console.log('帖子列表:', res.data.result.list);
       posts.value = res.data.result.list || [];
     } else {
       uni.showToast({ title: res.data.message || '获取失败', icon: 'none' });
@@ -269,7 +271,6 @@ onMounted(fetchMyPosts);
   right: 12rpx;
   width: 44rpx;
   height: 44rpx;
-  background: rgba(255, 77, 79, 0.85); /* 红色半透明 */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -277,9 +278,6 @@ onMounted(fetchMyPosts);
   z-index: 10;
   box-shadow: 0 2rpx 8rpx rgba(255,77,79,0.12);
   transition: background 0.2s;
-}
-.delete-btn:active {
-  background: #ff4d4f;
 }
 .post-header {
   display: flex;

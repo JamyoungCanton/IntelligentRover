@@ -65,6 +65,12 @@
   const fetchActivityCollect = async () => {
     loading.value = true;
     try {
+      const params = {
+        productId: '1',
+        productType: 'Activities',
+        productName: ''
+      };
+      console.log('请求活动收藏参数:', params);
       const res = await uni.request({
         url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
         method: 'POST',
@@ -72,10 +78,7 @@
           'Content-Type': 'application/json',
           'X-Access-Token': userStore.token
         },
-        data: {
-          userId: userStore.userInfo?.id || '',
-          productType: 'FeaturedRoute' // 只查询活动类型
-        }
+        data: params
       });
 
       if (res.data.code === 200 && res.data.success) {

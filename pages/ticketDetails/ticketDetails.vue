@@ -27,8 +27,16 @@
     <view class="section-title"><text>航班时刻</text></view>
     <view class="date-picker">
       <text>选择乘船日期：</text>
-      <picker mode="date" :value="sailDate" :start="todayStr" @change="onSailDateChange">
-        <view class="picker-value">{{ sailDate || '请选择' }}</view>
+      <picker 
+        mode="multiSelector" 
+        :range="[years, months, days]" 
+        :value="dateIndex" 
+        @change="onSailDateChange"
+        @columnchange="onDateColumnChange"
+      >
+        <view class="picker-value">
+          {{ sailDate.year + '-' + sailDate.month + '-' + sailDate.day }}
+        </view>
       </picker>
     </view>
     <view class="schedule-section">
@@ -105,11 +113,25 @@ const orderSn = ref('');
 const selectedCabinName = ref('');
 const selectedScheduleTime = ref('');
 const selectedScheduleIndex = ref(0);
-const sailDate = ref('');
+const dateIndex = ref([
+  0, // 年
+  0, // 月
+  0 // 日
+]);
+const sailDate = ref({
+  year: '',
+  month: '',
+  day: ''
+});
 
 const today = new Date();
-const pad = (n) => n < 10 ? '0' + n : n;
-const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+const thisYear = today.getFullYear();
+const thisMonth = today.getMonth() + 1;
+const thisDay = today.getDate();
+
+const years = Array.from({ length: 10 }, (_, i) => String(thisYear + i)); // 今年起10年
+const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -248,10 +270,21 @@ const createOrder = () => {
     return;
   }
 
-  if (!sailDate.value) {
+  if (!sailDate.value.year || !sailDate.value.month || !sailDate.value.day) {
     uni.showToast({ title: '请选择乘船日期', icon: 'none' });
     return;
   }
+
+  const year = sailDate.value.year;
+  const month = sailDate.value.month;
+  const day = sailDate.value.day;
+  const time = selectedScheduleTime.value || '08:00';
+  const startDateStr = `${year}-${month}-${day} ${time}:00`;
+  const duration = Number(ticketInfo.value?.duration) || 1;
+  const startDateObj = new Date(`${year}-${month}-${day}T${time}:00`);
+  const endDateObj = new Date(startDateObj.getTime() + duration * 60 * 60 * 1000);
+  const pad = n => n < 10 ? '0' + n : n;
+  const endDateStr = `${endDateObj.getFullYear()}-${pad(endDateObj.getMonth() + 1)}-${pad(endDateObj.getDate())} ${pad(endDateObj.getHours())}:${pad(endDateObj.getMinutes())}:00`;
 
   const orderData = {
     contract: {
@@ -261,10 +294,11 @@ const createOrder = () => {
     items: [
       {
         bookInfo: {
-          date: sailDate.value,
+          date: `${year}-${month}-${day}`,
           fullname: userStore.userInfo.realname || '默认联系人',
           idCardNo: userStore.userInfo.idCardNo || '110101199001011234',
-          idCardType: 'ID_CARD'
+          idCardType: 'ID_CARD',
+          schedule: time
         },
         productId: ticketInfo.value.id,
         productType: 'Transportation',
@@ -273,8 +307,8 @@ const createOrder = () => {
         imageUrl: ticketInfo.value.imageUrl
       }
     ],
-    travelStartDate: sailDate.value,
-    travelEndDate: sailDate.value
+    travelStartDate: startDateStr,
+    travelEndDate: endDateStr
   };
 
   console.log('创建订单 - 请求数据:', JSON.stringify(orderData, null, 2));
@@ -298,7 +332,7 @@ const createOrder = () => {
           duration: 1500
         });
         uni.navigateTo({
-          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&cabinName=${encodeURIComponent(cabinTypes.value[selectedCabinIndex.value]?.name || '')}&scheduleTime=${encodeURIComponent(selectedScheduleTime.value)}&sailDate=${encodeURIComponent(sailDate.value)}`
+          url: `/pages/comfirmticketBookingOrder/comfirmticketBookingOrder?ticketId=${ticketId.value}&price=${selectedCabinPrice.value}&cabinName=${encodeURIComponent(cabinTypes.value[selectedCabinIndex.value]?.name || '')}&scheduleTime=${encodeURIComponent(selectedScheduleTime.value)}&sailDate=${encodeURIComponent(sailDate.value.year + '-' + sailDate.value.month + '-' + sailDate.value.day + ' ' + selectedScheduleTime.value + ':00')}`
         });
       } else {
         uni.showToast({
@@ -318,7 +352,49 @@ const createOrder = () => {
 };
 
 const onSailDateChange = (e) => {
-  sailDate.value = e.detail.value;
+  const [yearIdx, monthIdx, dayIdx] = e.detail.value;
+  const y = parseInt(years[yearIdx]);
+  const m = parseInt(months[monthIdx]);
+  const d = parseInt(days[dayIdx]);
+  const selected = new Date(y, m - 1, d);
+  if (selected < today.setHours(0,0,0,0)) {
+    uni.showToast({ title: '不能选择今天之前的日期', icon: 'none' });
+    dateIndex.value = [
+      0,
+      thisMonth - 1,
+      thisDay - 1
+    ];
+    sailDate.value = {
+      year: years[0],
+      month: months[thisMonth - 1],
+      day: days[thisDay - 1]
+    };
+    return;
+  }
+  dateIndex.value = [yearIdx, monthIdx, dayIdx];
+  sailDate.value = {
+    year: years[yearIdx],
+    month: months[monthIdx],
+    day: days[dayIdx]
+  };
+};
+
+const onDateColumnChange = (e) => {
+  const { column, value } = e.detail;
+  if (column === 0 || column === 1) {
+    // 年或月变动，需重新计算天数
+    let year = years[dateIndex.value[0]];
+    let month = months[dateIndex.value[1]];
+    let maxDay = new Date(year, month, 0).getDate();
+    days.length = 0;
+    for (let i = 1; i <= maxDay; i++) {
+      days.push(i.toString().padStart(2, '0'));
+    }
+    // 如果当前选中的天超出最大天数，重置为最大天数
+    if (dateIndex.value[2] >= maxDay) {
+      dateIndex.value[2] = maxDay - 1;
+    }
+  }
 };
 
 const selectSchedule = (idx) => {

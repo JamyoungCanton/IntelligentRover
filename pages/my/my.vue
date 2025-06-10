@@ -4,7 +4,7 @@
       <!-- 已登录 -->
       <view class="user-info" v-if="userStore.token" @click="goProfileView">
         <view class="avatar-container">
-          <image class="avatar" :src="userStore.userInfo.avatar" />
+          <image class="avatar" :src="userStore.userInfo.avatar || '/static/my/default-avatar.png'" />
         </view>
         <view class="user-detail">
           <text class="username">{{ userStore.userInfo.username }}</text>
@@ -123,15 +123,26 @@ const gohisorder = () => {
 const handleGridItemClick = (item) => {
   if (item.onClick === 'gohisorder') {
     gohisorder();
+    return;
   }
   if (item.onClick === 'goCollectPost') {
     uni.navigateTo({
       url: '/pages/post/mypost',
-    })
+    });
+    return;
   }
   if (item.onClick === 'goActivityCollect') {
     uni.navigateTo({
       url: '/pages/activityCollect/activityCollect'
+    });
+    return;
+  }
+  // 如果没有 onClick 字段，且是客服中心
+  if (item.text === '客服中心') {
+    uni.showToast({
+      title: '未到营业时间',
+      icon: 'none',
+      duration: 2000
     });
   }
 }

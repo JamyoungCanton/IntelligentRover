@@ -563,6 +563,7 @@ onShow(() => {
   border: none;
   margin-left: auto;
   margin-right: 10px;
+  width: 70%;
 }
 
 .fixed-activity-title-bar {
