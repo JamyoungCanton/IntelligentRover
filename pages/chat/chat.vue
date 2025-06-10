@@ -1,75 +1,160 @@
 <template>
-	<view class="container">
-		<!-- 自定义顶部导航栏 -->
-		<view class="custom-nav">
-			<view class="nav-left" @click="goBack">
-				<uni-icons type="back" size="28" color="#333" />
-			</view>
-			<view class="nav-title">AI助手</view>
-			<view class="nav-right"></view>
-		</view>
-		
-		<view style="height: 10px;"></view>
-		<view class="header">
-			<view class="header-top">
-				<image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17843786381807740873AI导游 (无字版).png" mode="widthFix" class="logo"></image>
-				<image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys16333321491417963510智游侠文字.png" mode="widthFix" class="logo-title"></image>
-			</view>
-			<view class="header-center">
-				<p class="header-center-text">欢迎使用AI旅游助手!我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</p>
-				<div class="header-center-function">
-					<div class="function-item" v-for="item in headerCenterFunction" :key="item.icon">
-						<image :src="item.icon" mode="widthFix"></image>
-						<text>{{item.text}}</text>
-					</div>
-				</div>
-			</view>
-			<view class="header-bottom">
-				<div class="header-span">东澳岛2天行程</div>
-			</view>
-		</view>
+  <view class="container">
+    <!-- 头部区域 -->
+    <view class="header">
+      <view class="header-top">
+        <image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17170461054774894891ai顶部.png"
+          mode="widthFix" class="logo"></image>
+      </view>
 
-		<!-- 聊天内容滚动区域 -->
-		<div class="scroll-container" @scroll="handleScroll">
-			<view class="chat-container">
-				<view v-for="(msg, index) in chatMessages" :key="index" class="message-item">
-					<view v-if="msg.type === 'user'" class="user-message">
-						<div class="message-content">{{ msg.content }}</div>
-					</view>
-					<view v-else class="ai-message">
-						<div class="typing-content" :class="{ typing: isTyping && index === chatMessages.length - 1 }">
-							<span v-html="msg.content">
-								
-							</span>
+      <view class="header-center">
+        <p class="header-center-text">欢迎使用AI旅游助手!我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</p>
 
-						</div>
-					</view>
-				</view>
-			</view>
-		</div>
+        <div class="header-center-function">
+          <div class="function-item" v-for="item in headerCenterFunction" :key="item.icon"
+            @click="handleFunctionClick(item.text)">
+            <image :src="item.icon" mode="widthFix"></image>
+            <text>{{ item.text }}</text>
+          </div>
+        </div>
+      </view>
 
-		<!-- 底部输入框 -->
-		<div class="bottom">
-			<div class="voiceMessage">
-				<img class="voice-icon" src="/static/chat/ai图标-语音输入.svg" alt="语音输入">
-				<div class="input-container">
-					<input type="text" placeholder="请输入旅游目的地或旅游问题" v-model="message" @keyup.enter="sendMessage" />
-					<img class="send-icon" @click="sendMessage" src="/static/chat/ai图标-发送.svg" alt="发送">
-				</div>
-			</div>
-		</div>
-    <Tabbar v-if="showTabbar" /> 
+      <view class="header-bottom">
+        <div class="header-span">东澳岛2天行程</div>
+      </view>
+    </view>
 
-	</view>
+    <!-- 聊天内容滚动区域 -->
+    <div class="scroll-container">
+      <view class="chat-container">
+        <view v-for="(msg, index) in chatMessages" :key="index" class="message-item">
+          <view v-if="msg.type === 'user'" class="user-message">
+            <div class="message-content">{{ msg.content }}</div>
+          </view>
+
+          <view v-else class="ai-message">
+            <div class="typing-content" :class="{ typing: isTyping && index === chatMessages.length - 1 }">
+              <template v-if="msg.content && msg.content.length > 0">
+                <div class="ai-response-content">
+                  <template v-for="(item, i) in msg.content" :key="i">
+                    <span v-if="item.type === 'text'" v-html="item.content" class="message-text"></span>
+                    <template
+                      v-else-if="['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant'].includes(item.type)">
+                      <span class="clickable-item" @click="handleItemClick(item)" style="display: inline;">
+                        {{ item.content || item.type }}
+                      </span>
+                    </template>
+                    <span v-else v-html="item.content" class="message-text"></span>
+                  </template>
+                </div>
+              </template>
+
+              <template v-else-if="msg.thinking">
+                <div class="thinking-animation">
+                  <span class="time">({{ Math.floor((Date.now() - msg.startTime) / 1000) }}s)</span>
+                  正在思考中<span class="dots">{{ dots }}</span>
+                </div>
+              </template>
+              <span v-else v-html="msg.content"></span>
+            </div>
+
+            <!-- 行程优化组件 -->
+            <view class="trip-optimizer" v-if="msg.type === 'ai' && msg.showOptimizer">
+              <view class="optimizer-header">
+                <text class="optimizer-title">优化行程</text>
+                <text class="optimizer-subtitle">您可以调整行程景点和行程偏好，对其进行优化</text>
+              </view>
+
+              <view class="optimizer-section">
+                <text class="section-title">行程偏好设置</text>
+
+                <view class="option-group">
+                  <text class="option-label">出行天数</text>
+                  <view class="option-buttons">
+                    <button v-for="day in [1, 2, 3, 4]" :key="day"
+                      :class="['day-btn', { active: selectedDays === day }]" @click="selectedDays = day">
+                      {{ day }}天
+                    </button>
+                  </view>
+                </view>
+
+                <view class="option-group">
+                  <text class="option-label">同行人员</text>
+                  <view class="option-buttons">
+                    <button v-for="person in ['6岁以下儿童', '6岁-12岁儿童', '65岁以上老人']" :key="person"
+                      :class="['person-btn', { active: selectedPerson === person }]"
+                      @click="selectedPerson = selectedPerson === person ? '' : person">
+                      {{ person }}
+                    </button>
+                  </view>
+                </view>
+
+                <view class="option-group">
+                  <text class="option-label">行程偏好</text>
+                  <view class="preference-tags">
+                    <button v-for="tag in preferenceTags" :key="tag"
+                      :class="['tag-btn', { active: selectedTag === tag }]"
+                      @click="selectedTag = selectedTag === tag ? '' : tag">
+                      {{ tag }}
+                    </button>
+                  </view>
+                </view>
+
+                <view class="optimizer-actions">
+                  <button class="confirm-btn" @click="confirmTrip">确认行程并购买</button>
+                  <button class="optimize-btn" @click="optimizeTrip">优化行程规划</button>
+                </view>
+              </view>
+
+              <view class="action-buttons">
+                <button class="action-btn" @click="likeMessage">
+                  <span class="icon like-icon">👍</span>
+                  <text>点赞</text>
+                </button>
+                <button class="action-btn" @click="dislikeMessage">
+                  <span class="icon dislike-icon">👎</span>
+                  <text>踩</text>
+                </button>
+                <button class="action-btn" @click="shareMessage">
+                  <span class="icon share-icon">↗️</span>
+                  <text>分享</text>
+                </button>
+                <button class="action-btn" @click="saveMessage">
+                  <span class="icon save-icon">⭐</span>
+                  <text>收藏</text>
+                </button>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </div>
+
+    <!-- 底部输入栏 -->
+    <div class="bottom">
+      <div class="voiceMessage">
+        <img class="voice-icon" src="/static/chat/ai图标-语音输入.svg" alt="语音输入">
+        <div class="input-container">
+          <input type="text" placeholder="1请输入旅游目的地或旅游问题1" v-model="message" />
+          <img class="send-icon" @click="sendMessage" src="/static/chat/ai图标-发送.svg" alt="发送">
+        </div>
+      </div>
+    </div>
+
+    <Tabbar />
+  </view>
 </template>
 
-<script setup >
+<script setup>
 import Tabbar from '../Tabbar/Tabbar.vue';
-import { ref, nextTick, onMounted, watch } from 'vue';
-import {useUserStore} from '@/store/modules/user';
-import * as TextEncoding from 'text-encoding-shim'
-import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
+import { ref, reactive, nextTick, onMounted, watch } from 'vue';
+import { useUserStore } from '@/store/modules/user';
 
+// 固定回复内容
+const FIXED_REPLY = "请告诉我，我可以进一步帮你调整。";
+
+// 存储所有AI回复的历史数据
+const aiHistory = ref([]);
 
 const headerCenterFunction = [
   { icon: '/static/chat/ai图标-海钓体验.svg', text: '海岛体验' },
@@ -81,236 +166,425 @@ const headerCenterFunction = [
 
 const message = ref('');
 const chatMessages = ref([]);
-let isTyping = ref(false);  //在 AI 处理请求期间标识加载状态
+const responseData = ref([]);
+const isTyping = ref(false);
+const dots = ref('');
+const selectedDays = ref(1);
+const selectedPerson = ref('');
+const selectedTag = ref('');
+const preferenceTags = ref([
+  '山水风光', '名族风情', '历史文化',
+  '诗酒文化', '文旅活动', '户外极限',
+  '科学探索', '疗愈精心', '夜游出行'
+]);
+
+
+
+const confirmTrip = () => {
+  uni.showToast({
+    title: '行程确认成功',
+    icon: 'success'
+  });
+};
+
+const optimizeTrip = () => {
+  uni.showToast({
+    title: '正在优化行程...',
+    icon: 'loading'
+  });
+};
+
+const likeMessage = () => {
+  uni.showToast({ title: '已点赞', icon: 'success' });
+};
+
+const dislikeMessage = () => {
+  uni.showToast({ title: '已踩', icon: 'success' });
+};
+
+const shareMessage = () => {
+  uni.showToast({ title: '已分享', icon: 'success' });
+};
+
+const saveMessage = () => {
+  uni.showToast({ title: '已收藏', icon: 'success' });
+};
+let currentIndex = 0;
 const userStore = useUserStore();
-let currentScrollTop = 0
-const showTabbar = ref(false); // 添加showTabbar变量
+const messageInput = ref(null);
+
 
 // 滚动到底部函数
-const scrollToBottom = async () => {
-  await nextTick();
-  const query = uni.createSelectorQuery();
-  query.select('.scroll-container').boundingClientRect(data => {
-    if (data) {
-      const newScrollTop = data.height;
-      // 只有当新高度大于当前滚动位置时才更新
-      if (newScrollTop > currentScrollTop) {
+const scrollToBottom = () => {
+  nextTick(() => {
+    const query = uni.createSelectorQuery();
+    query.select('.scroll-container').boundingClientRect(data => {
+      if (data) {
         uni.pageScrollTo({
-          scrollTop: newScrollTop,
+          scrollTop: data.height,
           duration: 300
         });
-        currentScrollTop = newScrollTop;
       }
-    }
-  }).exec();
+    }).exec();
+  });
 };
+
 
 // 发送消息
 const sendMessage = async () => {
   if (!message.value.trim()) return;
+
   // 添加用户消息
   chatMessages.value.push({ type: 'user', content: message.value });
   const userInput = message.value;
-  message.value = '';
+  message.value = ''; // 清空输入框
+
   // 添加AI消息（初始为空）
-  chatMessages.value.push({ type: 'ai', content: [], id: Date.now(), thinking: false, typing: true });
+  const newAiMessage = {
+    type: 'ai',
+    content: [],
+    id: Date.now(),
+    startTime: Date.now(), // 记录开始时间
+    thinking: true, // 显示思考动画
+    typing: true,
+    showOptimizer: false, // 初始不显示优化组件
+    isCurrent: true // 标记为当前消息
+  };
+  chatMessages.value.push(newAiMessage);
+
+  // 清空当前响应数据，确保新消息从初始状态开始
+  responseData.value = [];
+
+  // 启动思考动画
+  startThinkingAnimation();
+
   // 发送AI请求
   await sendAiRequest(userInput);
 };
 
+// 发送ai请求
+const sendAiRequest = async (userInput) => {
+  try {
+    const token = userStore.token;
+    console.group('📡 发送AI请求');
+    console.log('🔑 Token:', token);
+    console.log('📩 用户输入:', userInput);
 
+    const requestData = {
+      conversation_id: '',
+      inputs: {
+        original_intention: '',
+        recommended_plan: ''
+      },
+      query: userInput,
+      webMode: 'MAPP-小程序'
+    };
 
-const messages = ref([]);
-const buffer = ref('');
-const decoder = new TextEncoding.TextDecoder('utf-8');
-const requestTask = ref(null);
+    console.log('📦 请求数据:', JSON.stringify(requestData, null, 2));
+    console.groupEnd();
 
+    // 显示思考动画
+    isTyping.value = true;
 
-// 发送ai请求 ，调用接口
-const sendAiRequest = (userInput) => {
-  messages.value = [];
-  const token = userStore.token;
-  const requestData = {
-    conversation_id: '',
-    inputs: {
-      original_intention: '',
-      recommended_plan: ''
-    },
-    query: userInput,
-    webMode: 'MAPP-小程序'
-  };
+    let response;
+    let retryCount = 0;
+    const maxRetries = 3; // 最大重试次数调整为3次
+    const timeout = 300000; // 5分钟超时(300000毫秒)
 
-  isTyping.value = true;
-
-  requestTask.value = uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux      ',
-    method: 'POST',
-    header: {
-      'X-Access-Token': token,
-      'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
-    },
-    data: requestData,
-    responseType: 'arraybuffer',
-    enableChunked: true,
-    timeout: 600000,
-    success: () => {},
-    fail: (err) => {
-      console.error('请求失败：', err);
-      isTyping.value = false;
-    }
-  });
-
-  // 定义一个去重函数，发现接受到的数组中，会重复上一条
-  const uniqueArray = (arr) => {
-    const seen = new Set();
-    return arr.filter(item => {
-      const value = typeof item === 'string' ? item : JSON.stringify(item);
-      if (!seen.has(value)) {
-        seen.add(value);
-        return true;
-      }
-      return false;
-    });
-  };
-
-
-  if (requestTask.value && requestTask.value.onChunkReceived) {
-  	  // 监听接收消息
-  requestTask.value?.onChunkReceived((res) => {
-    try {
-      const arrayBuffer = new Uint8Array(res.data);
-      const chunkStr = decoder.decode(arrayBuffer);
-      buffer.value += chunkStr;
-  
-      let eventEndIndex;
-      while ((eventEndIndex = buffer.value.indexOf('\n\n')) >= 0) {
-        const eventData = buffer.value.slice(0, eventEndIndex);
-        buffer.value = buffer.value.slice(eventEndIndex + 2);
-  
-        const parsed = parseSSEEvent(eventData);
-        if (parsed?.data) {
-          try {
-            const json = JSON.parse(parsed.data);
-			      console.log(json);
-			
-            if (json?.data?.content) {
-              json.data.content = json.data.content.replace(/\n/g, '<br>');
-            }
-            
-            // 渲染内容 只渲染了title和answer,后续可以加
-            if (json.data && json.data.title) {
-              messages.value.push(json.data.title);
-            }
-            if (json.data && json.data.outputs.answer) {
-              messages.value.push(json.data.outputs.answer);
-            }
-			
-
-          
-            // 对 messages 数组进行去重
-            let uniqueMessages = uniqueArray(messages.value);
-            if (uniqueMessages.length > 0) {
-              uniqueMessages.pop(); 
-            }
-  
-            let allMessages = '';
-            for (let i = 0; i < uniqueMessages.length; i++) {
-              let itemStr;
-              if (typeof uniqueMessages[i] === 'string') {
-                itemStr = uniqueMessages[i];
-              } else {
-                try {
-                  itemStr = JSON.stringify(uniqueMessages[i]);
-                } catch (error) {
-                  console.error('转换元素为字符串时出错:', error);
-                  continue;
-                }
-              }
-              // 去掉双引号
-              itemStr = itemStr.replace(/^"|"$/g, ''); 
-              // 追加处理后的字符串和换行符
-              allMessages += itemStr + '\n';
-
-              console.log("未处理替换标签前的 allMessages: ", allMessages);
-              
-
-              
-              allMessages = allMessages.replace(/<\/details>/g, '');
-              allMessages = allMessages.replace(/<ask>/g, '');
-              allMessages = allMessages.replace(/<\/ask>/g, '');
-              allMessages = allMessages.replace(/<details style="color:gray;background-color: #f8f8f8;padding: 8px;border-radius: 4px;" open>/g, '');
-              allMessages = allMessages.replace(/<summary>/g, '');
-              allMessages = allMessages.replace(/<\/summary>/g, '');
-              allMessages= allMessages.replace(/<\/details>/g, '');
-              allMessages = allMessages.replace(/<Activity>/g, '');
-              allMessages = allMessages.replace(/<\/Activity>/g, '');
-              allMessages = allMessages.replace(/<Attraction>/g, '');
-              allMessages = allMessages.replace(/<\/Attraction>/g, '');     
-              allMessages = allMessages.replace(/<Transport>/g, '');
-              allMessages = allMessages.replace(/<\/Transport>/g, '');
-              allMessages = allMessages.replace(/<Accommodation>/g, '');
-              allMessages = allMessages.replace(/<\/Accommodation>/g, '');     
-              allMessages = allMessages.replace(/<Restaurant>/g, '');
-              allMessages = allMessages.replace(/<\/Restaurant>/g, '');
-            }
-            console.log('最后出来的字符串 allMessages: ', allMessages);
-              
-            if (chatMessages.value.length > 0) {
-              chatMessages.value[chatMessages.value.length - 1].content = allMessages.replace(/\n/g, '<br>');
-              startTypingEffect(allMessages.replace(/\n/g, '<br>'), chatMessages.value.length - 1);
-            }
-  
-          } catch (e) {
-          }
+    while (retryCount <= maxRetries) {
+      try {
+        response = await Promise.race([
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux',
+            method: 'POST',
+            data: requestData,
+            header: {
+              'X-Access-Token': token,
+              'Content-Type': 'application/json',
+              'Accept': 'text/event-stream'
+            },
+            timeout: timeout
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('请求超时')), timeout)
+          )
+        ]);
+        break; // 请求成功，退出重试循环
+      } catch (error) {
+        retryCount++;
+        if (retryCount > maxRetries) {
+          throw error;
         }
+        console.warn(`请求失败，第${retryCount}次重试...`, error);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒后重试
       }
-    } catch (err) {
-      console.error('流数据解析失败：', err);
     }
-  });
 
-  requestTask.value.onAbort?.(() => {
-    console.warn('连接中止');
+    console.group('?? 收到API响应');
+    console.log('🛡️ 状态码:', response.statusCode);
+    console.log('📊 响应头:', response.header);
+
+    // 详细打印响应数据
+    console.groupCollapsed('🔍 响应数据详情');
+    console.log('📝 原始数据:', response.data);
+    console.log('📌 数据类型:', typeof response.data);
+
+    // 解析SSE格式数据
+    if (typeof response.data === 'string') {
+      const chunks = response.data.split('data:').filter(chunk => chunk.trim());
+      console.log('📦 数据块数量:', chunks.length);
+      chunks.forEach((chunk, index) => {
+        console.groupCollapsed(`📌 数据块 ${index + 1}`);
+        try {
+          const jsonData = JSON.parse(chunk.trim());
+          console.log('✅ 解析成功:', jsonData);
+          if (jsonData.event) console.log('🏷️ 事件类型:', jsonData.event);
+          if (jsonData.data) console.log('📊 事件数据:', jsonData.data);
+        } catch (e) {
+          console.log('❌ 解析失败:', chunk.trim());
+        }
+        console.groupEnd();
+      });
+    }
+    console.groupEnd(); // 结束响应数据详情
+    console.groupEnd(); // 结束API响应组
+
+    if (response.data && response.statusCode === 200) {
+      // 处理响应数据
+      const processedContent = processResponseData(response);
+      console.log("处理后的内容:", processedContent);
+
+      // 存入历史记录
+      aiHistory.value.push(processedContent);
+
+      // 更新最后一条消息的状态和内容
+      const lastIndex = chatMessages.value.length - 1;
+      if (lastIndex >= 0) {
+        chatMessages.value[lastIndex] = {
+          ...chatMessages.value[lastIndex],
+          content: processedContent,
+          typing: false,
+          showOptimizer: false, // 初始不显示优化组件
+          optimizerData: {
+            selectedDays: 1,
+            selectedPerson: '',
+            selectedTag: ''
+          },
+          isCurrent: false // 标记为已完成
+        };
+      }
+
+      // 模拟打字机效果完成后显示优化组件
+      setTimeout(() => {
+        chatMessages.value[lastIndex].showOptimizer = true;
+      }, 1000); // 延迟1秒显示优化组件
+    } else {
+      // 确保只更新当前消息的错误状态
+      const currentMsgId = chatMessages.value[chatMessages.value.length - 1]?.id;
+      if (currentMsgId && chatMessages.value[chatMessages.value.length - 1].id === currentMsgId) {
+        chatMessages.value[lastIndex].content = [{
+          type: 'text',
+          content: '抱歉，请求出错了，请稍后再试。'
+        }];
+      }
+      console.error('请求失败:', response.statusCode, response.data);
+    }
+  } catch (error) {
+    console.error('AI请求出错:', error);
+    const lastIndex = chatMessages.value.length - 1;
+    if (lastIndex >= 0) {
+      chatMessages.value[lastIndex] = {
+        ...chatMessages.value[lastIndex],
+        content: [{
+          type: 'text',
+          content: '抱歉，发生了错误，请稍后再试。'
+        }],
+        typing: false,
+        thinking: false
+      };
+    }
+  } finally {
+    // 结束打字动画和思考动画
     isTyping.value = false;
-  });
-  requestTask.value.onComplete?.(() => {
-    isTyping.value = false;
-  });
+    const lastIndex = chatMessages.value.length - 1;
+    if (lastIndex >= 0) {
+      chatMessages.value[lastIndex].thinking = false;
+      chatMessages.value[lastIndex].typing = false;
+    }
+
+    // 滚动到底部
+    scrollToBottom();
   }
-
-
-
 };
 
-// 解析SSE文本事件
-function parseSSEEvent(rawData) {
-  const lines = rawData.split('\n');
-  const event = { data: '' };
 
-  lines.forEach(line => {
-    const index = line.indexOf(':');
-    if (index > 0) {
-      const field = line.slice(0, index).trim();
-      const value = line.slice(index + 1).trim();
-      if (field === 'data') {
-        event.data += value + '\n';
-      } else {
-        event[field] = value;
+/**
+ * 处理响应数据，提取workflow_finished事件的answer字段
+ * @param {Object} response - API响应对象
+ * @returns {Array} 结构化消息数组
+ */
+function processResponseData(response) {
+  try {
+    // 解析SSE格式数据
+    const chunks = typeof response.data === 'string' ?
+      response.data.split('data:').filter(chunk => chunk.trim()) : [];
+
+    // 查找workflow_finished事件
+    const workflowEvent = chunks.find(chunk => {
+      try {
+        const data = JSON.parse(chunk.trim());
+        return data.event === 'workflow_finished';
+      } catch (e) {
+        return false;
       }
-    }
-  });
+    });
 
-  event.data = event.data.trimEnd();
-  return event;
+    if (!workflowEvent) {
+      throw new Error('未找到workflow_finished事件');
+    }
+
+    const eventData = JSON.parse(workflowEvent.trim());
+    const answer = eventData.data?.outputs?.answer;
+
+    if (!answer) {
+      throw new Error('answer字段不存在');
+    }
+
+    // 解析answer字段
+    const parsedData = JSON.parse(answer);
+
+    // 计算思考时间(秒)
+    const lastIndex = chatMessages.value.length - 1;
+    const thinkTime = lastIndex >= 0
+      ? Math.floor((Date.now() - chatMessages.value[lastIndex].startTime) / 1000)
+      : 0;
+
+    // 处理markdown格式内容
+    const processedData = parsedData.map(item => {
+      if (item.type === 'text') {
+        // 简单markdown处理
+        let content = item.content
+          .replace(/^####\s+(.*)$/gm, '<h4 class="markdown-title markdown-h4">$1</h4>') // 处理####标题
+          .replace(/^###\s+(.*)$/gm, '<h3 class="markdown-title markdown-h3">$1</h3>') // 处理###标题
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // 加粗
+          .replace(/\*(.*?)\*/g, '<em>$1</em>') // 斜体
+          .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // 链接
+          .replace(/<ask>(.*?)<\/ask>/g, '<span class="ask-tag" @click="handleAskTagClick(\'$1\')">$1</span>') // 保留ask标签并添加点击事件
+          .replace(/^(-{3,}|-)$/gm, '<div class="divider"></div>') // 将单独的---或-转换为分隔线
+          .replace(/\n/g, '<br>'); // 换行
+
+        // 保留特殊标签内容
+        content = content.replace(/<(script|style)(.*?)>(.*?)<\/\1>/gis, (match, tag, attrs, inner) => {
+          return `<${tag}${attrs}>${inner}</${tag}>`;
+        });
+
+        return {
+          ...item,
+          content
+        };
+      }
+      return item;
+    });
+
+    // 将思考时间添加到回复开头
+    if (processedData.length > 0 && processedData[0].type === 'text') {
+      processedData[0].content = `已思考${thinkTime}s<br>${processedData[0].content}`;
+    } else {
+      processedData.unshift({
+        type: 'text',
+        content: `已思考${thinkTime}s`
+      });
+    }
+
+    return processedData;
+  } catch (error) {
+    console.error('处理响应数据出错:', error);
+    return [{
+      type: 'text',
+      content: `处理响应数据时出错: ${error.message}`
+    }];
+  }
 }
-// 打印机效果
-const startTypingEffect = (content, messageIndex) => {
-  // 直接显示完整内容
-  chatMessages.value[messageIndex].content = content;
-  scrollToBottom();
+
+
+// 思考动画效果
+const startThinkingAnimation = () => {
+  let count = 0;
+  let seconds = 0;
+  const startTime = Date.now();
+
+  const animation = setInterval(() => {
+    count = (count + 1) % 4;
+    seconds = Math.floor((Date.now() - startTime) / 1000);
+    dots.value = '.'.repeat(count);
+
+    // 如果思考状态结束，清除动画
+    const lastIndex = chatMessages.value.length - 1;
+    if (lastIndex >= 0 && !chatMessages.value[lastIndex].thinking) {
+      clearInterval(animation);
+    }
+  }, 500);
+};
+
+const handleFunctionClick = (text) => {
+  console.log(`功能按钮点击: ${text}`);
+  // 为特定按钮设置消息内容并发送
+  if (['海岛体验', '浮潜探索', '亲子旅游', '休闲畅游', '海岛介绍'].includes(text)) {
+    message.value = text; // 填充输入框
+    sendMessage(); // 发送消息
+  }
+};
+
+const handleItemClick = (item) => {
+  console.log(`跳转到类型: ${item.type}, ID: ${item.id}`);
+  switch (item.type) {
+    case 'Transport':
+      uni.navigateTo({ url: `/pages/transportationGuide/transportationGuide?id=${item.id}` });
+      break;
+    case 'Accommodation':
+      uni.navigateTo({ url: `/pages/hotelDetail/hotelDetail?id=${item.id}` });
+      break;
+    case 'Activity':
+      uni.navigateTo({ url: `/pages/activity/activity?id=${item.id}` });
+      break;
+    case 'Attraction':
+      uni.navigateTo({ url: `/pages/attractionDetail/attractionDetail?id=${item.id}` });
+      break;
+    case 'Restaurant':
+      uni.navigateTo({ url: `/pages/foodDetails/foodDetails?id=${item.id}` });
+      break;
+    default:
+      console.warn('未知的类型:', item.type);
+  }
+};
+
+
+// 打字机效果
+const startTypingEffect = () => {
+  isTyping.value = true;
+  currentIndex = 0;
+  const replyContent = FIXED_REPLY.split(''); // 拆分成字符数组
+  const lastMessageIndex = chatMessages.value.length - 1;
+
+  // 逐个字符显示
+  const timer = setInterval(() => {
+    if (currentIndex < replyContent.length) {
+      // 更新最后一条消息的内容
+      chatMessages.value[lastMessageIndex].content = replyContent.slice(0, currentIndex + 1).join('').replace(/\n/g, '<br>');
+      currentIndex++;
+      // 每次更新内容后滚动到底部
+      scrollToBottom();
+    } else {
+      isTyping.value = false;
+      clearInterval(timer);
+      // 完成打字后显示优化组件并滚动
+      const lastIndex = chatMessages.value.length - 1;
+      if (lastIndex >= 0) {
+        chatMessages.value[lastIndex].showOptimizer = true;
+      }
+      scrollToBottom();
+    }
+  }, 50); // 控制打字速度（50ms/字符）
 };
 
 // 监听消息列表变化
@@ -318,262 +592,494 @@ watch(chatMessages, () => {
   scrollToBottom();
 }, { deep: true });
 
-
 onMounted(() => {
+  // 初始化时不显示多余空白
   chatMessages.value = [];
 });
-
-// 滚动事件处理
-const handleScroll = (e) => {
-  currentScrollTop = e.detail.scrollTop;
-};
-
-const goBack = () => {
-  const pages = getCurrentPages();
-  if (pages.length > 1) {
-    uni.navigateBack();
-  } else {
-    // 如果没有上一页，则跳转到首页
-    uni.switchTab({
-      url: '/pages/index/index'
-    });
-  }
-};
 
 </script>
 
 <style>
+/* 行程优化组件样式 */
+.trip-optimizer {
+  background-color: #fff;
+  border-radius: 12px;
+  margin: 10px 0 0 0;
+  padding: 15px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: 85%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.optimizer-header {
+  margin-bottom: 15px;
+}
+
+.optimizer-title {
+  font-size: 18px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.optimizer-subtitle {
+  font-size: 14px;
+  color: #888;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 15px 0 10px;
+  display: block;
+}
+
+.option-group {
+  margin-bottom: 15px;
+}
+
+.option-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.option-buttons,
+.preference-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.day-btn,
+.person-btn,
+.tag-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #eee;
+  border-radius: 15px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #333;
+}
+
+.day-btn.active,
+.person-btn.active,
+.tag-btn.active {
+  background-color: #e5f5ff;
+  color: #4285f4;
+  border-color: #4285f4;
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
+  transform: translateY(-1px);
+}
+
+.day-btn,
+.person-btn,
+.tag-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.day-btn:active,
+.person-btn:active,
+.tag-btn:active {
+  transform: translateY(1px);
+}
+
+.optimizer-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirm-btn {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+}
+
+.optimize-btn {
+  background-color: white;
+  color: #4285f4;
+  border: 1px solid #4285f4;
+  border-radius: 20px;
+  padding: 12px;
+  font-size: 15px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.like-icon {
+  color: #4CAF50;
+}
+
+.dislike-icon {
+  color: #F44336;
+}
+
+.share-icon {
+  color: #2196F3;
+}
+
+.save-icon {
+  color: #FFC107;
+}
+
+/* 新增样式 */
+.ai-response-content {
+  word-wrap: break-word;
+}
+
+.clickable-item {
+  color: #4285f4;
+  text-decoration: underline;
+  text-decoration-color: #4285f4;
+  cursor: pointer;
+  margin: 0 2px;
+  display: inline;
+  padding-bottom: 1px;
+  border-bottom: 1px solid #4285f4;
+}
+
+.message-text {
+  display: block;
+  margin: 5px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  width: 100%;
+}
+
+/* Markdown标题样式 */
+.markdown-title {
+  color: #333;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.markdown-h4 {
+  font-size: 16px;
+  margin: 15px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.markdown-h3 {
+  font-size: 18px;
+  margin: 20px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* 深色模式适配 */
+.dark .markdown-title {
+  color: #eee;
+}
+
+.dark .markdown-h4,
+.dark .markdown-h3 {
+  border-bottom-color: #444;
+}
+
+/* 分隔线样式 */
+.divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 12px 0;
+  width: 100%;
+  border: none;
+}
+
 .container {
-	min-height: 100vh;
-	background-color: rgba(241, 252, 254);
-	display: flex;
-	flex-direction: column;
-	position: relative;
+  min-height: 100vh;
+  background-color: rgba(241, 252, 254);
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-/* 自定义导航栏样式 */
-.custom-nav {
-	position: fixed;
-	top: 70rpx;
-	left: 0;
-	right: 0;
-	height: 88rpx;
-	background-color: #F1FCFE;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0 30rpx;
-	z-index: 999;
-}
-
-.nav-left {
-	width: 60rpx;
-	height: 60rpx;
-	display: flex;
-	align-items: center;
-}
-
-.back-icon {
-	width: 40rpx;
-	height: 40rpx;
-}
-
-.nav-title {
-	font-size: 32rpx;
-	font-weight: 500;
-	color: #333;
-}
-
-.nav-right {
-	width: 60rpx;
-}
-
-/* 为顶部导航栏留出空间 */
 .header {
-	margin-top: 88rpx;
-	padding: 20px;
-	background-color: rgba(241, 252, 254);
-	z-index: 10;
+  padding: 20px;
+  background-color: rgba(241, 252, 254);
+  z-index: 10;
 }
 
 .header-top {
-	display: flex;
-	flex-direction: row; 
-	margin-bottom: 15px;
-	align-items: center;
+  margin-bottom: 15px;
 }
 
 .header-top image {
-	width: 70px;
-	height: 20px;
-	display: block;
-}
-.header-top .logo-title {
-	width: 120px;
-	height: 20px;
-	display: block;	
+  width: 150px;
+  height: 20px;
+  display: block;
 }
 
 .header-center {
-	background-color: #fff;
-	border-radius: 15px;
-	padding: 15px;
-	font-size: 14px;
-	margin-bottom: 15px;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 15px;
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
 .header-center-text {
-	margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 .header-center-function {
-	display: flex;
-	align-items: center;
-	flex-direction: row;	
-	justify-content: space-between;
-	padding: 10px;
-	width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  width: 100%;
 }
 
 .function-item {
-	display: flex;
-	align-items: center;
-	flex-direction: column;	
-	padding: 0px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 0px;
 }
 
 .function-item image {
-	width: 30px;
-	height: 30px;
+  width: 30px;
+  height: 30px;
 }
 
 .function-item text {
-	margin-top: 15px;
-	font-size: 12px;
-	width: 50px;
-	color: #333;
+  margin-top: 15px;
+  font-size: 12px;
+  width: 50px;
+  color: #333;
 }
 
 .header-bottom {
-	padding: 10px;
+  padding: 10px;
 }
 
 .header-span {
-	background-color: #fff;
-	border-radius: 10px;
-	padding: 10px;
-	width: 50%;
-	border: none;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 50%;
+  border: none;
 }
 
 .scroll-container {
-	flex: 1;
-	overflow-y: auto;
-	padding: 0 20px;
-	padding-bottom: 150px; /* 增加底部内边距，确保内容不被遮挡 */
-	margin-bottom: 0;
-	height: calc(100vh - 350px); /* 设置固定高度，减去header和bottom的高度 */
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
+  padding-bottom: 150px;
+  /* 增加底部内边距，确保内容不被遮挡 */
+  margin-bottom: 0;
+  height: calc(100vh - 350px);
+  /* 设置固定高度，减去header和bottom的高度 */
 }
 
 .chat-container {
-	width: 100%;
-	min-height: 100%;
-	padding-bottom: 20px; /* 添加一些底部间距 */
+  width: 100%;
+  min-height: 100%;
+  padding-bottom: 20px;
+  /* 添加一些底部间距 */
 }
 
 /* 聊天内容部分 */
 .message-item {
-	margin: 15px 0;
-	position: relative; /* 确保消息定位正确 */
+  margin: 15px 0;
+  position: relative;
+  /* 确保消息定位正确 */
 }
 
 .user-message {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .ai-message {
-	display: flex;
-	justify-content: flex-start;
+  display: block;
+  margin-bottom: 10px;
 }
 
 .message-content,
 .typing-content {
-	max-width: 70%;
-	padding: 12px 18px;
-	border-radius: 20px;
-	line-height: 1.6;
+  max-width: 70%;
+  padding: 12px 18px;
+  border-radius: 20px;
+  line-height: 1.6;
 }
 
 .user-message .message-content {
-	background-color: #4285f4;
-	color: white;
-	align-self: flex-end;
+  background-color: #4285f4;
+  color: white;
+  align-self: flex-end;
 }
 
 .ai-message .typing-content {
-	background-color: #e5f5ff;
-	color: #333;
-	position: relative;
+  background-color: #e5f5ff;
+  color: #333;
+  position: relative;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 85%;
+}
+
+.thinking-animation {
+  color: #666;
+  font-size: 14px;
+}
+
+.dots {
+  display: inline-block;
+  width: 1em;
+  text-align: left;
 }
 
 /* 打字机光标效果 */
 .typing-content::after {
-	display: none; /* 隐藏光标 */
+  display: none;
+  /* 隐藏光标 */
 }
 
 .typing .typing-content::after {
-	display: none; /* 隐藏光标 */
+  display: none;
+  /* 隐藏光标 */
 }
 
 /* 底输入框 */
 .bottom {
-	position: fixed;
-	bottom: 50px;
-	left: 0;
-	right: 0;
-	padding: 10px 20px;
-	background-color: rgba(241, 252, 254);
-	z-index: 100;
-	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* 添加轻微阴影 */
+  position: fixed;
+  bottom: 90px;
+  left: 0;
+  right: 0;
+  padding: 10px 20px;
+  background-color: rgba(241, 252, 254);
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  /* 添加轻微阴影 */
 }
-.voiceMessage{
-	display: flex;
-	align-items: center;
-	flex-direction: row;
-	gap: 10px;
+
+.voiceMessage {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 10px;
 }
+
 .voice-icon {
-	width: 40px;
-	height: 40px;
-	cursor: pointer;
-	transition: transform 0.2s ease;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
+
 .voice-icon:hover {
-	transform: scale(1.1);
+  transform: scale(1.1);
 }
+
 .input-container {
-	display: flex;
-	align-items: center;
-	border: 1.7px solid rgba(97, 209, 255);
-	padding: 5px 15px;
-	border-radius: 20px;
-	flex: 1;
+  display: flex;
+  align-items: center;
+  border: 1.7px solid rgba(97, 209, 255);
+  padding: 5px 15px;
+  border-radius: 20px;
+  flex: 1;
 }
+
 .input-container input {
-	flex: 1;
-	border: none;
-	outline: none;
-	background: transparent;
-	font-size: 14px;
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
 }
+
 .send-icon {
-	width: 35px;
-	height: 35px;
-	cursor: pointer;
-	transition: transform 0.2s ease;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
+
 .send-icon:hover {
-	transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+/* 表格样式 */
+.expense-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 14px;
+  border: 2px solid #333;
+  /* 加粗外边框 */
+  border-spacing: 0;
+}
+
+.expense-table caption {
+  text-align: left;
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.expense-table th,
+.expense-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border: 1px solid #333;
+  /* 加深格子线颜色 */
+}
+
+.expense-table th {
+  background-color: #f5f7fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.expense-table tr:last-child td {
+  font-weight: bold;
+  background-color: #f9f9f9;
 }
 </style>
