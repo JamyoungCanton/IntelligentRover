@@ -34,9 +34,9 @@
 
           <view v-else class="ai-message">
             <div class="typing-content" :class="{ typing: isTyping && index === chatMessages.length - 1 }">
-              <template v-if="responseData.length > 0">
+              <template v-if="msg.content && msg.content.length > 0">
                 <div class="ai-response-content">
-                  <template v-for="(item, i) in responseData" :key="i">
+                  <template v-for="(item, i) in msg.content" :key="i">
                     <span v-if="item.type === 'text'" v-html="item.content" class="message-text"></span>
                     <template
                       v-else-if="['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant'].includes(item.type)">
@@ -149,10 +149,12 @@
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { ref, reactive, nextTick, onMounted, watch } from 'vue';
 import { useUserStore } from '@/store/modules/user';
-// 移除uni-icons引用，因为组件不存在
 
 // 固定回复内容
 const FIXED_REPLY = "请告诉我，我可以进一步帮你调整。";
+
+// 存储所有AI回复的历史数据
+const aiHistory = ref([]);
 
 const headerCenterFunction = [
   { icon: '/static/chat/ai图标-海钓体验.svg', text: '海岛体验' },
@@ -232,24 +234,26 @@ const scrollToBottom = () => {
 const sendMessage = async () => {
   if (!message.value.trim()) return;
 
-  // 清空之前的响应数据
-  responseData.value = [];
-
   // 添加用户消息
   chatMessages.value.push({ type: 'user', content: message.value });
   const userInput = message.value;
   message.value = ''; // 清空输入框
 
   // 添加AI消息（初始为空）
-  chatMessages.value.push({
+  const newAiMessage = {
     type: 'ai',
     content: [],
     id: Date.now(),
     startTime: Date.now(), // 记录开始时间
     thinking: true, // 显示思考动画
     typing: true,
-    showOptimizer: false // 初始不显示优化组件
-  });
+    showOptimizer: false, // 初始不显示优化组件
+    isCurrent: true // 标记为当前消息
+  };
+  chatMessages.value.push(newAiMessage);
+
+  // 清空当前响应数据，确保新消息从初始状态开始
+  responseData.value = [];
 
   // 启动思考动画
   startThinkingAnimation();
@@ -282,115 +286,124 @@ const sendAiRequest = async (userInput) => {
     // 显示思考动画
     isTyping.value = true;
 
-    try {
-      console.group('⏳ 正在发送请求...');
-      let response;
-      let retryCount = 0;
-      const maxRetries = 3; // 最大重试次数调整为3次
-      const timeout = 300000; // 5分钟超时(300000毫秒)
+    let response;
+    let retryCount = 0;
+    const maxRetries = 3; // 最大重试次数调整为3次
+    const timeout = 300000; // 5分钟超时(300000毫秒)
 
-      while (retryCount <= maxRetries) {
-        try {
-          response = await Promise.race([
-            uni.request({
-              url: 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux',
-              method: 'POST',
-              data: requestData,
-              header: {
-                'X-Access-Token': token,
-                'Content-Type': 'application/json',
-                'Accept': 'text/event-stream'
-              },
-              timeout: timeout
-            }),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('请求超时')), timeout)
-            )
-          ]);
-          break; // 请求成功，退出重试循环
-        } catch (error) {
-          retryCount++;
-          if (retryCount > maxRetries) {
-            throw error;
-          }
-          console.warn(`请求失败，第${retryCount}次重试...`, error);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒后重试
+    while (retryCount <= maxRetries) {
+      try {
+        response = await Promise.race([
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/front/ai/chat/chatMessage-stream-flux',
+            method: 'POST',
+            data: requestData,
+            header: {
+              'X-Access-Token': token,
+              'Content-Type': 'application/json',
+              'Accept': 'text/event-stream'
+            },
+            timeout: timeout
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('请求超时')), timeout)
+          )
+        ]);
+        break; // 请求成功，退出重试循环
+      } catch (error) {
+        retryCount++;
+        if (retryCount > maxRetries) {
+          throw error;
         }
+        console.warn(`请求失败，第${retryCount}次重试...`, error);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒后重试
       }
-
-      console.group('📬 收到API响应');
-      console.log('🛡️ 状态码:', response.statusCode);
-      console.log('📊 响应头:', response.header);
-
-      // 详细打印响应数据
-      console.groupCollapsed('🔍 响应数据详情');
-      console.log('📝 原始数据:', response.data);
-      console.log('📌 数据类型:', typeof response.data);
-
-      // 解析SSE格式数据
-      if (typeof response.data === 'string') {
-        const chunks = response.data.split('data:').filter(chunk => chunk.trim());
-        console.log('📦 数据块数量:', chunks.length);
-        chunks.forEach((chunk, index) => {
-          console.groupCollapsed(`📌 数据块 ${index + 1}`);
-          try {
-            const jsonData = JSON.parse(chunk.trim());
-            console.log('✅ 解析成功:', jsonData);
-            if (jsonData.event) console.log('🏷️ 事件类型:', jsonData.event);
-            if (jsonData.data) console.log('📊 事件数据:', jsonData.data);
-          } catch (e) {
-            console.log('❌ 解析失败:', chunk.trim());
-          }
-          console.groupEnd();
-        });
-      }
-      console.groupEnd(); // 结束响应数据详情
-      console.groupEnd(); // 结束API响应组
-
-      if (response.data && response.statusCode === 200) {
-        // 处理响应数据
-        const processedContent = processResponseData(response);
-        console.log("处理后的内容:", processedContent);
-
-        // 存入响应式变量
-        responseData.value = processedContent;
-
-        // 更新最后一条消息的状态
-        const lastIndex = chatMessages.value.length - 1;
-        if (lastIndex >= 0) {
-          chatMessages.value[lastIndex] = {
-            ...chatMessages.value[lastIndex],
-            typing: false,
-            showOptimizer: false, // 初始不显示优化组件
-            optimizerData: {
-              selectedDays: 1,
-              selectedPerson: '',
-              selectedTag: ''
-            }
-          };
-
-          // 模拟打字机效果完成后显示优化组件
-          setTimeout(() => {
-            chatMessages.value[lastIndex].showOptimizer = true;
-          }, 1000); // 延迟1秒显示优化组件
-        }
-        return;
-      } else {
-        // 确保只更新当前消息的错误状态
-        const currentMsgId = chatMessages.value[chatMessages.value.length - 1]?.id;
-        if (currentMsgId && chatMessages.value[chatMessages.value.length - 1].id === currentMsgId) {
-          responseData.value = [{
-            type: 'text',
-            content: '抱歉，请求出错了，请稍后再试。'
-          }];
-        }
-        console.error('请求失败1:', response.statusCode, response.data);
-      }
-    } catch (error) {
-      chatMessages.value[chatMessages.value.length - 1].content = '抱歉，网络请求失败，请稍后再试。';
-      console.error('请求失败2:', error);
     }
 
+    console.group('?? 收到API响应');
+    console.log('🛡️ 状态码:', response.statusCode);
+    console.log('📊 响应头:', response.header);
+
+    // 详细打印响应数据
+    console.groupCollapsed('🔍 响应数据详情');
+    console.log('📝 原始数据:', response.data);
+    console.log('📌 数据类型:', typeof response.data);
+
+    // 解析SSE格式数据
+    if (typeof response.data === 'string') {
+      const chunks = response.data.split('data:').filter(chunk => chunk.trim());
+      console.log('📦 数据块数量:', chunks.length);
+      chunks.forEach((chunk, index) => {
+        console.groupCollapsed(`📌 数据块 ${index + 1}`);
+        try {
+          const jsonData = JSON.parse(chunk.trim());
+          console.log('✅ 解析成功:', jsonData);
+          if (jsonData.event) console.log('🏷️ 事件类型:', jsonData.event);
+          if (jsonData.data) console.log('📊 事件数据:', jsonData.data);
+        } catch (e) {
+          console.log('❌ 解析失败:', chunk.trim());
+        }
+        console.groupEnd();
+      });
+    }
+    console.groupEnd(); // 结束响应数据详情
+    console.groupEnd(); // 结束API响应组
+
+    if (response.data && response.statusCode === 200) {
+      // 处理响应数据
+      const processedContent = processResponseData(response);
+      console.log("处理后的内容:", processedContent);
+
+      // 存入历史记录
+      aiHistory.value.push(processedContent);
+
+      // 更新最后一条消息的状态和内容
+      const lastIndex = chatMessages.value.length - 1;
+      if (lastIndex >= 0) {
+        chatMessages.value[lastIndex] = {
+          ...chatMessages.value[lastIndex],
+          content: processedContent,
+          typing: false,
+          showOptimizer: false, // 初始不显示优化组件
+          optimizerData: {
+            selectedDays: 1,
+            selectedPerson: '',
+            selectedTag: ''
+          },
+          isCurrent: false // 标记为已完成
+        };
+      }
+
+      // 模拟打字机效果完成后显示优化组件
+      setTimeout(() => {
+        chatMessages.value[lastIndex].showOptimizer = true;
+      }, 1000); // 延迟1秒显示优化组件
+    } else {
+      // 确保只更新当前消息的错误状态
+      const currentMsgId = chatMessages.value[chatMessages.value.length - 1]?.id;
+      if (currentMsgId && chatMessages.value[chatMessages.value.length - 1].id === currentMsgId) {
+        chatMessages.value[lastIndex].content = [{
+          type: 'text',
+          content: '抱歉，请求出错了，请稍后再试。'
+        }];
+      }
+      console.error('请求失败:', response.statusCode, response.data);
+    }
+  } catch (error) {
+    console.error('AI请求出错:', error);
+    const lastIndex = chatMessages.value.length - 1;
+    if (lastIndex >= 0) {
+      chatMessages.value[lastIndex] = {
+        ...chatMessages.value[lastIndex],
+        content: [{
+          type: 'text',
+          content: '抱歉，发生了错误，请稍后再试。'
+        }],
+        typing: false,
+        thinking: false
+      };
+    }
+  } finally {
     // 结束打字动画和思考动画
     isTyping.value = false;
     const lastIndex = chatMessages.value.length - 1;
@@ -400,17 +413,6 @@ const sendAiRequest = async (userInput) => {
     }
 
     // 滚动到底部
-    scrollToBottom();
-  } catch (error) {
-    console.error('AI请求出错：', error);
-    chatMessages.value.push({
-      type: 'ai',
-      content: [{
-        type: 'text',
-        content: '抱歉，发生了错误，请稍后再试。'
-      }],
-      typing: false
-    });
     scrollToBottom();
   }
 };
@@ -451,15 +453,24 @@ function processResponseData(response) {
     // 解析answer字段
     const parsedData = JSON.parse(answer);
 
+    // 计算思考时间(秒)
+    const lastIndex = chatMessages.value.length - 1;
+    const thinkTime = lastIndex >= 0
+      ? Math.floor((Date.now() - chatMessages.value[lastIndex].startTime) / 1000)
+      : 0;
+
     // 处理markdown格式内容
-    return parsedData.map(item => {
+    const processedData = parsedData.map(item => {
       if (item.type === 'text') {
         // 简单markdown处理
         let content = item.content
+          .replace(/^####\s+(.*)$/gm, '<h4 class="markdown-title markdown-h4">$1</h4>') // 处理####标题
+          .replace(/^###\s+(.*)$/gm, '<h3 class="markdown-title markdown-h3">$1</h3>') // 处理###标题
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // 加粗
           .replace(/\*(.*?)\*/g, '<em>$1</em>') // 斜体
           .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // 链接
           .replace(/<ask>(.*?)<\/ask>/g, '<span class="ask-tag" @click="handleAskTagClick(\'$1\')">$1</span>') // 保留ask标签并添加点击事件
+          .replace(/^(-{3,}|-)$/gm, '<div class="divider"></div>') // 将单独的---或-转换为分隔线
           .replace(/\n/g, '<br>'); // 换行
 
         // 保留特殊标签内容
@@ -474,6 +485,18 @@ function processResponseData(response) {
       }
       return item;
     });
+
+    // 将思考时间添加到回复开头
+    if (processedData.length > 0 && processedData[0].type === 'text') {
+      processedData[0].content = `已思考${thinkTime}s<br>${processedData[0].content}`;
+    } else {
+      processedData.unshift({
+        type: 'text',
+        content: `已思考${thinkTime}s`
+      });
+    }
+
+    return processedData;
   } catch (error) {
     console.error('处理响应数据出错:', error);
     return [{
@@ -763,6 +786,46 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   width: 100%;
+}
+
+/* Markdown标题样式 */
+.markdown-title {
+  color: #333;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.markdown-h4 {
+  font-size: 16px;
+  margin: 15px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.markdown-h3 {
+  font-size: 18px;
+  margin: 20px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* 深色模式适配 */
+.dark .markdown-title {
+  color: #eee;
+}
+
+.dark .markdown-h4,
+.dark .markdown-h3 {
+  border-bottom-color: #444;
+}
+
+/* 分隔线样式 */
+.divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 12px 0;
+  width: 100%;
+  border: none;
 }
 
 .container {
