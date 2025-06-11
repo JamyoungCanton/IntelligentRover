@@ -185,13 +185,14 @@ function saveProfile() {
     return;
   }
   const sysUser = {
+    id: userStore.userInfo.id,
     avatar: avatar.value,
     birthday: birthday.value,
     email: email.value,
     phone: phoneStr,
     realname: realname.value,
     sex: Number(gender.value),
-    openid: openid.value
+    openid: openid.value || null
   };
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/sys/user/update',

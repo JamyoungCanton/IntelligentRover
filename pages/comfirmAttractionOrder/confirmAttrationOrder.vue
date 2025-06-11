@@ -125,6 +125,7 @@
 import { useUserStore } from '@/store/modules/user';
 import { onLoad } from '@dcloudio/uni-app';
 import { ref,onMounted } from 'vue';
+import { useCommentStore } from '@/store/modules/comment';
 
 const userStore = useUserStore();
 const id = ref(''); 
@@ -135,6 +136,8 @@ const price = ref('');
 const playDate = ref('');
 const image_url = ref('');
 const isFeaturedRoute = ref(false);
+const type = ref('');
+const productId = ref('');
 
 onLoad((options) => {
    id.value = options.id;
@@ -143,6 +146,8 @@ onLoad((options) => {
    price.value = options.price || '';
    playDate.value = options.playDate || '';
    image_url.value = options.image_url ? decodeURIComponent(options.image_url) : '';
+   type.value = options.type || '';
+   productId.value = options.productId || '';
    console.log('接收的 id:', id);
    console.log('接收的 orderSn:', orderSn);
    // 判断是否为精选路线
@@ -190,6 +195,7 @@ const handleConfirmPayment = () => {
 
   const userStore = useUserStore();
   console.log(userStore.token);
+  const commentStore = useCommentStore();
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
     method: 'POST',
@@ -202,14 +208,14 @@ const handleConfirmPayment = () => {
     },
     success:(res)=>{
       console.log(res.data);
-    },
+      if (res.data.code === 200) {
+        commentStore.setPendingComment('景点', id.value);
+        uni.navigateTo({
+          url: `/pages/pay_success/pay_success?amount=${isFeaturedRoute.value ? price.value : hotelList.value.ticketprice}&orderId=${orderSn.value}&type=${type.value}&productId=${productId.value}`
+        });
+      }
+    }
   })
-  
- 
-
-  uni.navigateTo({
-    url: `/pages/pay_success/pay_success?amount=${isFeaturedRoute.value ? price.value : hotelList.value.ticketprice}&orderId=${orderSn.value}`
-  });
 };
 // 退出
 const handleLogout = () => {

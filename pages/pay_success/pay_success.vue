@@ -38,11 +38,15 @@ import { ref } from 'vue';
 const amount = ref('');
 const payment = ref('');
 const orderId = ref('');
+const type = ref('');
+const productId = ref('');
 
 onLoad((options) => {
   amount.value = options.amount || options.price || '0.00';
   payment.value = options.payment || '未知方式';
   orderId.value = options.orderId || options.orderSn || '';
+  type.value = options.type || '';
+  productId.value = options.productId || '';
 });
 
 const navigatortoOrder = () => {
@@ -52,7 +56,7 @@ const navigatortoOrder = () => {
 };
 const ToitineraryEvaluation = () => {
   uni.navigateTo({
-    url: '/pages/itineraryEvaluation/itineraryEvaluation'
+    url: `/pages/itineraryEvaluation/itineraryEvaluation?type=${type.value}&productId=${productId.value}`
   });
 };
 const Toindex = () => {

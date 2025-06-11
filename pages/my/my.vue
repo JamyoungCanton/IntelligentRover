@@ -8,7 +8,9 @@
         </view>
         <view class="user-detail">
           <text class="username">{{ userStore.userInfo.username }}</text>
-          <text class="signature">{{ (userStore.userInfo.signature || '').slice(0, 10) }}</text>
+          <text class="signature">
+            {{ userStore.userInfo.openid ? userStore.userInfo.openid.slice(0, 10) : '暂无签名' }}
+          </text>
         </view>
         <uni-icons type="right" size="14" color="#999" />
       </view>

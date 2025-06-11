@@ -54,28 +54,21 @@
           v-model="feedbackText"
           maxlength="500"
         />
-        <view class="voice-input">
-          <image 
-            class="voice-icon" 
-            :src="getImagePath(isVoiceInputActive ? icons.voiceActive : icons.voiceInactive)" 
-            @click="toggleVoiceInput"
-          ></image>
-        </view>
       </view>
       
-      <view class="photo-upload">
-        <view class="upload-area">
-          <view class="upload-btn" @click="openPhotoLibrary">
-            <image :src="getImagePath(icons.camera)"></image>
-          </view>
-          <text class="photo-limit">{{ texts.photoLimit }}</text>
+      <view class="post-image">
+        <view class="form-label">
+          <uni-icons type="image" size="16" color="#0066CC"></uni-icons>
+          <text>上传图片</text>
+          <text class="label-hint">(最多9张)</text>
         </view>
-        <view class="photo-preview-container">
-          <view class="photo-preview" v-for="(photo, index) in uploadedPhotos" :key="index">
-            <image :src="photo.url"></image>
-            <view class="delete-photo" @click="deletePhoto(index)">
-              <image :src="getImagePath(icons.close)"></image>
-            </view>
+        <view class="image-container">
+          <view v-for="(image, index) in uploadedFiles" :key="index" class="image-item">
+            <image class="image-item-image" :src="image" mode="aspectFill"></image>
+            <button class="delete-btn" @click="deleteImage(index)">x</button>
+          </view>
+          <view v-if="uploadedFiles.length < 9" class="add-image" @click="chooseImage">
+            <text class="add-icon">+</text>
           </view>
         </view>
       </view>
@@ -90,6 +83,7 @@
 <script>
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
 import { useUserStore } from '@/store/modules/user.js';
+import { useCommentStore } from '@/store/modules/comment';
 
 function getImagePath(imageName) {
   return `/static/itinerary/${imageName}`;
@@ -144,7 +138,7 @@ export default {
       ],
       // 反馈内容
       feedbackText: '',
-      uploadedPhotos: [],
+      uploadedFiles: [],
       isVoiceInputActive: false,
       selectedSatisfaction: null,
       productId: '',
@@ -155,6 +149,14 @@ export default {
 	this.getSafeAreaInfo();
     this.productId = options.productId || '';
     this.type = options.type || '';
+    console.log('onLoad 获取到的 productId:', this.productId, 'type:', this.type);
+  },
+  onMounted() {
+    const commentStore = useCommentStore();
+    const type = commentStore.pendingComment.type;
+    const productId = commentStore.pendingComment.productId;
+    console.log('store 待评价商品类型:', type, 'productId:', productId);
+    // 用于提交评论
   },
   methods: {
     getImagePath(imageName) {
@@ -166,23 +168,8 @@ export default {
     rate(itemName, score) {
       this.ratingItems.find(item => item.name === itemName).ratings = score;
     },
-    toggleVoiceInput() {
-      this.isVoiceInputActive = !this.isVoiceInputActive;
-      uni.showToast({
-        title: this.isVoiceInputActive ? '语音输入已开启' : '语音输入已关闭',
-        icon: 'none'
-      });
-    },
     deletePhoto(index) {
-      uni.showModal({
-        title: '提示',
-        content: '确定要删除这张图片吗？',
-        success: (res) => {
-          if (res.confirm) {
-            this.uploadedPhotos.splice(index, 1);
-          }
-        }
-      });
+      this.uploadedPhotos.splice(index, 1);
     },
     openPhotoLibrary() {
       if (this.uploadedPhotos.length >= 9) {
@@ -201,50 +188,27 @@ export default {
       });
     },
     submitFeedback() {
-      if (!this.selectedSatisfaction) {
-        uni.showToast({ title: '请选择整体满意度', icon: 'none' });
-        return;
-      }
       if (!this.feedbackText.trim()) {
         uni.showToast({ title: '请输入详细反馈', icon: 'none' });
         return;
       }
-
-      // 获取用户信息
+      
       const userStore = useUserStore();
       const userInfo = userStore.userInfo || {};
-
-      // 获取商品/订单ID和类型（建议通过路由参数或页面传参传递）
-      const productId = this.$route?.params?.productId || ''; // 或其它方式获取
-      const type = this.$route?.params?.type || 'itinerary'; // 建议根据业务传递
-
-      // 拼接评分内容
-      const ratings = this.ratingItems.map(item => `${item.name}:${item.ratings}`).join('，');
-      // 拼接图片url
-      const photoUrls = this.uploadedPhotos.map(photo => photo.url).join(',');
-
-      // 组装评论内容
-      let commentContent = `满意度：${this.satisfactionOptions.find(opt => opt.value === this.selectedSatisfaction)?.label || ''}\n`;
-      commentContent += `评分：${ratings}\n`;
-      commentContent += `反馈：${this.feedbackText}`;
-      if (photoUrls) {
-        commentContent += `\n图片：${photoUrls}`;
-      }
-
-      const dto = {
-        avatar: userInfo.avatar || '',
-        comment: commentContent,
-        productId: productId,
-        type: type,
-        userId: userInfo.id || '',
-        username: userInfo.username || userInfo.realname || ''
+      // 这里要确保 uploadedFiles 是字符串数组
+      const url = this.uploadedFiles.join(','); // 注意这里
+      const commentData = {
+        id: Date.now().toString(),
+        avatar: userInfo.avatar || "",
+        comment: this.feedbackText,
+        productId: this.productId,
+        type: this.type,
+        userId: userInfo.id,
+        username: userInfo.realname || userInfo.username,
+        url
       };
+      console.log('提交评论参数:', commentData); // 检查url字段
 
-      uni.showModal({
-        title: '确认提交',
-        content: '您确定要提交反馈吗？',
-        success: (res) => {
-          if (res.confirm) {
             uni.request({
               url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
               method: 'POST',
@@ -252,14 +216,16 @@ export default {
                 'Content-Type': 'application/json',
                 'X-Access-Token': userStore.token
               },
-              data: { dto },
+        data: commentData,
               success: (res) => {
                 if ((res.data.code === 0 || res.data.code === 200) && res.data.success) {
-                  uni.showToast({
-                    title: '提交成功',
-                    icon: 'success'
-                  });
-                  this.resetForm();
+            uni.showToast({
+              title: '提交成功',
+              icon: 'success'
+            });
+            setTimeout(() => {
+              uni.navigateBack();
+            }, 800);
                 } else {
                   uni.showToast({
                     title: res.data.message || '提交失败',
@@ -272,9 +238,6 @@ export default {
                   title: '网络错误',
                   icon: 'none'
                 });
-              }
-            });
-          }
         }
       });
     },
@@ -292,26 +255,40 @@ export default {
 	    const systemInfo = uni.getSystemInfoSync();
 	    this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
 	},
-    uploadImage(filePath) {
+    chooseImage() {
+      if (!this.hasToken()) return;
+
+      uni.chooseImage({
+        count: 9 - this.uploadedFiles.length,
+        sizeType: ['original', 'compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          res.tempFilePaths.forEach((path) => {
+            this.uploadImage(path);
+          });
+        },
+        fail: (err) => {
+          console.error('选择图片失败:', err);
+          uni.showToast({
+            title: '选择图片失败',
+            icon: 'none'
+          });
+        }
+      });
+    },
+    uploadImage(path) {
       const userStore = useUserStore();
       const token = userStore.token;
-
       if (!token) {
         uni.showToast({
           title: '未获取到认证信息，请重新登录',
           icon: 'none'
         });
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/login/login'
-          });
-        }, 500);
         return;
       }
-
       uni.uploadFile({
         url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
-        filePath: filePath,
+        filePath: path,
         name: 'file',
         header: {
           'X-Access-Token': token
@@ -320,24 +297,9 @@ export default {
           if (res.statusCode === 200) {
             try {
               const data = JSON.parse(res.data);
-              if ((data.code === 0 || data.code === 200) && data.success && data.result && data.result.url) {
-                this.uploadedPhotos.push({ url: data.result.url });
-                uni.showToast({
-                  title: '上传成功',
-                  icon: 'success'
-                });
-              } else if (data.code === 401) {
-                uni.showModal({
-                  title: '登录失效',
-                  content: '您的登录已过期，请重新登录',
-                  showCancel: false,
-                  confirmText: '去登录',
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      uni.navigateTo({ url: '/pages/login/login' });
-                    }
-                  }
-                });
+              if (data.success && data.result) {
+                this.uploadedFiles.push(data.result.url || data.result); // 兼容两种格式
+                uni.showToast({ title: '上传成功', icon: 'success' });
               } else {
                 uni.showToast({
                   title: data.message || '图片上传失败',
@@ -345,7 +307,6 @@ export default {
                 });
               }
             } catch (e) {
-              console.error('解析响应数据失败:', e);
               uni.showToast({
                 title: '图片上传失败',
                 icon: 'none'
@@ -359,13 +320,32 @@ export default {
           }
         },
         fail: (err) => {
-          console.error('图片上传失败:', err);
           uni.showToast({
             title: '图片上传失败',
             icon: 'none'
           });
         }
       });
+    },
+    deleteImage(index) {
+      this.uploadedFiles.splice(index, 1);
+    },
+    hasToken() {
+      const userStore = useUserStore();
+      if (!userStore.token) {
+        uni.showToast({
+          title: '未登录,请先登录',
+          icon: 'none',
+          duration: 1500
+        });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          });
+        }, 500);
+        return false;
+      }
+      return true;
     }
   }
 };
@@ -506,73 +486,68 @@ export default {
 }
 
 /* 图片上传样式 */
-.photo-upload {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* 调整为左对齐 */
+.post-image {
+  margin-bottom: 20px;
+  padding: 0;
+  position: relative;
+  z-index: 1;
 }
-
-.upload-area {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* 调整为左对齐 */
-  margin-bottom: 10px;
-}
-
-.upload-btn {
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.upload-btn image {
-  width: 80px; /* 调整照相机图标大小 */
-  height: 80px; /* 调整照相机图标大小 */
-}
-
-.photo-limit {
-  font-size: 12px;
-  color: #999;
-  text-align: left; /* 调整为左对齐 */
-}
-
-.photo-preview-container {
+.image-container {
   display: flex;
   flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.photo-preview {
-  position: relative;
-  margin: 0 10px 10px 0;
-  width: 60px;
-  height: 60px;
-  border-radius: 5px;
+  gap: 15px;
+  padding: 15px 0;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  border: 1px dashed #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
 }
-
-.photo-preview image {
+.image-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+.image-item-image {
   width: 100%;
   height: 100%;
+  border-radius: 8px;
   object-fit: cover;
 }
-
-.delete-photo {
+.delete-btn {
   position: absolute;
-  top: 0;
-  right: 0;
-  background-color: rgba(255, 0, 0, 0.7);
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
   border-radius: 50%;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
-
-.delete-photo image {
-  width: 12px;
-  height: 12px;
+.add-image {
+  width: 100px;
+  height: 100px;
+  background: #f8f8f8;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+.add-icon {
+  font-size: 40px;
+  color: #999;
 }
 
 .submit-button {

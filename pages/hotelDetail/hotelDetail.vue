@@ -84,58 +84,58 @@
     <!-- 评论区 -->
     <view class="hotel-reviews">
       <text class="section-title">住客点评</text>
-      <!-- 用户输入评论 -->
-      <view class="comment-input-wrapper">
-        <view v-if="allowComment" class="comment-input-area">
-          <view class="comment-user-row">
-            <image :src="userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
-            <text class="user-name">{{ userInfo.realname || userInfo.username || '游客' }}</text>
+      <!-- 评论列表横滑，仅保留最新评论 -->
+      <scroll-view scroll-x class="comment-scroll" v-if="comments.length">
+        <view
+          class="comment-card"
+          v-for="(item, idx) in displayedComments"
+          :key="item.id || idx"
+        >
+          <view class="comment-header">
+            <image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
+            <view class="comment-user">
+              <text class="comment-username">{{ item.username || '匿名用户' }}</text>
+              <text class="comment-date">{{ item.createTime }}</text>
           </view>
-          <textarea
-            v-model="newComment"
-            class="comment-textarea"
-            placeholder="写下你的评论..."
-            :maxlength="200"
-          />
-          <view class="comment-footer-row">
-            <text class="word-count">{{ newComment.length }}/200</text>
-            <button 
-              class="submit-btn" 
-              :disabled="!newComment.trim()"
-              @click="submitComment"
-            >发表评论</button>
           </view>
+          <view class="comment-content">{{ item.comment }}</view>
+          <!-- 评论图片横滑 -->
+          <scroll-view scroll-x class="comment-img-scroll" v-if="item.images && item.images.length">
+            <image
+              v-for="(img, imgIdx) in item.images"
+              :key="imgIdx"
+              :src="img"
+              class="comment-img"
+            />
+          </scroll-view>
+          </view>
+        <!-- "查看更多"按钮 -->
+        <view
+          v-if="!showAllComments && comments.length > 3"
+          class="comment-more-btn"
+          @click="toggleComments"
+        >
+          查看更多
         </view>
-        <view v-else style="color:#999;text-align:center;padding:20px 0;">
-          仅限已支付该酒店订单的用户评论
-        </view>
-      </view>
-      <!-- 评论列表 -->
-      <view v-if="!comments || comments.length === 0" class="no-comments">
+      </scroll-view>
+      <view v-else class="no-comments">
         <uni-icons type="chat" size="24" color="#999"></uni-icons>
-        <text>暂无评论，快来发表第一条评论吧！</text>
+        <text>暂无评论</text>
       </view>
-      <template v-else>
-        <view class="review-card" v-for="(comment, index) in displayedComments" :key="index">
-          <image :src="comment.avatar" class="review-avatar" />
-          <view class="review-content">
-            <view class="review-header">
-              <text class="review-user">{{ comment.userName }}</text>
-              <text class="review-date">{{ comment.createTime }}</text>
+      <!-- 游客实拍 -->
+      <view class="tourist-album-section" v-if="touristImages.length">
+        <view class="album-title-row">
+          <text class="album-title">游客实拍</text>
             </view>
-            <text class="review-text">{{ comment.content }}</text>
+        <scroll-view scroll-x class="tourist-album-scroll">
+          <image
+            v-for="(img, idx) in touristImages"
+            :key="idx"
+            :src="img"
+            class="tourist-album-img"
+          />
+        </scroll-view>
           </view>
-        </view>
-        <!-- 显示更多按钮 -->
-        <view v-if="comments.length > 3" class="show-more" @click="toggleComments">
-          <text>{{ showAllComments ? '收起' : `显示更多(${comments.length - 3}条)` }}</text>
-          <uni-icons 
-            :type="showAllComments ? 'top' : 'bottom'" 
-            size="14" 
-            color="#3B82F6"
-          ></uni-icons>
-        </view>
-      </template>
     </view>
     <!-- 日期选择 -->
     <view class="date-picker-section">
@@ -224,6 +224,7 @@ const checkOrderPaid = async () => {
 
 onLoad((options) => {
   hotelId.value = options.id
+  console.log('onLoad 传入的 id:', hotelId.value); // 打印路由参数id
   if (options.images) {
     try {
       hotelImages.value = JSON.parse(decodeURIComponent(options.images))
@@ -237,15 +238,20 @@ onLoad((options) => {
 
 const getDetailList = () => {
   uni.request({
-      url: `https://island.zhangshuiyi.com/island/front/product/accommodations/${hotelId.value}`,
+    url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/queryById',
       method: 'GET',
+    data: { id: hotelId.value },
       header: {
-        'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
         'X-Access-Token': userStore.token
       },
-      success:(res)=>{
-        hotelData.value = res.data
-     },
+    success: (res) => {
+      if (res.data && res.data.result) {
+        hotelData.value = res.data.result;
+        comments.value = res.data.result.comments || [];
+        console.log('评论数据：', comments.value);
+      }
+    }
   })
 }
 
@@ -285,6 +291,8 @@ const createOrder = (hotel) => {
     travelEndDate
   };
 
+  console.log('下单参数：', JSON.stringify(orderData, null, 2));
+
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
@@ -301,7 +309,18 @@ const createOrder = (hotel) => {
           duration: 1500
         });
         const orderSn = res.data.result.orderSn;
-        uni.navigateTo({ url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+        uni.navigateTo({
+          url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}&type=住宿&productId=${hotelData.value.id}`,
+          success: () => {
+            // 成功跳转后，可以添加一些逻辑，比如重置表单或更新状态
+          },
+          fail: (err) => {
+            uni.showToast({
+              title: '跳转失败，请稍后重试',
+              icon: 'none'
+            });
+          }
+        });
       } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',
@@ -337,14 +356,21 @@ const originalPrice = computed(() => {
 const comments = ref([]);
 const newComment = ref('');
 const showAllComments = ref(false);
-const displayedComments = computed(() => {
-  if (showAllComments.value) {
-    return comments.value;
-  } else {
-    return comments.value.slice(0, 3);
+const displayedComments = computed(() => showAllFacilities.value ? comments.value : comments.value.slice(0, 3));
+const toggleComments = () => { showAllComments.value = true; };
+
+// 聚合所有评论图片
+const touristImages = computed(() => {
+  const arr = [];
+  comments.value.forEach(item => {
+    if (item.images && item.images.length) {
+      arr.push(...item.images);
   }
 });
+  return arr;
+});
 
+// 评论提交，type传"酒店"
 const submitComment = () => {
   if (!allowComment.value) {
     uni.showToast({
@@ -353,13 +379,48 @@ const submitComment = () => {
     });
     return;
   }
-  // 实现提交评论的逻辑
-  console.log('Submitting comment:', newComment.value);
+  if (!newComment.value.trim()) {
+    uni.showToast({
+      title: '评论内容不能为空',
+      icon: 'none'
+    });
+    return;
+  }
+  // 假设你有图片上传功能，images为图片url数组
+  const commentData = {
+    avatar: userInfo.value.avatar || "",
+    comment: newComment.value,
+    productId: hotelId.value,
+    type: "酒店", // 这里传"酒店"
+    userId: userInfo.value.id,
+    username: userInfo.value.realname || userInfo.value.username,
+    images: uploadedPhotos?.value ? uploadedPhotos.value.map(i => i.url) : []
+  };
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: commentData,
+    success: (res) => {
+      if ((res.data.code === 0 || res.data.code === 200) && res.data.success) {
+        uni.showToast({
+          title: '提交成功',
+          icon: 'success'
+        });
   newComment.value = '';
-};
-
-const toggleComments = () => {
-  showAllComments.value = !showAllComments.value;
+        // 重新拉取评论
+        getHotelComments();
+      } else {
+        uni.showToast({
+          title: res.data.message || '提交失败',
+          icon: 'none'
+        });
+      }
+    }
+  });
 };
 
 const hotelTags = computed(() => {
@@ -805,5 +866,84 @@ const toggleFacilities = () => {
   margin-top: 10rpx;
   cursor: pointer;
   user-select: none;
+}
+.comment-scroll {
+  display: flex;
+  flex-direction: row;
+  white-space: nowrap;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+.comment-card {
+  display: inline-block;
+  min-width: 220px;
+  max-width: 70vw;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 16px;
+  margin-right: 12px;
+  vertical-align: top;
+}
+.comment-header { display: flex; align-items: center; }
+.comment-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+.comment-user { display: flex; flex-direction: column; }
+.comment-username { font-weight: bold; color: #333; }
+.comment-date { color: #aaa; font-size: 12px; }
+.comment-content { color: #444; font-size: 15px; margin-top: 6px; }
+.comment-img-scroll {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+.comment-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.comment-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 60px;
+  color: #19d4c5;
+  font-size: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+.tourist-album-section {
+  margin: 24px 0 0 0;
+  padding: 0 16px;
+}
+.album-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.album-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+}
+.tourist-album-scroll {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+.tourist-album-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 8px;
 }
 </style>

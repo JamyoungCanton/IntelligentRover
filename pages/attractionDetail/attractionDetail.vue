@@ -55,60 +55,58 @@
       </view>
     </view>
 
-    <!-- 评价区 -->
+    <!-- 评论区 -->
     <view class="reviews">
-      <text class="section-title">点评</text>
-
-      <!-- 评论详情展示（只展示一条，按新接口commentDetail） -->
-      <template v-if="commentDetail">
-        <view class="comment-card">
-          <view class="comment-header">
-            <image :src="commentDetail.avatar || (commentDetail.sysUser && commentDetail.sysUser.avatar) || 'https://wuminghui.top:9000/default-avatar.png'" class="comment-avatar" />
-            <view class="comment-user-info">
-              <text class="comment-username">{{ commentDetail.username || (commentDetail.sysUser && commentDetail.sysUser.realname) || '匿名用户' }}</text>
-              <text class="comment-time">{{ commentDetail.createTime }}</text>
+      <scroll-view scroll-x class="comment-scroll">
+        <view class="comment-row">
+          <view
+            class="comment-card"
+            v-for="(item, idx) in displayedComments"
+            :key="item.id || idx"
+          >
+            <view class="comment-header">
+              <image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
+              <view class="comment-user">
+                <text class="comment-username">{{ item.username || '匿名用户' }}</text>
+                <text class="comment-date">{{ item.createTime }}</text>
+              </view>
             </view>
-            <!-- 右侧查看更多按钮 -->
-            <view class="comment-more" @click="goToAllComments(commentDetail.productId)">查看更多</view>
+            <view class="comment-content">{{ item.comment }}</view>
           </view>
-          <view class="comment-score-row">
-            <uni-rate :value="commentDetail.score || 5" readonly size="20" />
-            <text class="comment-score">{{ commentDetail.score || 10 }}分</text>
-            <text class="comment-score-desc">{{ commentDetail.type || '非常满意' }}</text>
+          <view
+            v-if="!showAllComments && comments.length > 3"
+            class="comment-more-btn"
+            @click="toggleComments"
+          >
+            <view class="see-all-btn-img">
+              <text class="see-all-text">查<br/>看<br/>全<br/>部</text>
+              <view class="see-all-arrow">
+                <uni-icons type="arrowright" size="18" color="#fff" />
+              </view>
+            </view>
           </view>
-          <view class="comment-content">{{ commentDetail.comment }}</view>
         </view>
-      </template>
-      <view v-else class="no-comments">
-        <uni-icons type="chat" size="24" color="#999"></uni-icons>
-        <text>暂无内容，期待你留下宝贵的评论</text>
-      </view>
-
-      <!-- 添加评论区域 -->
-      <view v-if="allowComment" class="comment-input-area">
-        <view class="comment-user-info">
-          <image :src="userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
-          <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
-        </view>
-        <textarea
-          v-model="newComment"
-          class="comment-textarea"
-          placeholder="写下你的评论..."
-          :maxlength="200"
-        />
-        <view class="comment-footer">
-          <text class="word-count">{{ newComment.length }}/200</text>
-          <button 
-            class="submit-btn" 
-            :disabled="!newComment.trim()"
-            @click="submitComment"
-          >发表评论</button>
-        </view>
-      </view>
-      <view v-else style="color:#999;text-align:center;padding:20px 0;">
-        仅限已支付该景点订单的用户评论
-      </view>
+      </scroll-view>
     </view>
+
+    <!-- 游客实拍 -->
+    <view class="tourist-album-section" v-if="hotelData.images && hotelData.images.length">
+      <view class="album-title-row">
+        <text class="album-title">游客实拍</text>
+      </view>
+      <scroll-view scroll-x class="tourist-album-scroll">
+        <image
+          v-for="(img, idx) in hotelData.images"
+          :key="idx"
+          :src="img"
+          class="tourist-album-img"
+          @click="previewImage(idx)"
+        />
+      </scroll-view>
+    </view>
+
+    <!-- 占位，防止被底部按钮遮挡 -->
+    <view class="bottom-placeholder"></view>
 
     <!-- 底部按钮 -->
     <view class="fixed-bottom-bar">
@@ -119,13 +117,17 @@
 
 <script setup>
   import { ref, onMounted, computed } from 'vue'
-  import { onLoad } from '@dcloudio/uni-app'
+  import { onLoad, onShow } from '@dcloudio/uni-app'
   import { useUserStore } from '@/store/modules/user'
 
   const userStore = useUserStore();
   const hotelData = ref({});
   const attractionImages = ref([]);
-  const comments = ref([]);
+  const comments = ref([
+    { score: 10, comment: '非常棒', username: '张三', createTime: '2024-06-12' },
+    { score: 9, comment: '不错', username: '李四', createTime: '2024-06-11' },
+    { score: 10, comment: '很满意', username: '王五', createTime: '2024-06-10' }
+  ]);
   const id = ref(0);
   const playDate = ref('');
   const today = new Date();
@@ -146,6 +148,10 @@
     checkOrderPaid();
     getCommentDetail(options.id);
   })
+
+  onShow(() => {
+    getAttrictionDetail();
+  });
 
   const getAttrictionDetail = () => {
     uni.request({
@@ -171,18 +177,24 @@
           }
           // 处理评论
           comments.value = res.data.result.comments || [];
+          console.log('comments:', res.data.result.comments);
         }
       }
     });
   };
 
-  // 预览图片
+  // 预览单张图片
   const previewImage = (index) => {
     uni.previewImage({
-      urls: attractionImages.value,
-      current: index,
-      indicator: 'number',
-      loop: true
+      urls: hotelData.value.images,
+      current: index
+    });
+  };
+
+  // 预览全部图片
+  const previewAllImages = () => {
+    uni.previewImage({
+      urls: hotelData.value.images
     });
   };
 
@@ -251,7 +263,20 @@
           });
           // 可以跳转到订单详情页或其他页面
           const orderSn = res.data.result.orderSn;
-          uni.navigateTo({ url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}` })
+          uni.navigateTo({
+            url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}&type=景点&productId=${hotelData.value.id}`,
+            success: () => {
+              // 跳转成功后的操作
+              getAttrictionDetail();
+            },
+            fail: (err) => {
+              console.error('页面跳转失败:', err);
+              uni.showToast({
+                title: '页面跳转失败',
+                icon: 'none'
+              });
+            }
+          });
         } else {
           uni.showToast({
             title: '未开放，维护中',
@@ -338,7 +363,8 @@
         postId: id.value, // 景点ID
         fatherId: '', // 父评论ID，这里为空因为是直接评论景点
         receiverId: '', // 接收者ID，这里为空因为是直接评论景点
-        repliedCommentId: '' // 回复的评论ID，这里为空因为是直接评论景点
+        repliedCommentId: '', // 回复的评论ID，这里为空因为是直接评论景点
+        score: 10 // 假设评分10分
       };
       console.log('提交评论数据:', commentData);
       const res = await uni.request({
@@ -374,16 +400,11 @@
   };
 
   // 添加计算属性来控制显示的评论数量
-  const displayedComments = computed(() => {
-    if (showAllComments.value) {
-      return comments.value;
-    }
-    return comments.value.slice(0, 3);
-  });
+  const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
 
   // 添加切换显示状态的方法
   const toggleComments = () => {
-    showAllComments.value = !showAllComments.value;
+    showAllComments.value = true;
   };
 
   const getCommentDetail = (id) => {
@@ -544,7 +565,7 @@
   bottom: 0;
   background: #fff;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-  padding: 12px 20px 18px 20px;
+  padding: 5px 20px 9px 20px;
   z-index: 100;
   display: flex;
   justify-content: center;
@@ -714,15 +735,112 @@
   align-items: center;
   background-color: #f8f8f8;
 }
-.comment-card { background: #fff; border-radius: 12px; padding: 20rpx; margin: 20rpx 0; }
+.comment-scroll {
+  width: 100%;
+  /* 不要加flex */
+}
+.comment-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.comment-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: 70vw;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 16px;
+  margin-right: 12px;
+  height: 120px;
+  box-sizing: border-box;
+}
 .comment-header { display: flex; align-items: center; }
-.comment-avatar { width: 60rpx; height: 60rpx; border-radius: 50%; margin-right: 16rpx; }
-.comment-user-info { flex: 1; }
-.comment-username { font-size: 28rpx; color: #333; font-weight: 500; }
-.comment-time { font-size: 22rpx; color: #999; margin-left: 10rpx; }
-.comment-more { color: #3B82F6; font-size: 26rpx; padding: 0 10rpx; }
-.comment-score-row { display: flex; align-items: center; margin: 10rpx 0; }
-.comment-score { color: #FF9800; font-size: 28rpx; font-weight: bold; margin-left: 10rpx; }
-.comment-score-desc { color: #888; font-size: 24rpx; margin-left: 10rpx; }
-.comment-content { font-size: 28rpx; color: #333; line-height: 1.7; margin-top: 10rpx; }
+.comment-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+.comment-user { display: flex; flex-direction: column; }
+.comment-username { font-weight: bold; color: #333; }
+.comment-date { color: #aaa; font-size: 12px; }
+.comment-score-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.comment-score { color: #19d4c5; font-weight: bold; }
+.comment-score-desc { color: #888; font-size: 12px; }
+.comment-content { color: #444; font-size: 15px; margin-top: 6px; }
+.comment-more-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 120px;
+  background: #e9e6e6;
+  border-radius: 18px;
+  margin-right: 12px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.see-all-btn-img {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.see-all-text {
+  writing-mode: vertical-rl;
+  font-size: 18px;
+  color: #222;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+.see-all-arrow {
+  width: 23px;
+  height: 23px;
+  background: #222;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.see-all-arrow uni-icons {
+  color: #fff !important;
+}
+.tourist-album-section {
+  margin: 24px 0 0 0;
+  padding: 0 16px;
+}
+.album-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.album-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+}
+.album-more {
+  color: #19d4c5;
+  font-size: 15px;
+  cursor: pointer;
+}
+.tourist-album-scroll {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+.tourist-album-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 8px;
+}
+.bottom-placeholder {
+  height: 70px; /* 与底部按钮高度一致 */
+}
 </style>

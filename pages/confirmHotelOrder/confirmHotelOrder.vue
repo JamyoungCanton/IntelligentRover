@@ -180,7 +180,7 @@ const handleConfirmPayment = () => {
       const amount = data.result?.amount || hotelList.value.price;
       const orderId = data.result?.orderSn || orderSn.value;
       uni.navigateTo({
-        url: `/pages/pay_success/pay_success?amount=${amount}&orderId=${orderId}`
+        url: `/pages/pay_success/pay_success?amount=${amount}&orderId=${orderId}&type=住宿&productId=${id.value}`
       });
     })
     .catch(errMsg => {
