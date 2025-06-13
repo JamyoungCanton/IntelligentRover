@@ -518,7 +518,9 @@ function processResponseData(response) {
           // 将ask内容解析后添加到结果中
           askMatches.forEach(match => {
             try {
-              const askObj = JSON.parse(match.replace(/<br>/g, ''));
+              // 去除所有换行符和<br>标签
+              const cleanedMatch = match.replace(/[\n\r]+/g, '').replace(/<br\s*\/?>/gi, '');
+              const askObj = JSON.parse(cleanedMatch);
               finalProcessedData.push({
                 ...askObj,
                 type: 'ask' // 确保类型正确
