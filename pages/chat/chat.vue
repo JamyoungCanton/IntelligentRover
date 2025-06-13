@@ -195,10 +195,38 @@ const confirmTrip = () => {
 };
 
 const optimizeTrip = () => {
+  // 构建优化请求内容
+  let optimizationRequest = '优化上述行程';
+
+  // 添加出行天数
+  if (selectedDays.value) {
+    optimizationRequest += `，出行天数为${selectedDays.value}天`;
+  }
+
+  // 添加同行人员
+  if (selectedPerson.value) {
+    optimizationRequest += `，同行人员有${selectedPerson.value}`;
+  }
+
+  // 添加行程偏好
+  if (selectedTag.value) {
+    optimizationRequest += `，行程偏好为${selectedTag.value}`;
+  }
+
+  // 显示加载状态
   uni.showToast({
     title: '正在优化行程...',
     icon: 'loading'
   });
+
+  // 自动填充并发送优化请求
+  message.value = optimizationRequest;
+  sendMessage();
+
+  // 重置选择状态
+  selectedDays.value = 1;
+  selectedPerson.value = '';
+  selectedTag.value = '';
 };
 
 const likeMessage = () => {
