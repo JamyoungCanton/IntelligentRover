@@ -1,46 +1,76 @@
 <template>
-  <view class="container">
-    <view class="nav-bar">
-      <uni-icons type="back" size="24" @click="goBack" />
-      <text class="nav-title">我的好友</text>
+  <view class="container" :style="`padding-top: ${statusBarHeight + 44}px;`">
+    <!-- 自定义顶部导航栏 -->
+    <view
+      class="custom-nav"
+      :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight}px;`"
+    >
+      <view class="nav-left" @click="goBack">
+        <uni-icons type="back" size="28" color="#333" />
+      </view>
+      <view class="nav-title">我的好友</view>
+      <view class="nav-right"></view>
     </view>
-    <view class="tab-bar">
-      <view
-        class="tab"
-        :class="{active: activeTab === 'follow'}"
-        @click="activeTab = 'follow'"
-      >关注</view>
-      <view
-        class="tab"
-        :class="{active: activeTab === 'fans'}"
-        @click="activeTab = 'fans'"
-      >粉丝</view>
-    </view>
-    <view v-if="activeTab === 'follow'">
-      <view v-if="focusList.length === 0" class="empty-state">暂无关注</view>
-      <view v-else>
-        <view v-for="user in focusList" :key="user.id" class="fan-item">
-          <image :src="user.avatar || defaultAvatar" class="fan-avatar" />
-          <view class="fan-info">
-            <text class="fan-name">{{ user.username }}</text>
-            <text class="fan-desc">{{ (user.fans || 0) + '粉丝' }}</text>
-          </view>
-          <button class="follow-back-btn" @click="unfollow(user)">已关注</button>
-        </view>
+
+    <!-- 好友分类选择 -->
+    <view class="friend-type-select">
+      <view 
+        class="type-item" 
+        :class="{ active: activeType === 'follow' }"
+        @click="switchType('follow')"
+      >
+        关注
+      </view>
+      <view 
+        class="type-item" 
+        :class="{ active: activeType === 'fans' }"
+        @click="switchType('fans')"
+      >
+        粉丝
       </view>
     </view>
-    <view v-if="activeTab === 'fans'">
-      <view v-if="fansList.length === 0" class="empty-state">暂无粉丝</view>
-      <view v-else>
-        <view v-for="fan in fansList" :key="fan.id" class="fan-item">
-          <image :src="fan.avatar || defaultAvatar" class="fan-avatar" />
-          <view class="fan-info">
-            <text class="fan-name">{{ fan.username }}</text>
-            <text class="fan-desc">{{ (fan.fans || 0) + '粉丝' }}</text>
-          </view>
-          <button class="follow-back-btn" @click="followBack(fan)">回关</button>
+
+    <!-- 好友列表 -->
+    <view class="friend-list">
+      <!-- 关注列表 -->
+      <template v-if="activeType === 'follow'">
+        <view class="list-header">
+          共 <text class="count">{{ focusTotal }}</text> 个关注
         </view>
-      </view>
+        <view v-if="focusList.length === 0" class="empty-state">
+          <text>暂无关注</text>
+        </view>
+        <view v-else>
+          <view v-for="user in focusList" :key="user.id" class="friend-item">
+            <image :src="user.avatar || defaultAvatar" class="friend-avatar" />
+            <view class="friend-info">
+              <text class="friend-name">{{ user.username }}</text>
+              <text class="friend-desc">{{ (user.fans || 0) + '粉丝' }}</text>
+            </view>
+            <button class="follow-btn" @click="unfollow(user)">已关注</button>
+          </view>
+        </view>
+      </template>
+
+      <!-- 粉丝列表 -->
+      <template v-if="activeType === 'fans'">
+        <view class="list-header">
+          共 <text class="count">{{ fansTotal }}</text> 个粉丝
+        </view>
+        <view v-if="fansList.length === 0" class="empty-state">
+          <text>暂无粉丝</text>
+        </view>
+        <view v-else>
+          <view v-for="fan in fansList" :key="fan.id" class="friend-item">
+            <image :src="fan.avatar || defaultAvatar" class="friend-avatar" />
+            <view class="friend-info">
+              <text class="friend-name">{{ fan.username }}</text>
+              <text class="friend-desc">{{ (fan.fans || 0) + '粉丝' }}</text>
+            </view>
+            <button class="follow-btn" @click="followBack(fan)">回关</button>
+          </view>
+        </view>
+      </template>
     </view>
   </view>
 </template>
@@ -48,15 +78,28 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
-const userStore = useUserStore();
 
-const activeTab = ref('follow');
+const userStore = useUserStore();
+const statusBarHeight = ref(0);
+const activeType = ref('follow');
 const focusList = ref([]);
 const fansList = ref([]);
+const focusTotal = ref(0);
+const fansTotal = ref(0);
 const defaultAvatar = 'https://static-typical-avatar-url.png';
 
-const goBack = () => {
-  uni.navigateBack();
+onMounted(() => {
+  statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0;
+  getFocusList();
+});
+
+const switchType = (type) => {
+  activeType.value = type;
+  if (type === 'follow') {
+    getFocusList();
+  } else {
+    getFansList();
+  }
 };
 
 const getFocusList = () => {
@@ -70,8 +113,7 @@ const getFocusList = () => {
     success: (res) => {
       if (res.statusCode === 200 && res.data.code === 200) {
         focusList.value = res.data.result?.records || [];
-      } else {
-        focusList.value = [];
+        focusTotal.value = res.data.result?.total || 0;
       }
     }
   });
@@ -87,37 +129,9 @@ const getFansList = () => {
     },
     success: (res) => {
       if (res.statusCode === 200 && res.data.code === 200) {
-        console.log('粉丝接口返回：', res.data);
         fansList.value = res.data.result?.records || [];
-      } else {
-        fansList.value = [];
+        fansTotal.value = res.data.result?.total || 0;
       }
-    }
-  });
-};
-
-const followBack = (fan) => {
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
-    method: 'POST',
-    header: {
-      'X-Access-Token': userStore.token,
-      'Content-Type': 'application/json'
-    },
-    data: {
-      focusId: fan.id,
-      operation: 1 // 1为关注
-    },
-    success: (res) => {
-      if (res.data.success) {
-        uni.showToast({ title: '已回关', icon: 'success' });
-        getFocusList(); // 刷新关注列表
-      } else {
-        uni.showToast({ title: res.data.message || '回关失败', icon: 'none' });
-      }
-    },
-    fail: () => {
-      uni.showToast({ title: '网络错误', icon: 'none' });
     }
   });
 };
@@ -137,18 +151,15 @@ const unfollow = (user) => {
           },
           data: {
             focusId: user.id,
-            operation: 2 // 2为取消关注
+            operation: 2
           },
           success: (res) => {
             if (res.data.success) {
               uni.showToast({ title: '已取消关注', icon: 'success' });
-              getFocusList(); // 刷新关注列表
+              getFocusList();
             } else {
               uni.showToast({ title: res.data.message || '取消关注失败', icon: 'none' });
             }
-          },
-          fail: () => {
-            uni.showToast({ title: '网络错误', icon: 'none' });
           }
         });
       }
@@ -156,92 +167,184 @@ const unfollow = (user) => {
   });
 };
 
-onMounted(() => {
-  getFocusList();
-  getFansList();
-});
+const followBack = (fan) => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+    method: 'POST',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/json'
+    },
+    data: {
+      focusId: fan.id,
+      operation: 1
+    },
+    success: (res) => {
+      if (res.data.success) {
+        uni.showToast({ title: '已回关', icon: 'success' });
+        getFansList();
+      } else {
+        uni.showToast({ title: res.data.message || '回关失败', icon: 'none' });
+      }
+    }
+  });
+};
+
+const goBack = () => {
+  uni.navigateBack();
+};
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .container {
-  background: #fff;
   min-height: 100vh;
-  padding-bottom: 30px;
-  padding-top: 30px;
+  background-color: #f8f8f8;
 }
-.nav-bar {
+
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
   display: flex;
   align-items: center;
-  padding: 18px 20px 8px 10px;
+  justify-content: space-between;
+  z-index: 999;
   border-bottom: 1px solid #f0f0f0;
 }
-.nav-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-left: 16px;
-}
-.tab-bar {
-  display: flex;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
-}
-.tab {
-  flex: 1;
-  text-align: center;
-  padding: 14px 0;
-  font-size: 16px;
-  color: #666;
-  cursor: pointer;
-}
-.tab.active {
-  color: #007aff;
-  border-bottom: 2px solid #007aff;
-  font-weight: bold;
-}
-.fan-item {
+
+.nav-left {
+  width: 60rpx;
+  height: 60rpx;
   display: flex;
   align-items: center;
-  padding: 18px 20px;
-  border-bottom: 1px solid #f5f5f5;
+  padding-left: 20rpx;
 }
-.fan-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  margin-right: 18px;
-  object-fit: cover;
-  background: #f0f0f0;
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
 }
-.fan-info {
+
+.nav-right {
+  width: 60rpx;
+}
+
+.friend-type-select {
+  display: flex;
+  background-color: #fff;
+  padding: 20rpx 30rpx;
+  margin-top: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.type-item {
   flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+  
+  &.active {
+    color: #007aff;
+    font-weight: 500;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40rpx;
+      height: 4rpx;
+      background-color: #007aff;
+      border-radius: 2rpx;
+    }
+  }
+}
+
+.friend-list {
+  margin-top: 20rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.list-header {
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  
+  .count {
+    color: #007aff;
+    font-weight: bold;
+  }
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.friend-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.friend-info {
+  flex: 1;
+  
+  .friend-name {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+  }
+  
+  .friend-desc {
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 8rpx;
+  }
+}
+
+.follow-btn {
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  background-color: #fff;
+  color: #007aff;
+  border: 1rpx solid #007aff;
+  
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.empty-state {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-}
-.fan-name {
-  font-size: 18px;
-  color: #222;
-  font-weight: 500;
-}
-.fan-desc {
-  font-size: 14px;
-  color: #888;
-  margin-top: 2px;
-}
-.follow-back-btn {
-  border: 1.5px solid #007aff;
-  color: #007aff;
-  background: #fff;
-  border-radius: 20px;
-  padding: 6px 22px;
-  font-size: 16px;
-  margin-left: 10px;
-  line-height: 1.8;
-}
-.empty-state {
-  text-align: center;
-  color: #bbb;
-  font-size: 16px;
-  margin: 40px 0;
+  padding: 100rpx 0;
+  color: #999;
+  font-size: 28rpx;
+  
+  &::before {
+    content: '👥';
+    font-size: 80rpx;
+    margin-bottom: 20rpx;
+  }
 }
 </style>

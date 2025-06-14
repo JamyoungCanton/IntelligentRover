@@ -63,7 +63,7 @@
           @click="goToMyFriends"
         >
           <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
-          <text>关注</text>
+          <text>我的好友</text>
         </view>
       </view>
     </view>
@@ -85,9 +85,15 @@
               <text class="itemname">{{ item.userVO?.username }}</text>
               <text class="itemlv">lv3</text>
           </view>
-            <view class="follow-button">
-              <u-button plain shape="circle" size="small" color="#007aff" @click="toggleFollowAuthor">
-                {{ isFollowing ? '已关注' : '关注TA' }}
+            <view class="follow-button" @click.stop="toggleFollowStatus(item)">
+              <u-button 
+                plain 
+                shape="circle" 
+                size="small" 
+                :color="item.isFollowing ? '#999' : '#007aff'"
+                @click.stop="toggleFollowStatus(item)"
+              >
+                {{ item.isFollowing ? '已关注' : '+ 关注' }}
               </u-button>
           </view>
         </view>
@@ -383,23 +389,27 @@ const postList = ref([]);
 // 用户通知信息列表
 const notificationList = ref([]);
 
-// 关注用户
-const followUser = (post, event) => {
-  if (event) event.stopPropagation();
-  
+// 统一处理关注和取消关注的函数
+const toggleFollowStatus = (post) => {
+  console.log('--- toggleFollowStatus 函数被调用 ---');
+  console.log('传入的帖子对象:', JSON.parse(JSON.stringify(post)));
+
   const focusId = String(post.userVO?.id || post.userVO?.userId);
+  console.log('提取到的 focusId:', focusId);
+
   if (!focusId) {
-    uni.showToast({ title: '用户ID无效，无法关注', icon: 'none' });
+    uni.showToast({ title: '用户ID无效，无法操作', icon: 'none' });
+    console.log('错误: 用户ID无效');
     return;
   }
   if (focusId === String(userStore.userInfo.id)) {
     uni.showToast({ title: '不能关注自己', icon: 'none' });
+    console.log('提示: 不能关注自己');
     return;
   }
-  if (isFollowing(post)) {
-    uni.showToast({ title: '已关注', icon: 'none' });
-    return;
-  }
+
+  const operation = post.isFollowing ? 2 : 1; // 1: 关注, 2: 取消关注
+  console.log('当前关注状态 (post.isFollowing):', post.isFollowing, '操作类型 (operation):', operation);
 
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
@@ -410,21 +420,35 @@ const followUser = (post, event) => {
     },
     data: {
       focusId,
-      operation: 1
+      operation
     },
     success: (res) => {
+      console.log('--- API请求成功响应 ---', res);
       if (res.data.success) {
-        uni.showToast({ title: '已关注', icon: 'none' });
-        getFocusList(); // 关注成功后重新拉取关注列表，刷新 focusIdSet
+        post.isFollowing = !post.isFollowing; // 切换本地状态
+        uni.showToast({
+          title: operation === 1 ? '已关注' : '已取消关注',
+          icon: 'success'
+        });
+        console.log('操作成功，新的 isFollowing 状态:', post.isFollowing);
+        getFocusList(); // 刷新关注列表以更新全局状态和其它帖子的按钮
       } else {
-        uni.showToast({ title: res.data.message || '操作失败', icon: 'none' });
+        uni.showToast({
+          title: res.data.message || '操作失败',
+          icon: 'none'
+        });
+        console.log('操作失败:', res.data.message);
       }
     },
-    fail: () => {
-      uni.showToast({ title: '网络请求失败', icon: 'none' });
+    fail: (err) => {
+      console.error('--- API请求失败 ---', err);
+      uni.showToast({ title: '网络错误', icon: 'none' });
     }
   });
+  console.log('--- uni.request 已发送 ---');
 };
+
+
 // 获取帖子信息
 const getPostLst = () => {
   uni.request({
@@ -453,7 +477,7 @@ const getPostLst = () => {
         else if (res.statusCode === 200) {
         postList.value = res.data.result.list.map(post => ({
               ...post,
-          isFollowing: false,
+          isFollowing: false, // 确保初始状态为未关注
           liked: !!post.liked,
           collected: !!post.collected
         }));
@@ -734,80 +758,6 @@ const followBack = (fan) => {
   });
 };
 
-const togglePostFollow = (post) => {
-  const focusId = String(post.userVO?.id || post.userVO?.userId);
-  if (!focusId) {
-    uni.showToast({ title: '用户ID无效，无法关注', icon: 'none' });
-    return;
-  }
-  if (focusId === String(userStore.userInfo.id)) {
-    uni.showToast({ title: '不能关注自己', icon: 'none' });
-    return;
-  }
-
-  if (post.isFollowing) {
-    // 取关
-    uni.showModal({
-      title: '取消关注',
-      content: `确定要取消关注 ${post.userVO?.username} 吗？`,
-      success: (res) => {
-        if (res.confirm) {
-          uni.request({
-            url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
-            method: 'POST',
-            header: {
-              'X-Access-Token': userStore.token,
-              'Content-Type': 'application/json'
-            },
-            data: {
-              focusId,
-              operation: 2
-            },
-            success: (res) => {
-              if (res.data.success) {
-                post.isFollowing = false;
-                uni.showToast({ title: '已取消关注', icon: 'success' });
-                getFocusList(); // 刷新关注列表，保证全局状态一致
-              } else {
-                uni.showToast({ title: res.data.message || '取消关注失败', icon: 'none' });
-              }
-            },
-            fail: () => {
-              uni.showToast({ title: '网络错误', icon: 'none' });
-            }
-          });
-        }
-      }
-    });
-  } else {
-    // 关注
-    uni.request({
-      url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
-      method: 'POST',
-      header: {
-        'X-Access-Token': userStore.token,
-        'Content-Type': 'application/json'
-      },
-      data: {
-        focusId,
-        operation: 1
-      },
-      success: (res) => {
-        if (res.data.success) {
-          post.isFollowing = true;
-          uni.showToast({ title: '已关注', icon: 'success' });
-          getFocusList();
-        } else {
-          uni.showToast({ title: res.data.message || '关注失败', icon: 'none' });
-        }
-      },
-      fail: () => {
-        uni.showToast({ title: '网络错误', icon: 'none' });
-      }
-    });
-  }
-};
-
 // 点赞
 const toggleLike = async (item) => {
   const operation = item.liked ? 0 : 1;
@@ -907,7 +857,6 @@ const toggleCollect = async (item) => {
   box-shadow: none;
   margin: 0;
   border: none;
-  width: 92%;
 }
 
 .type-button {

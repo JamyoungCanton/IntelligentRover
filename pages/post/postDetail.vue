@@ -11,10 +11,10 @@
         <view class="name">{{ postDetailList.userVO.username}}</view>
         <view class="desc">lv3</view>
       </view>
-      <view class="button">
-        <u-button plain shape="circle" size="small" color="#007aff" @click="toggleFollowAuthor">
+      <view class="follow-btn" @click="toggleFollowAuthor">
+        <text :class="['btn-text', isFollowing ? 'following' : '']">
           {{ isFollowing ? '已关注' : '关注TA' }}
-        </u-button>
+        </text>
       </view>
       <view class="icon">
         <uni-icons type="share" size="24" color="#666"></uni-icons>
@@ -94,7 +94,7 @@
             mode="scaleToFill"
           />
         </view>
-        <input @click="showEditComment" class="bar-input" placeholder="说点什么..."/>
+        <view class="bar-input" @click="showEditComment">说点什么...</view>
       </view>
       <view class="bar-icon-deta">
         <view class="bar-item" @click="addLikes">
@@ -115,13 +115,15 @@
     </view>
 
     <!-- 评论框 -->
-    <uni-popup ref="popup" background-color="#fff" type="bottom" >
-      <view class="popup-content" :class="{ 'popup-height': type === 'left' || type === 'right' }">
+    <uni-popup ref="popup" background-color="#fff" type="bottom" @change="handlePopupChange">
+      <view class="popup-content">
         <view class="input-send-container">
           <input 
             v-model="commentContent" 
             class="popup-input" 
             placeholder="请发表你的看法吧~"
+            :focus="inputFocus"
+            @blur="inputFocus = false"
           />
           <button @click="sendComment" class="send-btn">发送</button>
         </view>
@@ -188,7 +190,21 @@ const formatRelativeTime = (time) => {
 
 const popup = ref(null);
 
-// 评论内容
+const inputFocus = ref(false);
+
+// 处理弹窗状态变化
+const handlePopupChange = (e) => {
+  if (e.show) {
+    // 弹窗显示时，延迟设置输入框焦点
+    setTimeout(() => {
+      inputFocus.value = true;
+    }, 100);
+  } else {
+    inputFocus.value = false;
+  }
+};
+
+// 显示评论输入框
 const showEditComment = () => {
   if (subPopup.value) {
     subPopup.value.close();
@@ -394,9 +410,16 @@ const getCommentList = async () => {
 // 发送评论
 const commentContent = ref('');
 const sendComment = async () => {
+  if (!commentContent.value.trim()) {
+    uni.showToast({
+      title: '请输入评论内容',
+      icon: 'none'
+    });
+    return;
+  }
+  
   console.log(postId.value.id);
   console.log(commentContent.value);
-  
   
   const res = await uni.request({
     url: 'https://island.zhangshuiyi.com/island/comments/save',
@@ -412,21 +435,28 @@ const sendComment = async () => {
       'Content-Type': 'application/json',
       'X-Access-Token': userStore.token
     }
-    
-  })
-  console.log(res.data);
-  console.log(commentContent.value);
+  });
   
-  getCommentList()
-  getCommentCount()
-  // 关闭弹窗
-  // 情况内容
-  commentContent.value = '';
-  if (popup.value) {
-    popup.value.close();
+  if (res.data.code === 200) {
+    uni.showToast({
+      title: '评论成功',
+      icon: 'success'
+    });
+    getCommentList();
+    getCommentCount();
+    // 清空内容
+    commentContent.value = '';
+    // 关闭弹窗
+    if (popup.value) {
+      popup.value.close();
+    }
+  } else {
+    uni.showToast({
+      title: res.data.message || '评论失败',
+      icon: 'none'
+    });
   }
-  
-}
+};
 
 // 检查当前用户是否已关注该作者
 const checkIsFollowing = () => {
@@ -535,9 +565,6 @@ page {
 }
 
 .author-info {
-  position: sticky;
-  top: 45px;
-  z-index: 999;
   display: flex;
   align-items: center;
   width: 100%;
@@ -573,15 +600,27 @@ page {
     }
   }
 
-  .button {
-    width: 100rpx;
+  .follow-btn {
     margin-left: auto;
     margin-right: 30rpx;
-    border: solid 1px #ff8a2b;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 14px;
-    color: #ff8a2b;
+    padding: 10rpx 30rpx;
+    border-radius: 30rpx;
+    background-color: #fff;
+    border: 1px solid #007aff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120rpx;
+    
+    .btn-text {
+      font-size: 28rpx;
+      color: #007aff;
+      
+      &.following {
+        color: #999;
+        border-color: #999;
+      }
+    }
   }
 
   .icon {
@@ -677,6 +716,7 @@ page {
 
   .comment-list {
     margin-top: 20rpx;
+    padding-bottom: 120rpx; /* 增加底部内边距，为底部输入框留出空间 */
 
     .comment-item {
       display: flex;
@@ -826,13 +866,16 @@ page {
   }
 
   .bar-input {
-    width: 50%;
+    width: 70%;
     height: 80rpx;
     border-radius: 28rpx;
     background-color: #eee;
-    padding: 0 20rpx; /* 添加内边距 */
-    font-size: 28rpx; /* 设置字体大小 */
-    margin-left: 20px;
+    padding: 0 20rpx;
+    font-size: 28rpx;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    color: #999;
   }
   .bar-icon-deta {
     display: flex;
@@ -859,34 +902,36 @@ page {
 .popup-content {
   padding: 20rpx;
   background-color: white;
-  border-top-left-radius: 80rpx;
-  border-top-right-radius: 80rpx;
-  
+  border-top-left-radius: 20rpx;
+  border-top-right-radius: 20rpx;
 }
 
 .input-send-container {
   display: flex;
   align-items: center;
-  margin-top: 10rpx;
-  margin-bottom: 10px;
+  padding: 20rpx;
+  background-color: #fff;
 }
 
 .popup-input {
-  width: 60%;
-  margin-right: 20rpx;
-  border: 1rpx solid #ccc;
-  border-radius: 8rpx;
-  padding: 10rpx;
+  flex: 1;
   height: 80rpx;
+  border: 1rpx solid #eee;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  margin-right: 20rpx;
 }
 
 .send-btn {
-  width: 30%;
-  white-space: nowrap;
+  width: 120rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
   background-color: #007aff;
   color: white;
   border-radius: 8rpx;
-  padding: 10rpx 20rpx;
+  font-size: 28rpx;
 }
 
 // 子弹窗

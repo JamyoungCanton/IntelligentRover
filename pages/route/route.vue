@@ -450,7 +450,7 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 120rpx;
+  height: 80rpx;
   background: #fff;
   padding: 24rpx;
   display: flex;
@@ -481,12 +481,14 @@ export default {
 }
 
 .register-btn {
+  width: 300rpx;
   background: linear-gradient(90deg, #007AFF 0%, #0056b3 100%);
   padding: 20rpx 48rpx;
-  border-radius: 44rpx;
+  border-radius: 20rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 122, 255, 0.2);
   transition: all 0.3s ease;
-  height: 88rpx;
+  height: 50rpx;
+  text-align: center;
 }
 
 .register-btn:active {
