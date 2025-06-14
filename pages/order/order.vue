@@ -151,6 +151,7 @@ const searchKeyword = ref(''); // 搜索结果关键词
 const showDetailPopup = ref(false); // 控制弹窗显示
 const currentOrderDetail = ref(null); // 当前订单详情
 
+const DEBUG = false; // 调试时可设为true
 
 // 订单状态映射（去除已支付、待出行）
 const statusMap = {
@@ -159,36 +160,76 @@ const statusMap = {
   3: { orderStatus: 'COMPLETED' } // 已完成
 };
 
+function fixDateStr(str) {
+  if (!str) return '';
+  if (str.includes('T')) return str;
+  // 兼容 iOS
+  return str.replace(/-/g, '/');
+}
+
+function getOrderStartDate(order) {
+  return order.travelStartDate || (order.mainOrder && order.mainOrder.travelStartDate) || '';
+}
+
+function getOrderEndDate(order) {
+  return order.travelEndDate || (order.mainOrder && order.mainOrder.travelEndDate) || '';
+}
+
+function isOrderOngoing(order, now) {
+  const startDateStr = fixDateStr(getOrderStartDate(order));
+  const endDateStr = fixDateStr(getOrderEndDate(order));
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const payStatus = order.payStatus;
+  const isOngoing = payStatus === 'PAID' && now >= startDate && now <= endDate;
+  if (DEBUG) {
+    console.log({
+      payStatus,
+      startDateStr,
+      endDateStr,
+      startDate,
+      endDate,
+      now,
+      isOngoing
+    });
+  }
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
+  return isOngoing;
+}
+
+function isOrderCompleted(order, now) {
+  const endDateStr = fixDateStr(getOrderEndDate(order));
+  const endDate = new Date(endDateStr);
+  if (isNaN(endDate.getTime())) return false;
+  return order.payStatus === 'PAID' && now > endDate;
+}
+
 // 根据当前标签和搜索关键词过滤订单
 const filteredOrders = computed(() => {
   let result = orders.value;
 
   // 根据标签筛选
   if (currentTab.value !== 0) {
-    if (currentTab.value === 1) { // 待支付
+    if (currentTab.value === 1) {
       result = result.filter(order => order.payStatus === 'UNPAID');
-    } else if (currentTab.value === 2) { // 进行中
-      result = result.filter(order => {
-        const now = new Date();
-        const endDate = new Date(order.travelEndDate);
-        return order.payStatus === 'PAID' && endDate > now;
-      });
-    } else if (currentTab.value === 3) { // 已完成
-    result = result.filter(order => {
-        const now = new Date();
-        const endDate = new Date(order.travelEndDate);
-        return order.payStatus === 'PAID' && endDate <= now;
-    });
+    } else if (currentTab.value === 2) {
+      // 进行中
+      const now = new Date(); // 使用当前北京时间
+      result = result.filter(order => isOrderOngoing(order, now));
+    } else if (currentTab.value === 3) {
+      // 已完成
+      const now = new Date(); // 使用当前北京时间
+      result = result.filter(order => isOrderCompleted(order, now));
     }
   }
 
-  // 根据搜索关键词筛选
+  // 搜索关键词筛选
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase();
     result = result.filter(order =>
-      (order.orderSn && order.orderSn.toLowerCase().includes(keyword)) || // 订单编号
-      (order.goodsName && order.goodsName.toLowerCase().includes(keyword)) || // 商品名称
-      (order.title && order.title.toLowerCase().includes(keyword)) // 景点名称
+      (order.orderSn && order.orderSn.toLowerCase().includes(keyword)) ||
+      (order.goodsName && order.goodsName.toLowerCase().includes(keyword)) ||
+      (order.title && order.title.toLowerCase().includes(keyword))
     );
   }
 
@@ -197,18 +238,22 @@ const filteredOrders = computed(() => {
     return order.orderStatus !== 'CANCELLED' && order.mainOrder?.orderStatus !== 'CANCELLED';
   });
 
-  // 按照创建时间排序，最近的在前
+  // 按创建时间排序
   result.sort((a, b) => {
     const parseDate = (dateStr) => {
       if (!dateStr) return new Date(0);
-        const parsedDate = new Date(dateStr.replace(/-/g, '/'));
+      const parsedDate = new Date(dateStr.replace(/-/g, '/'));
       return isNaN(parsedDate.getTime()) ? new Date(0) : parsedDate;
     };
-
     const dateA = parseDate(a.createTime);
     const dateB = parseDate(b.createTime);
     return dateB.getTime() - dateA.getTime();
   });
+
+  if (DEBUG) {
+    console.log('原始订单数据:', orders.value);
+    console.log('筛选后订单数据:', result);
+  }
 
   return result;
 });
@@ -243,28 +288,23 @@ const handleTabClick = (index) => {
 
 // 获取用户自身的订单列表  GET
 const getOrderList = () => {
-  // 显示加载提示
-  uni.showLoading({
-    title: '加载订单中...'
-  });
+  uni.showLoading({ title: '加载订单中...' });
 
-  // 构建请求参数
   const params = {
     pageNo: 1,
     pageSize: 300
   };
 
-  // 添加标签对应的筛选条件
-  if (currentTab.value !== 0) {
-    Object.assign(params, statusMap[currentTab.value]);
+  // 只在"待支付"时传 payStatus
+  if (currentTab.value === 1) {
+    params.payStatus = 'UNPAID';
   }
 
-  // 添加搜索关键词
+  // 搜索关键词
   if (searchKeyword.value) {
     params.keyword = searchKeyword.value;
   }
 
-  // 发起请求获取订单列表
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
     method: 'GET',
@@ -274,10 +314,10 @@ const getOrderList = () => {
       'X-Access-Token': userStore.token
     },
     success: (res) => {
-      // 如果请求成功，更新订单数据
       if (res.data.success) {
         const orderList = res.data.result.records || [];
         orders.value = orderList;
+        console.log('订单列表数据:', res.data.result.records);
       }
     },
     fail: (err) => {
@@ -497,8 +537,8 @@ const payOrder = (order) => {
 			if (res.data.success && res.data.result.payStatus === 'UNPAID') {
 				const result = res.data.result;
 				const now = new Date();
-				const startDate = new Date(result.travelStartDate);
-				const endDate = new Date(result.travelEndDate);
+				const startDate = new Date(fixDateStr(result.travelStartDate));
+				const endDate = new Date(fixDateStr(result.travelEndDate));
 				console.log('接口返回travelStartDate:', result.travelStartDate, 'travelEndDate:', result.travelEndDate);
 				console.log('startDate:', startDate, 'endDate:', endDate, 'now:', now);
 				console.log('startDate.getTime():', startDate.getTime(), 'endDate.getTime():', endDate.getTime());
@@ -542,6 +582,15 @@ onShow(() => {
   console.log('订单页面显示');
   getOrderList();
 });
+
+// 获取当前北京时间
+function getBeijingTime() {
+  const now = new Date();
+  // 北京时间 = UTC时间 + 8小时
+  return new Date(now.getTime() + (8 - now.getTimezoneOffset() / 60) * 60 * 60 * 1000);
+}
+// 用法
+const now = getBeijingTime();
 </script>
 
 <style>

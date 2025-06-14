@@ -192,11 +192,12 @@ export default {
         uni.showToast({ title: '请输入详细反馈', icon: 'none' });
         return;
       }
-      
       const userStore = useUserStore();
       const userInfo = userStore.userInfo || {};
-      // 这里要确保 uploadedFiles 是字符串数组
-      const url = this.uploadedFiles.join(','); // 注意这里
+      // 只保留非空图片
+      const validFiles = this.uploadedFiles.filter(img => !!img && img.trim() !== '');
+      // 没有图片时 url 传空字符串，否则用逗号拼接
+      const url = validFiles.length > 0 ? validFiles.join(',') : '';
       const commentData = {
         id: Date.now().toString(),
         avatar: userInfo.avatar || "",
@@ -204,21 +205,21 @@ export default {
         productId: this.productId,
         type: this.type,
         userId: userInfo.id,
-        username: userInfo.realname || userInfo.username,
-        url
+        username: userInfo.realname || userInfo.username
       };
-      console.log('提交评论参数:', commentData); // 检查url字段
+      if (url) commentData.url = url; // 只有有图片时才传 url 字段
+      console.log('提交评论参数:', commentData);
 
-            uni.request({
-              url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
-              method: 'POST',
-              header: {
-                'Content-Type': 'application/json',
-                'X-Access-Token': userStore.token
-              },
+      uni.request({
+        url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': userStore.token
+        },
         data: commentData,
-              success: (res) => {
-                if ((res.data.code === 0 || res.data.code === 200) && res.data.success) {
+        success: (res) => {
+          if ((res.data.code === 0 || res.data.code === 200) && res.data.success) {
             uni.showToast({
               title: '提交成功',
               icon: 'success'
@@ -226,18 +227,18 @@ export default {
             setTimeout(() => {
               uni.navigateBack();
             }, 800);
-                } else {
-                  uni.showToast({
-                    title: res.data.message || '提交失败',
-                    icon: 'none'
-                  });
-                }
-              },
-              fail: (err) => {
-                uni.showToast({
-                  title: '网络错误',
-                  icon: 'none'
-                });
+          } else {
+            uni.showToast({
+              title: res.data.message || '提交失败',
+              icon: 'none'
+            });
+          }
+        },
+        fail: (err) => {
+          uni.showToast({
+            title: '网络错误',
+            icon: 'none'
+          });
         }
       });
     },

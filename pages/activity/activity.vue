@@ -200,22 +200,61 @@ const goToRegistration = (id) => {
   });
 };
 
-const toggleFavorite = async () => {
-  // 1. 切换本地收藏状态（可选，建议等接口成功后再切换）
-  // activity.isFavorite = !activity.isFavorite;
+// 检查收藏状态
+const checkFavoriteStatus = () => {
+  const params = {
+    productId: String(activity.id),
+    productType: 'FeaturedRoute',
+    productName: activity.title
+  };
 
-  // 2. 组装请求体
-  const operation = activity.isFavorite ? 0 : 1; // 当前已收藏则取消，否则收藏
+  console.log('查询收藏状态参数:', params);
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: params,
+    success: (res) => {
+      console.log('收藏状态查询结果:', res.data);
+      if (res.data.code === 200 && res.data.success) {
+        // 处理返回的数据结构
+        const result = res.data.result?.result || [];
+        console.log('收藏列表:', result);
+        
+        // 检查返回的数组中是否包含当前活动
+        const isCollected = Array.isArray(result) && 
+          result.some(item => String(item.productId) === String(activity.id));
+        
+        console.log('是否已收藏:', isCollected);
+        activity.isFavorite = isCollected;
+      }
+    },
+    fail: (err) => {
+      console.error('检查收藏状态失败:', err);
+    }
+  });
+};
+
+const toggleFavorite = async () => {
+  // 根据当前状态决定操作类型
+  const operation = activity.isFavorite ? 0 : 1;
+  
+  // 执行收藏/取消收藏操作
   const dto = {
     operation,
-    productId: activity.id,
+    productId: String(activity.id),
     productName: activity.title,
-    priductImage: activity.image,
-    productType: 'FeaturedRoute', // 或其他类型，按实际业务
+    productImage: activity.image,
+    productType: 'FeaturedRoute',
     userId: userStore.userInfo?.id || ''
   };
 
-  // 3. 发起请求
+  console.log('收藏操作参数:', dto);
+
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/island/productCollect/collectProduct',
     method: 'POST',
@@ -225,8 +264,10 @@ const toggleFavorite = async () => {
     },
     data: dto,
     success: (res) => {
+      console.log('收藏操作响应:', res.data);
       if (res.data.code === 200 && res.data.success) {
-        activity.isFavorite = !activity.isFavorite;
+        // 操作成功后重新查询收藏状态
+        checkFavoriteStatus();
         uni.showToast({
           title: operation === 1 ? '已收藏' : '已取消收藏',
           icon: 'success'
@@ -239,6 +280,7 @@ const toggleFavorite = async () => {
       }
     },
     fail: (err) => {
+      console.error('收藏操作失败:', err);
       uni.showToast({
         title: '网络错误，请重试',
         icon: 'none'
@@ -296,6 +338,11 @@ const getActivityDetailsById = (id) => {
             notIncluded: result.costs.notIncluded || activity.costs.notIncluded
           };
         }
+
+        // 获取收藏状态
+        setTimeout(() => {
+          checkFavoriteStatus();
+        }, 100);
       }
     },
     fail: (err) => {
@@ -321,6 +368,10 @@ onShow(() => {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 0;
   safeAreaInsets.value = systemInfo.safeAreaInsets || { bottom: 0 };
+  // 每次显示页面时查询收藏状态
+  if (activity.id) {
+    checkFavoriteStatus();
+  }
 });
 </script>
 

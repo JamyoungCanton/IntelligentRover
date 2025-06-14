@@ -2,7 +2,6 @@
   <view class="profile-edit-page">
     <view class="nav-bar" :style="navBarStyle">
       <uni-icons type="close" size="28" color="#333" @click="goBack" />
-      <text class="nav-title">编辑资料</text>
       <text class="nav-save" v-if="isEdit" @click="saveProfile">保存</text>
     </view>
     <view class="avatar-section">
@@ -185,7 +184,6 @@ function saveProfile() {
     return;
   }
   const sysUser = {
-    id: userStore.userInfo.id,
     avatar: avatar.value,
     birthday: birthday.value,
     email: email.value,

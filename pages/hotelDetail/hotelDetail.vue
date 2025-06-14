@@ -139,16 +139,29 @@
     </view>
     <!-- 日期选择 -->
     <view class="date-picker-section">
-      <text>选择入住日期：</text>
-      <picker mode="date" :value="checkinDate" :start="todayStr" @change="onCheckinDateChange">
-        <view class="picker-value">{{ checkinDate || '请选择' }}</view>
-      </picker>
-    </view>
-    <view class="date-picker-section">
-      <text>选择退房日期：</text>
-      <picker mode="date" :value="checkoutDate" :start="checkinDate || todayStr" @change="onCheckoutDateChange">
-        <view class="picker-value">{{ checkoutDate || '请选择' }}</view>
-      </picker>
+      <view class="date-picker-row">
+        <view class="date-picker-item">
+          <text class="date-label">入住</text>
+          <picker mode="date" :value="checkinDate" :start="todayStr" @change="onCheckinDateChange">
+            <view class="picker-value" :class="{ 'unselected': !checkinDate }">
+              {{ checkinDate || '请选择' }}
+            </view>
+          </picker>
+        </view>
+        <view class="date-divider">
+          <view class="divider-line"></view>
+          <text class="divider-text">至</text>
+          <view class="divider-line"></view>
+        </view>
+        <view class="date-picker-item">
+          <text class="date-label">退房</text>
+          <picker mode="date" :value="checkoutDate" :start="checkinDate || todayStr" @change="onCheckoutDateChange">
+            <view class="picker-value" :class="{ 'unselected': !checkoutDate }">
+              {{ checkoutDate || '请选择' }}
+            </view>
+          </picker>
+        </view>
+      </view>
     </view>
     <!-- 预订按钮吸底 -->
     <view class="book-bar">
@@ -178,11 +191,18 @@ const onCheckinDateChange = (e) => {
   // 如果退房日期早于入住日期，自动清空退房日期
   if (checkoutDate.value && checkoutDate.value <= checkinDate.value) {
     checkoutDate.value = '';
+    uni.showToast({
+      title: '退房日期已重置',
+      icon: 'none'
+    });
   }
 };
 const onCheckoutDateChange = (e) => {
   if (e.detail.value <= checkinDate.value) {
-    uni.showToast({ title: '退房日期不能早于入住日期', icon: 'none' });
+    uni.showToast({
+      title: '退房日期不能早于入住日期',
+      icon: 'none'
+    });
     return;
   }
   checkoutDate.value = e.detail.value;
@@ -223,6 +243,7 @@ const checkOrderPaid = async () => {
 };
 
 onLoad((options) => {
+  console.log('onLoad options:', options); // 打印所有参数
   hotelId.value = options.id
   console.log('onLoad 传入的 id:', hotelId.value); // 打印路由参数id
   if (options.images) {
@@ -246,8 +267,13 @@ const getDetailList = () => {
         'X-Access-Token': userStore.token
       },
     success: (res) => {
+      console.log('酒店详情接口返回：', res.data);
       if (res.data && res.data.result) {
         hotelData.value = res.data.result;
+        // 如果后端返回的id为空，则用传入的id补上
+        if (!hotelData.value.id) {
+          hotelData.value.id = hotelId.value;
+        }
         comments.value = res.data.result.comments || [];
         console.log('评论数据：', comments.value);
       }
@@ -256,6 +282,11 @@ const getDetailList = () => {
 }
 
 const createOrder = (hotel) => {
+  console.log('createOrder hotel:', hotel); // 打印 hotel
+  if (!hotel.id) {
+    uni.showToast({ title: '商品ID为空，无法下单', icon: 'none' });
+    return;
+  }
   if (!checkinDate.value) {
     uni.showToast({ title: '请选择入住日期', icon: 'none' });
     return;
@@ -645,16 +676,61 @@ const toggleFacilities = () => {
   border-radius: 16rpx;
   margin: 24rpx;
   padding: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+.date-picker-row {
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.date-picker-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.date-label {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 4rpx;
 }
 .picker-value {
-  padding: 8rpx 18rpx;
-  border: 1px solid #dbeafe;
-  border-radius: 8rpx;
+  padding: 16rpx 24rpx;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12rpx;
   color: #007AFF;
+  background: #f8fafc;
+  font-size: 28rpx;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+.picker-value.unselected {
+  color: #999;
+  background: #f5f5f5;
+  border-color: #eee;
+}
+.picker-value:active {
+  border-color: #007AFF;
   background: #f0f9ff;
+}
+.date-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16rpx;
+  padding-top: 15px;
+}
+.divider-line {
+  width: 40rpx;
+  height: 2rpx;
+  background: #ddd;
+  margin: 4rpx 0;
+}
+.divider-text {
+  color: #999;
+  font-size: 24rpx;
+  margin: 8rpx 0;
 }
 .book-bar {
   position: fixed;
@@ -945,5 +1021,40 @@ const toggleFacilities = () => {
   border-radius: 8px;
   object-fit: cover;
   margin-right: 8px;
+}
+/* 添加日期选择器的点击效果 */
+.picker-value:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+}
+/* 适配暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .date-picker-section {
+    background: #1a1a1a;
+  }
+  
+  .picker-value {
+    background: #2a2a2a;
+    border-color: #333;
+    color: #007AFF;
+  }
+  
+  .picker-value.unselected {
+    color: #666;
+    background: #2a2a2a;
+    border-color: #333;
+  }
+  
+  .date-label {
+    color: #999;
+  }
+  
+  .divider-text {
+    color: #666;
+  }
+  
+  .divider-line {
+    background: #333;
+  }
 }
 </style>

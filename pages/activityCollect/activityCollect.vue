@@ -44,6 +44,59 @@
   const activities = ref([]);
   const loading = ref(true);
   
+  const fetchActivityCollect = async () => {
+    loading.value = true;
+    try {
+      // 1. 获取收藏列表
+      const params = { productType: 'FeaturedRoute', productName: '' };
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': userStore.token
+        },
+        data: params
+      });
+
+      const result = res.data.result?.result || [];
+      const ids = result.map(item => item.productId).filter(Boolean);
+
+      // 2. 查询所有活动详情
+      const actRes = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/product/ilActivities/list',
+        method: 'GET',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': userStore.token
+        },
+        data: {
+          pageNo: 1,
+          pageSize: 1000
+        }
+      });
+      const allActivities = actRes.data.result?.records || [];
+
+      // 3. 合并数据
+      activities.value = result.map(item => {
+        const detail = allActivities.find(act => String(act.id) === String(item.productId));
+        return {
+          ...item,
+          priductImage: detail?.imageUrl || 'https://wuminghui.top:9000/travel/diving.jpg',
+          productName: detail?.title || '未命名活动'
+        }
+      });
+    } catch (error) {
+      console.error('获取收藏活动失败:', error);
+      uni.showToast({ 
+        title: '网络异常', 
+        icon: 'none' 
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  
   // 格式化时间
   const formatTime = (time) => {
     if (!time) return '';
@@ -57,47 +110,9 @@
       'Dining': '餐饮',
       'Accommodations': '住宿',
       'Transportation': '交通',
-      'FeaturedRoute': '特色路线'
+      'FeaturedRoute': '活动'
     };
     return typeMap[type] || type;
-  };
-  
-  const fetchActivityCollect = async () => {
-    loading.value = true;
-    try {
-      const params = {
-        productId: '1',
-        productType: 'Activities',
-        productName: ''
-      };
-      console.log('请求活动收藏参数:', params);
-      const res = await uni.request({
-        url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'X-Access-Token': userStore.token
-        },
-        data: params
-      });
-
-      if (res.data.code === 200 && res.data.success) {
-        activities.value = Array.isArray(res.data.result) ? res.data.result : [];
-      } else {
-        uni.showToast({ 
-          title: res.data.message || '获取失败', 
-          icon: 'none' 
-        });
-      }
-    } catch (error) {
-      console.error('获取收藏活动失败:', error);
-      uni.showToast({ 
-        title: '网络异常', 
-        icon: 'none' 
-      });
-    } finally {
-      loading.value = false;
-    }
   };
   
   const toDetail = (item) => {
@@ -189,9 +204,12 @@
     font-size: 24rpx;
     color: #666;
     background: #f5f5f5;
-    padding: 4rpx 12rpx;
+    padding: 2rpx 8rpx;
     border-radius: 20rpx;
     display: inline-block;
+    text-align: center;
+    max-width: 40%;
+    min-width: 20%;
   }
   .activity-time {
     display: flex;

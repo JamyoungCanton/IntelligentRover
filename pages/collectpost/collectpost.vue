@@ -1,24 +1,5 @@
 <template>
   <view class="container">
-    <view class="post-type-buttons">
-      <view
-        class="type-button"
-        :class="{ active: currentTab === 'my' }"
-        @tap="switchTab('my')"
-      >
-        <uni-icons type="compose" size="18" :color="currentTab === 'my' ? '#fff' : '#666'" />
-        <text>我的发布</text>
-      </view>
-      <view
-        class="type-button"
-        :class="{ active: currentTab === 'collect' }"
-        @tap="switchTab('collect')"
-      >
-        <uni-icons type="star" size="18" :color="currentTab === 'collect' ? '#fff' : '#666'" />
-        <text>我的收藏</text>
-      </view>
-    </view>
-
     <scroll-view 
       scroll-y 
       class="scroll-container"
@@ -77,6 +58,25 @@
         </view>
       </view>
     </scroll-view>
+
+    <view class="bottom-tab-bar">
+      <view
+        class="tab-btn"
+        :class="{ active: currentTab === 'my' }"
+        @tap="switchTab('my')"
+      >
+        <uni-icons type="compose" size="22" :color="currentTab === 'my' ? '#fff' : '#0080ff'" />
+        <text>我的发布</text>
+      </view>
+      <view
+        class="tab-btn"
+        :class="{ active: currentTab === 'collect' }"
+        @tap="switchTab('collect')"
+      >
+        <uni-icons type="star" size="22" :color="currentTab === 'collect' ? '#fff' : '#0080ff'" />
+        <text>我的收藏</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -191,43 +191,7 @@ onMounted(fetchCollectPosts);
 .scroll-container {
   flex: 1;
   height: calc(100vh - 120rpx);
-}
-
-.post-type-buttons {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 15px;
-  background-color: #fff;
-  margin: 15px;
-  border-radius: 14px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-  position: relative;
-  z-index: 2;
-  border: 1px solid #f0f0f0;
-  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
-}
-
-.type-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 15px;
-  border-radius: 12px;
-  width: 48%;
-  background-color: #f8f9fa;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-}
-
-.type-button.active {
-  background: linear-gradient(135deg, #0080ff, #0066CC);
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
-  transform: translateY(-2px);
-  border: none;
+  padding-bottom: 100rpx;
 }
 
 .loading, .no-posts {
@@ -320,6 +284,41 @@ onMounted(fetchCollectPosts);
 .data-detail {
   font-size: 24rpx;
   color: #999;
+}
+
+.bottom-tab-bar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(255,255,255,0.98);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  padding: 12px 0 20px 0;
+  z-index: 99;
+}
+
+.tab-btn {
+  flex: 1;
+  margin: 0 18rpx;
+  background: linear-gradient(135deg, #f8f9fa, #e6f0ff);
+  border-radius: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 0 10rpx 0;
+  font-size: 26rpx;
+  color: #0080ff;
+  box-shadow: 0 2px 8px rgba(0,128,255,0.08);
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #0080ff, #0066cc);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,128,255,0.18);
 }
 </style>
 

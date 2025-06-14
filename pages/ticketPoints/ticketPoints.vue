@@ -60,10 +60,10 @@
         <view 
           class="type-button" 
           :class="{ active: currentPostType === 'mine' }" 
-          @click="switchPostType('mine')"
+          @click="goToMyFriends"
         >
           <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
-          <text>我的好友</text>
+          <text>关注</text>
         </view>
       </view>
     </view>
@@ -85,10 +85,10 @@
               <text class="itemname">{{ item.userVO?.username }}</text>
               <text class="itemlv">lv3</text>
           </view>
-            <view class="follow-button" @click.stop="followUser(item, $event)">
-              <text :class="{'following': isFollowing(item)}">
-                {{ isFollowing(item) ? '已关注' : '+ 关注' }}
-              </text>
+            <view class="follow-button">
+              <u-button plain shape="circle" size="small" color="#007aff" @click="toggleFollowAuthor">
+                {{ isFollowing ? '已关注' : '关注TA' }}
+              </u-button>
           </view>
         </view>
         <view class="postTitle">
@@ -112,12 +112,26 @@
           </view>
             <view class="item-bottom-right">
             <view class="right-data">
-              <uni-icons type="heart" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.likes }}</text>
-              <uni-icons type="star" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.collect }}</text>
-              <uni-icons type="chat" size="18" color="#999"></uni-icons>
-              <text class="data-detail">{{ item.comments }}</text>
+              <view @click.stop="toggleLike(item)">
+                <uni-icons
+                  type="heart"
+                  size="18"
+                  :color="item.liked ? '#ff0000' : '#999'"
+                ></uni-icons>
+                <text class="data-detail">{{ item.likes }}</text>
+              </view>
+              <view @click.stop="toggleCollect(item)">
+                <uni-icons
+                  type="star"
+                  size="18"
+                  :color="item.collected ? '#ff0000' : '#999'"
+                ></uni-icons>
+                <text class="data-detail">{{ item.collect }}</text>
+              </view>
+              <view>
+                <uni-icons type="chat" size="18" color="#999"></uni-icons>
+                <text class="data-detail">{{ item.comments }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -143,7 +157,7 @@
                 <text class="fan-name">{{ user.username }}</text>
                 <text class="fan-desc">{{ (user.fans || 0) + '粉丝' }}</text>
               </view>
-              <button class="follow-back-btn" @click="followBack(user)">已关注</button>
+              <button class="follow-back-btn" @click="unfollow(user)">已关注</button>
             </view>
             <view class="fans-footer">不能再往下滑了~</view>
           </view>
@@ -439,7 +453,9 @@ const getPostLst = () => {
         else if (res.statusCode === 200) {
         postList.value = res.data.result.list.map(post => ({
               ...post,
-          isFollowing: false
+          isFollowing: false,
+          liked: !!post.liked,
+          collected: !!post.collected
         }));
         // 关键：拉取关注列表，保证按钮状态正确
         getFocusList();
@@ -651,6 +667,194 @@ const updatePostFollowingStatus = () => {
     post.isFollowing = focusIdSet.value.has(authorId);
   });
 };
+
+const goToMyFriends = () => {
+  uni.navigateTo({
+    url: '/pages/myFriends/myFriends'
+  });
+};
+
+const unfollow = (user) => {
+  uni.showModal({
+    title: '取消关注',
+    content: `确定要取消关注 ${user.username} 吗？`,
+    success: (res) => {
+      if (res.confirm) {
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+          method: 'POST',
+          header: {
+            'X-Access-Token': userStore.token,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            focusId: user.id,
+            operation: 2
+          },
+          success: (res) => {
+            if (res.data.success) {
+              uni.showToast({ title: '已取消关注', icon: 'success' });
+              getFocusList();
+            } else {
+              uni.showToast({ title: res.data.message || '取消关注失败', icon: 'none' });
+            }
+          },
+          fail: () => {
+            uni.showToast({ title: '网络错误', icon: 'none' });
+          }
+        });
+      }
+    }
+  });
+};
+
+const followBack = (fan) => {
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+    method: 'POST',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/json'
+    },
+    data: {
+      focusId: fan.id,
+      operation: 1
+    },
+    success: (res) => {
+      if (res.data.success) {
+        uni.showToast({ title: '已回关', icon: 'success' });
+        getFocusList();
+      } else {
+        uni.showToast({ title: res.data.message || '回关失败', icon: 'none' });
+      }
+    },
+    fail: () => {
+      uni.showToast({ title: '网络错误', icon: 'none' });
+    }
+  });
+};
+
+const togglePostFollow = (post) => {
+  const focusId = String(post.userVO?.id || post.userVO?.userId);
+  if (!focusId) {
+    uni.showToast({ title: '用户ID无效，无法关注', icon: 'none' });
+    return;
+  }
+  if (focusId === String(userStore.userInfo.id)) {
+    uni.showToast({ title: '不能关注自己', icon: 'none' });
+    return;
+  }
+
+  if (post.isFollowing) {
+    // 取关
+    uni.showModal({
+      title: '取消关注',
+      content: `确定要取消关注 ${post.userVO?.username} 吗？`,
+      success: (res) => {
+        if (res.confirm) {
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+            method: 'POST',
+            header: {
+              'X-Access-Token': userStore.token,
+              'Content-Type': 'application/json'
+            },
+            data: {
+              focusId,
+              operation: 2
+            },
+            success: (res) => {
+              if (res.data.success) {
+                post.isFollowing = false;
+                uni.showToast({ title: '已取消关注', icon: 'success' });
+                getFocusList(); // 刷新关注列表，保证全局状态一致
+              } else {
+                uni.showToast({ title: res.data.message || '取消关注失败', icon: 'none' });
+              }
+            },
+            fail: () => {
+              uni.showToast({ title: '网络错误', icon: 'none' });
+            }
+          });
+        }
+      }
+    });
+  } else {
+    // 关注
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+      method: 'POST',
+      header: {
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        focusId,
+        operation: 1
+      },
+      success: (res) => {
+        if (res.data.success) {
+          post.isFollowing = true;
+          uni.showToast({ title: '已关注', icon: 'success' });
+          getFocusList();
+        } else {
+          uni.showToast({ title: res.data.message || '关注失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        uni.showToast({ title: '网络错误', icon: 'none' });
+      }
+    });
+  }
+};
+
+// 点赞
+const toggleLike = async (item) => {
+  const operation = item.liked ? 0 : 1;
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/like',
+    method: 'POST',
+    data: {
+      operation, // 1 点赞，0 取消
+      postsId: item.id,
+      type: 0
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    }
+  });
+  if (res.data.code === 200) {
+    item.liked = !item.liked;
+    item.likes = item.liked ? item.likes + 1 : Math.max(0, item.likes - 1);
+  } else {
+    uni.showToast({ title: res.data.message || '操作失败', icon: 'none' });
+  }
+};
+
+// 收藏
+const toggleCollect = async (item) => {
+  const operation = item.collected ? 0 : 1;
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/collect',
+    method: 'POST',
+    data: {
+      operation, // 1 收藏，0 取消
+      postsId: item.id
+    },
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    }
+  });
+  if (res.data.code === 200) {
+    item.collected = !item.collected;
+    item.collect = item.collected ? item.collect + 1 : Math.max(0, item.collect - 1);
+    uni.showToast({ title: operation === 1 ? '已收藏' : '已取消收藏', icon: 'success' });
+  } else {
+    uni.showToast({ title: res.data.message || '操作失败', icon: 'none' });
+  }
+};
   
 </script>
 
@@ -703,6 +907,7 @@ const updatePostFollowingStatus = () => {
   box-shadow: none;
   margin: 0;
   border: none;
+  width: 92%;
 }
 
 .type-button {

@@ -2,13 +2,19 @@
   <view class="app-container">
     <!-- 用户信息 -->
     <view class="author-info">
-      <image class="app-avatar avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg  " mode="scaleToFill" />
+      <image
+        class="app-avatar avatar"
+        :src="postDetailList.userVO.avatar || defaultAvatar"
+        mode="scaleToFill"
+      />
       <view class="info">
         <view class="name">{{ postDetailList.userVO.username}}</view>
         <view class="desc">lv3</view>
       </view>
       <view class="button">
-        <u-button plain shape="circle" size="small" color="#007aff">关注TA</u-button>
+        <u-button plain shape="circle" size="small" color="#007aff" @click="toggleFollowAuthor">
+          {{ isFollowing ? '已关注' : '关注TA' }}
+        </u-button>
       </view>
       <view class="icon">
         <uni-icons type="share" size="24" color="#666"></uni-icons>
@@ -47,7 +53,7 @@
         <!-- 评论项 -->
 
         <view class="comment-item" @click="showSubPopup(item,$event)" v-for="(item) in commentList" :key="item.id">
-          <image class="avatar" src="/static/hotel-attctive/ava.png " mode="scaleToFill" />
+          <image class="avatar" :src="item.userVO.avatar || defaultAvatar" mode="scaleToFill" />
           <view class="comment-content">
             <view class="info">
               <text class="name">{{item.userVO.username}}</text>
@@ -60,7 +66,11 @@
             <view class="sub-comment-item" @click="showSubPopup(sub,$event)"  v-for="(sub) in item.children" :key="sub.id">
               <view class="sub-comment-header">
                 <view class="sub-header-left">
-                  <image class="avatar" src="https://ai-public.mastergo.com/ai/img_res/298a09126b167b2389171cf1732d0efd.jpg" mode="scaleToFill" />
+                  <image
+                    class="avatar"
+                    :src="sub.userVO.avatar || defaultAvatar"
+                    mode="aspectFill"
+                  />
                   <text class="name">{{ sub.userVO.username }}</text>
                 </view>
                 <text class="time">{{ formatRelativeTime(sub.createTime) }}</text>
@@ -147,6 +157,7 @@ const userStore = useUserStore();
 
 const type = ref('');
 
+const isFollowing = ref(false);
 
 // 时间转换函数
 const formatRelativeTime = (time) => {
@@ -236,7 +247,8 @@ onLoad((options) => {
 onMounted(() => {
   getPostList(),
   getCommentCount(),
-  getCommentList()
+  getCommentList(),
+  setTimeout(checkIsFollowing, 500); // 延迟确保postDetailList已获取
 })
 
 const getPostList = async () => {
@@ -253,6 +265,7 @@ const getPostList = async () => {
   })
   if (res.data.code === 200) {
     postDetailList.value = res.data.result;
+    isFollowing.value = !!res.data.result.focused; // 直接用接口返回的 focused 字段
   }
 }
 
@@ -415,6 +428,99 @@ const sendComment = async () => {
   
 }
 
+// 检查当前用户是否已关注该作者
+const checkIsFollowing = () => {
+  const authorId = postDetailList.value.userVO?.id || postDetailList.value.userVO?.userId;
+  if (!authorId) return;
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/queryFocusList',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    success: (res) => {
+      if (res.statusCode === 200 && res.data.code === 200) {
+        const focusList = res.data.result?.records || [];
+        isFollowing.value = focusList.some(user => String(user.id) === String(authorId));
+      }
+    }
+  });
+};
+
+// 关注/取关作者
+const toggleFollowAuthor = () => {
+  const authorId = postDetailList.value.userVO?.id || postDetailList.value.userVO?.userId;
+  if (!authorId) {
+    uni.showToast({ title: '用户ID无效', icon: 'none' });
+    return;
+  }
+  if (String(authorId) === String(userStore.userInfo.id)) {
+    uni.showToast({ title: '不能关注自己', icon: 'none' });
+    return;
+  }
+  if (isFollowing.value) {
+    // 取关
+    uni.showModal({
+      title: '取消关注',
+      content: `确定要取消关注 ${postDetailList.value.userVO?.username} 吗？`,
+      success: (res) => {
+        if (res.confirm) {
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+            method: 'POST',
+            header: {
+              'X-Access-Token': userStore.token,
+              'Content-Type': 'application/json'
+            },
+            data: {
+              focusId: authorId,
+              operation: 2
+            },
+            success: (res) => {
+              if (res.data.success) {
+                isFollowing.value = false;
+                uni.showToast({ title: '已取消关注', icon: 'success' });
+              } else {
+                uni.showToast({ title: res.data.message || '取消关注失败', icon: 'none' });
+              }
+            },
+            fail: () => {
+              uni.showToast({ title: '网络错误', icon: 'none' });
+            }
+          });
+        }
+      }
+    });
+  } else {
+    // 关注
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/sys/user/focus',
+      method: 'POST',
+      header: {
+        'X-Access-Token': userStore.token,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        focusId: authorId,
+        operation: 1
+      },
+      success: (res) => {
+        if (res.data.success) {
+          isFollowing.value = true;
+          uni.showToast({ title: '已关注', icon: 'success' });
+        } else {
+          uni.showToast({ title: res.data.message || '关注失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        uni.showToast({ title: '网络错误', icon: 'none' });
+      }
+    });
+  }
+};
+
+const defaultAvatar = 'https://static-typical-avatar-url.png';
 
 </script>
 
@@ -615,10 +721,12 @@ page {
           }
 
           .avatar {
-            width: 50rpx; /* 子评论头像尺寸略小 */
-            height: 50rpx;
-            border-radius: 25rpx;
+            width: 70px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
             margin-right: 10rpx;
+            display: block;
           }
 
           .name {

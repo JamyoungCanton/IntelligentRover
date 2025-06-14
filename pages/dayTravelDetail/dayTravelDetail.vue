@@ -47,12 +47,12 @@
     </view>
 
     <!-- 用户评论区域 -->
-    <view class="section-container" style="margin-top: 5px;">
+    <!-- <!-- <view class="section-container" style="margin-top: 5px;">
       <view class="section-title">用户点评</view>
       <view class="comment-list">
-        <view v-if="allowComment">
+        <view v-if="allowComment"> -->
           <!-- 评论输入区 -->
-          <view class="comment-input-area">
+          <!-- <view class="comment-input-area">
             <view class="comment-user-info">
               <image :src="userStore.userInfo.avatar || '/static/daytravelDetail/man.png'" class="user-avatar" mode="aspectFill"></image>
               <text class="user-name">{{ userStore.userInfo.realname || userStore.userInfo.username || '游客' }}</text>
@@ -75,9 +75,9 @@
         </view>
         <view v-else style="color:#999;text-align:center;padding:20px 0;">
           仅限已支付该一日游订单的用户评论
-        </view>
+        </view> -->
         <!-- 评论列表 -->
-        <view v-for="(review, index) in reviews" :key="index" class="comment-item">
+        <!-- <view v-for="(review, index) in reviews" :key="index" class="comment-item">
           <view class="comment-header">
             <image class="user-avatar" :src="review.avatar" mode="aspectFill"></image>
             <view class="user-info">
@@ -92,7 +92,7 @@
           <view class="comment-content">{{ review.content }}</view>
         </view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 底部购买按钮 -->
     <view class="bottom-bar">
@@ -103,18 +103,46 @@
       <view class="buy-button" @click="handleBooking">立即预订</view>
     </view>
 
-    <!-- 选择出行日期部分 -->
-    <view class="section-container">
-      <view class="section-title">选择出行日期</view>
-      <picker mode="date" :value="selectedDate" :start="todayStr" @change="onDateChange">
-        <view class="picker-value">{{ selectedDate || '请选择出行日期' }}</view>
-      </picker>
-    </view>
+    <!-- 预订信息区块 -->
+    <view class="booking-section">
+      <view class="section-title">预订信息</view>
+      
+      <!-- 日期选择 -->
+      <view class="date-picker-row">
+        <view class="date-picker-item">
+          <text class="date-label">出行日期</text>
+          <picker mode="date" :value="selectedDate" :start="todayStr" @change="onDateChange">
+            <view class="picker-value" :class="{ 'unselected': !selectedDate }">
+              <uni-icons type="calendar" size="18" color="#007AFF"></uni-icons>
+              <text>{{ selectedDate || '请选择出行日期' }}</text>
+            </view>
+          </picker>
+        </view>
+      </view>
 
-    <!-- 新增：下单信息输入 -->
-    <view class="order-input-section">
-      <input v-model="realname" class="order-input" placeholder="请输入姓名" />
-      <input v-model="phone" class="order-input" placeholder="请输入手机号码" type="number" />
+      <!-- 用户信息输入 -->
+      <view class="user-info-row">
+        <view class="input-item">
+          <text class="input-label">姓名</text>
+          <input 
+            v-model="realname" 
+            class="info-input" 
+            placeholder="请输入姓名"
+            placeholder-class="placeholder"
+          />
+        </view>
+        <view class="input-item">
+          <text class="input-label">手机号</text>
+          <input 
+            v-model="phone" 
+            class="info-input" 
+            type="number" 
+            maxlength="11"
+            placeholder="请输入手机号码"
+            placeholder-class="placeholder"
+          />
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -842,7 +870,7 @@ const submitComment = async () => {
 }
 
 .buy-button {
-  width: 240rpx;
+  width: 340rpx;
   height: 80rpx;
   background-color: #4dabf7;
   color: #fff;
@@ -853,76 +881,190 @@ const submitComment = async () => {
   border-radius: 10rpx;
 }
 
-/* 新增：下单信息输入 */
-.order-input-section {
-  padding: 20rpx;
+/* 预订信息区块样式 */
+.booking-section {
   background: #fff;
-  margin-top: 10px;
-}
-.order-input {
-  width: 100%;
-  height: 80rpx;
-  border: 1px solid #e5e5e5;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  margin-bottom: 16rpx;
-  padding: 0 20rpx;
+  border-radius: 16rpx;
+  margin: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
-/* 新增：评论输入区域样式 */
-.comment-input-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.comment-user-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.user-avatar {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.user-name {
-  font-size: 30rpx;
+.section-title {
+  font-size: 32rpx;
   font-weight: bold;
   color: #333;
-}
-
-.comment-textarea {
-  width: 100%;
-  height: 120rpx;
-  border: 1px solid #e5e5e5;
-  border-radius: 10rpx;
-  padding: 10rpx;
-  margin-bottom: 10px;
-}
-
-.comment-footer {
+  margin-bottom: 24rpx;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
 }
 
-.word-count {
-  font-size: 24rpx;
+.section-title::before {
+  content: '';
+  width: 6rpx;
+  height: 32rpx;
+  background: #007AFF;
+  margin-right: 16rpx;
+  border-radius: 3rpx;
+}
+
+/* 日期选择样式 */
+.date-picker-row {
+  margin-bottom: 24rpx;
+}
+
+.date-picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.date-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: #f8fafc;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12rpx;
+  color: #007AFF;
+  font-size: 28rpx;
+  transition: all 0.3s ease;
+}
+
+.picker-value.unselected {
+  color: #999;
+  background: #f5f5f5;
+  border-color: #eee;
+}
+
+.picker-value:active {
+  border-color: #007AFF;
+  background: #f0f9ff;
+}
+
+/* 用户信息输入样式 */
+.user-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.input-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.info-input {
+  padding: 20rpx 24rpx;
+  background: #f8fafc;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.info-input:focus {
+  border-color: #007AFF;
+  background: #f0f9ff;
+}
+
+.placeholder {
   color: #999;
 }
 
-.submit-btn {
-  width: 120rpx;
-  height: 80rpx;
-  background-color: #4dabf7;
-  color: #fff;
-  font-size: 32rpx;
-  border-radius: 10rpx;
+/* 适配暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .booking-section {
+    background: #1a1a1a;
+  }
+  
+  .section-title {
+    color: #fff;
+  }
+  
+  .date-label,
+  .input-label {
+    color: #999;
+  }
+  
+  .picker-value,
+  .info-input {
+    background: #2a2a2a;
+    border-color: #333;
+    color: #fff;
+  }
+  
+  .picker-value.unselected {
+    color: #666;
+    background: #2a2a2a;
+  }
+  
+  .placeholder {
+    color: #666;
+  }
+}
+
+/* 添加输入框动画效果 */
+.info-input {
+  position: relative;
+  overflow: hidden;
+}
+
+.info-input:focus {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
+}
+
+/* 添加必填标记 */
+.input-label::after {
+  content: '*';
+  color: #ff4d4f;
+  margin-left: 4rpx;
+}
+
+/* 添加输入框图标 */
+.input-item {
+  position: relative;
+}
+
+.input-item::before {
+  content: '';
+  position: absolute;
+  left: 24rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32rpx;
+  height: 32rpx;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.5;
+}
+
+.input-item:nth-child(1)::before {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MyLjY3IDAgNC44NCAyLjE3IDQuODQgNC44NCAwIDIuNjctMi4xNyA0Ljg0LTQuODQgNC44NC0yLjY3IDAtNC44NC0yLjE3LTQuODQtNC44NCAwLTIuNjcgMi4xNy00Ljg0IDQuODQtNC44NHptMCAxMmM0LjQyIDAgOC4xNy0yLjI4IDkuNTQtNS41Ni0yLjMxLTEuODEtNS4yMy0yLjg4LTkuNTQtMi44OHMtNy4yMyAxLjA3LTkuNTQgMi44OGMxLjM3IDMuMjggNS4xMiA1LjU2IDkuNTQgNS41NnoiIGZpbGw9IiMwMDdBRkYiLz48L3N2Zz4=');
+}
+
+.input-item:nth-child(2)::before {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTIwIDRINGMtMS4xIDAtMS45OS45LTEuOTkgMkwyIDE4YzAgMS4xLjkgMiAyIDJoMTZjMS4xIDAgMi0uOSAyLTJWNmMwLTEuMS0uOS0yLTItMnptLS40IDQuMjVsLTcuMDcgNC40MmMtLjMyLjItLjc0LjItMS4wNiAwTDQuNCA4LjI1Yy0uMjUtLjE2LS40LS40My0uNC0uNzIgMC0uNjcuNzMtMS4wNyAxLjMtLjcyTDEyIDExbDYuNy00LjE5Yy41Ny0uMzUgMS4zLjA1IDEuMy43MiAwIC4yOS0uMTUuNTYtLjQuNzJ6IiBmaWxsPSIjMDA3QUZGIi8+PC9zdmc+');
+}
+
+/* 调整输入框内边距，为图标留出空间 */
+.info-input {
+  padding-left: 72rpx;
 }
 </style>

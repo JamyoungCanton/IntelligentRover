@@ -170,9 +170,9 @@ const handleConfirmPayment = () => {
 					icon: 'success',
 					duration: 1500
 				});
-				// 跳转到支付页，传递 orderSn 及必要信息
-					uni.navigateTo({
-					url: `/pages/activityPay/activityPay?orderSn=${orderSn}&title=${foodDetails.value.title}&price=${foodDetails.value.price * quantity.value}&restaurant=${encodeURIComponent(foodDetails.value.restaurant)}`
+				// 跳转到支付成功页，传递 orderSn、amount、type、productId
+				uni.navigateTo({
+					url: `/pages/pay_success/pay_success?orderSn=${orderSn}&amount=${foodDetails.value.price * quantity.value}&type=美食&productId=${id.value}`
 				});
 			} else {
 				uni.showToast({

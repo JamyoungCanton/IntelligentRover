@@ -75,79 +75,62 @@
 		</view>
 
 		<!-- 店铺实拍 -->
-		<view class="shop-photos">
+		<view class="shop-photos" v-if="shopPhotos.length">
 			<view class="section-title">店铺实拍</view>
 			<scroll-view class="photo-scroll" scroll-x enable-flex>
 				<view class="photo-item" v-for="(photo, index) in shopPhotos" :key="index">
-					<view v-if="imageLoading" class="loading-placeholder">
-						<uni-icons type="image" size="30" color="#999"></uni-icons>
-					</view>
-					<image :src="`https://wuminghui.top:9000/travel/${photo}`" mode="aspectFill" @load="imageLoading = false" @error="handleImageError"></image>
+					<image :src="photo" mode="aspectFill"></image>
 				</view>
 			</scroll-view>
 		</view>
 
 
 		<!-- 用户评价 -->
-		<view class="user-reviews">
-			<view class="review-header">
-				<view class="review-title">用户评价 ({{ comments.length }})</view>
-			</view>
-
-			<view class="review-list">
-				<!-- 添加评论区域 -->
-				<view v-if="allowComment" class="comment-input-area">
-					<view class="comment-user-info">
-						<image :src="userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'" class="user-avatar"></image>
-						<text class="user-name">{{ userInfo.realname || userInfo.username || '游客' }}</text>
-					</view>
-					<textarea
-						v-model="newComment"
-						class="comment-textarea"
-						placeholder="写下你的评论..."
-						:maxlength="200"
-					/>
-					<view class="comment-footer">
-						<text class="word-count">{{ newComment.length }}/200</text>
-						<button 
-							class="submit-btn" 
-							:disabled="!newComment.trim()"
-							@click="submitComment"
-						>发表评论</button>
-					</view>
-				</view>
-				<view v-else style="color:#999;text-align:center;padding:20px 0;">
-					仅限已支付该商品订单的用户评论
-				</view>
-
-				<!-- 评论列表 -->
-				<view v-if="!comments || comments.length === 0" class="no-comments">
-					<uni-icons type="chat" size="24" color="#999"></uni-icons>
-					<text>暂无评论，快来发表第一条评论吧！</text>
-				</view>
-				<template v-else>
-					<view class="review-item" v-for="(comment, index) in displayedComments" :key="index">
-						<view class="review-user">
-							<image :src="comment.avatar" class="review-avatar"></image>
-							<view class="review-user-info">
-								<text class="review-username">{{ comment.userName }}</text>
-								<text class="review-time">{{ comment.createTime }}</text>
+		<view class="reviews">
+			<scroll-view scroll-x class="comment-scroll">
+				<view class="comment-row">
+					<view
+						class="comment-card"
+						v-for="(item, idx) in displayedComments"
+						:key="item.id || idx"
+					>
+						<view class="comment-header">
+							<image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
+							<view class="comment-user">
+								<text class="comment-username">{{ item.username || '匿名用户' }}</text>
+								<text class="comment-date">{{ item.createTime }}</text>
 							</view>
 						</view>
-						<text class="review-content">{{ comment.content }}</text>
+						<view class="comment-content">
+							<view v-if="getValidImages(item.images).length">
+								<image
+									v-for="(img, i) in getValidImages(item.images)"
+									:key="i"
+									:src="img"
+									class="comment-img"
+									mode="aspectFill"
+								/>
+							</view>
+							{{ item.comment }}
+						</view>
 					</view>
-					
-					<!-- 显示更多按钮 -->
-					<view v-if="comments.length > 3" class="show-more" @click="toggleComments">
-						<text>{{ showAllComments ? '收起' : `显示更多(${comments.length - 3}条)` }}</text>
-						<uni-icons 
-							:type="showAllComments ? 'top' : 'bottom'" 
-							size="14" 
-							color="#3B82F6"
-						></uni-icons>
+					<view
+						v-if="!showAllComments && comments.length > 3"
+						class="comment-more-btn"
+						@click="toggleComments"
+					>
+						<view class="see-all-btn-img">
+							<text class="see-all-text">查<br/>看<br/>全<br/>部</text>
+							<view class="see-all-arrow">
+								<uni-icons type="arrowright" size="18" color="#fff" />
+							</view>
+						</view>
 					</view>
-				</template>
-			</view>
+				</view>
+			</scroll-view>
+		</view>
+		<view style="color:#999;text-align:center;padding:20px 0;">
+			仅限已支付该商品订单的用户评论
 		</view>
 
 		<!-- 推荐菜品 -->
@@ -164,15 +147,16 @@
 		</view>
 
 		<!-- 在推荐菜品后面，立即预订按钮前面添加时间选择部分 -->
-		<view class="time-picker-section">
-			<view class="section-title">选择用餐时间</view>
+		
 			<view class="date-picker">
+				<uni-icons type="calendar" size="22" color="#007aff" style="margin-right:8px;" />
 				<text>选择用餐日期：</text>
 				<picker mode="date" :value="diningDate" :start="todayStr" @change="onDiningDateChange">
-					<view class="picker-value">{{ diningDate || '请选择' }}</view>
+					<view :class="['picker-value', !diningDate ? 'unselected' : '']">
+						{{ diningDate || '请选择' }}
+					</view>
 				</picker>
 			</view>
-		</view>
 
 		<!-- 立即预订按钮 -->
 		<view class="book-now" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
@@ -516,163 +500,25 @@ const bookNow = () => {
 
 // 在 script setup 中添加评论相关的状态
 const comments = ref([]);
-const newComment = ref('');
 const showAllComments = ref(false);
+const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
+const toggleComments = () => { showAllComments.value = true; };
 
-// 添加获取评论列表的方法
 const getComments = async () => {
-	try {
-		console.log('开始获取评论，餐厅ID:', id.value);
-		const res = await uni.request({
-			url: `https://island.zhangshuiyi.com/island/comments/${id.value}`,
-			method: 'GET',
-			header: {
-				'Content-Type': 'application/json',
-				'X-Access-Token': userStore.token
-			}
-		});
-		
-		console.log('评论接口返回数据:', res.data);
-		
-		if (res.data.success) {
-			if (res.data.result && Array.isArray(res.data.result)) {
-				comments.value = res.data.result.map(comment => ({
-					id: comment.id,
-					content: comment.content,
-					createTime: comment.createTime,
-					userName: comment.userVO?.realname || comment.userVO?.username || '匿名用户',
-					avatar: comment.userVO && comment.userVO.avatar
-						? (comment.userVO.avatar.startsWith('http') ? comment.userVO.avatar : 'https://wuminghui.top:9000/' + comment.userVO.avatar.replace(/^\/+/, ''))
-						: (userStore.userInfo.avatar || 'https://wuminghui.top:9000/default-avatar.png'),
-					rating: 5,
-					children: comment.children || []
-				}));
-			} else {
-				comments.value = [];
-			}
-			console.log('处理后的评论列表:', comments.value);
-		} else {
-			console.error('获取评论失败:', res.data.message);
-			uni.showToast({
-				title: res.data.message || '获取评论失败',
-				icon: 'none'
-			});
+	const res = await uni.request({
+		url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
+		method: 'GET',
+		data: { productId: id.value, type: 'Dining' },
+		header: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'X-Access-Token': userStore.token
 		}
-	} catch (error) {
-		console.error('获取评论异常：', error);
-		uni.showToast({
-			title: '获取评论失败',
-			icon: 'none'
-		});
+	});
+	if (res.data.success && Array.isArray(res.data.result)) {
+		comments.value = res.data.result;
+	} else {
+		comments.value = [];
 	}
-};
-
-// 添加提交评论的方法
-const allowComment = ref(false); // 是否允许评论
-
-// 检查是否支付过该商品
-const checkOrderPaid = async () => {
-	if (!userStore.token) {
-		allowComment.value = false;
-		return;
-	}
-	try {
-		const res = await uni.request({
-			url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
-			method: 'GET',
-			header: {
-				'X-Access-Token': userStore.token,
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			data: {
-				pageNo: 1,
-				pageSize: 100
-			}
-		});
-		if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
-			// 只要有 payStatus === 'PAID' 且 goodsId === 当前商品id
-			allowComment.value = res.data.result.records.some(item =>
-				String(item.goodsId) === String(id.value) && item.payStatus === 'PAID'
-			);
-		} else {
-			allowComment.value = false;
-		}
-	} catch (e) {
-		allowComment.value = false;
-	}
-};
-
-const submitComment = async () => {
-	if (!allowComment.value) {
-		uni.showToast({
-			title: '仅限已支付该商品订单的用户评论',
-			icon: 'none'
-		});
-		return;
-	}
-	if (!newComment.value.trim()) {
-		uni.showToast({
-			title: '评论内容不能为空',
-			icon: 'none'
-		});
-		return;
-	}
-	if (!userStore.token) {
-		uni.showToast({
-			title: '请先登录',
-			icon: 'none'
-		});
-		return;
-	}
-	try {
-		const commentData = {
-			content: newComment.value,
-			postId: id.value,
-			fatherId: '',
-			receiverId: '',
-			repliedCommentId: ''
-		};
-		const res = await uni.request({
-			url: 'https://island.zhangshuiyi.com/island/comments/save',
-			method: 'POST',
-			header: {
-				'Content-Type': 'application/json',
-				'X-Access-Token': userStore.token
-			},
-			data: commentData
-		});
-		if (res.data.success) {
-			uni.showToast({
-				title: '评论成功',
-				icon: 'success'
-			});
-			newComment.value = '';
-			getComments();
-		} else {
-			uni.showToast({
-				title: res.data.message || '评论失败',
-				icon: 'none'
-			});
-		}
-	} catch (error) {
-		uni.showToast({
-			title: '评论失败，请稍后重试',
-			icon: 'none'
-		});
-	}
-};
-
-// 添加计算属性来控制显示的评论数量
-const displayedComments = computed(() => {
-	if (showAllComments.value) {
-		return comments.value;
-	}
-	return comments.value.slice(0, 3);
-});
-
-// 添加切换显示状态的方法
-const toggleComments = () => {
-	showAllComments.value = !showAllComments.value;
 };
 
 onLoad((options) => {
@@ -705,9 +551,8 @@ onLoad((options) => {
 	}
 
 	// 调用接口获取餐厅信息
-	getRestaurantDetailsById(options.id);
+	getRestaurantDetailsById(id.value);
 	getComments();
-	checkOrderPaid(); // 检查是否支付过该商品
 });
 
 onMounted(() => {
@@ -717,111 +562,27 @@ onMounted(() => {
 
 });
 
-// 调用接口获取餐厅信息
+// 获取餐厅详情
 const getRestaurantDetailsById = (id) => {
-	console.log('开始获取餐厅信息，ID:', id);
-	
-	const headers = {
-		'Content-Type': 'application/x-www-form-urlencoded'
-	};
-	if (userStore.token) {
-		headers['X-Access-Token'] = userStore.token;
-	}
-
 	uni.request({
-		url: `https://island.zhangshuiyi.com/island/front/product/dining/${id}`,
+		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
 		method: 'GET',
-		header: headers,
+		data: { id },
+		header: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'X-Access-Token': userStore.token || ''
+		},
 		success: (res) => {
-			console.log("获取餐厅信息成功:", res.data);
-			if (res.data && res.data.id) {
-				const details = res.data;
-				
-				// 保存餐厅详情到foodDetails变量
+			if (res.data && res.data.result) {
+				const details = res.data.result;
 				foodDetails.value = details;
-				console.log('保存的餐厅信息:', foodDetails.value);
-
-				// 更新店铺主照片（如果没有从上一页传入图片，则使用接口返回的图片）
-				if (!shopMainImage.value) {
-					shopMainImage.value = details.imageUrl || '/static/foodDetails/shop.jpg';
-				}
-
-				// 更新店铺基本信息
-				staticTexts.value.shopName = details.name || staticTexts.value.shopName;
-
-				// 删除description中的<p>标签
-				const cleanDescription = details.description
-					? details.description.replace(/<\/?p>/g, '')
-					: staticTexts.value.shopIntro;
-
-				staticTexts.value.shopIntro = cleanDescription;
-				staticTexts.value.address = details.address || staticTexts.value.address;
-				staticTexts.value.phone = details.phone || staticTexts.value.phone;
-
-				// 如果没有从上一页传入时间，则使用接口返回的时间
-				if (!timeRange.value.start || !timeRange.value.end) {
-					timeRange.value.start = formatTime(details.starthour) || '10:00';
-					timeRange.value.end = formatTime(details.endhour) || '22:00';
-				}
-
-				// 更新显示的营业时间
-				staticTexts.value.businessHours = `${timeRange.value.start}-${timeRange.value.end}`;
-
-				// 更新评分和价格信息
-				staticTexts.value.shopRating.rating = details.rating || staticTexts.value.shopRating.rating;
-				staticTexts.value.shopRating.monthlySales = `月售 ${details.monthSale || 0}`;
-				staticTexts.value.shopRating.averagePrice = `人均 ¥${details.priceaverage || 168}`;
-
-				// 获取餐厅图片
-				getRestaurantImages(id);
-			} else {
-				console.error('获取餐厅信息失败: 返回数据格式不正确');
-				uni.showToast({
-					title: '获取餐厅信息失败',
-					icon: 'none',
-					duration: 2000
-				});
+				// 重点：直接赋值评论和实拍图片
+				comments.value = details.comments || [];
+				shopPhotos.value = details.images || [];
+				// 如果后端返回的id为0或null，补上
+				if (!details.id) foodDetails.value.id = id;
+				// 其它字段赋值...
 			}
-		},
-		fail: (err) => {
-			console.error('获取餐厅信息失败:', err);
-			uni.showToast({
-				title: '网络错误，请重试',
-				icon: 'none',
-				duration: 2000
-			});
-		}
-	});
-};
-
-// 获取餐厅图片
-const getRestaurantImages = (id) => {
-	const headers = {
-		'Content-Type': 'application/x-www-form-urlencoded'
-	};
-	if (userStore.token) {
-		headers['X-Access-Token'] = userStore.token;
-	}
-
-	uni.request({
-		url: `https://island.zhangshuiyi.com/island/il-ding-images/attractions/${id}`,
-		method: 'GET',
-		header: headers,
-		success: (res) => {
-			console.log("获取餐厅图片成功:", res.data);
-			if (res.data.success && res.data.result) {
-				// 限制最多显示6张图片
-				shopPhotos.value = res.data.result.slice(0, 6);
-			} else {
-				console.error('获取餐厅图片失败:', res.data.message);
-				// 使用默认图片
-				shopPhotos.value = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
-			}
-		},
-		fail: (err) => {
-			console.error('获取餐厅图片失败:', err);
-			// 使用默认图片
-			shopPhotos.value = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
 		}
 	});
 };
@@ -836,12 +597,20 @@ const imageLoading = ref(true);
 
 // 在 script setup 中添加
 const userInfo = computed(() => userStore.userInfo || {});
+
+function getValidImages(images) {
+	if (!images) return [];
+	if (Array.isArray(images)) return images.filter(Boolean);
+	if (typeof images === 'string') return images.split(',').filter(Boolean);
+	return [];
+}
 </script>
 
 <style scoped>
 .container {
 	background-color: #f5f5f5;
 	min-height: 100vh;
+	padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* 为底部按钮留出空间 */
 }
 
 .shop-image {
@@ -1121,151 +890,85 @@ const userInfo = computed(() => userStore.userInfo || {});
 }
 
 /* 用户评价 */
-.user-reviews {
-	background-color: #fff;
-	padding: 20rpx;
-	margin: 20rpx;
-	border-radius: 12rpx;
-	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+.reviews {
+	width: 100%;
+	background: none;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+	margin: 0;
+	padding: 0;
 }
 
-.review-header {
-	margin-bottom: 20rpx;
+.comment-scroll {
+	width: 100%;
 }
 
-.review-title {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: #333;
+.comment-row {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
 }
 
-.no-comments {
-	text-align: center;
-	padding: 40rpx 30rpx;
-	color: #999;
-	font-size: 26rpx;
+.comment-card {
+	display: flex;
+	flex-direction: column;
+	min-width: 220px;
+	max-width: 70vw;
+	background: #fff;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	padding: 16px;
+	margin-right: 12px;
+	height: 120px;
+	box-sizing: border-box;
+}
+
+.comment-header { display: flex; align-items: center; }
+.comment-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+.comment-user { display: flex; flex-direction: column; }
+.comment-username { font-weight: bold; color: #333; }
+.comment-date { color: #aaa; font-size: 12px; }
+.comment-content { color: #444; font-size: 15px; margin-top: 6px; }
+.comment-more-btn {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 16rpx;
-	background-color: #f8f9fa;
-	border-radius: 12rpx;
-	margin: 20rpx 0;
+	justify-content: center;
+	min-width: 80px;
+	height: 120px;
+	background: #e9e6e6;
+	border-radius: 18px;
+	margin-right: 12px;
+	margin-bottom: 5px;
+	cursor: pointer;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-
-.comment-input-area {
-	background-color: #f8f9fa;
-	border-radius: 12rpx;
-	padding: 20rpx;
-	margin-bottom: 30rpx;
-}
-
-.comment-user-info {
+.see-all-btn-img {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	margin-bottom: 20rpx;
+	justify-content: center;
 }
-
-.user-avatar {
-	width: 60rpx;  /* 减小头像尺寸 */
-	height: 60rpx;
+.see-all-text {
+	writing-mode: vertical-rl;
+	font-size: 18px;
+	color: #222;
+	letter-spacing: 2px;
+	margin-bottom: 8px;
+	font-weight: bold;
+}
+.see-all-arrow {
+	width: 23px;
+	height: 23px;
+	background: #222;
 	border-radius: 50%;
-	margin-right: 16rpx;
-}
-
-.user-name {
-	font-size: 26rpx;  /* 减小字体大小 */
-	color: #333;
-	font-weight: 500;
-}
-
-.comment-textarea {
-	width: 100%;
-	height: 160rpx;
-	background-color: #fff;
-	border-radius: 8rpx;
-	padding: 20rpx;
-	font-size: 28rpx;
-	box-sizing: border-box;
-	border: 1px solid #e5e5e5;
-	margin-bottom: 20rpx;
-}
-
-/* 评论列表样式 */
-.review-item {
-	padding: 20rpx 0;
-	border-bottom: 1px solid #f0f0f0;
-}
-
-.review-user {
-	display: flex;
-	align-items: center;
-	margin-bottom: 16rpx;
-}
-
-.review-avatar {
-	width: 60rpx;  /* 减小头像尺寸 */
-	height: 60rpx;
-	border-radius: 50%;
-	margin-right: 16rpx;
-}
-
-.review-user-info {
-	flex: 1;
-}
-
-.review-username {
-	font-size: 26rpx;  /* 减小字体大小 */
-	color: #333;
-	font-weight: 500;
-	margin-bottom: 4rpx;
-}
-
-.review-time {
-	font-size: 22rpx;  /* 减小字体大小 */
-	color: #999;
-}
-
-.review-content {
-	font-size: 28rpx;
-	color: #333;
-	line-height: 1.6;
-	margin-left: 76rpx;  /* 调整内容缩进，与头像对齐 */
-}
-
-.comment-footer {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 16rpx;
-}
-
-.word-count {
-	font-size: 24rpx;
-	color: #999;
-}
-
-.submit-btn {
-	background-color: #3B82F6;
-	color: #fff;
-	font-size: 26rpx;
-	padding: 8rpx 32rpx;
-	border-radius: 8rpx;
-	border: none;
-}
-
-.submit-btn[disabled] {
-	background-color: #ccc;
-}
-
-.show-more {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 20rpx 0;
-	color: #3B82F6;
-	font-size: 26rpx;
-	gap: 8rpx;
+}
+.see-all-arrow uni-icons {
+	color: #fff !important;
 }
 
 /* 推荐菜品 */
@@ -1336,34 +1039,32 @@ const userInfo = computed(() => userStore.userInfo || {});
 
 /* 立即预订按钮 */
 .book-now {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color: #fff;
 	padding: 15px;
-	margin-top: 10px;
-	padding-top: 35px;
+	padding-bottom: calc(15px + env(safe-area-inset-bottom)); /* 适配底部安全区域 */
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+	z-index: 100;
 }
 
 .book-button {
 	background-color: #007AFF;
 	color: white;
 	border: none;
-	order-radius: 10px;
-	/* 减小圆角半径，使其更接近长方形 */
+	border-radius: 10px;
 	padding: 15px 0;
 	font-size: 16px;
-	width: calc(100% - 30px);
-	/* 略微缩小宽度，使两侧有小边距 */
-	margin: -30px 15px 0 15px;
-	/* 添加水平边距 */
+	width: 100%;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	/* 添加轻微阴影 */
 	transition: transform 0.3s ease, box-shadow 0.3s ease;
-	/* 添加过渡效果 */
 }
 
 .book-button:active {
 	transform: scale(0.98);
-	/* 点击时轻微缩小 */
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	/* 点击时阴影变浅 */
 }
 
 .time-picker-section {
@@ -1377,38 +1078,47 @@ const userInfo = computed(() => userStore.userInfo || {});
 .date-picker {
 	display: flex;
 	align-items: center;
+	justify-content: space-between; /* 左右分布 */
 	margin: 16px 0;
-	padding: 8px 0;
-	border-radius: 8px;
-	background: #fff9f9;
-	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+	padding: 12px 18px;
+	border-radius: 12px;
+	background: #f8fafc;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	border: 1px solid #e6e6e6;
 }
 
 .date-picker text {
-	font-size: 15px;
-	color: #141f2c;
-	min-width: 90px;
+	font-size: 16px;
+	color: #222;
 	font-weight: 500;
-	margin-left: 12px;
+	margin-right: 10px;
 }
 
 .picker-value {
 	display: inline-block;
-	margin-right: 12px;
-	color: #007aff;
-	font-size: 15px;
-	background: #fff;
-	border-radius: 6px;
-	padding: 6px 16px;
-	border: 1px solid #e0e0e0;
-	min-width: 90px;
+	min-width: 110px;
 	text-align: center;
-	transition: border-color 0.2s;
+	color: #007aff;
+	font-size: 16px;
+	background: #fff;
+	border-radius: 8px;
+	padding: 8px 18px;
+	border: 1.5px solid #e0e0e0;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+	transition: border-color 0.2s, box-shadow 0.2s;
+	cursor: pointer;
 }
 
 .picker-value:active,
 .picker-value:focus {
 	border-color: #007aff;
+	box-shadow: 0 2px 8px rgba(0,122,255,0.08);
+}
+
+.picker-value.unselected {
+	color: #bbb;
+	border-color: #eee;
+	background: #f5f5f5;
 }
 
 .loading-placeholder {

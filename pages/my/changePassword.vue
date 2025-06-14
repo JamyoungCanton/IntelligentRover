@@ -2,7 +2,6 @@
   <view class="change-password-page">
     <view class="card">
       <view class="title">修改登录密码</view>
-      <input class="input" v-model="oldPwd" placeholder="请输入原密码" password />
       <input class="input" v-model="newPwd" placeholder="请输入新密码" password />
       <button class="submit-btn" @click="submit">提交</button>
     </view>
@@ -23,12 +22,35 @@ const submit = async () => {
     uni.showToast({ title: '新密码至少6位', icon: 'none' })
     return
   }
-  // 调用后端接口
-  const res = await uni.request({
-    url: '你的后端修改密码接口',
-    method: 'POST',
-    data: { oldPwd: oldPwd.value, newPwd: newPwd.value },
+
+  // 1. 先获取用户完整信息
+  const userId = userStore.userInfo.id
+  const userRes = await uni.request({
+    url: `https://island.zhangshuiyi.com/island/sys/user/select/${userId}`,
+    method: 'GET',
     header: { 'X-Access-Token': userStore.token }
+  })
+  if (!userRes.data.success) {
+    uni.showToast({ title: '获取用户信息失败', icon: 'none' })
+    return
+  }
+  const userInfo = userRes.data.result
+
+  // 2. 合并新密码
+  userInfo.password = newPwd.value
+
+  // 3. 提交修改
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/sys/user/login/setting/userEdit',
+    method: 'POST',
+    data: {
+      id: userStore.userInfo.id,
+      password: newPwd.value
+    },
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/json'
+    }
   })
   if (res.data.success) {
     uni.showToast({ title: '修改成功，请重新登录', icon: 'success' })

@@ -60,11 +60,30 @@
         </view>
       </view>
 
-      <view class="date-picker">
-        <text class="section-title">选择出发日期：</text>
-        <picker mode="date" :value="playDate" :start="todayStr" @change="onPlayDateChange">
-          <view class="picker-value">{{ playDate || '请选择' }}</view>
-        </picker>
+      <view class="booking-section">
+        <view class="section-title">
+          <uni-icons type="calendar" size="20" color="#007AFF"></uni-icons>
+          <text>选择出发日期</text>
+        </view>
+        
+        <view class="date-picker-wrapper">
+          <picker 
+            mode="date" 
+            :value="playDate" 
+            :start="todayStr" 
+            @change="onPlayDateChange"
+          >
+            <view class="date-picker-content" :class="{ 'unselected': !playDate }">
+              <view class="date-left">
+                <text class="date-label">出发日期</text>
+                <text class="date-value">{{ playDate || '请选择' }}</text>
+              </view>
+              <view class="date-right">
+                <uni-icons type="right" size="16" color="#999"></uni-icons>
+              </view>
+            </view>
+          </picker>
+        </view>
       </view>
 
       <view class="action-buttons">
@@ -183,6 +202,11 @@ export default {
     },
     onPlayDateChange(e) {
       this.playDate = e.detail.value;
+      uni.showToast({
+        title: '日期选择成功',
+        icon: 'success',
+        duration: 1500
+      });
     },
     createOrder() {
       // 假设你有 userStore.userInfo
@@ -255,6 +279,7 @@ export default {
   background-color: #f7f7f7;
   padding: 0 20px;
   padding-top: v-bind('safeArea.top + "px"');
+  padding-bottom: 130px;
 }
 
 .header {
@@ -421,48 +446,184 @@ export default {
 }
 
 .action-buttons {
-  margin-top: 30px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120rpx;
+  background: #fff;
+  padding: 24rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 -2rpx 8rpx rgba(0,0,0,0.05);
+  z-index: 100;
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .total-price {
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 8rpx;
 }
 
 .total-label {
-  font-size: 14px;
+  font-size: 28rpx;
   color: #666;
-  margin-right: 10px;
 }
 
 .total-value {
-  font-size: 18px;
+  font-size: 40rpx;
   font-weight: bold;
-  /* 钱的颜色 */
-  color: #007AFF;
-  color: rgb(255, 105, 5);
+  color: #ff5722;
+  line-height: 1;
 }
 
 .register-btn {
-  background-color: #007AFF;
-  padding: 10px 20px;
-  border-radius: 5px;
+  background: linear-gradient(90deg, #007AFF 0%, #0056b3 100%);
+  padding: 20rpx 48rpx;
+  border-radius: 44rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 122, 255, 0.2);
+  transition: all 0.3s ease;
+  height: 88rpx;
+}
+
+.register-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 122, 255, 0.1);
 }
 
 .register-text {
   color: white;
-  font-size: 16px;
+  font-size: 32rpx;
+  font-weight: bold;
 }
 
-.date-picker {
-  margin-bottom: 20px;
+.booking-section {
+  background: #fff;
+  border-radius: 16rpx;
+  margin: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
-.picker-value {
-  padding: 5px 10px;
-  border-radius: 5px;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.date-picker-wrapper {
+  background: #f8fafc;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.date-picker-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.date-picker-content.unselected {
+  background: #f5f5f5;
+  border-color: #eee;
+}
+
+.date-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.date-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.date-value {
+  font-size: 32rpx;
+  color: #007AFF;
+  font-weight: 500;
+}
+
+.date-picker-content.unselected .date-value {
+  color: #999;
+}
+
+.date-right {
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-content:active {
+  animation: dateSelect 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .booking-section {
+    background: #1a1a1a;
+  }
+  
+  .section-title {
+    color: #fff;
+  }
+  
+  .date-picker-content {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+  
+  .date-picker-content.unselected {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+  
+  .date-label {
+    color: #999;
+  }
+  
+  .date-value {
+    color: #007AFF;
+  }
+  
+  .date-picker-content.unselected .date-value {
+    color: #666;
+  }
+  
+  .action-buttons {
+    background-color: #1a1a1a;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .total-value {
+    color: #ff5722;
+  }
+  
+  .total-label {
+    color: #999;
+  }
+}
+
+@keyframes dateSelect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 </style>

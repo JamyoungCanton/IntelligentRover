@@ -90,13 +90,13 @@
     </view>
 
     <!-- 游客实拍 -->
-    <view class="tourist-album-section" v-if="hotelData.images && hotelData.images.length">
+    <view class="tourist-album-section" v-if="hotelData.images && hotelData.images.filter(img => !!img && img.trim() !== '').length">
       <view class="album-title-row">
         <text class="album-title">游客实拍</text>
       </view>
       <scroll-view scroll-x class="tourist-album-scroll">
         <image
-          v-for="(img, idx) in hotelData.images"
+          v-for="(img, idx) in hotelData.images.filter(img => !!img && img.trim() !== '')"
           :key="idx"
           :src="img"
           class="tourist-album-img"
@@ -168,9 +168,7 @@
           // 这里打印 productId
           console.log('当前景点 productId:', hotelData.value.id);
           // 处理图片
-          if (Array.isArray(res.data.result.images) && res.data.result.images.length > 0) {
-            attractionImages.value = res.data.result.images;
-          } else if (res.data.result.imageUrl) {
+          if (res.data.result.imageUrl) {
             attractionImages.value = [res.data.result.imageUrl];
           } else {
             attractionImages.value = [];

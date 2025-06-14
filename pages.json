@@ -254,7 +254,7 @@
 		{
 			"path": "pages/post/createPost",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -285,6 +285,12 @@
 			"path": "pages/collectpost/collectpost",
 			"style": {
 				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/myFriends/myFriends",
+			"style": {
+				"navigationStyle": "custom"
 			}
 		},
 		{
