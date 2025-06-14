@@ -3,8 +3,8 @@
     <!-- 头部区域 -->
     <view class="header">
       <view class="header-top">
-        <image src="https://wlmtsys.obs.cn-south-1.myhuaweicloud.com/post/wlmtsys17170461054774894891ai顶部.png"
-          mode="widthFix" class="logo"></image>
+        <image src="/static/chat/ai.png" mode="widthFix" class="logo"></image>
+        <text class="app-title">智游侠</text>
       </view>
 
       <view class="header-center">
@@ -20,7 +20,7 @@
       </view>
 
       <view class="header-bottom">
-        <div class="header-span">东澳岛2天行程</div>
+        <div class="header-span">AI智游侠很高兴为您服务</div>
       </view>
     </view>
 
@@ -108,7 +108,7 @@
                 </view>
 
                 <view class="optimizer-actions">
-                  <button class="confirm-btn" @click="confirmTrip">确认行程并购买</button>
+                  <!-- <button class="confirm-btn" @click="confirmTrip">确认行程并购买</button> -->
                   <button class="optimize-btn" @click="optimizeTrip">优化行程规划</button>
                 </view>
               </view>
@@ -122,14 +122,6 @@
                   <span class="icon dislike-icon">👎</span>
                   <text>踩</text>
                 </button>
-                <button class="action-btn" @click="shareMessage">
-                  <span class="icon share-icon">↗️</span>
-                  <text>分享</text>
-                </button>
-                <button class="action-btn" @click="saveMessage">
-                  <span class="icon save-icon">⭐</span>
-                  <text>收藏</text>
-                </button>
               </view>
             </view>
           </view>
@@ -142,7 +134,7 @@
       <div class="voiceMessage">
         <img class="voice-icon" src="/static/chat/ai图标-语音输入.svg" alt="语音输入">
         <div class="input-container">
-          <input type="text" placeholder="1请输入旅游目的地或旅游问题1" v-model="message" />
+          <input type="text" placeholder="2请输入旅游目的地或旅游问题1" v-model="message" />
           <img class="send-icon" @click="sendMessage" src="/static/chat/ai图标-发送.svg" alt="发送">
         </div>
       </div>
@@ -235,14 +227,6 @@ const likeMessage = () => {
 
 const dislikeMessage = () => {
   uni.showToast({ title: '已踩', icon: 'success' });
-};
-
-const shareMessage = () => {
-  uni.showToast({ title: '已分享', icon: 'success' });
-};
-
-const saveMessage = () => {
-  uni.showToast({ title: '已收藏', icon: 'success' });
 };
 let currentIndex = 0;
 const userStore = useUserStore();
@@ -603,19 +587,19 @@ const handleFunctionClick = (text) => {
 const handleItemClick = (item) => {
   console.log(`跳转到类型: ${item.type}, ID: ${item.id}`);
   switch (item.type) {
-    case 'Transport':
+    case 'Transport':  // 交通
       uni.navigateTo({ url: `/pages/transportationGuide/transportationGuide?id=${item.id}` });
       break;
-    case 'Accommodation':
+    case 'Accommodation':  // 住宿
       uni.navigateTo({ url: `/pages/hotelDetail/hotelDetail?id=${item.id}` });
       break;
-    case 'Activity':
+    case 'Activity':  // 活动
       uni.navigateTo({ url: `/pages/activity/activity?id=${item.id}` });
       break;
-    case 'Attraction':
+    case 'Attraction':  // 景点
       uni.navigateTo({ url: `/pages/attractionDetail/attractionDetail?id=${item.id}` });
       break;
-    case 'Restaurant':
+    case 'Restaurant':  // 餐饮
       uni.navigateTo({ url: `/pages/foodDetails/foodDetails?id=${item.id}` });
       break;
     default:
@@ -828,13 +812,6 @@ onMounted(() => {
   color: #F44336;
 }
 
-.share-icon {
-  color: #2196F3;
-}
-
-.save-icon {
-  color: #FFC107;
-}
 
 /* 新增样式 */
 .ai-response-content {
@@ -915,13 +892,23 @@ onMounted(() => {
 }
 
 .header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 15px;
 }
 
 .header-top image {
-  width: 150px;
-  height: 20px;
-  display: block;
+  width: 100px;
+  height: 15px;
+  transform: scaleX(-1);
+  transition: all 0.3s ease;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
 }
 
 .header-center {
@@ -971,9 +958,15 @@ onMounted(() => {
 .header-span {
   background-color: #fff;
   border-radius: 10px;
-  padding: 10px;
-  width: 50%;
+  padding: 10px 15px;
+  width: auto;
+  /* 自动宽度 */
+  min-width: 200px;
+  /* 最小宽度确保文字完整显示 */
   border: none;
+  white-space: nowrap;
+  display: inline-block;
+  /* 行内块元素 */
 }
 
 .scroll-container {
