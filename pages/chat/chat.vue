@@ -44,6 +44,13 @@
                         {{ item.content || item.type }}
                       </span>
                     </template>
+                    <template v-else-if="item.type === 'ask'">
+                      <div style="margin: 8px 0;">
+                        <span class="clickable-item" @click="handleAskClick(item)" style="display: inline-block;">
+                          {{ item.content }}
+                        </span>
+                      </div>
+                    </template>
                     <span v-else v-html="item.content" class="message-text"></span>
                   </template>
                 </div>
@@ -188,10 +195,38 @@ const confirmTrip = () => {
 };
 
 const optimizeTrip = () => {
+  // 构建优化请求内容
+  let optimizationRequest = '优化上述行程';
+
+  // 添加出行天数
+  if (selectedDays.value) {
+    optimizationRequest += `，出行天数为${selectedDays.value}天`;
+  }
+
+  // 添加同行人员
+  if (selectedPerson.value) {
+    optimizationRequest += `，同行人员有${selectedPerson.value}`;
+  }
+
+  // 添加行程偏好
+  if (selectedTag.value) {
+    optimizationRequest += `，行程偏好为${selectedTag.value}`;
+  }
+
+  // 显示加载状态
   uni.showToast({
     title: '正在优化行程...',
     icon: 'loading'
   });
+
+  // 自动填充并发送优化请求
+  message.value = optimizationRequest;
+  sendMessage();
+
+  // 重置选择状态
+  selectedDays.value = 1;
+  selectedPerson.value = '';
+  selectedTag.value = '';
 };
 
 const likeMessage = () => {
@@ -382,7 +417,7 @@ const sendAiRequest = async (userInput) => {
       // 确保只更新当前消息的错误状态
       const currentMsgId = chatMessages.value[chatMessages.value.length - 1]?.id;
       if (currentMsgId && chatMessages.value[chatMessages.value.length - 1].id === currentMsgId) {
-        chatMessages.value[lastIndex].content = [{
+        chatMessages.value[chatMessages.value.length - 1].content = [{
           type: 'text',
           content: '抱歉，请求出错了，请稍后再试。'
         }];
@@ -496,7 +531,37 @@ function processResponseData(response) {
       });
     }
 
-    return processedData;
+    // 处理ask类型的内容
+    const askRegex = /\{"type":"ask".*?\}/g;
+    const finalProcessedData = [...processedData];
+
+    // 遍历处理后的数据，查找并处理ask内容
+    processedData.forEach(item => {
+      if (item.type === 'text' && item.content) {
+        const askMatches = item.content.match(askRegex);
+        if (askMatches) {
+          // 从原内容中删除ask内容
+          item.content = item.content.replace(askRegex, '');
+
+          // 将ask内容解析后添加到结果中
+          askMatches.forEach(match => {
+            try {
+              // 去除所有换行符和<br>标签
+              const cleanedMatch = match.replace(/[\n\r]+/g, '').replace(/<br\s*\/?>/gi, '');
+              const askObj = JSON.parse(cleanedMatch);
+              finalProcessedData.push({
+                ...askObj,
+                type: 'ask' // 确保类型正确
+              });
+            } catch (e) {
+              console.error('解析ask内容失败:', e);
+            }
+          });
+        }
+      }
+    });
+
+    return finalProcessedData;
   } catch (error) {
     console.error('处理响应数据出错:', error);
     return [{
@@ -556,6 +621,13 @@ const handleItemClick = (item) => {
     default:
       console.warn('未知的类型:', item.type);
   }
+};
+
+const handleAskClick = (askObj) => {
+  console.log('点击了ask选项:', askObj);
+  // 这里可以添加更多处理逻辑，比如发送对应的问题
+  message.value = askObj.content;
+  sendMessage();
 };
 
 
@@ -769,13 +841,13 @@ onMounted(() => {
   word-wrap: break-word;
 }
 
-.clickable-item {
+.clickable-item,
+.clickable-ask {
   color: #4285f4;
   text-decoration: underline;
   text-decoration-color: #4285f4;
   cursor: pointer;
   margin: 0 2px;
-  display: inline;
   padding-bottom: 1px;
   border-bottom: 1px solid #4285f4;
 }
