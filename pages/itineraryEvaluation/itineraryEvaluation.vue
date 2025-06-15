@@ -264,6 +264,7 @@ export default {
         sizeType: ['original', 'compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
+          console.log('选择的图片路径:', res.tempFilePaths);
           res.tempFilePaths.forEach((path) => {
             this.uploadImage(path);
           });
@@ -278,54 +279,72 @@ export default {
       });
     },
     uploadImage(path) {
-      const userStore = useUserStore();
-      const token = userStore.token;
-      if (!token) {
-        uni.showToast({
-          title: '未获取到认证信息，请重新登录',
-          icon: 'none'
-        });
-        return;
-      }
-      uni.uploadFile({
-        url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
-        filePath: path,
-        name: 'file',
-        header: {
-          'X-Access-Token': token
-        },
-        success: (res) => {
-          if (res.statusCode === 200) {
-            try {
-              const data = JSON.parse(res.data);
-              if (data.success && data.result) {
-                this.uploadedFiles.push(data.result.url || data.result); // 兼容两种格式
-                uni.showToast({ title: '上传成功', icon: 'success' });
-              } else {
-                uni.showToast({
-                  title: data.message || '图片上传失败',
-                  icon: 'none'
-                });
-              }
-            } catch (e) {
-              uni.showToast({
-                title: '图片上传失败',
-                icon: 'none'
-              });
-            }
-          } else {
-            uni.showToast({
-              title: `上传失败，状态码: ${res.statusCode}`,
-              icon: 'none'
-            });
-          }
-        },
-        fail: (err) => {
+      console.log('开始上传图片:', path);
+      return new Promise((resolve, reject) => {
+        const userStore = useUserStore();
+        const token = userStore.token;
+
+        if (!token) {
           uni.showToast({
-            title: '图片上传失败',
+            title: '未获取到认证信息，请重新登录',
             icon: 'none'
           });
+          reject('未获取到认证信息');
+          return;
         }
+
+        uni.uploadFile({
+          url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
+          filePath: path,
+          name: 'file',
+          header: {
+            'X-Access-Token': userStore.token
+          },
+          success: (res) => {
+            console.log('图片上传响应:', res);
+            if (res.statusCode === 200) {
+              try {
+                const data = JSON.parse(res.data);
+                console.log('解析后的响应数据:', data);
+                if (data.success) {
+                  const imageUrl = data.result;
+                  console.log('上传成功，图片URL:', imageUrl);
+                  this.uploadedFiles.push(imageUrl);
+                  resolve(imageUrl);
+                } else {
+                  console.error('上传失败:', data.message);
+                  uni.showToast({
+                    title: data.message || '图片上传失败',
+                    icon: 'none'
+                  });
+                  reject(data.message);
+                }
+              } catch (e) {
+                console.error('解析响应数据失败:', e);
+                uni.showToast({
+                  title: '图片上传失败',
+                  icon: 'none'
+                });
+                reject(e);
+              }
+            } else {
+              console.error('上传失败，状态码:', res.statusCode);
+              uni.showToast({
+                title: `上传失败，状态码: ${res.statusCode}`,
+                icon: 'none'
+              });
+              reject(res.statusCode);
+            }
+          },
+          fail: (err) => {
+            console.error('图片上传失败:', err);
+            uni.showToast({
+              title: '图片上传失败',
+              icon: 'none'
+            });
+            reject(err);
+          }
+        });
       });
     },
     deleteImage(index) {

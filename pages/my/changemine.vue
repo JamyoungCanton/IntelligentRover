@@ -23,12 +23,6 @@
         <view class="signature-count">{{ openid.length }}/10</view>
       </view>
       <view class="form-item">
-        <text class="label">性别</text>
-        <picker :disabled="!isEdit" :range="['男','女','保密']" :value="gender" @change="onGenderChange">
-          <view class="picker-value">{{ genderText }}</view>
-        </picker>
-      </view>
-      <view class="form-item">
         <text class="label">出生日期</text>
         <picker mode="date" :disabled="!isEdit" :value="birthday" :end="today" @change="onBirthdayChange">
           <view class="picker-value">{{ birthday || '请选择出生日期' }}</view>

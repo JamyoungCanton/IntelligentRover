@@ -13,8 +13,12 @@
 
     <!-- 信息栏 -->
     <view class="info-bar">
+      <!-- 景点名称 -->
+      <view class="attraction-name">
+        <text>{{ hotelData.name }}</text>
+      </view>
       <view class="price-row">
-        <text class="price-main">￥{{ hotelData.ticketprice || '--' }}</text>
+        <text class="price-main">￥{{ hotelData.ticketprice || '免费' }}</text>
         <text class="price-desc">起/人</text>
       </view>
       <view class="info-row">
@@ -141,6 +145,8 @@
   const allowComment = ref(false); // 是否允许评论
   const commentDetail = ref(null);
 
+  console.log('attractionDetail.vue 页面已加载');
+
   onLoad((options) => {
     id.value = options.id;
     console.log('onLoad 传入的 id:', id.value);
@@ -154,6 +160,8 @@
   });
 
   const getAttrictionDetail = () => {
+    console.log('getAttrictionDetail 被调用');
+    console.log('开始获取景点详情，ID:', id.value);
     uni.request({
       url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById',
       method: 'GET',
@@ -163,26 +171,59 @@
       },
       data: { id: id.value },
       success: (res) => {
+        console.log('景点详情接口返回数据:', res.data);
         if (res.data.success && res.data.result) {
           hotelData.value = res.data.result;
-          // 这里打印 productId
-          console.log('当前景点 productId:', hotelData.value.id);
+          console.log('当前景点数据:', hotelData.value);
+          
           // 处理图片
           if (res.data.result.imageUrl) {
+            console.log('景点主图:', res.data.result.imageUrl);
             attractionImages.value = [res.data.result.imageUrl];
           } else {
+            console.log('没有景点主图');
             attractionImages.value = [];
           }
+
+          // 处理游客实拍图片
+          console.log('原始图片数据:', res.data.result.images);
+          if (res.data.result.images && Array.isArray(res.data.result.images)) {
+            // 拆分每个字符串里的多个图片URL
+            const processedImages = res.data.result.images.reduce((acc, imgStr) => {
+              if (imgStr && typeof imgStr === 'string') {
+                const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
+                return [...acc, ...urls];
+              }
+              return acc;
+            }, []);
+            hotelData.value.images = processedImages;
+            console.log('处理后的图片数组:', processedImages);
+          } else {
+            console.log('没有游客实拍图片或格式不正确');
+            hotelData.value.images = [];
+          }
+
           // 处理评论
           comments.value = res.data.result.comments || [];
-          console.log('comments:', res.data.result.comments);
+          console.log('评论数据:', comments.value);
+        } else {
+          console.log('获取景点详情失败:', res.data);
         }
+      },
+      fail: (err) => {
+        console.error('请求景点详情失败:', err);
       }
     });
   };
 
   // 预览单张图片
   const previewImage = (index) => {
+    if (!hotelData.value.images || !Array.isArray(hotelData.value.images)) {
+      console.log('没有可预览的图片');
+      return;
+    }
+    console.log('预览图片，当前索引:', index);
+    console.log('预览图片数组:', hotelData.value.images);
     uni.previewImage({
       urls: hotelData.value.images,
       current: index
@@ -840,5 +881,13 @@
 }
 .bottom-placeholder {
   height: 70px; /* 与底部按钮高度一致 */
+}
+.attraction-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: left;
+  padding: 0 4px;
 }
 </style>

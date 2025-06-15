@@ -576,9 +576,21 @@ const getRestaurantDetailsById = (id) => {
 			if (res.data && res.data.result) {
 				const details = res.data.result;
 				foodDetails.value = details;
-				// 重点：直接赋值评论和实拍图片
 				comments.value = details.comments || [];
-				shopPhotos.value = details.images || [];
+				// 重点：处理 images 字段
+				if (details.images && Array.isArray(details.images)) {
+					const processedPhotos = details.images.reduce((acc, imgStr) => {
+						if (imgStr && typeof imgStr === 'string') {
+							const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
+							return [...acc, ...urls];
+						}
+						return acc;
+					}, []);
+					shopPhotos.value = processedPhotos;
+					console.log('处理后的店铺实拍图片数组:', processedPhotos);
+				} else {
+					shopPhotos.value = [];
+				}
 				// 如果后端返回的id为0或null，补上
 				if (!details.id) foodDetails.value.id = id;
 				// 其它字段赋值...
