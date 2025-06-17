@@ -63,20 +63,25 @@
             <view class="time">{{ formatRelativeTime(item.createTime) }}</view>
 
             <!-- 子评论 -->
-            <view class="sub-comment-item" @click="showSubPopup(sub,$event)"  v-for="(sub) in item.children" :key="sub.id">
+            <view v-if="item.children.length > 0" class="sub-comments">
               <view class="sub-comment-header">
-                <view class="sub-header-left">
-                  <image
-                    class="avatar"
-                    :src="sub.userVO.avatar || defaultAvatar"
-                    mode="aspectFill"
-                  />
-                  <text class="name">{{ sub.userVO.username }}</text>
-                </view>
-                <text class="time">{{ formatRelativeTime(sub.createTime) }}</text>
+                <text>共 {{ item.children.length }} 条回复</text>
               </view>
-              <view class="comment-content">
-                <view class="content">{{ sub.content }}</view>
+              <view class="sub-comment-item" @click="showSubPopup(sub,$event)"  v-for="(sub) in item.children" :key="sub.id">
+                <view class="sub-comment-header">
+                  <view class="sub-header-left">
+                    <image
+                      class="avatar"
+                      :src="sub.userVO.avatar || defaultAvatar"
+                      mode="aspectFill"
+                    />
+                    <text class="name">{{ sub.userVO.username }}</text>
+                  </view>
+                  <text class="time">{{ formatRelativeTime(sub.createTime) }}</text>
+                </view>
+                <view class="comment-content">
+                  <view class="content">{{ sub.content }}</view>
+                </view>
               </view>
             </view>
           </view>
@@ -151,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
 
@@ -552,6 +557,21 @@ const toggleFollowAuthor = () => {
 
 const defaultAvatar = 'https://static-typical-avatar-url.png';
 
+// 优化：添加分页加载子评论
+const subCommentPageSize = ref(3); // 初始加载 3 条子评论
+const showAllSubComments = ref({}); // 记录每个评论是否显示全部子评论
+
+const getDisplaySubComments = (comment) => {
+  if (showAllSubComments.value[comment.id]) {
+    return comment.children;
+  }
+  return comment.children.slice(0, subCommentPageSize.value);
+};
+
+const toggleShowAllSubComments = (comment) => {
+  showAllSubComments.value[comment.id] = !showAllSubComments.value[comment.id];
+};
+
 </script>
 
 <style lang="scss" scoped>
@@ -694,12 +714,12 @@ page {
 }
 
 .comment-area {
-  margin-top: 20rpx;
+  width: 100%;
+  padding-bottom: 20rpx;
   
 
   .comment-bar {
     display: flex;
-    margin-top: 20rpx;
 
     .bar {
       font-size: 28rpx;
@@ -741,7 +761,7 @@ page {
       }
 
       .sub-comment-item {
-        margin-left: 28rpx; 
+        margin-left: 8rpx; 
         padding: 5rpx 0; 
         border-left: 2rpx dashed #ccc; 
         background-color: #f9f9f9;
@@ -761,8 +781,6 @@ page {
           }
 
           .avatar {
-            width: 70px;
-            height: 40px;
             border-radius: 50%;
             object-fit: cover;
             margin-right: 10rpx;
@@ -961,5 +979,30 @@ page {
   background-color: #fff;
   // 去除边框线
   border: none;
+}
+.sub-comments {
+  margin-top: 10rpx;
+  padding-left: 20rpx;
+
+  .sub-comment-header {
+    margin-bottom: 10rpx;
+    color: #666;
+    font-size: 24rpx;
+  }
+
+  .sub-comment-item {
+    margin-bottom: 10rpx;
+    padding: 10rpx;
+    background-color: #f9f9f9;
+    border-radius: 8rpx;
+  }
+}
+
+.show-all-btn {
+  color: #007aff;
+  font-size: 24rpx;
+  margin-top: 10rpx;
+  text-align: center;
+  cursor: pointer;
 }
 </style>
