@@ -39,74 +39,165 @@
     <view class="tips">
       <text class="tips-title">{{ tips.title }}</text>
       <view class="tips-content">
-        <text class="tip-item" v-for="(tip, index) in tips.items" :key="index">{{ tip }}</text>
+        <text v-for="(item, index) in tips.items" :key="index" class="tips-item">{{ item }}</text>
       </view>
+      <text class="countdown">{{ countdown }}秒后自动跳转到订单页面</text>
     </view>
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      safeArea: { top: 0, bottom: 0 },
-      // 图片资源路径
-      assets: {
-        successIcon: '/static/route/success.png',
-        infoIcon1: '/static/route/info1.png',
-        infoIcon2: '/static/route/info2.png'
-      },
-      // 订单信息
-      orderInfo: {
-        orderId: 'SD20230728001',
-        tourName: '浪漫双岛游 2日1晚',
-        departureDate: '2025年1月1日',
-        travelers: 2
-      },
-      // 通知内容
-      notifications: [
-        '行程详情和注意事项已发送至您的手机：138****8888，请注意查收。',
-        '导游将在出发前1天与您联系，确认集合地点和时间。'
-      ],
-      // 按钮文案
-      buttons: {
-        viewDetails: '查看订单详情',
-        goHome: '返回首页'
-      },
-      // 温馨提示内容
-      tips: {
-        title: '温馨提示',
-        items: [
-          '• 请提前准备好必要的证件和物品',
-          '• 如需修改或取消行程，请提前48小时联系客服',
-          '• 遇到问题可随时拨打咨询热线：400-888-8888'
-        ]
-      }
-    };
-  },
-  onLoad() {
-    this.getSafeAreaInfo();
-  },
-  methods: {
-    goBack() {
-      uni.navigateBack();
-    },
-    viewDetails() {
-      uni.switchTab({
-        url: `/pages/order/order`
-      });
-    },
-    goHome() {
-      uni.switchTab({
-        url: '/pages/index/index'
-      });
-    },
-    getSafeAreaInfo() {
-      const systemInfo = uni.getSystemInfoSync();
-      this.safeArea = systemInfo.safeArea || { top: 0, bottom: 0 };
-    }
-  }
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useUserStore } from '@/store/modules/user';
+
+const safeArea = ref({ top: 0, bottom: 0 });
+const assets = ref({
+  successIcon: '/static/route/success.png',
+  infoIcon1: '/static/route/info1.png',
+  infoIcon2: '/static/route/info2.png'
+});
+const orderInfo = ref({
+  orderId: 'SD20230728001',
+  tourName: '浪漫双岛游 2日1晚',
+  departureDate: '2025年1月1日',
+  travelers: 2
+});
+const notifications = ref([
+  '行程详情和注意事项已发送至您的手机：138****8888，请注意查收。',
+  '导游将在出发前1天与您联系，确认集合地点和时间。'
+]);
+const buttons = ref({
+  viewDetails: '查看订单详情',
+  goHome: '返回首页'
+});
+const tips = ref({
+  title: '温馨提示',
+  items: [
+    '• 请提前准备好必要的证件和物品',
+    '• 如需修改或取消行程，请提前48小时联系客服',
+    '• 遇到问题可随时拨打咨询热线：400-888-8888'
+  ]
+});
+const countdown = ref(3);
+
+const getSafeAreaInfo = () => {
+  const systemInfo = uni.getSystemInfoSync();
+  safeArea.value = systemInfo.safeArea || { top: 0, bottom: 0 };
 };
+
+const goBack = () => {
+  uni.navigateBack();
+};
+
+const viewDetails = () => {
+  uni.switchTab({
+    url: `/pages/order/order`
+  });
+};
+
+const goHome = () => {
+  uni.switchTab({
+    url: '/pages/index/index'
+  });
+};
+
+const payOrder = () => {
+  const userStore = useUserStore();
+  const token = userStore.token;
+  
+  if (!token) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none',
+      duration: 2000
+    });
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 2000);
+    return;
+  }
+
+  uni.showLoading({
+    title: '正在支付...',
+    mask: true
+  });
+
+  // 修改为正确的请求方式
+  uni.request({
+    url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${this.orderSn}`,
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': token
+    },
+    success: (res) => {
+      console.log('支付订单响应:', res);
+      uni.hideLoading();
+      
+      if (res.statusCode === 401) {
+        uni.showToast({
+          title: '登录信息过期，请重新登录',
+          icon: 'none',
+          duration: 2000
+        });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          });
+        }, 2000);
+        return;
+      }
+
+      if (res.data && res.data.success) {
+        uni.showToast({
+          title: '支付成功',
+          icon: 'success',
+          duration: 1500
+        });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/orderList/orderList'
+          });
+        }, 1500);
+      } else {
+        console.error('支付失败:', res.data);
+        uni.showToast({
+          title: res.data.message || '支付失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('支付请求失败:', err);
+      uni.hideLoading();
+      uni.showToast({
+        title: '支付失败，请稍后重试',
+        icon: 'none'
+      });
+    }
+  });
+};
+
+onMounted(() => {
+  getSafeAreaInfo();
+  // 添加倒计时
+  const timer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearInterval(timer);
+      uni.switchTab({
+        url: '/pages/order/order'
+      });
+    }
+  }, 1000);
+});
+
+// 在组件卸载时清除定时器
+onUnmounted(() => {
+  clearInterval(timer);
+});
 </script>
 
 <style scoped>
@@ -233,10 +324,17 @@ export default {
   margin-top: 20px;
 }
 
-.tip-item {
+.tips-item {
   font-size: 14px;
   color: #666;
   margin-bottom: 8px;
   display: block;
+}
+
+.countdown {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  margin-top: 10px;
 }
 </style>
