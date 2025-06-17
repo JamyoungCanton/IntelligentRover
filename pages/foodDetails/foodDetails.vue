@@ -5,18 +5,18 @@
 
 		<!--  店铺图片 -->
 		<view class="shop-image">
-			<image :src="shopMainImage" mode="widthFix"></image>
+			<image :src="foodDetails?.imageUrl || shopMainImage" mode="widthFix"></image>
 			<view class="shop-info-overlay">
-				<view class="shop-name">{{ staticTexts.shopName }}</view>
+				<view class="shop-name">{{ foodDetails?.name || '加载中...' }}</view>
 				<view class="shop-rating">
 					<view class="star-rating">
-						<template v-for="(star, index) in renderStars(staticTexts.shopRating.rating)" :key="index">
+						<template v-for="(star, index) in renderStars(foodDetails?.rating || 0)" :key="index">
 							<uni-icons :type="star.type" size="18" :color="star.color"></uni-icons>
 						</template>
 					</view>
-					<text class="rating">{{ staticTexts.shopRating.rating }}</text>
-					<text class="monthly-sales">{{ staticTexts.shopRating.monthlySales }}</text>
-					<text class="average-price">{{ staticTexts.shopRating.averagePrice }}</text>
+					<text class="rating">{{ foodDetails?.rating || 0 }}</text>
+					<text class="monthly-sales">月售 {{ foodDetails?.monthSale || 0 }}</text>
+					<text class="average-price">人均 ¥{{ foodDetails?.priceaverage || 0 }}</text>
 				</view>
 			</view>
 		</view>
@@ -29,10 +29,10 @@
 					<uni-icons type="location" size="20" color="#666"></uni-icons>
 				</view>
 				<view class="detail-content">
-					<text class="detail-label">{{ staticTexts.detailLabels.businessHours }}</text>
+					<text class="detail-label">营业时间</text>
 					<view class="detail-value">
 						<uni-icons type="time" size="16" color="#666"></uni-icons>
-						<text>{{ staticTexts.businessHours }}</text>
+						<text>{{ foodDetails?.starthour || '00:00' }}-{{ foodDetails?.endhour || '00:00' }}</text>
 					</view>
 				</view>
 			</view>
@@ -41,9 +41,9 @@
 					<uni-icons type="location" size="20" color="#666"></uni-icons>
 				</view>
 				<view class="detail-content">
-					<text class="detail-label">{{ staticTexts.detailLabels.address }}</text>
+					<text class="detail-label">地址</text>
 					<view class="detail-value">
-						<text>{{ staticTexts.address }}</text>
+						<text>{{ foodDetails?.address || '暂无地址' }}</text>
 					</view>
 				</view>
 			</view>
@@ -52,9 +52,9 @@
 					<uni-icons type="phone" size="20" color="#666"></uni-icons>
 				</view>
 				<view class="detail-content">
-					<text class="detail-label">{{ staticTexts.detailLabels.phone }}</text>
+					<text class="detail-label">电话</text>
 					<view class="detail-value">
-						<text>{{ staticTexts.phone }}</text>
+						<text>{{ foodDetails?.phone || '暂无电话' }}</text>
 					</view>
 				</view>
 			</view>
@@ -65,11 +65,10 @@
 			<view class="section-title">餐厅介绍</view>
 			<view class="intro-content">
 				<text class="intro-text" :class="{ 'collapsed': !isIntroUnfolded }" ref="introText">
-					{{ staticTexts.shopIntro }}
+					{{ foodDetails?.description || '暂无介绍' }}
 				</text>
 				<view class="unfold" @click="toggleIntro">
-					<text :class="isIntroUnfolded ? 'fold-text' : 'unfold-text'">{{ isIntroUnfolded ? '收起' : '展开'
-					}}</text>
+					<text :class="isIntroUnfolded ? 'fold-text' : 'unfold-text'">{{ isIntroUnfolded ? '收起' : '展开' }}</text>
 				</view>
 			</view>
 		</view>
@@ -176,37 +175,52 @@ const statusBarHeight = ref(0);
 const foodDetails = ref(null);
 const userStore = useUserStore();
 const id = ref('');
-
 const shopMainImage = ref('');
+const isIntroUnfolded = ref(false);
+const shopPhotos = ref([]);
+const comments = ref([]);
+const showAllComments = ref(false);
+const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
 
-// 更新页面显示的数据的函数
-const updatePageDetails = (details) => {
-	if (details) {
-		staticTexts.value.shopName = details.name || staticTexts.value.shopName;
-		staticTexts.value.address = details.address || staticTexts.value.address;
-
-		// 使用正则表达式提取时分
-		const formatTime = (timeString) => {
-			const match = timeString ? timeString.match(/(\d{2}:\d{2})/) : null;
-			return match ? match[1] : null;
-		};
-
-		const startTime = formatTime(details.starthour) || '10:00';
-		const endTime = formatTime(details.endhour) || '22:00';
-
-		staticTexts.value.businessHours = `${startTime}-${endTime}`;
-		staticTexts.value.shopRating.averagePrice = `人均 ¥${details.priceaverage || 168}`;
+// 获取餐厅详情
+const getRestaurantDetailsById = (id) => {
+	uni.request({
+		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
+		method: 'GET',
+		data: { id },
+		header: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'X-Access-Token': userStore.token || ''
+		},
+		success: (res) => {
+			if (res.data && res.data.result) {
+				const details = res.data.result;
+				foodDetails.value = details;
+				comments.value = details.comments || [];
+				
+				// 处理图片
+				if (details.images && Array.isArray(details.images)) {
+					const processedPhotos = details.images.reduce((acc, imgStr) => {
+						if (imgStr && typeof imgStr === 'string') {
+							const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
+							return [...acc, ...urls];
+						}
+						return acc;
+					}, []);
+					shopPhotos.value = processedPhotos;
+				} else {
+					shopPhotos.value = [];
 	}
-};
-
-// 注册组件
-const components = {
-	uniIcons
+				
+				// 如果后端返回的id为0或null，补上
+				if (!details.id) foodDetails.value.id = id;
+			}
+		}
+	});
 };
 
 // 星级渲染函数
 const renderStars = (rating) => {
-	// 如果没有评分，返回5个空星
 	if (!rating && rating !== 0) {
 		return Array(5).fill({ type: 'star', color: '#CCCCCC' });
 	}
@@ -215,17 +229,10 @@ const renderStars = (rating) => {
 	const fullStars = Math.floor(rating);
 	const halfStar = rating % 1 >= 0.5;
 
-	// 添加满星
 	for (let i = 0; i < fullStars; i++) {
 		stars.push({ type: 'star-filled', color: '#FFCC00' });
 	}
 
-	// 添加半星（不行）
-	// if (halfStar) {
-	// 	stars.push({ type: 'half', color: '#FFCC00' });
-	// }
-
-	// 添加空星
 	while (stars.length < 5) {
 		stars.push({ type: 'star', color: '#CCCCCC' });
 	}
@@ -233,100 +240,77 @@ const renderStars = (rating) => {
 	return stars;
 };
 
-// 数据
-const isIntroUnfolded = ref(false);
-const shopPhotos = ref(['photo1.jpg', 'photo2.jpg', 'photo3.jpg']);
+// 展开/收起介绍
+const toggleIntro = () => {
+	isIntroUnfolded.value = !isIntroUnfolded.value;
+};
 
-const staticTexts = ref({
-	// 页面基础信息
-	title: '店铺详情',
-	backIcon: '返回',
-	shareIcon: '分享',
+// 切换评论显示
+const toggleComments = () => {
+	showAllComments.value = true;
+};
 
-	// 店铺基本信息
-	shopName: '海鲜大排档',
-	shopIntro: '本店主打新鲜海鲜，采用当日现捕海鲜，确保最佳口感。店内环境整洁，服务热情周到。推荐菜品包括清蒸海斑、椒盐濑尿虾、姜葱炒蟹等。欢迎品尝！',
-	businessHours: '10:00-22:00',
-	address: '广州市海珠区新港东路123号',
-	phone: '020-12345678',
-
-	// 功能按钮
-	functionButtons: [
-		{ icon: 'phone', text: '电话' },
-		{ icon: 'location', text: '导航' },
-		{ icon: 'calendar', text: '预订' }
-	],
-
-	// 店铺评分
-	shopRating: {
-		rating: 4.8,
-		monthlySales: '月售 2,384',
-		averagePrice: '人均 ¥168'
-	},
-
-	// 详情标签
-	detailLabels: {
-		businessHours: '营业时间',
-		address: '地址',
-		phone: '电话'
-	},
-
-	// 评价与推荐
-	reviewTitle: '用户评价 (1,234)',
-	recommendedDishesTitle: '推荐菜品',
-	reviewViewAllText: '查看全部 >',
-
-	// 按钮文字
-	bookNowText: '立即预订',
-	introToggleTexts: {
-		unfold: '展开',
-		fold: '收起'
-	},
-
-	// 用户评价相关文字
-	reviews: [
-		{
-			avatar: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/df90fbeb9bad4ae895a10deab1eeaa2c.jpg',
-			name: '李小姐',
-			date: '2024-01-15',
-			content: '海鲜非常新鲜，服务态度很好，环境也很干净，值得推荐！',
-			rating: 5,
-			images: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/d1f51a32fb384ed79d5c788d931185b9.jpg'
-		},
-		{
-			avatar: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/38fc8a8cb33a4229b5fed00bdcedd7a9.jpg',
-			name: '张先生',
-			date: '2024-01-14',
-			content: '菜品味道不错，就是价格稍贵。总体来说还是很满意的。',
-			rating: 4,
-			images: null
+// 获取评论
+const getComments = async () => {
+	const res = await uni.request({
+		url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
+		method: 'GET',
+		data: { productId: id.value, type: 'Dining' },
+		header: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'X-Access-Token': userStore.token
 		}
-	]
+	});
+	if (res.data.success && Array.isArray(res.data.result)) {
+		comments.value = res.data.result;
+	} else {
+		comments.value = [];
+	}
+};
+
+// 获取有效的图片数组
+function getValidImages(images) {
+	if (!images) return [];
+	if (Array.isArray(images)) return images.filter(Boolean);
+	if (typeof images === 'string') return images.split(',').filter(Boolean);
+	return [];
+}
+
+onLoad((options) => {
+	console.log('饮食详情页面收到的参数:', options);
+	
+	if (!options.id) {
+		uni.showToast({
+			title: '参数错误',
+			icon: 'none',
+			duration: 2000
+		});
+		setTimeout(() => {
+			uni.navigateBack();
+		}, 2000);
+		return;
+	}
+	
+	id.value = options.id;
+	
+	if (options.startTime && options.endTime) {
+		timeRange.value.start = formatTime(decodeURIComponent(options.startTime));
+		timeRange.value.end = formatTime(decodeURIComponent(options.endTime));
+	}
+
+	if (options.imageURL) {
+		shopMainImage.value = decodeURIComponent(options.imageURL);
+	}
+
+	getRestaurantDetailsById(id.value);
+	getComments();
 });
 
-const recommendedDishes = ref([
-	{
-		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/32205ab6539049b79581d7080fb835d6.jpg',
-		name: '清蒸海斑',
-		desc: '新鲜海斑鱼，清蒸工艺',
-		price: 188
-	},
-	{
-		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/7a9b523fe5804d3cbea93223c628a314.jpg',
-		name: '椒盐濑尿虾',
-		desc: '现捕濑尿虾，椒盐配方',
-		price: 98
-	},
-	{
-		image: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/bfcbc05e156445198555de4204faf596.jpg',
-		name: '姜葱炒蟹',
-		desc: '新鲜花蟹，姜葱爆炒',
-		price: 138
-	}
-]);
-
-// 将静态文字中的评价数据赋值给 reviews
-const reviews = ref(staticTexts.value.reviews);
+onMounted(() => {
+	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
+	statusBarHeight.value = sbHeight;
+	safeAreaInsets.value = insets;
+});
 
 // 方法
 const goBack = () => {
@@ -349,24 +333,6 @@ const navigate = () => {
 
 const book = () => {
 	console.log('打开预订页面');
-};
-
-const toggleIntro = () => {
-	isIntroUnfolded.value = !isIntroUnfolded.value;
-	const introTextElement = document.querySelector('.intro-text');
-	if (isIntroUnfolded.value) {
-		console.log('展开餐厅介绍');
-		// 展开时显示全文
-		introTextElement.classList.remove('collapsed');
-	} else {
-		console.log('收起餐厅介绍');
-		// 收起时省略文本
-		introTextElement.classList.add('collapsed');
-	}
-};
-
-const viewAllReviews = () => {
-	console.log('查看全部评价');
 };
 
 // 添加时间选择相关的响应式变量
@@ -498,107 +464,6 @@ const bookNow = () => {
 	});
 };
 
-// 在 script setup 中添加评论相关的状态
-const comments = ref([]);
-const showAllComments = ref(false);
-const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
-const toggleComments = () => { showAllComments.value = true; };
-
-const getComments = async () => {
-	const res = await uni.request({
-		url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
-		method: 'GET',
-		data: { productId: id.value, type: 'Dining' },
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token
-		}
-	});
-	if (res.data.success && Array.isArray(res.data.result)) {
-		comments.value = res.data.result;
-	} else {
-		comments.value = [];
-	}
-};
-
-onLoad((options) => {
-	console.log('饮食详情页面收到的参数:', options);
-	
-	// 确保id存在
-	if (!options.id) {
-		uni.showToast({
-			title: '参数错误',
-			icon: 'none',
-			duration: 2000
-		});
-		setTimeout(() => {
-			uni.navigateBack();
-		}, 2000);
-		return;
-	}
-	
-	id.value = options.id;
-	
-	// 如果有传入营业时间，则使用传入的时间
-	if (options.startTime && options.endTime) {
-		timeRange.value.start = formatTime(decodeURIComponent(options.startTime));
-		timeRange.value.end = formatTime(decodeURIComponent(options.endTime));
-	}
-
-	// 如果有传入图片URL，则使用传入的图片
-	if (options.imageURL) {
-		shopMainImage.value = decodeURIComponent(options.imageURL);
-	}
-
-	// 调用接口获取餐厅信息
-	getRestaurantDetailsById(id.value);
-	getComments();
-});
-
-onMounted(() => {
-	const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
-	statusBarHeight.value = sbHeight;
-	safeAreaInsets.value = insets;
-
-});
-
-// 获取餐厅详情
-const getRestaurantDetailsById = (id) => {
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
-		method: 'GET',
-		data: { id },
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token || ''
-		},
-		success: (res) => {
-			if (res.data && res.data.result) {
-				const details = res.data.result;
-				foodDetails.value = details;
-				comments.value = details.comments || [];
-				// 重点：处理 images 字段
-				if (details.images && Array.isArray(details.images)) {
-					const processedPhotos = details.images.reduce((acc, imgStr) => {
-						if (imgStr && typeof imgStr === 'string') {
-							const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
-							return [...acc, ...urls];
-						}
-						return acc;
-					}, []);
-					shopPhotos.value = processedPhotos;
-					console.log('处理后的店铺实拍图片数组:', processedPhotos);
-				} else {
-					shopPhotos.value = [];
-				}
-				// 如果后端返回的id为0或null，补上
-				if (!details.id) foodDetails.value.id = id;
-				// 其它字段赋值...
-			}
-		}
-	});
-};
-
 const handleImageError = (e) => {
 	console.error('图片加载失败:', e);
 	// 可以设置一个默认图片
@@ -609,13 +474,6 @@ const imageLoading = ref(true);
 
 // 在 script setup 中添加
 const userInfo = computed(() => userStore.userInfo || {});
-
-function getValidImages(images) {
-	if (!images) return [];
-	if (Array.isArray(images)) return images.filter(Boolean);
-	if (typeof images === 'string') return images.split(',').filter(Boolean);
-	return [];
-}
 </script>
 
 <style scoped>

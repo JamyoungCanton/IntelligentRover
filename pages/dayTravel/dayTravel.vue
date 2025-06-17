@@ -150,7 +150,14 @@ const fetchSpots = async () => {
 
     if (res.statusCode === 200 && res.data && res.data.success) {
       const spotList = res.data.result || [];
+      console.log('原始套餐数据:', JSON.stringify(spotList, null, 2));
+      
       spots.value = spotList.map(item => {
+        console.log('处理套餐项:', item.id, '图片数据:', item.images);
+        
+        const imageUrl = item.images && item.images.length > 0 ? item.images[0].url : '/static/default.png';
+        console.log('最终图片URL:', imageUrl);
+        
         return {
           id: item.id || '',
           name: item.packname || '',
@@ -158,11 +165,13 @@ const fetchSpots = async () => {
           desc: (item.tags || '').replace(/,/g, ' · '),
           price: item.price ? parseFloat(item.price) : 0,
           sales: item.soldSum || 0,
-          image: (item.images && item.images[0] && item.images[0].url) || '/static/default.png',
+          image: imageUrl,
           imagestar: '/static/dayTravel/star.png',
           starStyle: { width: '13px', height: '13px', objectFit: 'contain' }
         };
       });
+      
+      console.log('处理后的套餐列表:', JSON.stringify(spots.value, null, 2));
     } else {
       uni.showToast({ title: '套餐获取失败！', icon: 'none' });
     }

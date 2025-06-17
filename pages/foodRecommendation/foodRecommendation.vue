@@ -526,7 +526,7 @@ page {
 
 .main {
   flex: 1;
-  margin-top: calc(88rpx + var(--status-bar-height));
+  margin-top: calc(40rpx + var(--status-bar-height));
   padding: 0 32rpx;
   overflow: hidden;
 }

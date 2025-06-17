@@ -390,7 +390,6 @@ const navigateToActivity = (id) => {
 
 const navigateToRoute = (routeId) => {
   console.log("跳转到路线详情页面");
-  console.log(`/pages/itineraryDetails/itineraryDetails?id=${routeId}`);
   // uni.navigateTo({
   //   url: `/pages/itineraryDetails/itineraryDetails?id=${routeId}`
   // });

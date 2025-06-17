@@ -114,8 +114,11 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">
-        确认支付¥  {{ isFeaturedRoute ? price : hotelList.ticketprice }}
+      <button class="confirm-btn" 
+              :disabled="isPaying" 
+              :class="{'confirm-btn-disabled': isPaying}"
+              @click="handleConfirmPayment">
+        {{ isPaying ? '支付处理中...' : `确认支付¥ ${isFeaturedRoute ? price : hotelList.ticketprice}` }}
       </button>
     </view>
   </view>
@@ -181,6 +184,7 @@ onMounted(() => {
 const phone = ref('13800138000');
 const remark = ref('');
 const selectedPayment = ref('wechat');
+const isPaying = ref(false);
 
 const clearPhone = () => {
   phone.value = '';
@@ -192,10 +196,18 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
+  if (isPaying.value) return;
+  
+  isPaying.value = true;
 
   const userStore = useUserStore();
   console.log(userStore.token);
   const commentStore = useCommentStore();
+  
+  uni.showLoading({
+    title: '支付处理中...'
+  });
+  
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
     method: 'POST',
@@ -210,10 +222,27 @@ const handleConfirmPayment = () => {
       console.log(res.data);
       if (res.data.code === 200) {
         commentStore.setPendingComment('景点', id.value);
+        uni.hideLoading();
         uni.navigateTo({
           url: `/pages/pay_success/pay_success?amount=${isFeaturedRoute.value ? price.value : hotelList.value.ticketprice}&orderId=${orderSn.value}&type=${type.value}&productId=${productId.value}`
         });
+      } else {
+        uni.showToast({
+          title: res.data.message || '支付失败',
+          icon: 'none'
+        });
       }
+    },
+    fail: (err) => {
+      console.error('支付请求失败:', err);
+      uni.showToast({
+        title: '网络错误，请稍后重试',
+        icon: 'none'
+      });
+    },
+    complete: () => {
+      isPaying.value = false;
+      uni.hideLoading();
     }
   })
 };
@@ -412,5 +441,10 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.confirm-btn-disabled {
+  background-color: #93c5fd !important;
+  opacity: 0.8;
 }
 </style>

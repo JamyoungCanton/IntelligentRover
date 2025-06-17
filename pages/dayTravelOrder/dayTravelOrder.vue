@@ -103,8 +103,10 @@
     <view class="bottom-bar">
       <button
         class="confirm-btn"
+        :disabled="isPaying"
+        :class="{'confirm-btn-disabled': isPaying}"
         @click="handleConfirmPayment"
-      >确认支付 ¥{{ productDetail.price }}</button>
+      >{{ isPaying ? '支付处理中...' : `确认支付 ¥${productDetail.price}` }}</button>
     </view>
   </view>
 </template>
@@ -126,6 +128,7 @@ const remark = ref('');
 const selectedPayment = ref('wechat');
 const startDate = ref('');
 const orderSn = ref('');
+const isPaying = ref(false);
 
 onLoad((options) => {
   if (options.orderSn) orderSn.value = options.orderSn;
@@ -148,6 +151,8 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = async () => {
+  if (isPaying.value) return;
+  
   if (!orderSn.value) {
     uni.showToast({ title: '订单号缺失', icon: 'none' });
     return;
@@ -156,6 +161,12 @@ const handleConfirmPayment = async () => {
     uni.showToast({ title: '请先登录', icon: 'none' });
     return;
   }
+
+  isPaying.value = true;
+  uni.showLoading({
+    title: '支付处理中...'
+  });
+
   try {
     console.log('开始支付，订单号：', orderSn.value, 'token:', userStore.token);
     const res = await uni.request({
@@ -168,6 +179,7 @@ const handleConfirmPayment = async () => {
     });
     console.log('支付返回：', res.data);
     if (res.statusCode === 200 && res.data && res.data.success) {
+      uni.hideLoading();
       uni.showToast({ title: '支付成功', icon: 'success' });
       uni.redirectTo({
         url: `/pages/pay_success/pay_success?orderSn=${orderSn.value}&price=${productDetail.value.price}&title=${encodeURIComponent(productDetail.value.title)}`
@@ -178,6 +190,9 @@ const handleConfirmPayment = async () => {
   } catch (error) {
     console.error('支付异常：', error);
     uni.showToast({ title: '支付异常', icon: 'none' });
+  } finally {
+    isPaying.value = false;
+    uni.hideLoading();
   }
 };
 
@@ -352,5 +367,10 @@ page {
   color: #333;
   font-size: 28rpx;
   padding-left: 16rpx;
+}
+
+.confirm-btn-disabled {
+  background-color: #93c5fd !important;
+  opacity: 0.8;
 }
 </style>

@@ -60,6 +60,7 @@
         </view>
       </view>
 
+      <!-- 日期选择器 -->
       <view class="booking-section">
         <view class="section-title">
           <uni-icons type="calendar" size="20" color="#007AFF"></uni-icons>
@@ -86,16 +87,23 @@
         </view>
       </view>
 
-      <view class="action-buttons">
-        <view class="total-price">
-          <text class="total-label">{{ priceInfo.totalLabel }}</text>
-          <text class="total-value">{{ priceInfo.totalValue }}</text>
-        </view>
-        <view class="register-btn" @click="goToRegistration">
-          <text class="register-text">{{ texts.registerText }}</text>
-        </view>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="action-buttons">
+      <view class="total-price">
+        <text class="total-label">{{ priceInfo.totalLabel }}</text>
+        <text class="total-value">{{ priceInfo.totalValue }}</text>
+      </view>
+      <view 
+        class="register-btn" 
+        :class="{'register-btn-disabled': isCreating}"
+        @click="handleBookNow"
+      >
+        <text class="register-text">{{ isCreating ? '创建中...' : texts.registerText }}</text>
       </view>
     </view>
+
   </view>
 </template>
 
@@ -104,6 +112,7 @@ export default {
   data() {
     return {
       safeArea: { top: 0, bottom: 0 },
+      isCreating: false, // 控制按钮状态
       // 文本内容
       texts: {
         title: '浪漫双岛游',
@@ -161,20 +170,7 @@ export default {
         const today = new Date();
         const pad = n => n < 10 ? '0' + n : n;
         return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-      })(),
-      featuredRoutes: [
-        {
-          id: '10001',
-          name: '浪漫双岛游',
-          description: '东澳岛-外伶仃岛2日游，体验海岛风情。',
-          price: 688.00,
-          features: '含住宿,含餐饮,含门票',
-          duration_days: 2,
-          suitable_crowd: '情侣、家庭、朋友',
-          notes: '请携带有效身份证件,建议携带防晒用品,请遵守导游安排,注意安全，听从工作人员指挥',
-          image_url: 'https://wuminghui.top:9000/travel/beach.jpg'
-        }
-      ]
+      })()
     };
   },
   onLoad(options) {
@@ -188,13 +184,36 @@ export default {
     goBack() {
       uni.navigateBack();
     },
-    goToRegistration() {
+    handleBookNow() {
       if (!this.playDate) {
-        uni.showToast({ title: '请选择出发日期', icon: 'none' });
+        uni.showToast({
+          title: '请先选择出行日期',
+          icon: 'none'
+        });
         return;
       }
-      // 这里直接创建订单
-      this.createOrder();
+      
+      console.log('准备跳转，productId:', this.productId);
+      console.log('准备跳转，selectedDate:', this.playDate);
+      
+      try {
+        uni.navigateTo({
+          url: `/pages/routeRegistration/routeRegistration?productId=${this.productId}&travelDate=${this.playDate}`,
+          fail: (err) => {
+            console.error('跳转失败:', err);
+            uni.showToast({
+              title: '页面跳转失败',
+              icon: 'none'
+            });
+          }
+        });
+      } catch (error) {
+        console.error('跳转出错:', error);
+        uni.showToast({
+          title: '页面跳转出错',
+          icon: 'none'
+        });
+      }
     },
     getSafeAreaInfo() {
       const systemInfo = uni.getSystemInfoSync();
@@ -207,68 +226,6 @@ export default {
         icon: 'success',
         duration: 1500
       });
-    },
-    createOrder() {
-      // 假设你有 userStore.userInfo
-      const userInfo = getApp().globalData.userInfo || {};
-      const orderData = {
-        contract: {
-          contractName: userInfo.realname || userInfo.username || '',
-          contractPhone: userInfo.phone || ''
-        },
-        items: [
-          {
-            bookInfo: {
-              date: this.playDate,
-              fullname: userInfo.realname || userInfo.username || '',
-              idCardNo: userInfo.idCardNo || '',
-              idCardType: 'ID_CARD',
-              schedule: this.playDate
-            },
-            productId: this.productId,
-            productType: "FeaturedRoute",
-            quantity: 1
-          }
-        ],
-        travelStartDate: this.playDate,
-        travelEndDate: this.playDate
-      };
-
-      uni.request({
-        url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'X-Access-Token': uni.getStorageSync('token')
-        },
-        data: orderData,
-        success: (res) => {
-          if (res.data.code === 200) {
-            uni.showToast({
-              title: '订单创建成功',
-              icon: 'success',
-              duration: 1500
-            });
-            // 跳转到订单详情页
-            const orderSn = res.data.result.orderSn;
-            const priceNumber = this.priceInfo.price.replace(/[¥￥]/g, '');
-            uni.navigateTo({
-              url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?orderSn=${orderSn}&routeName=${encodeURIComponent(this.texts.routeName)}&price=${priceNumber}&playDate=${this.playDate}&image_url=${encodeURIComponent(this.assets.banner)}`
-            });
-          } else {
-            uni.showToast({
-              title: res.data.message || '订单创建失败',
-              icon: 'none'
-            });
-          }
-        },
-        fail: (err) => {
-          uni.showToast({
-            title: '创建订单失败，请稍后重试',
-            icon: 'none'
-          });
-        }
-      });
     }
   }
 };
@@ -279,7 +236,7 @@ export default {
   background-color: #f7f7f7;
   padding: 0 20px;
   padding-top: v-bind('safeArea.top + "px"');
-  padding-bottom: 130px;
+  padding-bottom: 130px; /* 为吸底按钮留出空间 */
 }
 
 .header {
@@ -445,6 +402,7 @@ export default {
   display: block;
 }
 
+/* 底部操作按钮 */
 .action-buttons {
   position: fixed;
   bottom: 0;
@@ -458,7 +416,7 @@ export default {
   align-items: center;
   box-shadow: 0 -2rpx 8rpx rgba(0,0,0,0.05);
   z-index: 100;
-  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: constant(safe-area-inset-bottom); /* iOS 刘海屏适配 */
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -502,15 +460,16 @@ export default {
   font-weight: bold;
 }
 
+/* 日期选择器部分样式 */
 .booking-section {
   background: #fff;
   border-radius: 16rpx;
-  margin: 24rpx;
+  margin: 24rpx 0;
   padding: 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
-.section-title {
+.booking-section .section-title {
   display: flex;
   align-items: center;
   gap: 12rpx;
@@ -572,12 +531,13 @@ export default {
   animation: dateSelect 0.3s ease;
 }
 
+/* 暗黑模式适配 */
 @media (prefers-color-scheme: dark) {
   .booking-section {
     background: #1a1a1a;
   }
   
-  .section-title {
+  .booking-section .section-title {
     color: #fff;
   }
   
@@ -618,14 +578,13 @@ export default {
 }
 
 @keyframes dateSelect {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(0.98);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.register-btn-disabled {
+  opacity: 0.8;
+  background: linear-gradient(90deg, #93c5fd 0%, #60a5fa 100%);
 }
 </style>

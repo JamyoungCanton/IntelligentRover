@@ -24,6 +24,7 @@ export default {
       const currentRoute = '/' + currentPage.route;
       return tabBarPages.includes(currentRoute);
     });
+    console.log('App启动时user:', uni.getStorageSync('user'));
   },
   onShow: function() {
     console.log('App Show');
@@ -31,6 +32,43 @@ export default {
   onHide: function() {
     console.log('App Hide');
   },
+  createOrder() {
+    const user = uni.getStorageSync('user');
+    const token = user && user.token ? user.token : '';
+    console.log('route页面onLoad时user:', user);
+    console.log('下单前token:', token);
+
+    if (!token) {
+      uni.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    // ...组装 orderData...
+
+    console.log('请求header:', {
+      'Content-Type': 'application/json',
+      'X-Access-Token': token
+    });
+    console.log('请求data:', orderData);
+
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': token
+      },
+      data: orderData,
+      success: (res) => {
+        console.log('创建订单返回:', res);
+        // ...原有逻辑
+      },
+      fail: (err) => {
+        console.log('创建订单失败:', err);
+        // ...原有逻辑
+      }
+    });
+  }
 };
 </script>
 

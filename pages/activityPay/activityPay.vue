@@ -231,7 +231,7 @@ const handlePayment = () => {
 			console.log('支付请求响应结果:', res.data);
 			if (res.data.success) {
 				uni.showToast({ title: '支付成功', icon: 'success' });
-				setTimeout(() => { uni.switchTab({ url: '/pages/order/order' }); }, 1500);
+				setTimeout(() => { uni.switchTab({ url: '/pages/order/order' }); }, 1000);
 			} else {
 				uni.showToast({
 					title: res.data.message || '支付失败',

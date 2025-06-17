@@ -23,13 +23,6 @@
       </view>
 
       <view class="form-item">
-        <text class="label">行程开始时间</text>
-        <picker mode="date" :value="formData.travelStartDate" @change="onTravelStartDateChange">
-          <view class="picker-value">{{ formData.travelStartDate || '请选择出发日期' }}</view>
-        </picker>
-      </view>
-
-      <view class="form-item">
         <text class="label">{{ texts.selectTravelers }}</text>
         <view class="counter">
           <button :class="['counter-btn', 'minus', { 'disabled': formData.people === 1 }]" @click="decreasePeople"
@@ -57,18 +50,6 @@
         </view>
       </view> -->
 
-      <view class="date-picker">
-        <text>选择开始日期：</text>
-        <picker mode="date" :value="travelStartDate" @change="onStartDateChange">
-          <view class="picker-value">{{ travelStartDate || '请选择' }}</view>
-        </picker>
-      </view>
-      <view class="date-picker">
-        <text>选择结束日期：</text>
-        <picker mode="date" :value="travelEndDate" @change="onEndDateChange">
-          <view class="picker-value">{{ travelEndDate || '请选择' }}</view>
-        </picker>
-      </view>
 
       <view class="total-section">
         <view class="total-container">
@@ -123,12 +104,9 @@ export default {
         payment: 'wechat',
         travelStartDate: '',
         productId: '',
-        travelEndDate: '',
-        travelStartDate: '',
         travelEndDate: ''
       },
-      travelStartDate: '',
-      travelEndDate: ''
+      isCreating: false
     };
   },
   onLoad(options) {
@@ -136,6 +114,15 @@ export default {
     if (options.productId) {
       this.formData.productId = options.productId;
       console.log('报名页收到的productId:', this.formData.productId);
+    }
+    // 接收并设置日期参数
+    if (options.travelDate) {
+      const selectedDate = options.travelDate;
+      this.formData.travelStartDate = selectedDate + ' 08:00:00';
+      this.formData.travelEndDate = selectedDate + ' 15:00:00';
+      console.log('从route页面接收到的日期:', selectedDate);
+      console.log('设置后的开始时间:', this.formData.travelStartDate);
+      console.log('设置后的结束时间:', this.formData.travelEndDate);
     }
   },
   computed: {
@@ -163,19 +150,34 @@ export default {
       this.formData.payment = paymentMethod;
     },
     async submitForm() {
+      if (this.isCreating) {
+        return;
+      }
+      this.isCreating = true;
+      
+      // 检查必填字段
+      if (!this.formData.productId) {
+        uni.showToast({ title: '商品ID不能为空', icon: 'none' });
+        this.isCreating = false;
+        return;
+      }
+      
       // 姓名校验
-      if (!/^[\u4e00-\u9fa5a-zA-Z]{2,10}$/.test(this.formData.name)) {
+      if (!/^[一-龥a-zA-Z]{2,10}$/.test(this.formData.name)) {
         uni.showToast({ title: '姓名需为2-10位中英文', icon: 'none' });
+        this.isCreating = false;
         return;
       }
       // 手机号校验
       if (!/^1[3-9]\d{9}$/.test(this.formData.phone)) {
         uni.showToast({ title: '请输入正确的手机号', icon: 'none' });
+        this.isCreating = false;
         return;
       }
       // 身份证号校验
       if (!/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(this.formData.idCard)) {
         uni.showToast({ title: '请输入正确的身份证号', icon: 'none' });
+        this.isCreating = false;
         return;
       }
       if (!this.formData.name || !this.formData.phone || !this.formData.idCard) {
@@ -183,17 +185,39 @@ export default {
           title: '请填写完整信息',
           icon: 'none'
         });
+        this.isCreating = false;
         return;
       }
-      const userStore = useUserStore();
-      const token = userStore.token;
-      if (!this.travelStartDate || !this.travelEndDate) {
+      if (!this.formData.travelStartDate) {
         uni.showToast({
-          title: '请选择开始和结束日期',
+          title: '行程日期未设置',
           icon: 'none'
         });
+        this.isCreating = false;
         return;
       }
+
+      // 获取用户信息和token
+      const userStore = useUserStore();
+      const token = userStore.token;
+      
+      console.log('下单前token:', token);
+      if (!token) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none',
+          duration: 2000
+        });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/login/login'
+          });
+        }, 2000);
+        this.isCreating = false;
+        return;
+      }
+
+      // 构建订单数据
       const orderData = {
         contract: {
           contractName: this.formData.name,
@@ -202,20 +226,27 @@ export default {
         items: [
           {
             bookInfo: {
-              date: this.travelStartDate,
+              date: this.formData.travelStartDate,
               fullname: this.formData.name,
               idCardNo: this.formData.idCard,
               idCardType: 'ID_CARD',
-              schedule: this.travelStartDate
+              schedule: this.formData.travelStartDate
             },
             productId: this.formData.productId,
             productType: 'FeaturedRoute',
             quantity: this.formData.people
           }
         ],
-        travelStartDate: this.travelStartDate,
-        travelEndDate: this.travelEndDate
+        travelStartDate: this.formData.travelStartDate,
+        travelEndDate: this.formData.travelEndDate
       };
+
+      console.log('即将发送的订单数据:', JSON.stringify(orderData, null, 2));
+      console.log('请求头:', {
+        'Content-Type': 'application/json',
+        'X-Access-Token': token
+      });
+
       uni.showLoading({ title: '正在创建订单...' });
       uni.request({
         url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
@@ -226,38 +257,52 @@ export default {
           'X-Access-Token': token
         },
         success: (res) => {
+          console.log('创建订单响应:', res);
           uni.hideLoading();
+          this.isCreating = false;
+          
+          if (res.statusCode === 401) {
+            uni.showToast({ 
+              title: '登录信息过期，请重新登录', 
+              icon: 'none',
+              duration: 2000
+            });
+            setTimeout(() => {
+              uni.navigateTo({
+                url: '/pages/login/login'
+              });
+            }, 2000);
+            return;
+          }
+          
           if (res.data && res.data.code === 200 && res.data.result && res.data.result.orderSn) {
             const orderSn = res.data.result.orderSn;
-                  uni.showToast({
+            uni.showToast({
               title: '订单创建成功',
-                    icon: 'success',
-                    duration: 1500
-                  });
-                  setTimeout(() => {
-                    uni.navigateTo({
-                      url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
-                    });
-                  }, 1500);
-                } else {
-            uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
+              icon: 'success',
+              duration: 1500
+            });
+            setTimeout(() => {
+              uni.navigateTo({
+                url: `/pages/routeRegistrationSuccess/routeRegistrationSuccess?orderSn=${orderSn}&phone=${this.formData.phone}`
+              });
+            }, 1500);
+          } else {
+            console.error('创建订单失败:', res.data);
+            uni.showToast({ 
+              title: res.data.message || '订单创建失败', 
+              icon: 'none' 
+            });
           }
         },
         fail: (err) => {
+          console.error('创建订单请求失败:', err);
           uni.hideLoading();
+          this.isCreating = false;
           uni.showToast({ title: '订单创建失败，请稍后重试', icon: 'none' });
         }
       });
     },
-    onTravelStartDateChange(e) {
-      this.formData.travelStartDate = e.detail.value;
-    },
-    onStartDateChange(e) {
-      this.travelStartDate = e.detail.value;
-    },
-    onEndDateChange(e) {
-      this.travelEndDate = e.detail.value;
-    }
   }
 };
 </script>

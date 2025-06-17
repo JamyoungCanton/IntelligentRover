@@ -108,8 +108,10 @@
       <view class="bottom-bar">
         <button
           class="confirm-btn"
+          :disabled="isPaying"
+          :class="{'confirm-btn-disabled': isPaying}"
           @click="handleConfirmPayment"
-        >确认支付 ￥{{ selectedCabinPrice }}</button>
+        >{{ isPaying ? '处理中...' : `确认支付 ￥${selectedCabinPrice}` }}</button>
       </view>
     </view>
   </view>
@@ -133,6 +135,7 @@ const remark = ref('');
 const selectedPayment = ref('wechat');
 const orderSn = ref('');
 const sailDate = ref('');
+const isPaying = ref(false);
 
 // 岛屿ID到名称的映射
 const islandMap = {
@@ -237,6 +240,8 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
+  if (isPaying.value) return;
+  
   if (!userStore.token) {
     uni.showToast({
       title: '未登录，请先登录',
@@ -276,6 +281,11 @@ const handleConfirmPayment = () => {
     });
     return;
   }
+
+  isPaying.value = true;
+  uni.showLoading({
+    title: '订单处理中...'
+  });
 
   console.log('创建订单时的价格：', selectedCabinPrice.value);
 
@@ -328,6 +338,7 @@ const handleConfirmPayment = () => {
           success: (payRes) => {
             console.log('支付接口返回：', payRes);
             if (payRes.statusCode === 200 && payRes.data.success) {
+              uni.hideLoading();
               uni.showToast({
                 title: '支付成功',
                 icon: 'success'
@@ -348,6 +359,10 @@ const handleConfirmPayment = () => {
               title: '支付请求失败',
               icon: 'none'
             });
+          },
+          complete: () => {
+            isPaying.value = false;
+            uni.hideLoading();
           }
         });
       } else {
@@ -355,6 +370,8 @@ const handleConfirmPayment = () => {
           title: res.data.message || '订单创建失败',
           icon: 'none'
         });
+        isPaying.value = false;
+        uni.hideLoading();
       }
     },
     fail: (err) => {
@@ -363,6 +380,8 @@ const handleConfirmPayment = () => {
         title: '网络异常，请稍后重试',
         icon: 'none'
       });
+      isPaying.value = false;
+      uni.hideLoading();
     }
   });
 };
@@ -492,5 +511,10 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.confirm-btn-disabled {
+  background-color: #93c5fd !important;
+  opacity: 0.8;
 }
 </style>

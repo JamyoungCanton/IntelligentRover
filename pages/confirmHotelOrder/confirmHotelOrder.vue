@@ -107,9 +107,12 @@
     </view>
 
     <view class="bottom-bar">
-      <button class="confirm-btn" @click="handleConfirmPayment">
-        确认支付 ¥{{ hotelList.price }}
-      </button>
+      <button 
+        class="confirm-btn" 
+        :disabled="isPaying"
+        :class="{'confirm-btn-disabled': isPaying}"
+        @click="handleConfirmPayment"
+      >{{ isPaying ? '支付处理中...' : `确认支付 ¥${hotelList.price}` }}</button>
     </view>
   </view>
 </template>
@@ -154,6 +157,7 @@ onMounted(() => {
 const phone = ref('13800138000');
 const remark = ref('');
 const selectedPayment = ref('wechat');
+const isPaying = ref(false);
 
 const clearPhone = () => {
   phone.value = '';
@@ -165,13 +169,19 @@ const selectPayment = (payment) => {
 
 // 确认支付
 const handleConfirmPayment = () => {
+  if (isPaying.value) return;
+  
+  isPaying.value = true;
+  uni.showLoading({
+    title: '支付处理中...'
+  });
+
   const userStore = useUserStore();
   console.log(userStore.token);
   payOrder(orderSn.value, userStore.token)
     .then(data => {
       console.log('支付接口返回：', data);
-      // 检查 data.result.orderStatus
-      // ...
+      uni.hideLoading();
       uni.showToast({
         title: '支付成功',
         icon: 'success'
@@ -188,6 +198,10 @@ const handleConfirmPayment = () => {
         title: errMsg,
         icon: 'none'
       });
+    })
+    .finally(() => {
+      isPaying.value = false;
+      uni.hideLoading();
     });
 }
 
@@ -391,5 +405,10 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.confirm-btn-disabled {
+  background-color: #93c5fd !important;
+  opacity: 0.8;
 }
 </style>

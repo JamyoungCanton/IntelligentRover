@@ -77,7 +77,12 @@
 			<view class="total-price">
 				<text>合计：¥{{ foodDetails.price * quantity }}</text>
 			</view>
-			<button class="confirm-btn" @click="handleConfirmPayment()">立即预订</button>
+			<button 
+				class="confirm-btn" 
+				:disabled="isPaying"
+				:class="{'confirm-btn-disabled': isPaying}"
+				@click="handleConfirmPayment()"
+			>{{ isPaying ? '处理中...' : '立即预订' }}</button>
 		</view>
 	</view>
 </template>
@@ -106,6 +111,7 @@ const phone = ref('');
 const diningDate = ref('');
 const diningStartTime = ref('');
 const diningEndTime = ref('');
+const isPaying = ref(false);
 const today = new Date();
 const pad = (n) => n < 10 ? '0' + n : n;
 const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
@@ -120,9 +126,16 @@ const handleBack = () => {
 };
 
 const handleConfirmPayment = () => {
+	if (isPaying.value) return;
+	
 	if (!contactName.value) return uni.showToast({ title: '请输入联系人姓名', icon: 'none' });
 	if (!phone.value) return uni.showToast({ title: '请输入手机号码', icon: 'none' });
 	if (!diningDate.value) return uni.showToast({ title: '请选择用餐日期', icon: 'none' });
+
+	isPaying.value = true;
+	uni.showLoading({
+		title: '订单处理中...'
+	});
 
 	const orderData = {
 		contract: {
@@ -165,6 +178,7 @@ const handleConfirmPayment = () => {
 			console.log('创建订单 - 响应数据:', JSON.stringify(res.data, null, 2));
 			if (res.data.code === 200 && res.data.result && res.data.result.orderSn) {
 				const orderSn = res.data.result.orderSn;
+				uni.hideLoading();
 				uni.showToast({
 					title: '订单创建成功',
 					icon: 'success',
@@ -187,6 +201,10 @@ const handleConfirmPayment = () => {
 				title: '创建订单失败，请稍后重试',
 				icon: 'none'
 			});
+		},
+		complete: () => {
+			isPaying.value = false;
+			uni.hideLoading();
 		}
 	});
 };
@@ -514,5 +532,10 @@ page {
 	font-weight: 500;
 	border-radius: 40rpx;
 	text-align: center;
+}
+
+.confirm-btn-disabled {
+	background-color: #93c5fd !important;
+	opacity: 0.8;
 }
 </style>
