@@ -12,7 +12,7 @@
           <view class="location-item">
             <text class="label">出发地</text>
             <view class="input-wrapper">
-              <input class="value" v-model="fromLocation" placeholder="出发地如:东澳岛" @input="onFromLocationInput" />
+              <input class="value" v-model="fromLocation" placeholder="出发地" @input="onFromLocationInput" />
               <view class="suggestions" v-if="fromSuggestions.length > 0">
                 <view class="suggestion-item" v-for="(suggestion, index) in fromSuggestions" :key="index" 
                       @click="selectFromSuggestion(suggestion)">
@@ -27,7 +27,7 @@
           <view class="location-item align-right">
             <text class="label">目的地</text>
             <view class="input-wrapper">
-              <input class="value" v-model="toLocation" placeholder="目的地如:万山岛" @input="onToLocationInput" />
+              <input class="value" v-model="toLocation" placeholder="目的地" @input="onToLocationInput" />
               <view class="suggestions" v-if="toSuggestions.length > 0">
                 <view class="suggestion-item" v-for="(suggestion, index) in toSuggestions" :key="index" 
                       @click="selectToSuggestion(suggestion)">
@@ -423,9 +423,12 @@ onMounted(() => {
 
 .value {
   background-color: #eeeded;
-  width: 130px;
-  height: 40px;
-  line-height: 40px;
+  width: 80%; /* 自适应父容器宽度 */
+  height: 30px; /* 减小高度 */
+  line-height: 30px; /* 调整行高 */
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 5px;
 }
 
 .exchange-btn {

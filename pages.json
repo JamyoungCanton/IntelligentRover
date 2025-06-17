@@ -338,7 +338,8 @@
 		{
 			"path": "pages/my/changemine",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationBarTitleText": "我的资料"
+
 			}
 		},
 		{
