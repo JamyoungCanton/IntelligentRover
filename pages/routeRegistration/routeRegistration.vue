@@ -155,8 +155,11 @@ export default {
       }
       this.isCreating = true;
       
+      console.log('开始提交表单，当前表单数据:', JSON.stringify(this.formData, null, 2));
+      
       // 检查必填字段
       if (!this.formData.productId) {
+        console.error('商品ID为空');
         uni.showToast({ title: '商品ID不能为空', icon: 'none' });
         this.isCreating = false;
         return;
@@ -164,35 +167,22 @@ export default {
       
       // 姓名校验
       if (!/^[一-龥a-zA-Z]{2,10}$/.test(this.formData.name)) {
+        console.error('姓名格式不正确:', this.formData.name);
         uni.showToast({ title: '姓名需为2-10位中英文', icon: 'none' });
         this.isCreating = false;
         return;
       }
       // 手机号校验
       if (!/^1[3-9]\d{9}$/.test(this.formData.phone)) {
+        console.error('手机号格式不正确:', this.formData.phone);
         uni.showToast({ title: '请输入正确的手机号', icon: 'none' });
         this.isCreating = false;
         return;
       }
       // 身份证号校验
       if (!/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(this.formData.idCard)) {
+        console.error('身份证号格式不正确:', this.formData.idCard);
         uni.showToast({ title: '请输入正确的身份证号', icon: 'none' });
-        this.isCreating = false;
-        return;
-      }
-      if (!this.formData.name || !this.formData.phone || !this.formData.idCard) {
-        uni.showToast({
-          title: '请填写完整信息',
-          icon: 'none'
-        });
-        this.isCreating = false;
-        return;
-      }
-      if (!this.formData.travelStartDate) {
-        uni.showToast({
-          title: '行程日期未设置',
-          icon: 'none'
-        });
         this.isCreating = false;
         return;
       }
@@ -201,8 +191,11 @@ export default {
       const userStore = useUserStore();
       const token = userStore.token;
       
-      console.log('下单前token:', token);
+      console.log('用户token:', token);
+      console.log('用户信息:', userStore.userInfo);
+      
       if (!token) {
+        console.error('用户未登录');
         uni.showToast({
           title: '请先登录',
           icon: 'none',
@@ -241,7 +234,7 @@ export default {
         travelEndDate: this.formData.travelEndDate
       };
 
-      console.log('即将发送的订单数据:', JSON.stringify(orderData, null, 2));
+      console.log('完整的订单数据:', JSON.stringify(orderData, null, 2));
       console.log('请求头:', {
         'Content-Type': 'application/json',
         'X-Access-Token': token
@@ -257,11 +250,12 @@ export default {
           'X-Access-Token': token
         },
         success: (res) => {
-          console.log('创建订单响应:', res);
+          console.log('创建订单完整响应:', res);
           uni.hideLoading();
           this.isCreating = false;
           
           if (res.statusCode === 401) {
+            console.error('登录状态失效');
             uni.showToast({ 
               title: '登录信息过期，请重新登录', 
               icon: 'none',
@@ -277,6 +271,7 @@ export default {
           
           if (res.data && res.data.code === 200 && res.data.result && res.data.result.orderSn) {
             const orderSn = res.data.result.orderSn;
+            console.log('订单创建成功，订单号:', orderSn);
             uni.showToast({
               title: '订单创建成功',
               icon: 'success',
@@ -288,7 +283,7 @@ export default {
               });
             }, 1500);
           } else {
-            console.error('创建订单失败:', res.data);
+            console.error('创建订单失败，错误信息:', res.data);
             uni.showToast({ 
               title: res.data.message || '订单创建失败', 
               icon: 'none' 
@@ -296,7 +291,7 @@ export default {
           }
         },
         fail: (err) => {
-          console.error('创建订单请求失败:', err);
+          console.error('创建订单请求失败，错误详情:', err);
           uni.hideLoading();
           this.isCreating = false;
           uni.showToast({ title: '订单创建失败，请稍后重试', icon: 'none' });

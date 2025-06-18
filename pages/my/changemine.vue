@@ -34,21 +34,15 @@
         <view class="signature-count">{{ openid.length }}/10</view>
       </view>
       <view class="form-item">
+        <text class="label">性别</text>
+        <picker :disabled="!isEdit" :range="['男','女','保密']" :value="gender" @change="onGenderChange">
+          <view class="picker-value" :class="{ 'editable-border': isEdit }">{{ genderText }}</view>
+        </picker>
+      </view>
+      <view class="form-item">
         <text class="label">出生日期</text>
-        <!-- 根据 isEdit 控制是否可选择 -->
-        <picker 
-          mode="date" 
-          :disabled="!isEdit" 
-          :value="birthday" 
-          :end="today" 
-          @change="onBirthdayChange"
-        >
-          <view 
-            class="picker-value" 
-            :class="{ 'editable-border': isEdit }"
-          >
-            {{ birthday || '请选择出生日期' }}
-          </view>
+        <picker mode="date" :disabled="!isEdit" :value="birthday" :end="today" @change="onBirthdayChange">
+          <view class="picker-value" :class="{ 'editable-border': isEdit }">{{ birthday || '请选择出生日期' }}</view>
         </picker>
       </view>
       <view class="form-item">
@@ -113,10 +107,10 @@ const email = ref('')
 const openid = ref('')
 const realname = ref('')
 
-const genderText = computed(() => ['男', '女', '保密'][gender.value])
+const genderText = computed(() => ['男','女','保密'][gender.value])
 const today = computed(() => {
   const d = new Date()
-  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`
 })
 const navBarStyle = computed(() => {
   const statusBarHeight = uni.getSystemInfoSync().statusBarHeight || 0
@@ -132,8 +126,8 @@ onLoad(async (options) => {
     ? (info.avatar.startsWith('http') 
       ? info.avatar 
       : `https://wuminghui.top:9000/${info.avatar.replace(/^\/+/, '')}`)
-    : ''
-
+    : '';
+    
   nickname.value = info.username || ''
   gender.value = info.gender || 0
   birthday.value = info.birthday || ''
@@ -146,8 +140,8 @@ onLoad(async (options) => {
   }
 
   if (!userStore.token) {
-    const token = uni.getStorageSync('token')
-    if (token) userStore.setToken(token)
+    const token = uni.getStorageSync('token');
+    if (token) userStore.setToken(token);
   }
 })
 
@@ -192,26 +186,29 @@ function uploadAvatar(filePath) {
         if (data.success && data.result) {
           const imageUrl = data.result.startsWith('http') 
             ? data.result 
-            : `https://wuminghui.top:9000/${data.result.replace(/^\/+/, '')}`
-          avatar.value = imageUrl
-          userStore.userInfo.avatar = imageUrl
+            : `https://wuminghui.top:9000/${data.result.replace(/^\/+/, '')}`;
+            
+          avatar.value = imageUrl;
+          
+          userStore.userInfo.avatar = imageUrl;
+          
           uni.showToast({ 
             title: '上传成功', 
             icon: 'success' 
-          })
+          });
         } else {
           console.error('上传头像失败:', data.message)
           uni.showToast({ 
             title: data.message || '上传失败', 
             icon: 'none' 
-          })
+          });
         }
       } catch (e) {
         console.error('解析上传响应失败:', e)
         uni.showToast({ 
           title: '上传失败', 
           icon: 'none' 
-        })
+        });
       }
     },
     fail: (err) => {
@@ -219,32 +216,85 @@ function uploadAvatar(filePath) {
       uni.showToast({ 
         title: '上传失败', 
         icon: 'none' 
-      })
+      });
     }
-  })
+  });
 }
 
 function saveProfile() {
   // 手机号校验
-  const phoneStr = String(phone.value).replace(/\s/g, '')
+  const phoneStr = String(phone.value).replace(/\s/g, '');
   if (!phoneStr) {
-    uni.showToast({ title: '请输入手机号', icon: 'none' })
-    return
+    uni.showToast({ title: '请输入手机号', icon: 'none' });
+    return;
   }
   if (!/^1[3-9]\d{9}$/.test(phoneStr)) {
-    uni.showToast({ title: '手机号格式不正确', icon: 'none' })
-    return
+    uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+    return;
   }
+
+  // 检查用户名是否发生变化
+  const originalUsername = userStore.userInfo.username
+  const hasUsernameChanged = nickname.value !== originalUsername
+
+  if (hasUsernameChanged) {
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/sys/user/login/setting/userEdit',
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token
+      },
+      data: {
+        username: nickname.value,
+        id: userStore.userInfo.id
+      },
+      success: (res) => {
+        if (res.data && res.data.success) {
+          // 用户名修改成功后，调用注销接口
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/sys/logout',
+            method: 'PUT',
+            header: {
+              'Content-Type': 'application/json',
+              'X-Access-Token': userStore.token
+            },
+            success: (logoutRes) => {
+              // 清除本地token
+              userStore.setToken('');
+              uni.removeStorageSync('token');
+              uni.showToast({ title: '用户名已修改，请重新登录', icon: 'none' });
+              setTimeout(() => {
+                uni.reLaunch({ url: '/pages/login/login' });
+              }, 1200);
+            }
+          });
+        } else {
+          uni.showToast({ title: res.data.message || '用户名修改失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        uni.showToast({ title: '用户名修改失败', icon: 'none' });
+      }
+    });
+  } else {
+    // 用户名没变，走原有逻辑
+    updateOtherInfo();
+  }
+}
+
+// 更新其他用户信息
+function updateOtherInfo() {
   const sysUser = {
     avatar: avatar.value,
-    nickname: nickname.value,
     birthday: birthday.value,
     email: email.value,
-    phone: phoneStr,
+    phone: String(phone.value).replace(/\s/g, ''),
     realname: realname.value,
     sex: Number(gender.value),
     openid: openid.value || null
-  }
+  };
+  
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/sys/user/update',
     method: 'PUT',
@@ -255,19 +305,19 @@ function saveProfile() {
     data: sysUser,
     success: (res) => {
       if (res.data && res.data.success) {
-        // 保存成功后，强制重新查一次用户信息
+        // 重新拉取用户信息
         fetchUserInfoFromServer().then(() => {
-          uni.showToast({ title: '保存成功', icon: 'success' })
-          isEdit.value = false // 切换回非编辑状态
-        })
+          uni.showToast({ title: '保存成功', icon: 'success' });
+          isEdit.value = false;
+        });
       } else {
-        uni.showToast({ title: res.data.message || '保存失败', icon: 'none' })
+        uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
       }
     },
     fail: () => {
-      uni.showToast({ title: '网络错误', icon: 'none' })
+      uni.showToast({ title: '网络错误', icon: 'none' });
     }
-  })
+  });
 }
 
 // 切换编辑状态的方法
@@ -291,9 +341,9 @@ async function fetchUserInfoFromServer() {
     header: {
       'X-Access-Token': userStore.token
     }
-  })
+  });
   if (res.data && res.data.success) {
-    userStore.userInfo = res.data.result
+    userStore.userInfo = res.data.result;
   }
 }
 </script>
