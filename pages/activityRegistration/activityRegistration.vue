@@ -76,7 +76,7 @@
       <text class="agreement-text">{{ textData.agreements.text }}</text>
     </view>
 
-    <button class="submit-btn" @click="submitRegistration" :disabled="!agreed">
+    <button class="book-now-btn" @click="submitRegistration" :disabled="!agreed">
       {{ textData.buttons.submit }}
     </button>
   </view>
@@ -408,6 +408,35 @@ onLoad((options) => {
 }
 
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: #fff;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.back-btn {
+  position: absolute;
+  left: 20px; /* 调整返回按钮的左边距 */
+}
+
+.title {
+  color: #000; /* 修改标题颜色为黑色 */
+}
+
+/* 调整容器的顶部内边距，避免内容被头部遮挡 */
+.container {
+  padding-top: calc(v-bind('safeArea.top + "px"') + 48px);
+}
+
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -572,15 +601,30 @@ onLoad((options) => {
   color: #666;
 }
 
-.submit-btn {
+.book-now-btn {
   width: 100%;
-  background-color: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 15px;
-  font-size: 16px;
-  margin-top: 10px;
+  max-width: 400px;
+  background: #3B82F6; /* 修改背景颜色为主题色 */
+  color: #fff; /* 修改文字颜色为白色 */
+  border: none; /* 移除边框 */
+  border-radius: 25px; /* 增大圆角 */
+  font-size: 18px;
+  font-weight: bold;
+  padding: 6px 0; /* 增加内边距 */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); /* 添加阴影 */
+  transition: all 0.3s ease; /* 添加过渡效果 */
+  bottom: 15px; /* 为按钮底部添加 20px 的外边距，可根据需求调整 */
+}
+
+.book-now-btn:active {
+  background: #2563EB; /* 点击时加深背景颜色 */
+  transform: translateY(2px); /* 点击时向下移动 2px */
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); /* 点击时减小阴影 */
+}
+
+.book-now-btn:hover {
+  background: #2563EB; /* 悬停时加深背景颜色 */
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4); /* 悬停时增大阴影 */
 }
 
 .picker-value {
