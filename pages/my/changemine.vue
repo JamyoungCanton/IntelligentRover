@@ -237,7 +237,6 @@ function saveProfile() {
   const originalUsername = userStore.userInfo.username
   const hasUsernameChanged = nickname.value !== originalUsername
 
-  // 如果有用户名变化，先调用用户名修改接口
   if (hasUsernameChanged) {
     uni.request({
       url: 'https://island.zhangshuiyi.com/island/sys/user/login/setting/userEdit',
@@ -252,20 +251,35 @@ function saveProfile() {
       },
       success: (res) => {
         if (res.data && res.data.success) {
-          console.log('用户名修改成功')
-          // 用户名修改成功后，继续更新其他信息
-          updateOtherInfo()
+          // 用户名修改成功后，调用注销接口
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/sys/logout',
+            method: 'PUT',
+            header: {
+              'Content-Type': 'application/json',
+              'X-Access-Token': userStore.token
+            },
+            success: (logoutRes) => {
+              // 清除本地token
+              userStore.setToken('');
+              uni.removeStorageSync('token');
+              uni.showToast({ title: '用户名已修改，请重新登录', icon: 'none' });
+              setTimeout(() => {
+                uni.reLaunch({ url: '/pages/login/login' });
+              }, 1200);
+            }
+          });
         } else {
-          uni.showToast({ title: res.data.message || '用户名修改失败', icon: 'none' })
+          uni.showToast({ title: res.data.message || '用户名修改失败', icon: 'none' });
         }
       },
       fail: () => {
-        uni.showToast({ title: '用户名修改失败', icon: 'none' })
+        uni.showToast({ title: '用户名修改失败', icon: 'none' });
       }
-    })
+    });
   } else {
-    // 用户名没有变化，直接更新其他信息
-    updateOtherInfo()
+    // 用户名没变，走原有逻辑
+    updateOtherInfo();
   }
 }
 
@@ -291,10 +305,10 @@ function updateOtherInfo() {
     data: sysUser,
     success: (res) => {
       if (res.data && res.data.success) {
-        // 保存成功后，强制重新查一次用户信息
+        // 重新拉取用户信息
         fetchUserInfoFromServer().then(() => {
           uni.showToast({ title: '保存成功', icon: 'success' });
-          isEdit.value = false; // 切换回非编辑状态
+          isEdit.value = false;
         });
       } else {
         uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
