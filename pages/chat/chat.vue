@@ -1,33 +1,7 @@
 <template>
-  <view class="">
-    <!-- 头部区域 -->
-    <!-- <view class="header">
-      <view class="header-top">
-        <image src="/static/chat/ai.png" mode="widthFix" class="logo"></image>
-        <text class="app-title">智游侠</text>
-      </view>
-
-      <view class="header-center">
-        <p class="header-center-text">欢迎使用AI旅游助手!我可以帮您规划完美的海岛之旅。您可以选择以下热门选项，或直接告诉我您的需求。</p>
-
-        <div class="header-center-function">
-          <div class="function-item" v-for="item in headerCenterFunction" :key="item.icon"
-            @click="handleFunctionClick(item.text)">
-            <image :src="item.icon" mode="widthFix"></image>
-            <text>{{ item.text }}</text>
-          </div>
-        </div>
-      </view>
-
-      <view class="header-bottom">
-        <div class="header-span">AI智游侠很高兴为您服务</div>
-      </view>
-    </view> -->
-
-    <!-- 聊天内容滚动区域 -->
-
+  <view class="ai-container">
     <!-- 缺省页面 -->
-    <view class="ai-nochat-wrapper">
+    <view v-if="chatMessageList.length == 0" class="ai-nochat-wrapper">
       <!-- 标题 -->
       <view class="ai-nochat-header">
         <image src="/static/chat/ai.png" mode="widthFix"></image>
@@ -38,7 +12,7 @@
       </view>
       <!-- 快捷提示词 -->
       <view class="tips-wrapper">
-        <view class="tips-item" v-for="item in tipList" :key="item.title" @click="handleTipsClick(item)">
+        <view class="tips-item" v-for="item in tipList" :key="item.title" @click="handleTipsClick(item.title)">
           <image :src="item.icon" mode="scaleToFill"></image>
           <view class="tips-item-text">
             <view class="tips-item-text-title">{{ item.title }}</view>
@@ -48,12 +22,118 @@
       </view>
     </view>
 
-    <!-- <div class="scroll-container">
-    </div> -->
+    <!-- 聊天内容滚动区域 -->
+    <view v-if="chatMessageList.length > 0" class="chat-list-wrapper">
+      <template v-for="(msg, index) in chatMessageList" :key="index">
+        <view v-if="msg.type === 'user'" class="user-message">
+          <div class="message-content">{{ msg.content }}</div>
+        </view>
+
+        <view v-else class="ai-message">
+          <div class="typing-content" :class="{ typing: isTyping && index === chatMessageList.length - 1 }">
+            <template v-if="msg.content && msg.content.length > 0">
+              <div class="ai-response-content">
+                <template v-for="(item, i) in msg.content" :key="i">
+                  <span v-if="item.type === 'text'" v-html="item.content" class="message-text"></span>
+                  <template
+                    v-else-if="['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant'].includes(item.type)">
+                    <span class="clickable-item" @click="handleItemClick(item)" style="display: inline;">
+                      {{ item.content || item.type }}
+                    </span>
+                  </template>
+                  <template v-else-if="item.type === 'ask'">
+                    <div style="margin: 8px 0;">
+                      <span class="clickable-item" @click="handleAskClick(item)" style="display: inline-block;">
+                        {{ item.content }}
+                      </span>
+                    </div>
+                  </template>
+                  <span v-else v-html="item.content" class="message-text"></span>
+                </template>
+              </div>
+            </template>
+
+            <template v-else-if="msg.thinking">
+              <div class="thinking-animation">
+                <span class="time">({{ Math.floor((Date.now() - msg.startTime) / 1000) }}s)</span>
+                正在思考中<span class="dots">{{ dots }}</span>
+              </div>
+            </template>
+            <span v-else v-html="msg.content"></span>
+          </div>
+
+          <!-- 行程优化组件 -->
+          <view class="trip-optimizer" v-if="msg.type === 'ai' && msg.showOptimizer">
+            <view class="optimizer-header">
+              <text class="optimizer-title">优化行程</text>
+              <text class="optimizer-subtitle">您可以调整行程景点和行程偏好，对其进行优化</text>
+            </view>
+
+            <view class="optimizer-section">
+              <text class="section-title">行程偏好设置</text>
+
+              <view class="option-group">
+                <text class="option-label">出行天数</text>
+                <view class="option-buttons">
+                  <button v-for="day in [1, 2, 3, 4]" :key="day" :class="['day-btn', { active: selectedDays === day }]"
+                    @click="selectedDays = day">
+                    {{ day }}天
+                  </button>
+                </view>
+              </view>
+
+              <view class="option-group">
+                <text class="option-label">同行人员</text>
+                <view class="option-buttons">
+                  <button v-for="person in ['6岁以下儿童', '6岁-12岁儿童', '65岁以上老人']" :key="person"
+                    :class="['person-btn', { active: selectedPerson === person }]"
+                    @click="selectedPerson = selectedPerson === person ? '' : person">
+                    {{ person }}
+                  </button>
+                </view>
+              </view>
+
+              <view class="option-group">
+                <text class="option-label">行程偏好</text>
+                <view class="preference-tags">
+                  <button v-for="tag in preferenceTags" :key="tag" :class="['tag-btn', { active: selectedTag === tag }]"
+                    @click="selectedTag = selectedTag === tag ? '' : tag">
+                    {{ tag }}
+                  </button>
+                </view>
+              </view>
+
+              <view class="optimizer-actions">
+                <!-- <button class="confirm-btn" @click="confirmTrip">确认行程并购买</button> -->
+                <button class="optimize-btn" @click="optimizeTrip">优化行程规划</button>
+                <button>一键下单</button>
+              </view>
+            </view>
+
+            <view class="action-buttons">
+              <button class="action-btn" @click="likeMessage">
+                <span class="icon like-icon">👍</span>
+                <text>点赞</text>
+              </button>
+              <button class="action-btn" @click="dislikeMessage">
+                <span class="icon dislike-icon">👎</span>
+                <text>踩</text>
+              </button>
+            </view>
+          </view>
+        </view>
+      </template>
+    </view>
+
 
     <!-- 底部输入栏 -->
     <view class="input-wrapper">
-      <u-button>123</u-button>
+      <uv-textarea v-model="message" placeholder="请输入旅游目的地或旅游问题" :maxlength="1000" autoHeight></uv-textarea>
+      <view class="input-btn-wrapper">
+        <uv-button icon="mic" size="mini" shape="circle" class="send-button"></uv-button>
+        <uv-button icon="arrow-upward" iconColor="#fff" type="primary" size="mini" shape="circle" class="send-button"
+          @click="sendMessage"></uv-button>
+      </view>
     </view>
 
     <!-- <div class="bottom">
@@ -116,7 +196,7 @@ const headerCenterFunction = [
 ];
 
 const message = ref('');
-const chatMessages = ref([]);
+let chatMessageList = reactive([]);
 const responseData = ref([]);
 const isTyping = ref(false);
 const dots = ref('');
@@ -206,7 +286,7 @@ const sendMessage = async () => {
   if (!message.value.trim()) return;
 
   // 添加用户消息
-  chatMessages.value.push({ type: 'user', content: message.value });
+  chatMessageList.push({ type: 'user', content: message.value });
   const userInput = message.value;
   message.value = ''; // 清空输入框
 
@@ -221,7 +301,7 @@ const sendMessage = async () => {
     showOptimizer: false, // 初始不显示优化组件
     isCurrent: true // 标记为当前消息
   };
-  chatMessages.value.push(newAiMessage);
+  chatMessageList.push(newAiMessage);
 
   // 清空当前响应数据，确保新消息从初始状态开始
   responseData.value = [];
@@ -329,10 +409,10 @@ const sendMessage = async () => {
 //       aiHistory.value.push(processedContent);
 
 //       // 更新最后一条消息的状态和内容
-//       const lastIndex = chatMessages.value.length - 1;
+//       const lastIndex = chatMessageList.length - 1;
 //       if (lastIndex >= 0) {
-//         chatMessages.value[lastIndex] = {
-//           ...chatMessages.value[lastIndex],
+//         chatMessageList[lastIndex] = {
+//           ...chatMessageList[lastIndex],
 //           content: processedContent,
 //           typing: false,
 //           showOptimizer: false, // 初始不显示优化组件
@@ -347,13 +427,13 @@ const sendMessage = async () => {
 
 //       // 模拟打字机效果完成后显示优化组件
 //       setTimeout(() => {
-//         chatMessages.value[lastIndex].showOptimizer = true;
+//         chatMessageList[lastIndex].showOptimizer = true;
 //       }, 1000); // 延迟1秒显示优化组件
 //     } else {
 //       // 确保只更新当前消息的错误状态
-//       const currentMsgId = chatMessages.value[chatMessages.value.length - 1]?.id;
-//       if (currentMsgId && chatMessages.value[chatMessages.value.length - 1].id === currentMsgId) {
-//         chatMessages.value[chatMessages.value.length - 1].content = [{
+//       const currentMsgId = chatMessageList[chatMessageList.length - 1]?.id;
+//       if (currentMsgId && chatMessageList[chatMessageList.length - 1].id === currentMsgId) {
+//         chatMessageList[chatMessageList.length - 1].content = [{
 //           type: 'text',
 //           content: '抱歉，请求出错了，请稍后再试。'
 //         }];
@@ -362,10 +442,10 @@ const sendMessage = async () => {
 //     }
 //   } catch (error) {
 //     console.error('AI请求出错:', error);
-//     const lastIndex = chatMessages.value.length - 1;
+//     const lastIndex = chatMessageList.length - 1;
 //     if (lastIndex >= 0) {
-//       chatMessages.value[lastIndex] = {
-//         ...chatMessages.value[lastIndex],
+//       chatMessageList[lastIndex] = {
+//         ...chatMessageList[lastIndex],
 //         content: [{
 //           type: 'text',
 //           content: '抱歉，发生了错误，请稍后再试。'
@@ -377,10 +457,10 @@ const sendMessage = async () => {
 //   } finally {
 //     // 结束打字动画和思考动画
 //     isTyping.value = false;
-//     const lastIndex = chatMessages.value.length - 1;
+//     const lastIndex = chatMessageList.length - 1;
 //     if (lastIndex >= 0) {
-//       chatMessages.value[lastIndex].thinking = false;
-//       chatMessages.value[lastIndex].typing = false;
+//       chatMessageList[lastIndex].thinking = false;
+//       chatMessageList[lastIndex].typing = false;
 //     }
 
 //     // 滚动到底部
@@ -403,10 +483,10 @@ const handleGetBuffer = (e) => {
       finalChunk.value = chunk.data.outputs.answer;
       const processedContent = processResponseData(chunk.data.outputs.answer);
       console.log("处理后的内容:", processedContent);
-      if (chatMessages.value.length > 0) {
+      if (chatMessageList.length > 0) {
         // startTypingEffect(processedContent, 0, 0);
-        chatMessages.value[lastIndex] = {
-          ...chatMessages.value[lastIndex],
+        chatMessageList[lastIndex] = {
+          ...chatMessageList[lastIndex],
           content: processedContent,
           typing: false,
           showOptimizer: false, // 初始不显示优化组件
@@ -426,15 +506,15 @@ const handleGetBuffer = (e) => {
 
 // 打字机效果
 const startTypingEffect = (processedContent, rowIndex, charIndex) => {
-  const lastIndex = chatMessages.value.length - 1;
+  const lastIndex = chatMessageList.length - 1;
   const lastStreamMessage = JSON.parse(JSON.stringify(processedContent[rowIndex])); // 深拷贝处理后内容
   lastStreamMessage.content = lastStreamMessage.content.slice(0, charIndex + 1);
   console.log('lastStreamMessage.content', lastStreamMessage.content);
 
   const streamContent = [...processedContent.slice(0, rowIndex), lastStreamMessage];
   if (rowIndex <= processedContent.length - 1) {
-    chatMessages.value[lastIndex] = {
-      ...chatMessages.value[lastIndex],
+    chatMessageList[lastIndex] = {
+      ...chatMessageList[lastIndex],
       content: streamContent,
       typing: false,
       showOptimizer: false, // 初始不显示优化组件
@@ -458,8 +538,8 @@ const startTypingEffect = (processedContent, rowIndex, charIndex) => {
       }
     }, 30);
   } else {
-    chatMessages.value[lastIndex] = {
-      ...chatMessages.value[lastIndex],
+    chatMessageList[lastIndex] = {
+      ...chatMessageList[lastIndex],
       showOptimizer: true, // 初始不显示优化组件
       isCurrent: true // 标记为已完成
     }
@@ -478,7 +558,7 @@ const processResponseData = (answer) => {
     const parsedData = JSON.parse(answer);
 
     // 计算思考时间(秒)
-    const lastIndex = chatMessages.value.length - 1;
+    const lastIndex = chatMessageList.length - 1;
 
     // 处理markdown格式内容
     const processedData = parsedData.map(item => {
@@ -600,9 +680,9 @@ const sendAiRequest = async (userInput) => {
 //     const parsedData = JSON.parse(answer);
 
 //     // 计算思考时间(秒)
-//     const lastIndex = chatMessages.value.length - 1;
+//     const lastIndex = chatMessageList.length - 1;
 //     const thinkTime = lastIndex >= 0
-//       ? Math.floor((Date.now() - chatMessages.value[lastIndex].startTime) / 1000)
+//       ? Math.floor((Date.now() - chatMessageList[lastIndex].startTime) / 1000)
 //       : 0;
 
 //     // 处理markdown格式内容
@@ -695,14 +775,14 @@ const startThinkingAnimation = () => {
     dots.value = '.'.repeat(count);
 
     // 如果思考状态结束，清除动画
-    const lastIndex = chatMessages.value.length - 1;
-    if (lastIndex >= 0 && !chatMessages.value[lastIndex].thinking) {
+    const lastIndex = chatMessageList.length - 1;
+    if (lastIndex >= 0 && !chatMessageList[lastIndex].thinking) {
       clearInterval(animation);
     }
   }, 500);
 };
 
-const handleFunctionClick = (text) => {
+const handleTipsClick = (text) => {
   console.log(`功能按钮点击: ${text}`);
   // 为特定按钮设置消息内容并发送
   if (['海岛体验', '浮潜探索', '亲子旅游', '休闲畅游', '海岛介绍'].includes(text)) {
@@ -747,13 +827,13 @@ const handleAskClick = (askObj) => {
 //   isTyping.value = true;
 //   currentIndex = 0;
 //   const replyContent = FIXED_REPLY.split(''); // 拆分成字符数组
-//   const lastMessageIndex = chatMessages.value.length - 1;
+//   const lastMessageIndex = chatMessageList.length - 1;
 
 //   // 逐个字符显示
 //   const timer = setInterval(() => {
 //     if (currentIndex < replyContent.length) {
 //       // 更新最后一条消息的内容
-//       chatMessages.value[lastMessageIndex].content = replyContent.slice(0, currentIndex + 1).join('').replace(/\n/g, '<br>');
+//       chatMessageList[lastMessageIndex].content = replyContent.slice(0, currentIndex + 1).join('').replace(/\n/g, '<br>');
 //       currentIndex++;
 //       // 每次更新内容后滚动到底部
 //       scrollToBottom();
@@ -761,9 +841,9 @@ const handleAskClick = (askObj) => {
 //       isTyping.value = false;
 //       clearInterval(timer);
 //       // 完成打字后显示优化组件并滚动
-//       const lastIndex = chatMessages.value.length - 1;
+//       const lastIndex = chatMessageList.length - 1;
 //       if (lastIndex >= 0) {
-//         chatMessages.value[lastIndex].showOptimizer = true;
+//         chatMessageList[lastIndex].showOptimizer = true;
 //       }
 //       scrollToBottom();
 //     }
@@ -771,13 +851,13 @@ const handleAskClick = (askObj) => {
 // };
 
 // 监听消息列表变化
-watch(chatMessages, () => {
+watch(chatMessageList, () => {
   scrollToBottom();
 }, { deep: true });
 
 onMounted(() => {
   // 初始化时不显示多余空白
-  chatMessages.value = [];
+  chatMessageList = [];
 });
 
 </script>
@@ -785,6 +865,10 @@ onMounted(() => {
 <style lang="scss">
 page {
   background-color: #f8f8f8;
+}
+.ai-container {
+  width: 100%;
+  height: 100%;
 }
 
 // 缺省页
@@ -845,7 +929,7 @@ page {
       background-color: #fff;
       box-shadow: $app-shadow;
       border-radius: 25rpx;
-      width: 600rpx;
+      width: 550rpx;
       padding: 20rpx;
 
       image {
@@ -877,7 +961,90 @@ page {
       }
     }
   }
+}
 
+.input-wrapper {
+  position: fixed;
+  bottom: 180rpx;
+  left: 0;
+  right: 0;
+  padding: 20rpx;
+  padding-top: 10rpx;
+  background-color: #fff;
+  box-shadow: 0 -3px 9px #eee;
+  border-radius: 50rpx;
+  z-index: 10;
+  width: 650rpx;
+  min-height: 100rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  overflow: hidden;
+
+  .uv-textarea {
+    width: calc(100% - 20rpx);
+    min-height: 1rem;
+    max-height: 600rpx;
+    overflow-y: scroll;
+    background-color: #f5f5f5;
+    padding: 20rpx 40rpx;
+    border: none;
+    font-size: $fs-small;
+    color: #333;
+
+    textarea {
+      text-align: justify;
+    }
+  }
+
+  :deep(.uv-border) {
+    border: none !important;
+    border-width: 0;
+    border-color: transparent;
+  }
+
+  .input-btn-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .uv-button-wrapper {
+      .uv-button--mini {
+        width: 75rpx !important;
+        min-width: 75rpx !important;
+        height: 50rpx;
+
+        .uv-icon {
+          margin-left: 4rpx;
+        }
+      }
+    }
+  }
+}
+
+.chat-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 40rpx;
+  margin-top: 150rpx;
+  padding: 25rpx;
+  font-size: $fs-base;
+  color: #333;
+
+  .user-message {
+    width: max-content;
+    max-width: 550rpx;
+    margin-left: auto;
+    background-color: #fff;
+    padding: 20rpx 40rpx;
+    padding-right: 20rpx;
+    border-radius: 50rpx;
+    border-top-right-radius: 0;
+    box-shadow: $app-shadow;
+  }
 }
 </style>
 

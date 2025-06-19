@@ -203,8 +203,6 @@ onShow(() => {
     width: 100vw;
     margin: 0;
     padding: 0;
-    background-color: #FFFFFF; 
-    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.05);
 
     .tab-list {
         height: 100rpx; 
