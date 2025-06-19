@@ -921,19 +921,21 @@ const userInfo = computed(() => userStore.userInfo || {});
 }
 
 .book-button {
-	background-color: #007AFF;
-	color: white;
+	background-color: #3b82f6;
+	color: #fff;
 	border: none;
-	border-radius: 10px;
-	padding: 15px 0;
-	font-size: 16px;
+	border-radius: 25px;
+	padding: 6px 0;
+	font-size: 18px;
+	font-weight: bold;
 	width: 100%;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
 	transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .book-button:active {
 	transform: scale(0.98);
+	background-color: #3b82f6;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
