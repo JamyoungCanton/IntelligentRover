@@ -28,9 +28,9 @@
     <!-- 安全设置 -->
     <view class="section-title">安全设置</view>
     <view class="card">
-      <view class="row" @click="goPassword">
+      <view class="row">
         <uni-icons type="locked" size="24" color="#4A90E2" />
-        <text class="row-title">修改登录密码</text>
+        <text class="row-title">修改账号密码</text>
         <uni-icons type="right" size="18" color="#bbb" />
       </view>
     </view>
@@ -62,9 +62,9 @@ const goProfile = () => {
   uni.navigateTo({ url: '/pages/my/changemine?mode=edit' });
 };
 
-const goPassword = () => {
-  uni.navigateTo({ url: '/pages/my/changePassword' });
-};
+// const goPassword = () => {
+//   uni.navigateTo({ url: '/pages/my/changePassword' });
+// };
 
 </script>
 
