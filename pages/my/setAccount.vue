@@ -52,9 +52,9 @@ const goProfile = () => {
   uni.navigateTo({ url: '/pages/my/changemine?mode=edit' });
 };
 
-const goPassword = () => {
-  uni.navigateTo({ url: '/pages/my/changePassword' });
-};
+// const goPassword = () => {
+//   uni.navigateTo({ url: '/pages/my/changePassword' });
+// };
 
 </script>
 
