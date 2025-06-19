@@ -13,254 +13,15 @@
         </view>
       </button>
     </view>
-    
-
-    <!-- 账号登录区域 -->
-    <view
-      class="phone-login"
-      :class="{ 'disabled-login': !accountLoginEnabled }"
-    >
-      <view class="input-group">
-        <uni-icons type="username" size="24" color="#999999" />
-        <input type="text" placeholder="请输入用户名" maxlength="11" v-model="formData.username" @blur="validateUsername" :disabled="!accountLoginEnabled" />
-      </view>
-      <text v-if="errors.username" class="error-message">{{ errors.username }}</text>
-      <view class="input-group">
-        <uni-icons type="password" size="24" color="#999999" />
-        <input
-          :type="passwordVisible ? 'text' : 'password'"
-          placeholder="请输入密码"
-          maxlength="16"
-          v-model="formData.password"
-          :class="{ 'password-input': !passwordVisible && formData.password }"
-          @blur="validatePassword"
-          :disabled="!accountLoginEnabled"
-        />
-        <uni-icons
-          :type="passwordVisible ? 'eye' : 'eye-slash'"
-          size="24"
-          color="#999999"
-          @tap="togglePasswordVisibility"
-          class="toggle-password-icon"
-          :disabled="!accountLoginEnabled"
-        />
-      </view>
-      <text v-if="errors.password" class="error-message">{{ errors.password }}</text>
-      <view class="verify-code">
-        <view class="code-input-wrap">
-          <view class="input-group">
-            <uni-icons type="locked" size="24" color="#999999" />
-            <input type="text" placeholder="请输入验证码" maxlength="4" v-model="formData.verifyCode" @blur="validateVerifyCode" :disabled="!accountLoginEnabled" />
-          </view>
-          <image
-            :src="codeImg"
-            mode="scaleToFill"
-            @tap="handleChangeCode"
-            style="width: 190rpx;height: 90rpx; margin-top: 20rpx;"
-            :disabled="!accountLoginEnabled"
-          />
-        </view>
-      </view>
-      <text v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</text>
-      <button class="login-btn" @tap="handleLogin" :disabled="!accountLoginEnabled">登录</button>
-      
-      <!-- 新增注册按钮 -->
-      <button class="register-btn" @tap="handleRegister" :disabled="!accountLoginEnabled">注册账号</button>
-    </view>
-
-    <view class="switch-login-tip">
-      <text
-        class="switch-login-link"
-        v-if="!accountLoginEnabled"
-        @tap="accountLoginEnabled = true"
-      >使用账号登录</text>
-    </view>
   </view>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useUserStore } from '/store/modules/user';
-import { onShow } from '@dcloudio/uni-app';
 const userStore = useUserStore();
 
-// 时间戳
-const key = ref(null);
-// 验证码图片
-const codeImg = ref(null);
-// 表单数据
-const formData = reactive({
-  username: '',
-  password: '',
-  verifyCode: ''
-});
-// 错误信息
-const errors = reactive({
-  username: '',
-  password: '',
-  verifyCode: ''
-});
-// 密码可见性
-const passwordVisible = ref(false);
-const showAccountLogin = ref(false);
-const accountLoginEnabled = ref(false);
-
-onMounted(() => {
-  handleCode();
-});
-
-
-// 获取验证码
-const handleCode = async () => {
-  key.value = new Date().getTime();
-
-  uni.request({
-    url: `https://island.zhangshuiyi.com/island/sys/randomImage/${key.value}`,
-    method: 'GET',
-    header: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    success: (res) => {
-      codeImg.value = res.data.result;
-      
-    },
-    fail: (err) => {
-      console.error('获取验证码失败:', err);
-    }
-  });
-};
-
-// 切换图形验证码
-const handleChangeCode = () => {
-  handleCode();
-};
-
-// 切换密码可见性
-const togglePasswordVisibility = () => {
-  passwordVisible.value = !passwordVisible.value;
-};
-
-// 校验用户名
-const validateUsername = () => {
-  if (!formData.username) {
-    errors.username = '用户名不能为空';
-  } else if (formData.username.length < 3 || formData.username.length > 11) {
-    errors.username = '用户名长度必须在3到11位之间';
-  } else {
-    errors.username = '';
-  }
-};
-
-// 校验密码
-const validatePassword = () => {
-  if (!formData.password) {
-    errors.password = '密码不能为空';
-  } else if (formData.password.length < 5 || formData.password.length > 16) {
-    errors.password = '密码长度必须在5到16位之间';
-  } else {
-    errors.password = '';
-  }
-};
-
-// 校验验证码
-const validateVerifyCode = () => {
-  if (!formData.verifyCode) {
-    errors.verifyCode = '验证码不能为空';
-  } else if (formData.verifyCode.length !== 4) {
-    errors.verifyCode = '验证码必须为4位';
-  } else {
-    errors.verifyCode = '';
-  }
-};
-
-// 登录逻辑
-const handleLogin = async () => {
-  validateUsername();
-  validatePassword();
-  validateVerifyCode();
-
-  if (errors.username || errors.password || errors.verifyCode) {
-    return;
-  }
-
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/sys/login',
-    method: 'POST',
-    data: {
-      username: formData.username,
-      password: formData.password,
-      captcha: formData.verifyCode,
-      checkKey: key.value
-    },
-    header: { 'Content-Type': 'application/json' },
-    success: (res) => {
-      if (res.data.success === false) {
-        uni.showToast({
-          title: res.data.message || '登录失败',
-          icon: 'none',
-          duration: 1500
-        });
-        handleCode();
-      } else {
-        userStore.setToken(res.data.result.token);
-        userStore.updateUserInfo(res.data.result.userInfo);
-        console.log('登录返回用户信息:', res.data.result.userInfo);
-        uni.setStorageSync('userId', res.data.result.userInfo.id); // 保存 userId
-        console.log('用户id',res.data.result.userInfo.id)
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 1500
-        });
-        uni.setStorageSync('userPassword', formData.password); // 临时保存密码
-        // 获取存储的目标页面路径
-        uni.getStorage({
-          key: 'loginRedirectUrl',
-          success: (res) => {
-            const redirectUrl = res.data;
-            if (redirectUrl) {
-              // 修正参数名
-              uni.reLaunch({
-                url: redirectUrl
-              });
-              uni.removeStorage({ key: 'loginRedirectUrl' });
-            } else {
-              // 没有需要跳转的 URL，跳转到首页或其他默认页面 
-              uni.reLaunch({ url: '/pages/index/index' });
-            }
-          },
-          fail: (err) => {
-            // 发生错误时跳转到首页或其他默认页面
-            uni.reLaunch({ url: '/pages/index/index' });
-          }
-        });
-      }
-    },
-    fail: (err) => {
-      uni.showToast({
-        title: '网络请求失败，请稍后再试',
-        icon: 'none'
-      });
-      console.error('请求失败:', err);
-    }
-  });
-};
-
-const handleRegister = () => {
-  uni.navigateTo({
-    url: '/pages/register/register'
-  });
-};
-
-const handleForgetPassword = () => {
-  // 忘记密码逻辑
-};
-
-const handleGuestLogin = () => {
-  // 游客登录逻辑
-};
-
-// 注册
+// 微信登录
 const handleWechatLogin = () => {
   uni.login({
     provider: 'weixin',
@@ -274,34 +35,28 @@ const handleWechatLogin = () => {
           data: { code: loginRes.code },
           success: (res) => {
             console.log('微信登录返回数据:', res.data);
-            
             if (res.data.success && res.data.result) {
               const { id, token, username } = res.data.result;
-              
               // 存储 token
               if (token) {
                 userStore.setToken(token);
                 uni.setStorageSync('token', token);
               }
-
               // 存储用户信息
               const userInfo = {
                 id,
                 username,
                 // 其他必要的用户信息字段
               };
-              
               userStore.updateUserInfo(userInfo);
               if (id) {
                 uni.setStorageSync('userId', id);
               }
-
               // 显示登录成功提示
               uni.showLoading({
                 title: '登录成功',
                 mask: true
               });
-
               setTimeout(() => {
                 uni.hideLoading();
                 uni.showToast({
@@ -383,107 +138,6 @@ page {
   color: #333333;
 }
 
-.login-form {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: #e5e5e5;
-  z-index: 0;
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  background-color: #ffffff;
-  padding: 20rpx 30rpx;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
-  margin-top: 10rpx;
-}
-
-.input-group input {
-  flex: 1;
-  margin-left: 20rpx;
-  font-size: 14px;
-}
-
-.verify-code .code-input-wrap {
-  display: flex;
-  gap: 20rpx;
-}
-
-.verify-code .input-group {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-button {
-  border: none;
-  font-size: 14px;
-  border-radius: 8rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 104rpx;
-}
-
-.code-btn {
-  flex-shrink: 0;
-  background-color: #f5f5f5;
-  color: #333333;
-  padding: 0 30rpx;
-  white-space: nowrap;
-}
-
-.login-btn {
-  background-color: #07c160;
-  color: #ffffff;
-  margin-top: 40rpx;
-}
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 30rpx;
-  padding: 0 20rpx;
-}
-
-.action-link {
-  color: #666666;
-  font-size: 14px;
-}
-
-.guest-login {
-  margin-top: 80rpx;
-}
-
-.guest-btn {
-  background-color: #f5f5f5;
-  border: 1px solid #dddddd;
-  color: #666666;
-}
-
-/* 校验错误 */
-.error-message {
-  color: red;
-  font-size: 22rpx;
-  margin-left: 50rpx;
-}
-
-.password-input {
-  -webkit-text-security: disc !important;
-}
-
-/* 新增微信登录按钮样式 */
 .wechat-login-btn-wrap {
   display: flex;
   justify-content: center;
@@ -514,63 +168,5 @@ button {
   height: 32rpx;
   margin-right: 16rpx;
   vertical-align: middle;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 40rpx 0 20rpx 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #e5e5e5;
-}
-
-.divider-text {
-  margin: 0 20rpx;
-  color: #999;
-  font-size: 14px;
-}
-
-.phone-login {
-  font-size: 90%;
-}
-
-.switch-login-tip {
-  margin-top: 40rpx;
-  text-align: center;
-  width: 100%;
-}
-.switch-login-link {
-  color: #3B82F6;
-  font-size: 18px;
-  font-weight: 500;
-  text-decoration: underline;
-  display: inline-block;
-  cursor: pointer;
-}
-
-.phone-login.disabled-login {
-  opacity: 0.5;
-  filter: grayscale(1);
-  pointer-events: none; /* 禁止点击 */
-}
-
-.register-btn {
-  background-color: #fff;
-  color: #07c160;
-  border: 1px solid #07c160;
-  margin-top: 20rpx;
-  width: 80%;
-  margin-left: 10%;
-  border-radius: 50rpx;
-  height: 100rpx;
-  font-size: 20px;
-  font-weight: bold;
-  box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.04);
 }
 </style>

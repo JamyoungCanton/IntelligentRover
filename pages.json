@@ -337,12 +337,6 @@
 			}
 		},
 		{
-			"path": "pages/my/changePassword",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
 			"path": "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
 			"style": {
 				"navigationBarTitleText": ""

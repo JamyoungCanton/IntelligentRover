@@ -26,18 +26,12 @@
         <input 
           class="input" 
           :class="{ 'editable-border': isEdit }"
-          v-model="openid" 
+          v-model="departids" 
           :disabled="!isEdit" 
           placeholder="请输入个性签名" 
           maxlength="10" 
         />
-        <view class="signature-count">{{ openid.length }}/10</view>
-      </view>
-      <view class="form-item">
-        <text class="label">性别</text>
-        <picker :disabled="!isEdit" :range="['男','女','保密']" :value="gender" @change="onGenderChange">
-          <view class="picker-value" :class="{ 'editable-border': isEdit }">{{ genderText }}</view>
-        </picker>
+        <view class="signature-count">{{ departids.length }}/10</view>
       </view>
       <view class="form-item">
         <text class="label">出生日期</text>
@@ -99,15 +93,13 @@ const isEdit = ref(false) // 初始为非编辑状态
 
 const avatar = ref('')
 const nickname = ref('')
-const gender = ref(0)
 const birthday = ref('')
 const age = ref('')
 const phone = ref('')
 const email = ref('')
-const openid = ref('')
+const departids = ref('')
 const realname = ref('')
 
-const genderText = computed(() => ['男','女','保密'][gender.value])
 const today = computed(() => {
   const d = new Date()
   return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`
@@ -133,11 +125,10 @@ onLoad(async (options) => {
     : '';
     
   nickname.value = info.username || ''
-  gender.value = info.gender || 0
   birthday.value = info.birthday || ''
   phone.value = info.phone || ''
   email.value = info.email || ''
-  openid.value = info.openid || ''
+  departids.value = info.departids || info.departIds || ''
   realname.value = info.realname || ''
   if (birthday.value) {
     age.value = calcAge(birthday.value)
@@ -290,10 +281,17 @@ function updateOtherInfo() {
     email: email.value,
     phone: String(phone.value).replace(/\s/g, ''),
     realname: realname.value,
-    sex: Number(gender.value),
-    departids: ""
+    departids: departids.value
   };
   
+  // 只保留有值的字段（去除空字符串、null、undefined）
+  const dataToSend = {};
+  Object.keys(sysUser).forEach(key => {
+    if (sysUser[key] !== '' && sysUser[key] !== null && sysUser[key] !== undefined) {
+      dataToSend[key] = sysUser[key];
+    }
+  });
+
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/sys/user/update',
     method: 'PUT',
@@ -301,7 +299,7 @@ function updateOtherInfo() {
       'Content-Type': 'application/json',
       'X-Access-Token': userStore.token
     },
-    data: sysUser,
+    data: dataToSend,
     success: (res) => {
       if (res.data && res.data.success) {
         // 重新拉取用户信息
@@ -322,10 +320,6 @@ function updateOtherInfo() {
 // 切换编辑状态的方法
 function toggleEdit() {
   isEdit.value = !isEdit.value
-}
-
-function onGenderChange(e) {
-  gender.value = e.detail.value
 }
 
 function onBirthdayChange(e) {
