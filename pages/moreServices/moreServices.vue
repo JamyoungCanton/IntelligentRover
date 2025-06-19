@@ -147,10 +147,10 @@ const commonServices = ref([
 ]);
 
 const otherServices = ref([
-  { icon: 'shield', name: '旅游保险' },
+  { icon: 'chat', name: '旅游保险' },
   { icon: 'person', name: '导游服务' },
   { icon: 'chat', name: '翻译服务' },
-  { icon: 'car', name: '租车服务' },
+  { icon: 'gift', name: '租车服务' },
   { icon: 'gift', name: '快递服务' },
   { icon: 'help', name: '医疗援助' }
 ]);

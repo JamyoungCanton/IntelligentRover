@@ -25,16 +25,6 @@
       </view>
     </view>
 
-    <!-- 安全设置 -->
-    <view class="section-title">安全设置</view>
-    <view class="card">
-      <view class="row" @click="goPassword">
-        <uni-icons type="locked" size="24" color="#4A90E2" />
-        <text class="row-title">修改登录密码</text>
-        <uni-icons type="right" size="18" color="#bbb" />
-      </view>
-    </view>
-
     <!-- 退出账号按钮 -->
     <button class="logout-btn" @tap="goLogibOut">退出账号</button>
   </view>
@@ -50,8 +40,8 @@ const goLogibOut = () => {
     content: '是否退出登录？',
     success: (res) => {
       if (res.confirm) {
-        userStore.token = '';
-        uni.navigateBack({ delta: 1 });
+        userStore.clearUser();
+        uni.reLaunch({ url: '/pages/login/login' });
       }
     }
   });

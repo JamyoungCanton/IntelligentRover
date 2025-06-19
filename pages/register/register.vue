@@ -65,7 +65,7 @@
             <uni-icons type="locked" size="24" color="#999999"></uni-icons>
             <input type="text" placeholder="请输入手机验证码" maxlength="6" v-model="formData.phoneCode" @blur="validatePhoneCode" />
           </view>
-          <button class="code-btn" @tap="handleSendPhoneCode">{{ phoneCodeBtnText }}</button>
+          <button class="code-btn" @tap="handleSendPhoneCode" :disabled="countdown > 0">{{ phoneCodeBtnText }}</button>
         </view>
       </view>
       <text v-if="errors.phoneCode" class="error-message">{{ errors.phoneCode }}</text>
@@ -91,8 +91,8 @@ const codeImg = ref(null);
 const formData = reactive({
   username: '',
   password: '',
-  phone: '',
   verifyCode: '',
+  phone: '',
   phoneCode: ''
 });
 // 错误信息
@@ -103,16 +103,14 @@ const errors = reactive({
   phone: '',
   phoneCode: ''
 });
-// 是否显示手机验证码输入框
-const isShowPhoneCode = ref(false);
-// 手机验证码按钮文本
-const phoneCodeBtnText = ref('发送验证码');
-// 倒计时标识数
-const timer = ref(null);
-// 倒计时秒数
-const countdown = ref(7);
 // 密码可见性
 const passwordVisible = ref(false);
+// 手机验证码按钮文本
+const phoneCodeBtnText = ref('发送验证码');
+// 倒计时秒数
+const countdown = ref(0);
+// 倒计时定时器
+const timer = ref(null);
 
 onMounted(() => {
   handleCode();
@@ -201,11 +199,9 @@ const validatePhoneCode = () => {
   }
 };
 
-key.value = new Date().getTime();
-
 // 发送手机验证码
 const handleSendPhoneCode = async () => {
-  // 校验手机号和图形验证码是否为空
+  // 校验手机号和图形验证码
   validatePhone();
   validateVerifyCode();
   if (errors.phone || errors.verifyCode) {
@@ -226,39 +222,41 @@ const handleSendPhoneCode = async () => {
       'Content-Type': 'application/json'
     },
     success: (res) => {
-      if(res.data.success === true){
-        const result = res.data;
-      uni.showToast({
-        title: '已发送短信验证码',
-        icon: 'none',
-        duration: 1500
-      });
-      }else{
+      if (res.data.success === true) {
         uni.showToast({
-          title: res.data.message,
+          title: '验证码已发送',
+          icon: 'none',
+          duration: 1500
+        });
+        // 开始倒计时
+        countdown.value = 60;
+        phoneCodeBtnText.value = `${countdown.value}s后重试`;
+        timer.value = setInterval(() => {
+          countdown.value--;
+          phoneCodeBtnText.value = `${countdown.value}s后重试`;
+          if (countdown.value === 0) {
+            clearInterval(timer.value);
+            phoneCodeBtnText.value = '发送验证码';
+          }
+        }, 1000);
+      } else {
+        uni.showToast({
+          title: res.data.message || '发送失败',
           icon: 'none',
           duration: 1500
         });
       }
-      
     },
     fail: (err) => {
-      console.error('获取验证码失败:', err);
+      console.error('发送验证码失败:', err);
+      uni.showToast({
+        title: '发送失败，请重试',
+        icon: 'none',
+        duration: 1500
+      });
     }
   });
-  // 发送手机验证码逻辑
-  phoneCodeBtnText.value = `${countdown.value}s后重试`;
-  timer.value = setInterval(() => {
-    countdown.value--;
-    phoneCodeBtnText.value = `${countdown.value}s后重试`;
-    if (countdown.value === 0) {
-      clearInterval(timer.value);
-      phoneCodeBtnText.value = '发送验证码';
-      countdown.value = 7;
-    }
-  }, 1000);
 };
-
 
 // 注册逻辑
 const handleRegister = async () => {
@@ -268,9 +266,8 @@ const handleRegister = async () => {
   validatePassword();
   validateVerifyCode();
   validatePhone();
-  validatePhoneCode();
 
-  if (errors.username || errors.password || errors.verifyCode || errors.phone || errors.phoneCode) {
+  if (errors.username || errors.password || errors.verifyCode || errors.phone) {
     isValid = false;
   }
 
@@ -286,13 +283,12 @@ const handleRegister = async () => {
       username: formData.username,
       password: formData.password,
       phone: formData.phone,
-      smscode: '123456'
+      smscode: '123456' // 使用固定验证码值
     },
     header: { 'Content-Type': 'application/json' },
     success: (res) => {
       console.log(res.data);
       if (res.data.success === true) {
-        // 在这里添加实际的注册请求逻辑
         uni.showToast({
           title: res.data.message,
           icon: 'success',

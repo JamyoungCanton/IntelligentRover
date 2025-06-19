@@ -9,7 +9,7 @@
         <view class="user-detail">
           <text class="username">{{ userStore.userInfo.username }}</text>
           <text class="signature">
-            {{ userStore.userInfo.openid ? userStore.userInfo.openid.slice(0, 10) : '暂无签名' }}
+            {{ userStore.userInfo.departids ? userStore.userInfo.departids.slice(0, 10) : (userStore.userInfo.departIds ? userStore.userInfo.departIds.slice(0, 10) : '暂无签名') }}
           </text>
         </view>
         <uni-icons type="right" size="14" color="#999" />
@@ -191,7 +191,10 @@ onShow(() => {
       success: (res) => {
         console.log('后端返回个人信息:', res);
         if (res.data.success && res.data.result) {
-          // 推荐用 Object.assign 保证响应式
+          // 兼容后端返回departIds（大写I）字段
+          if (res.data.result.departIds) {
+            res.data.result.departids = res.data.result.departIds;
+          }
           Object.assign(userStore.userInfo, res.data.result)
         }
       }

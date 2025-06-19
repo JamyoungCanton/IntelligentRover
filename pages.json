@@ -25,21 +25,15 @@
 			}
 		},
 		{
-			"path": "pages/oneCodePass/oneCodePass",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
 			"path": "pages/order/order",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "订单"
 			}
 		},
 		{
 			"path": "pages/my/my",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "我的"
 			}
 		},
 		{
@@ -338,13 +332,8 @@
 		{
 			"path": "pages/my/changemine",
 			"style": {
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/my/changePassword",
-			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "我的资料"
+
 			}
 		},
 		{

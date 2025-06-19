@@ -612,19 +612,26 @@
 .book-now-btn {
   width: 100%;
   max-width: 400px;
-  background: #fff;
-  color: #3B82F6;
-  border: 2px solid #3B82F6;
-  border-radius: 12px;
+  background: #3B82F6; /* 修改背景颜色为主题色 */
+  color: #fff; /* 修改文字颜色为白色 */
+  border: none; /* 移除边框 */
+  border-radius: 25px; /* 增大圆角 */
   font-size: 18px;
   font-weight: bold;
-  padding: 14px 0;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  transition: background 0.2s, color 0.2s;
+  padding: 6px 0; /* 增加内边距 */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); /* 添加阴影 */
+  transition: all 0.3s ease; /* 添加过渡效果 */
 }
+
 .book-now-btn:active {
-  background: #3B82F6;
-  color: #fff;
+  background: #2563EB; /* 点击时加深背景颜色 */
+  transform: translateY(2px); /* 点击时向下移动 2px */
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); /* 点击时减小阴影 */
+}
+
+.book-now-btn:hover {
+  background: #2563EB; /* 悬停时加深背景颜色 */
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4); /* 悬停时增大阴影 */
 }
 .reviews, .user-reviews, .review-list {
   width: 100%;

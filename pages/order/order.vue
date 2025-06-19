@@ -316,7 +316,17 @@ const getOrderList = () => {
     success: (res) => {
       if (res.data.success) {
         const orderList = res.data.result.records || [];
+        // 遍历订单列表，当 orderType 为 "Parking" 时修改 imageUrl
+        orderList.forEach(order => {
+          if (order.orderType === 'Parking') {
+            order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/1eec475aa85047188c67915c7b4b9a83.jpg';
+          }
+          if (order.orderType === 'Transportation') {
+            order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/c9adb25fc3d44abfaeeef5f0af7c90b4.jpg';
+          }
+        });
         orders.value = orderList;
+        console.log('订单列表数据:', orderList);
         console.log('订单列表数据:', res.data.result.records);
       }
     },

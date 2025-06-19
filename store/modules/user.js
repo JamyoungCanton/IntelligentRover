@@ -33,6 +33,12 @@
      const token = ref('');
      function setToken(newToken) {
        token.value = newToken;
+       // 新增：同时保存到本地存储
+       if (newToken) {
+         uni.setStorageSync('token', newToken);
+       } else {
+         uni.removeStorageSync('token');
+       }
      }
    
      function clearUser() {
@@ -48,28 +54,40 @@
          realname: '',
          idCardNo: ''
        };
+       // 清除本地存储
+       uni.removeStorageSync('token');
+       uni.removeStorageSync('userInfo');
      }
    
      return { userInfo, updateUserInfo, token, setToken, clearUser };
    }, {
      persist: {
+       key: 'user-store',
        storage: {
          getItem(key) {
            try {
              const value = uni.getStorageSync(key);
-             return value;
+             return value ? JSON.parse(value) : null;
            } catch (error) {
              console.error(`Error getting item from storage: ${key}, error:`, error);
+             return null;
            }
          },
          setItem(key, value) {
            try {
              console.log(`Setting item in storage: ${key}, value:`, value);
-             uni.setStorageSync(key, value);
+             uni.setStorageSync(key, JSON.stringify(value));
            } catch (error) {
-             console.error(`Error setting item from storage: ${key}, error:`, error);
+             console.error(`Error setting item in storage: ${key}, error:`, error);
            }
          },
+         removeItem(key) {
+           try {
+             uni.removeStorageSync(key);
+           } catch (error) {
+             console.error(`Error removing item from storage: ${key}, error:`, error);
+           }
+         }
        }
      },
    });
