@@ -50,8 +50,8 @@ const goLogibOut = () => {
     content: '是否退出登录？',
     success: (res) => {
       if (res.confirm) {
-        userStore.token = '';
-        uni.navigateBack({ delta: 1 });
+        userStore.clearUser();
+        uni.reLaunch({ url: '/pages/login/login' });
       }
     }
   });
