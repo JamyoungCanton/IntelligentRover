@@ -118,6 +118,10 @@ const navBarStyle = computed(() => {
 })
 
 onLoad(async (options) => {
+  if (!userStore.token || !uni.getStorageSync('token')) {
+    uni.reLaunch({ url: '/pages/login/login' });
+    return;
+  }
   await fetchUserInfoFromServer()
   const info = userStore.userInfo
 
@@ -137,11 +141,6 @@ onLoad(async (options) => {
   realname.value = info.realname || ''
   if (birthday.value) {
     age.value = calcAge(birthday.value)
-  }
-
-  if (!userStore.token) {
-    const token = uni.getStorageSync('token');
-    if (token) userStore.setToken(token);
   }
 })
 
@@ -292,7 +291,7 @@ function updateOtherInfo() {
     phone: String(phone.value).replace(/\s/g, ''),
     realname: realname.value,
     sex: Number(gender.value),
-    openid: openid.value || null
+    departids: ""
   };
   
   uni.request({
