@@ -12,7 +12,7 @@
         <view class="flex-row items-center text-white">
           <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
           <text class="nav-title"
-            style="color: #FFFFFF; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;">海岛智游侠</text>
+            style="color: #FFFFFF; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;">山河智游侠</text>
           <uni-icons type="spinner-cycle" size="24" color="#FFFFFF" />
         </view>
       </view>
@@ -95,14 +95,6 @@
         </view>
       </view>
 
-      <!-- 会员充值卡片 -->
-      <!-- <view class="member-card" @click="navigateToMembership">
-        <view class="member-card-left">
-          <view class="member-title">会员专享</view>
-          <view class="member-desc">享受更多折扣与特权</view>
-        </view>
-        <view class="member-btn">立即充值</view>
-      </view> -->
 
       <!-- 热门活动 -->
       <view class="section">

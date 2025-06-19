@@ -164,11 +164,7 @@ const goLanguage = () => {
 }
 // 意见反馈
 const goFeedback = () => {
-  uni.showToast({
-    title: '未到营业时间',
-    icon: 'none',
-    duration: 2000
-  });
+  uni.navigateTo({ url: '/pages/my/feedback' })
 }
 // 关于我们
 const goAboutUs = () => {
