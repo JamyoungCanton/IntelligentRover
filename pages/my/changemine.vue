@@ -227,68 +227,22 @@ function saveProfile() {
   const originalUsername = userStore.userInfo.username
   const hasUsernameChanged = nickname.value !== originalUsername
 
-  if (hasUsernameChanged) {
-    uni.request({
-      url: 'https://island.zhangshuiyi.com/island/sys/user/login/setting/userEdit',
-      method: 'POST',
-      header: {
-        'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
-      },
-      data: {
-        username: nickname.value,
-        id: userStore.userInfo.id
-      },
-      success: (res) => {
-        if (res.data && res.data.success) {
-          // 用户名修改成功后，调用注销接口
-          uni.request({
-            url: 'https://island.zhangshuiyi.com/island/sys/logout',
-            method: 'PUT',
-            header: {
-              'Content-Type': 'application/json',
-              'X-Access-Token': userStore.token
-            },
-            success: (logoutRes) => {
-              // 清除本地token
-              userStore.setToken('');
-              uni.removeStorageSync('token');
-              uni.showToast({ title: '用户名已修改，请重新登录', icon: 'none' });
-              setTimeout(() => {
-                uni.reLaunch({ url: '/pages/login/login' });
-              }, 1200);
-            }
-          });
-        } else {
-          uni.showToast({ title: res.data.message || '用户名修改失败', icon: 'none' });
-        }
-      },
-      fail: () => {
-        uni.showToast({ title: '用户名修改失败', icon: 'none' });
-      }
-    });
-  } else {
-    // 用户名没变，走原有逻辑
-    updateOtherInfo();
-  }
-}
-
-// 更新其他用户信息
-function updateOtherInfo() {
-  const sysUser = {
+  // 构造要提交的数据
+  const sysUserIdvo = {
     avatar: avatar.value,
     birthday: birthday.value,
     email: email.value,
-    phone: String(phone.value).replace(/\s/g, ''),
+    phone: phoneStr,
     realname: realname.value,
-    departids: departids.value
+    departids: departids.value,
+    username: nickname.value
   };
-  
+
   // 只保留有值的字段（去除空字符串、null、undefined）
   const dataToSend = {};
-  Object.keys(sysUser).forEach(key => {
-    if (sysUser[key] !== '' && sysUser[key] !== null && sysUser[key] !== undefined) {
-      dataToSend[key] = sysUser[key];
+  Object.keys(sysUserIdvo).forEach(key => {
+    if (sysUserIdvo[key] !== '' && sysUserIdvo[key] !== null && sysUserIdvo[key] !== undefined) {
+      dataToSend[key] = sysUserIdvo[key];
     }
   });
 
@@ -302,11 +256,31 @@ function updateOtherInfo() {
     data: dataToSend,
     success: (res) => {
       if (res.data && res.data.success) {
-        // 重新拉取用户信息
-        fetchUserInfoFromServer().then(() => {
-          uni.showToast({ title: '保存成功', icon: 'success' });
-          isEdit.value = false;
-        });
+        if (hasUsernameChanged) {
+          // 用户名变更，自动退出登录
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/sys/logout',
+            method: 'PUT',
+            header: {
+              'Content-Type': 'application/json',
+              'X-Access-Token': userStore.token
+            },
+            success: () => {
+              userStore.setToken('');
+              uni.removeStorageSync('token');
+              uni.showToast({ title: '用户名已修改，请重新登录', icon: 'none' });
+              setTimeout(() => {
+                uni.reLaunch({ url: '/pages/login/login' });
+              }, 1200);
+            }
+          });
+        } else {
+          // 重新拉取用户信息
+          fetchUserInfoFromServer().then(() => {
+            uni.showToast({ title: '保存成功', icon: 'success' });
+            isEdit.value = false;
+          });
+        }
       } else {
         uni.showToast({ title: res.data.message || '保存失败', icon: 'none' });
       }

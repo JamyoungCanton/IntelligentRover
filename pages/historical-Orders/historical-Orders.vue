@@ -38,7 +38,10 @@
             </text>
           </view>
           <view class="order-info">
-            <image class="order-image" src="https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg" mode="aspectFill">
+            <image
+              class="order-image"
+              :src="order.imageUrl || 'https://ai-public.mastergo.com/ai/img_res/eca975b4a54bcecdd2e27d4c0f8a986a.jpg'"
+              mode="aspectFill">
             </image>
             <view class="order-details">
               <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>
@@ -122,7 +125,6 @@
         </scroll-view>
       </view>
     </view>
-    <Tabbar />
   </view>
 </template>
 
@@ -149,8 +151,8 @@ const statusMap = {
 const filteredOrders = computed(() => {
   let result = orders.value;
 
-  // 只显示已支付的订单
-  result = result.filter(order => order.payStatus === 'PAID');
+  // 只显示已完成的订单
+  result = result.filter(order => order.orderStatus === 'COMPLETED');
 
   // 根据搜索关键词筛选
   if (searchKeyword.value) {
@@ -225,7 +227,8 @@ const getOrderList = () => {
   // 构建请求参数
   const params = {
     pageNo: 1,
-    pageSize: 300
+    pageSize: 300,
+    orderStatus: 'COMPLETED'
   };
 
   // 添加标签对应的筛选条件

@@ -19,12 +19,6 @@
 			}
 		},
 		{
-			"path": "pages/itinerary/itinerary",
-			"style": {
-				"navigationStyle": "custom"
-			}
-		},
-		{
 			"path": "pages/order/order",
 			"style": {
 				"navigationBarTitleText": "订单"

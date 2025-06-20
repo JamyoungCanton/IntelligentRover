@@ -125,7 +125,6 @@
       <view class="section">
         <view class="section-header">
           <text class="section-title">精选路线</text>
-          <text class="section-more" @click="viewMore('精选路线')">查看更多 ></text>
         </view>
         <view class="route-item" @click="navigateToRoute(1)">
           <view class="route-hot-tag">
@@ -339,12 +338,6 @@ const getSpotsList = (type) => {
 const switchTab = (tab) => {
   activeTab.value = tab;
   getSpotsList(tab);
-};
-
-const viewMore = (type) => {
-  uni.navigateTo({
-    url: `/pages/${type === '热门活动' ? 'activity/activity' : 'itinerary/itinerary'}`
-  });
 };
 
 const tabBarPages = [

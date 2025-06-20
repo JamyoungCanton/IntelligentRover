@@ -40,8 +40,20 @@ const goLogibOut = () => {
     content: '是否退出登录？',
     success: (res) => {
       if (res.confirm) {
-        userStore.clearUser();
-        uni.reLaunch({ url: '/pages/login/login' });
+        // 先请求后端退出接口
+        uni.request({
+          url: 'https://island.zhangshuiyi.com/island/sys/logout',
+          method: 'PUT',
+          header: {
+            'Content-Type': 'application/json',
+            'X-Access-Token': userStore.token
+          },
+          complete: () => {
+            // 无论成功失败都清除本地token
+            userStore.clearUser();
+            uni.reLaunch({ url: '/pages/login/login' });
+          }
+        });
       }
     }
   });
