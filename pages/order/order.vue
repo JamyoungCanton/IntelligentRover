@@ -60,7 +60,7 @@
             <text class="price">¥ {{ order.price || order.amount || 0 }}</text>
             <view class="button-group">
 <!-- v-if="order.payStatus === 'UNPAID'" -->
-              <button class="btn btn-default"
+              <button class="btn btn-default" v-if="order.payStatus === 'UNPAID'"
                 @click="deleteOrder(order)">取消订单</button>
 
               <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
