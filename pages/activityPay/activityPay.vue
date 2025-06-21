@@ -74,12 +74,6 @@
 							</label>
 						</radio-group>
 					</view>
-
-					<view v-if="orderInfo">
-						<view class="order-status-tip">
-							当前订单状态：<text>{{ payStatusText }}</text>
-						</view>
-					</view>
 				</view>
 
 				<!-- <view v-if="orderInfo && (!orderInfo.items || orderInfo.items.length === 0)" class="empty">

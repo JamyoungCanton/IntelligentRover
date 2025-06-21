@@ -186,7 +186,13 @@
                 <text class="fan-name">{{ fan.username }}</text>
                 <text class="fan-desc">{{ (fan.fans || 0) + '粉丝' }}</text>
               </view>
-              <button class="follow-back-btn" @click="followBack(fan)">回关</button>
+              <button 
+                  class="follow-back-btn" 
+                  :class="{ 'already-followed': focusIdSet.has(String(fan.id)) }"
+                  @click="handleFollowBackClick(fan)"
+                >
+                {{ focusIdSet.has(String(fan.id)) ? '已关注' : '回关' }}
+              </button>
             </view>
             <view class="fans-footer">不能再往下滑了~</view>
           </view>
@@ -730,6 +736,17 @@ const unfollow = (user) => {
       }
     }
   });
+};
+
+const handleFollowBackClick = (fan) => {
+  if (focusIdSet.value.has(String(fan.id))) {
+    uni.showToast({
+      title: '您已经关注该用户',
+      icon: 'none'
+    });
+  } else {
+    followBack(fan);
+  }
 };
 
 const followBack = (fan) => {
@@ -1352,6 +1369,12 @@ const toggleCollect = async (item) => {
   font-size: 16px;
   margin-left: 10px;
   line-height: 1.8;
+}
+
+.follow-back-btn.already-followed {
+  border-color: #ccc;
+  color: #999;
+  background-color: #f7f7f7;
 }
 
 .fans-list-section {
