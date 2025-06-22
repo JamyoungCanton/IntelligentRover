@@ -126,9 +126,11 @@ const chooseImage = async () => {
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera']
     });
-    tempFilePaths.forEach((path) => {
-      uploadImage(path);
-    });
+    
+    // 依次处理每张图片
+    for (const path of tempFilePaths) {
+      await uploadImage(path);
+    }
   } catch (err) {
     console.error('选择图片失败:', err);
     uni.showToast({
@@ -138,66 +140,65 @@ const chooseImage = async () => {
   }
 };
 
-const uploadImage = (path) => {
-  return new Promise((resolve, reject) => {
-    const token = userStore.token;
+const uploadImage = async (path) => {
+  const token = userStore.token;
 
-    if (!token) {
-      uni.showToast({
-        title: '未获取到认证信息，请重新登录',
-        icon: 'none'
-      });
-      reject('未获取到认证信息');
-      return;
-    }
+  if (!token) {
+    uni.showToast({
+      title: '未获取到认证信息，请重新登录',
+      icon: 'none'
+    });
+    return;
+  }
 
-    uni.uploadFile({
-      url: `${baseurl}/island/posts/uploadImage`,
-      filePath: path,
-      name: 'file',
-      header: {
-        'X-Access-Token': userStore.token
-      },
-      success: (res) => {
-        if (res.statusCode === 200) {
-          try {
-            const data = JSON.parse(res.data);
-            if (data.success) {
-              const imageUrl = data.result;
-              uploadedFiles.value.push(imageUrl);
-              resolve(imageUrl);
-            } else {
-              uni.showToast({
-                title: data.message || '图片上传失败',
-                icon: 'none'
-              });
-              reject(data.message);
-            }
-          } catch (e) {
-            console.error('解析响应数据失败:', e);
+  // 先进行图片内容审核
+  const imageIsValid = await checkImage(path);
+  if (!imageIsValid) {
+    return;
+  }
+
+  // 图片审核通过后，再进行上传
+  uni.uploadFile({
+    url: `${baseurl}/island/posts/uploadImage`,
+    filePath: path,
+    name: 'file',
+    header: {
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      if (res.statusCode === 200) {
+        try {
+          const data = JSON.parse(res.data);
+          if (data.success) {
+            const imageUrl = data.result;
+            uploadedFiles.value.push(imageUrl);
+          } else {
             uni.showToast({
-              title: '图片上传失败',
+              title: data.message || '图片上传失败',
               icon: 'none'
             });
-            reject(e);
           }
-        } else {
+        } catch (e) {
+          console.error('解析响应数据失败:', e);
           uni.showToast({
-            title: `上传失败，状态码: ${res.statusCode}`,
+            title: '图片上传失败',
             icon: 'none'
           });
-          reject(res.statusCode);
         }
-      },
-      fail: (err) => {
-        console.error('图片上传失败:', err);
+      } else {
         uni.showToast({
-          title: '图片上传失败',
+          title: `上传失败，状态码: ${res.statusCode}`,
           icon: 'none'
         });
-        reject(err);
       }
-    });
+    },
+    fail: (err) => {
+      console.error('图片上传失败:', err);
+      uni.showToast({
+        title: '图片上传失败',
+        icon: 'none'
+      });
+    }
   });
 };
 
@@ -209,7 +210,73 @@ const goBack = () => {
   uni.navigateBack();
 };
 
-const createPost = () => {
+const checkContent = async (content, fieldName) => {
+  if (!content) return true;
+  try {
+    const res = await uni.request({
+      url: `https://island.zhangshuiyi.com/island/check/content/${encodeURIComponent(content)}`,
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token,
+      },
+    });
+    if (res.statusCode === 200 && res.data === true) {
+      return true;
+    } else {
+      uni.showToast({
+        title: `${fieldName}包含不合规内容，请修改`,
+        icon: 'none',
+      });
+      return false;
+    }
+  } catch (err) {
+    console.error('内容审核接口请求失败:', err);
+    uni.showToast({ title: '内容审核失败，请稍后再试', icon: 'none' });
+    return false;
+  }
+};
+
+const checkImage = async (filePath) => {
+  try {
+    const res = await uni.uploadFile({
+      url: `${baseurl}/island/check/image`,
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'X-Access-Token': userStore.token,
+      },
+    });
+    
+    if (res.statusCode === 200) {
+      try {
+        const data = JSON.parse(res.data);
+        // 根据接口文档，响应是布尔值
+        if (data === true) {
+          return true;
+        } else {
+          uni.showToast({
+            title: '图片包含不合规内容，请更换',
+            icon: 'none',
+          });
+          return false;
+        }
+      } catch (e) {
+        console.error('解析图片审核响应失败:', e);
+        uni.showToast({ title: '图片审核失败，请稍后再试', icon: 'none' });
+        return false;
+      }
+    } else {
+      uni.showToast({ title: '图片审核失败，请稍后再试', icon: 'none' });
+      return false;
+    }
+  } catch (err) {
+    console.error('图片审核接口请求失败:', err);
+    uni.showToast({ title: '图片审核失败，请稍后再试', icon: 'none' });
+    return false;
+  }
+};
+
+const createPost = async () => {
   if (!hasToken()) return;
 
   if (!title.value.trim()) {
@@ -233,6 +300,14 @@ const createPost = () => {
     });
     return;
   }
+
+  // 检查标题内容
+  const titleIsValid = await checkContent(title.value, '帖子标题');
+  if (!titleIsValid) return;
+
+  // 检查帖子内容
+  const contentIsValid = await checkContent(content.value, '帖子内容');
+  if (!contentIsValid) return;
 
   const postDto = {
     area: postType.value,

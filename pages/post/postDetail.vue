@@ -412,6 +412,33 @@ const getCommentList = async () => {
   }
 }
 
+// 内容审核函数
+const checkContent = async (content, fieldName) => {
+  if (!content) return true;
+  try {
+    const res = await uni.request({
+      url: `https://island.zhangshuiyi.com/island/check/content/${encodeURIComponent(content)}`,
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token,
+      },
+    });
+    if (res.statusCode === 200 && res.data === true) {
+      return true;
+    } else {
+      uni.showToast({
+        title: `${fieldName}包含不合规内容，请修改`,
+        icon: 'none',
+      });
+      return false;
+    }
+  } catch (err) {
+    console.error('内容审核接口请求失败:', err);
+    uni.showToast({ title: '内容审核失败，请稍后再试', icon: 'none' });
+    return false;
+  }
+};
+
 // 发送评论
 const commentContent = ref('');
 const sendComment = async () => {
@@ -420,6 +447,13 @@ const sendComment = async () => {
       title: '请输入评论内容',
       icon: 'none'
     });
+    return;
+  }
+
+  // 检查评论内容
+  const contentIsValid = await checkContent(commentContent.value, '评论内容');
+  if (!contentIsValid) {
+    // 内容审核失败时，不关闭弹窗，让用户继续编辑
     return;
   }
   

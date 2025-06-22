@@ -162,56 +162,131 @@ function chooseAvatar() {
 
 function uploadAvatar(filePath) {
   console.log('上传头像时token:', userStore.token)
-  uni.uploadFile({
-    url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
-    filePath: filePath,
-    name: 'file',
-    header: {
-      'X-Access-Token': userStore.token
-    },
-    success: (uploadFileRes) => {
-      try {
-        const data = JSON.parse(uploadFileRes.data)
-        console.log('上传头像响应:', data)
-        if (data.success && data.result) {
-          const imageUrl = data.result.startsWith('http') 
-            ? data.result 
-            : `https://wuminghui.top:9000/${data.result.replace(/^\/+/, '')}`;
+  
+  // 先进行头像内容审核
+  checkImage(filePath).then(imageIsValid => {
+    if (!imageIsValid) {
+      return;
+    }
+    
+    // 头像审核通过后，再进行上传
+    uni.uploadFile({
+      url: 'https://island.zhangshuiyi.com/island/posts/uploadImage',
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'X-Access-Token': userStore.token
+      },
+      success: (uploadFileRes) => {
+        try {
+          const data = JSON.parse(uploadFileRes.data)
+          console.log('上传头像响应:', data)
+          if (data.success && data.result) {
+            const imageUrl = data.result.startsWith('http') 
+              ? data.result 
+              : `https://wuminghui.top:9000/${data.result.replace(/^\/+/, '')}`;
+              
+            avatar.value = imageUrl;
             
-          avatar.value = imageUrl;
-          
-          userStore.userInfo.avatar = imageUrl;
-          
+            userStore.userInfo.avatar = imageUrl;
+            
+            uni.showToast({ 
+              title: '上传成功', 
+              icon: 'success' 
+            });
+          } else {
+            console.error('上传头像失败:', data.message)
+            uni.showToast({ 
+              title: data.message || '上传失败', 
+              icon: 'none' 
+            });
+          }
+        } catch (e) {
+          console.error('解析上传响应失败:', e)
           uni.showToast({ 
-            title: '上传成功', 
-            icon: 'success' 
-          });
-        } else {
-          console.error('上传头像失败:', data.message)
-          uni.showToast({ 
-            title: data.message || '上传失败', 
+            title: '上传失败', 
             icon: 'none' 
           });
         }
-      } catch (e) {
-        console.error('解析上传响应失败:', e)
+      },
+      fail: (err) => {
+        console.error('上传头像请求失败:', err)
         uni.showToast({ 
           title: '上传失败', 
           icon: 'none' 
         });
       }
-    },
-    fail: (err) => {
-      console.error('上传头像请求失败:', err)
-      uni.showToast({ 
-        title: '上传失败', 
-        icon: 'none' 
-      });
-    }
+    });
   });
 }
 
-function saveProfile() {
+const checkContent = async (content, fieldName) => {
+  if (!content) return true;
+  try {
+    const res = await uni.request({
+      url: `https://island.zhangshuiyi.com/island/check/content/${encodeURIComponent(content)}`,
+      method: 'GET',
+      header: {
+        'X-Access-Token': userStore.token,
+      },
+    });
+    if (res.statusCode === 200 && res.data === true) {
+      return true;
+    } else {
+      uni.showToast({
+        title: `${fieldName}包含不合规内容，请修改`,
+        icon: 'none',
+      });
+      return false;
+    }
+  } catch (err) {
+    console.error('内容审核接口请求失败:', err);
+    uni.showToast({ title: '内容审核失败，请稍后再试', icon: 'none' });
+    return false;
+  }
+};
+
+const checkImage = async (filePath) => {
+  try {
+    const res = await uni.uploadFile({
+      url: 'https://island.zhangshuiyi.com/island/check/image',
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'X-Access-Token': userStore.token,
+      },
+    });
+    
+    if (res.statusCode === 200) {
+      try {
+        const data = JSON.parse(res.data);
+        // 根据接口文档，响应是布尔值
+        if (data === true) {
+          return true;
+        } else {
+          uni.showToast({
+            title: '头像包含不合规内容，请更换',
+            icon: 'none',
+          });
+          return false;
+        }
+      } catch (e) {
+        console.error('解析头像审核响应失败:', e);
+        uni.showToast({ title: '头像审核失败，请稍后再试', icon: 'none' });
+        return false;
+      }
+    } else {
+      uni.showToast({ title: '头像审核失败，请稍后再试', icon: 'none' });
+      return false;
+    }
+  } catch (err) {
+    console.error('头像审核接口请求失败:', err);
+    uni.showToast({ title: '头像审核失败，请稍后再试', icon: 'none' });
+    return false;
+  }
+};
+
+async function saveProfile() {
   // 手机号校验
   const phoneStr = String(phone.value).replace(/\s/g, '');
   if (!phoneStr) {
@@ -222,6 +297,9 @@ function saveProfile() {
     uni.showToast({ title: '手机号格式不正确', icon: 'none' });
     return;
   }
+  
+  if (!(await checkContent(nickname.value, '昵称'))) return;
+  if (!(await checkContent(departids.value, '个性签名'))) return;
 
   // 检查用户名是否发生变化
   const originalUsername = userStore.userInfo.username

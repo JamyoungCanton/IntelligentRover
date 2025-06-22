@@ -50,8 +50,8 @@ const goLogibOut = () => {
           },
           complete: () => {
             // 无论成功失败都清除本地token
-            userStore.clearUser();
-            uni.reLaunch({ url: '/pages/login/login' });
+        userStore.clearUser();
+        uni.reLaunch({ url: '/pages/login/login' });
           }
         });
       }
