@@ -1,20 +1,20 @@
 <template>
   <view class="container" :style="`padding-top: ${statusBarHeight + 44}px;`">
     <!-- 自定义顶部导航栏 -->
-    <view
-      class="custom-nav"
-      :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight }px;`"
-    >
-      <view class="nav-left" @click="goBack">
-        <uni-icons type="back" size="28" color="#333" />
-      </view>
-      <view class="nav-title">社区</view>
-      <view class="nav-right"></view>
-    </view>
     
+    <view class="custom-nav" :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight}px;`">
+      <view class="back-btn" @click="goBack">
+        <uni-icons type="back" size="24"></uni-icons>
+      </view>
+      <view class="search-bar">
+        <uv-search placeholder="请输入搜索内容" shape="square" :showAction="false"></uv-search>
+      </view>
+    </view>
+
     <!-- 轮播图（放在筛选栏上面） -->
     <view class="banner-section">
-      <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
+      <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots
+        indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
         <swiper-item v-for="(item, index) in bannerList" :key="index">
           <image :src="item.imageUrl" mode="aspectFill" class="banner-image" />
           <view class="banner-title">
@@ -23,125 +23,79 @@
         </swiper-item>
       </swiper>
     </view>
-    
+
     <!-- 帖子分类区不再固定在顶部 -->
     <view class="postTypeSelect">
-      <scroll-view
-        class="type-scroll"
-        scroll-x
-        show-scrollbar="false"
-        :scroll-into-view="scrollIntoViewId"
-        scroll-with-animation
-      >
-        <view
-          v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList"
-          :key="index"
-          class="type-item"
-          :class="{ active: activeType === type.value }"
-          @click="selectType(type.value, index)"
-          :id="'type-item-' + index"
-        >
+      <scroll-view class="type-scroll" scroll-x show-scrollbar="false" :scroll-into-view="scrollIntoViewId"
+        scroll-with-animation>
+        <view v-for="(type, index) in currentPostType === 'mine' ? mineTypeList : publicTypeList" :key="index"
+          class="type-item" :class="{ active: activeType === type.value }" @click="selectType(type.value, index)"
+          :id="'type-item-' + index">
           {{ type.label }}
         </view>
       </scroll-view>
     </view>
-    
+
     <!-- 帖子类型按钮 -->
     <view class="fixed-bottom-btns">
-      <view class="post-type-buttons">
-        <view 
-          class="type-button" 
-          :class="{ active: currentPostType === 'public' }" 
-          @click="currentPostType === 'public' ? goToCreatePost() : switchPostType('public')"
-        >
-          <uni-icons type="paperplane" size="18" :color="currentPostType === 'public' ? '#fff' : '#666'"></uni-icons>
-          <text>{{ currentPostType === 'public' ? '发布帖子' : '看帖子' }}</text>
-        </view>
-        <view 
-          class="type-button" 
-          :class="{ active: currentPostType === 'mine' }" 
-          @click="goToMyFriends"
-        >
-          <uni-icons type="notification" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
-          <text>我的好友</text>
-        </view>
+      <view class="type-button" :class="{ active: currentPostType === 'public' }"
+        @click="currentPostType === 'public' ? goToCreatePost() : switchPostType('public')">
+        <uni-icons type="paperplane-filled" size="18"
+          :color="currentPostType === 'public' ? '#fff' : '#666'"></uni-icons>
+      </view>
+      <view class="type-button" :class="{ active: currentPostType === 'mine' }" @click="goToMyFriends">
+        <uni-icons type="person-filled" size="18" :color="currentPostType === 'mine' ? '#fff' : '#666'"></uni-icons>
       </view>
     </view>
-    
+
     <view class="postContent">
       <!-- 看帖子tab：渲染帖子列表（带图片、标题、内容等） -->
       <template v-if="currentPostType === 'public'">
-      <view class="postItem" 
-        v-for="(item, index) in filteredPostList" 
-        :key="index" 
-        @click="navigateToPostDetail(item)"
-      >
-        <view class="postHeader">
-          <image class="itemava"
-              :src="item.userVO?.avatar || defaultAvatar"
-            mode="aspectFill"
-          />
-          <view class="user-info">
+        <view class="postItem" v-for="(item, index) in filteredPostList" :key="index"
+          @click="navigateToPostDetail(item)">
+          <view class="postHeader">
+            <image class="itemava" :src="item.userVO?.avatar || defaultAvatar" mode="aspectFill" />
+            <view class="user-info">
               <text class="itemname">{{ item.userVO?.username }}</text>
               <text class="itemlv">lv3</text>
-          </view>
+            </view>
             <view class="follow-button" @click.stop="toggleFollowStatus(item)">
-              <u-button 
-                plain 
-                shape="circle" 
-                size="small" 
-                :color="item.isFollowing ? '#999' : '#007aff'"
-                @click.stop="toggleFollowStatus(item)"
-              >
+              <u-button plain shape="circle" size="small" :color="item.isFollowing ? '#999' : '#007aff'"
+                @click.stop="toggleFollowStatus(item)">
                 {{ item.isFollowing ? '已关注' : '+ 关注' }}
               </u-button>
+            </view>
           </view>
-        </view>
-        <view class="postTitle">
+          <view class="postTitle">
             <text>{{ item.title }}</text>
-        </view>
-        <view class="postP">
-          <text>{{ item.content }}</text>
-        </view>
-          <view class="postImage" v-if="item.images && item.images.length > 0">
-          <image
-            v-for="(img, imgIndex) in item.images" 
-            :key="imgIndex"
-            :src="img.url"
-            mode="aspectFill"
-            :style="getImageStyle(item.images.length, imgIndex)"
-          />
-        </view>
-        <view class="item-bottom">
-          <view class="item-bottom-left">
-            <text class="left-data">{{ formatCreateTime(item.createTime) }} · {{ item.area }}</text>
           </view>
+          <view class="postP">
+            <text>{{ item.content }}</text>
+          </view>
+          <view class="postImage" v-if="item.images && item.images.length > 0">
+            <image v-for="(img, imgIndex) in item.images" :key="imgIndex" :src="img.url" mode="aspectFill"
+              :style="getImageStyle(item.images.length, imgIndex)" />
+          </view>
+          <view class="item-bottom">
+            <view class="item-bottom-left">
+              <text class="left-data">{{ formatCreateTime(item.createTime) }} · {{ item.area }}</text>
+            </view>
             <view class="item-bottom-right">
-            <view class="right-data">
-              <view @click.stop="toggleLike(item)">
-                <uni-icons
-                  type="heart"
-                  size="18"
-                  :color="item.liked ? '#ff0000' : '#999'"
-                ></uni-icons>
+              <view @click.stop="toggleLike(item)" class="right-data">
+                <uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="18" :color="item.liked ? '#ff0000' : '#999'"></uni-icons>
                 <text class="data-detail">{{ item.likes }}</text>
               </view>
-              <view @click.stop="toggleCollect(item)">
-                <uni-icons
-                  type="star"
-                  size="18"
-                  :color="item.collected ? '#ff0000' : '#999'"
-                ></uni-icons>
+              <view @click.stop="toggleCollect(item)" class="right-data">
+                <uni-icons :type="item.collected ? 'star-filled' : 'star'" size="20" :color="item.collected ? '#f9ae3d' : '#999'"></uni-icons>
                 <text class="data-detail">{{ item.collect }}</text>
               </view>
-              <view>
+              <view class="right-data">
                 <uni-icons type="chat" size="18" color="#999"></uni-icons>
                 <text class="data-detail">{{ item.comments }}</text>
               </view>
             </view>
           </view>
         </view>
-      </view>
         <view v-if="filteredPostList.length === 0" class="empty-state">
           <text>暂无相关内容</text>
         </view>
@@ -152,10 +106,10 @@
         <view class="fans-list-section">
           <view class="fans-header">
             共 <text class="fans-count">{{ focusTotal }}</text> 个关注
-      </view>
+          </view>
           <view v-if="focusList.length === 0" class="empty-state">
             <text>暂无关注</text>
-      </view>
+          </view>
           <view v-else>
             <view v-for="user in focusList" :key="user.id" class="fan-item">
               <image :src="user.avatar || defaultAvatar" class="fan-avatar" />
@@ -199,14 +153,12 @@
         </view>
       </template>
     </view>
-    
-    <Tabbar v-if="showTabbar" /> 
     <view style="height: 50px;"></view>
   </view>
 </template>
 
 <script setup>
-import { ref,computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '@/store/modules/user';
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { onShow } from '@dcloudio/uni-app';
@@ -236,18 +188,18 @@ const mineTypeList = ref([
 ]);
 
 const bannerList = ref([
-  { 
-    id: 1, 
+  {
+    id: 1,
     imageUrl: 'https://wuminghui.top:9000/travel/19.jpg',
     title: '岛屿风光'
   },
-  { 
-    id: 2, 
+  {
+    id: 2,
     imageUrl: 'https://wuminghui.top:9000/travel/20.webp',
     title: '海边日落'
   },
-  { 
-    id: 3, 
+  {
+    id: 3,
     imageUrl: 'https://wuminghui.top:9000/travel/32.jpg',
     title: '蓝天白云'
   }
@@ -259,7 +211,7 @@ const filteredPostList = computed(() => {
   if (activeType.value === 'all') {
     return postList.value;
   }
-  
+
   // 看帖子筛选逻辑
   if (currentPostType.value === 'public') {
     if (activeType.value === 'daily') {
@@ -274,14 +226,14 @@ const filteredPostList = computed(() => {
     if (activeType.value === 'life') {
       return postList.value.filter(post => post.area === '分享生活');
     }
-  } 
+  }
   // 我的信息筛选逻辑
   else if (currentPostType.value === 'mine') {
     if (activeType.value === 'follow') {
       return postList.value.filter(post => post.area === '关注');
     }
   }
-  
+
   return postList.value;
 });
 
@@ -458,50 +410,50 @@ const toggleFollowStatus = (post) => {
 // 获取帖子信息
 const getPostLst = () => {
   uni.request({
-      url: 'https://island.zhangshuiyi.com/island/posts/page',
-      method: 'GET',
-      header:{
-        'X-Access-Token': userStore.token,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      data:{
-        isAsc: true,
-        order:1,
-        pageNo: 1,
-        pageSize: 50
-      },
-      success: (res) => {
+    url: 'https://island.zhangshuiyi.com/island/posts/page',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore.token,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: {
+      isAsc: true,
+      order: 1,
+      pageNo: 1,
+      pageSize: 50
+    },
+    success: (res) => {
       console.log('获取到的帖子数据：', res.data);
-        if(res.data.code === 401){
-          uni.showToast({
-            title: '请先登录',
-            icon: 'none',
-            duration: 2000
-          });
-          return;
-        }
-        else if (res.statusCode === 200) {
+      if (res.data.code === 401) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+      else if (res.statusCode === 200) {
         postList.value = res.data.result.list.map(post => ({
-              ...post,
+          ...post,
           isFollowing: false, // 确保初始状态为未关注
           liked: !!post.liked,
           collected: !!post.collected
         }));
         // 关键：拉取关注列表，保证按钮状态正确
         getFocusList();
-        } else {
-          uni.showToast({
-            title: '获取帖子信息失败',
-            icon: 'none'
-          });
-        }
-      },
-      fail: (err) => {
+      } else {
         uni.showToast({
-          title: '网络请求出错',
+          title: '获取帖子信息失败',
           icon: 'none'
         });
       }
+    },
+    fail: (err) => {
+      uni.showToast({
+        title: '网络请求出错',
+        icon: 'none'
+      });
+    }
   })
 }
 
@@ -525,7 +477,7 @@ const getFollowingStatus = () => {
       }
     }
   });
-}  
+}
 
 
 // 处理收藏/取消收藏
@@ -822,16 +774,15 @@ const toggleCollect = async (item) => {
     uni.showToast({ title: res.data.message || '操作失败', icon: 'none' });
   }
 };
-  
+
 </script>
 
 <style lang="scss">
 /* 顶部轮播图样式 */
 .banner-section {
   width: 100%;
-  height: 200px;
+  height: 180px;
   position: relative;
-  margin-top: 30px;
 }
 
 .banner-swiper {
@@ -858,77 +809,15 @@ const toggleCollect = async (item) => {
   border-radius: 0;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  
+
   text {
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
-/* 帖子类型按钮样式 */
-.post-type-buttons {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 15px;
-  background-color: #fff;
-  border-radius: 14px 14px 0 0;
-  box-shadow: none;
-  margin: 0;
-  border: none;
-}
 
-.type-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 15px;
-  border-radius: 12px;
-  width: 48%;
-  background-color: #f8f9fa;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-    transform: translateX(-100%);
-    transition: 0.6s;
-    z-index: 1;
-  }
-  
-  &:hover::before {
-    transform: translateX(100%);
-  }
-  
-  text {
-    margin-left: 8px;
-    font-size: 15px;
-    font-weight: 500;
-    position: relative;
-    z-index: 2;
-  }
-  
-  &.active {
-    background: linear-gradient(135deg, #0080ff, #0066CC);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
-    transform: translateY(-2px);
-    border: none;
-  }
-  
-  &:active {
-    transform: scale(0.98);
-  }
-}
 
-.container{
+.container {
   background-color: #f8f8f8;
   min-height: 100vh;
   padding-bottom: 100px;
@@ -963,7 +852,7 @@ const toggleCollect = async (item) => {
   transition: all 0.3s, transform 0.2s;
   position: relative;
   overflow: hidden;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -977,48 +866,48 @@ const toggleCollect = async (item) => {
     opacity: 0;
     border-radius: 3px;
   }
-  
+
   &.active {
     background-color: #E6F0FF;
     color: #0066CC;
     font-weight: 500;
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
-    
+
     &::after {
       width: 50%;
       opacity: 1;
     }
   }
-  
+
   &:active {
     transform: translateY(1px);
   }
 }
 
 .postContent {
-  padding-top: 10px;
-  padding-bottom: 80px;
+  padding: 20rpx 25rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+  width: calc(100% - 50rpx);
+  gap: 20rpx;
 }
 
 .postItem {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
-  width: 92%;
-  margin-bottom: 20px;
+  gap: 10rpx;
+  border-radius: 16rpx;
+  width: calc(700rpx - 40rpx);
+  padding: 20rpx;
   background-color: #fff;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  box-shadow: $app-shadow;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  
+
   /* 卡片光影效果 */
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -1030,196 +919,179 @@ const toggleCollect = async (item) => {
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   &:hover::after {
     opacity: 1;
   }
-  
+
   &:active {
     transform: scale(0.98);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   }
-}
 
-.postHeader{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 12px 15px;
-}
+  .postHeader {
+    display: flex;
+    align-items: center;
+    color: #333;
+    gap: 20rpx;
 
-.itemava{
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  margin-right: 12px;
-  border: solid 2px #f0f0f0;
-  object-fit: cover;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
-  
-  &:active {
-    transform: scale(1.05);
-    border-color: #d0e0ff;
-  }
-}
+    // 头像
+    .itemava {
+      width: 60rpx;
+      height: 60rpx;
+      border-radius: 50%;
+      object-fit: cover;
+      transition: all 0.3s ease;
 
-.itemname{
-  margin-right: 12px;
-  font-weight: 500;
-  color: #333;
-}
+      &:active {
+        transform: scale(1.05);
+        border-color: #d0e0ff;
+      }
+    }
 
-.itemlv{
-  padding: 3px 10px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #ff9800, #f57c00);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: 0 2px 5px rgba(245, 124, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
-    opacity: 0.5;
-  }
-}
+    .user-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 20rpx;
 
-.postTitle{
-  margin: 0 15px 8px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  line-height: 1.4;
-  letter-spacing: 0.3px;
-  
-  text {
-    background: linear-gradient(to right, #333, #555);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-}
+      .itemname {
+        font-size: $fs-base;
+      }
 
-.postP {
-  text-indent: 2em;
-  font-size: 15px;
-  padding: 0 15px 12px;
-  color: #4f4f4f;
-  line-height: 1.6;
-  letter-spacing: 0.3px;
-  
-  text {
-    display: block;
-    white-space: pre-line;
-  }
-}
+      .itemlv {
+        padding: 6rpx 20rpx;
+        border-radius: 25rpx;
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+        color: white;
+        font-size: $fs-small;
+        font-weight: bold;
+        box-shadow: $app-shadow;
+        position: relative;
+        overflow: hidden;
 
-.postImage{
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  padding: 0 15px;
-  width: 100%;
-  box-sizing: border-box;
-}
+        &::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+          opacity: 0.5;
+        }
+      }
+    }
 
-.postImage image{
-  border-radius: 8px;
-  margin-bottom: 10px;
-  object-fit: cover;
-  transition: opacity 0.2s;
-  
-  &:active {
-    opacity: 0.9;
-  }
-}
+    .follow-button {
+      color: #333;
+      font-size: $fs-base;
+      padding: 10rpx 20rpx;
+      background: linear-gradient(to bottom, #f0f7ff, #e0eeff);
+      border-radius: 50rpx;
+      border: 1px solid #d0e0ff;
+      box-shadow: $app-shadow;
+      transition: all 0.2s ease;
 
-.item-bottom{
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
-  border-top: solid 1px #f0f0f0;
-  margin-top: 5px;
-  background: linear-gradient(to bottom, rgba(250,250,250,0.5), rgba(255,255,255,0.8));
-}
+      text {
+        font-size: 13px;
+        color: #0066CC;
+        font-weight: 500;
 
-.item-bottom-left{
-  font-size: 13px;
-  color: #999;
-}
+        &.following {
+          color: #666;
+        }
+      }
 
-.item-bottom-right{
-  display: flex;
-  align-items: center;
-}
-
-.right-data{
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #666;
-  
-  /* 交互按钮增强 */
-  .uni-icons {
-    transition: all 0.2s ease;
-    padding: 5px;
-    border-radius: 50%;
-    
-    &:active {
-      background-color: rgba(0, 0, 0, 0.05);
-      transform: scale(1.1);
+      &:active {
+        transform: scale(0.95);
+        box-shadow: 0 1px 2px rgba(0, 102, 204, 0.1);
+      }
     }
   }
+
+  .postTitle {
+    font-size: $fs-large;
+    font-weight: bold;
+    color: #1a1a1a;
+    letter-spacing: 0.3px;
+  }
+
+  .postP {
+    font-size: $fs-base;
+    color: #333;
+  }
+
+  .postImage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .postImage image {
+    border-radius: 16rpx;
+    object-fit: cover;
+    transition: opacity 0.2s;
+
+    &:active {
+      opacity: 0.9;
+    }
+  }
+
+  .item-bottom {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10rpx;
+    border-top: solid 1px #f0f0f0;
+    margin-top: 10rpx;
+  }
+
+  .item-bottom-left {
+    font-size: $fs-small;
+    color: #999;
+  }
+
+  .item-bottom-right {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .right-data {
+    display: flex;
+    align-items: center;
+    font-size: $fs-small;
+    color: #999;
+
+    /* 交互按钮增强 */
+    .uni-icons {
+      transition: all 0.2s ease;
+      padding: 5px;
+      border-radius: 50%;
+
+      &:active {
+        background-color: rgba(0, 0, 0, 0.05);
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  .data-detail {
+    margin-right: 10rpx;
+  }
 }
 
-.data-detail{
-  margin: 0 12px 0 4px;
-}
+
 
 .floating-plus-button {
   display: none;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
 
-.follow-button {
-  padding: 5px 12px;
-  background: linear-gradient(to bottom, #f0f7ff, #e0eeff);
-  border-radius: 15px;
-  border: 1px solid #d0e0ff;
-  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.1);
-  transition: all 0.2s ease;
-  
-  text {
-    font-size: 13px;
-    color: #0066CC;
-    font-weight: 500;
-    
-    &.following {
-      color: #666;
-    }
-  }
-  
-  &:active {
-    transform: scale(0.95);
-    box-shadow: 0 1px 2px rgba(0, 102, 204, 0.1);
-  }
-}
 
 .empty-state {
   display: flex;
@@ -1229,19 +1101,19 @@ const toggleCollect = async (item) => {
   margin-top: 100px;
   color: #999;
   font-size: 16px;
-  
+
   &::before {
     content: '📭';
     font-size: 48px;
     margin-bottom: 15px;
     opacity: 0.7;
   }
-  
+
   text {
-    background-color: rgba(255,255,255,0.7);
+    background-color: rgba(255, 255, 255, 0.7);
     padding: 10px 20px;
     border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 }
 
@@ -1251,7 +1123,7 @@ const toggleCollect = async (item) => {
   border-left: 3px solid #0066CC;
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -1263,11 +1135,11 @@ const toggleCollect = async (item) => {
     opacity: 0.1;
     border-radius: 50%;
   }
-  
+
   .postTitle {
     color: #0066CC;
   }
-  
+
   .notification-type {
     display: inline-block;
     padding: 3px 10px;
@@ -1283,27 +1155,77 @@ const toggleCollect = async (item) => {
 
 .fixed-bottom-btns {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  right: 20rpx;
+  bottom: 300rpx;
   z-index: 1002;
-  background: #fff;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-  padding-bottom: env(safe-area-inset-bottom); /* 适配iPhone底部安全区 */
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+
+  .type-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10rpx;
+    border-radius: 100%;
+    width: 50rpx;
+    height: 50rpx;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: $app-shadow;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+      transform: translateX(-100%);
+      transition: 0.6s;
+      z-index: 1;
+    }
+
+    &:hover::before {
+      transform: translateX(100%);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #0080ff, #0066CC);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
+      transform: translateY(-2px);
+      border: none;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
 }
 
 .custom-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background-color: #fff;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  background-color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   z-index: 999;
   border-bottom: 1px solid #f0f0f0;
-  /* 高度和padding-top由内联style动态设置 */
+
+  .back-btn {
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .search-bar {
+    flex: 1;
+  }
 }
 
 .nav-left {
@@ -1369,6 +1291,10 @@ const toggleCollect = async (item) => {
   font-size: 16px;
   margin-left: 10px;
   line-height: 1.8;
+}
+
+.back-btn {
+  margin-right: 1px;
 }
 
 .follow-back-btn.already-followed {

@@ -274,6 +274,14 @@ const getDetailList = () => {
         if (!hotelData.value.id) {
           hotelData.value.id = hotelId.value;
         }
+        // 假设后端返回 images 字段为数组
+        if (hotelData.value.images && hotelData.value.images.length) {
+          hotelImages.value = hotelData.value.images;
+        } else if (hotelData.value.imageUrl) {
+          hotelImages.value = [hotelData.value.imageUrl];
+        } else {
+          hotelImages.value = [];
+        }
         comments.value = res.data.result.comments || [];
         console.log('评论数据：', comments.value);
       }

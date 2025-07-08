@@ -10,6 +10,38 @@ export const baseurl = 'https://island.zhangshuiyi.com/island'; // 服务器
 
 const exceptUrl = []; // 不需要token的接口
 
+const utf8Decode = (uint8Array) => {
+	let text = '';
+	let i = 0;
+	const len = uint8Array.length;
+	while (i < len) {
+		let byte = uint8Array[i];
+		if (byte < 0x80) {
+			text += String.fromCharCode(byte);
+			i++;
+		} else if (byte >= 0xC0 && byte < 0xE0) {
+			const byte2 = uint8Array[i + 1];
+			text += String.fromCharCode(((byte & 0x1F) << 6) | (byte2 & 0x3F));
+			i += 2;
+		} else if (byte >= 0xE0 && byte < 0xF0) {
+			const byte2 = uint8Array[i + 1];
+			const byte3 = uint8Array[i + 2];
+			text += String.fromCharCode(((byte & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F));
+			i += 3;
+		} else if (byte >= 0xF0 && byte < 0xF8) {
+			const byte2 = uint8Array[i + 1];
+			const byte3 = uint8Array[i + 2];
+			const byte4 = uint8Array[i + 3];
+			const codePoint = ((byte & 0x07) << 18) | ((byte2 & 0x3F) << 12) | ((byte3 & 0x3F) << 6) | (byte4 & 0x3F);
+			text += String.fromCodePoint(codePoint);
+			i += 4;
+		} else {
+			i++;
+		}
+	}
+	return text;
+}
+
 const request = (url, data = {}, method = 'GET') => {
 	let header = {
 		'Content-Type': 'application/json'
@@ -68,8 +100,9 @@ export const StreamRequest = (url, data = {}, method = 'GET', callbackMethod) =>
 			try {
 				// 二进制转字符串
 				const uint8Array = new Uint8Array(response.data);
-				const chunkStr = new TextDecoder('utf-8').decode(uint8Array);
-
+				const chunkStr = utf8Decode(uint8Array);
+				console.log(chunkStr);
+				
 				// 切割字符串，只获取data:data:部分
 				let dataList = chunkStr.split("data:").map(item => item.trim()).filter(item => item !== "");
 

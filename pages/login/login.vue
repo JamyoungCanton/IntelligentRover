@@ -2,7 +2,7 @@
   <view class="container">
     <view class="header">
       <image class="logo" src="https://wuminghui.top:9000/wlmtsys/2025/06/02/c64d05235ba845b88ade471516742c80.png" mode="aspectFit" />
-      <text class="title">海岛智游侠</text>
+      <text class="title">山海智游侠</text>
     </view>
 
     <!-- 微信一键登录区域 -->
