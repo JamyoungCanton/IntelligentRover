@@ -25,10 +25,12 @@
     <!-- 聊天内容滚动区域 -->
     <view v-if="chatMessageList.length > 0" class="chat-list-wrapper">
       <template v-for="(msg, index) in chatMessageList" :key="index">
+        <!-- 用户对话框 -->
         <view v-if="msg.type === 'user'" class="user-message">
           <div class="message-content">{{ msg.content }}</div>
         </view>
 
+        <!-- ai回复框 -->
         <view v-else class="ai-message">
           <view class="typing-content" :class="{ typing: isTyping && index === chatMessageList.length - 1 }">
             <template v-if="msg.content && msg.content.length > 0">
@@ -71,7 +73,7 @@
             <view v-else v-html="msg.content"></view>
           </view>
 
-          <!-- 行程优化组件 -->
+          <!-- 行程是否有帮助 -->
           <view class="action-button-wrapper" v-if="msg.type === 'ai' && msg.showOptimizer">
             <view class="action-button" @click="handleLike('like')">
               <uv-icon :name="msg.isLike.value == 'like' ? 'thumb-up-fill' : 'thumb-up'"
@@ -92,6 +94,7 @@
               </view>
             </view>
           </view>
+          <!-- 行程优化组件 -->
           <view class="trip-optimizer" v-if="msg.type === 'ai' && msg.showOptimizer">
             <view class="optimizer-header">
               <text class="optimizer-title">优化行程</text>
@@ -496,6 +499,11 @@ const startThinkingAnimation = () => {
   }, 500);
 };
 
+/**
+ * 处理功能按钮点击事件
+ *
+ * @param text 被点击按钮的文本内容
+ */
 const handleTipsClick = (text) => {
   console.log(`功能按钮点击: ${text}`);
   // 为特定按钮设置消息内容并发送
@@ -505,6 +513,11 @@ const handleTipsClick = (text) => {
   }
 };
 
+/**
+ * 处理项目点击事件
+ *
+ * @param item 点击的项目对象
+ */
 const handleItemClick = (item) => {
   console.log(`跳转到类型: ${item.type}, ID: ${item.id}`);
   const navigateMap = {
@@ -523,6 +536,11 @@ const handleItemClick = (item) => {
 
 };
 
+/**
+ * 处理点击ask选项的事件
+ *
+ * @param askObj 点击的ask选项对象
+ */
 const handleAskClick = (askObj) => {
   console.log('点击了ask选项:', askObj);
   // 这里可以添加更多处理逻辑，比如发送对应的问题
@@ -543,6 +561,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+@import './chat-dialog.css';  // 注掉这里可以恢复之前的样式
+
 page {
   background-color: #f8f8f8;
 }
@@ -725,11 +745,16 @@ page {
     width: max-content;
     max-width: 550rpx;
     margin-left: auto;
-    background-color: #fff;
+    background-color: #00A6ED;  // 用户对话框背景颜色
     padding: 20rpx 40rpx;
     border-radius: 50rpx;
     border-top-right-radius: 0;
     box-shadow: $app-shadow;
+
+    // 用户对话框内容字体
+    .message-content{
+      color: #fff;
+    }
   }
 
   .clickable-item {
