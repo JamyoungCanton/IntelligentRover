@@ -181,35 +181,35 @@ onPullDownRefresh(() => {
 // 导航按钮列表
 const navButtonList = reactive([{
   name: '景点攻略',
-  icon: 'https://img.icons8.com/fluency/96/beach.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/c3d04413f5324828a8b4b70f4e562aab.png',
   path: '/pages/attractionGuide/attractionGuide'
 }, {
   name: '船票预订',
-  icon: 'https://img.icons8.com/fluency/96/sail-boat.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/d57003a01adb43ae95bb1c8177d63cb6.png',
   path: '/pages/ticketBooking/ticketBooking'
 }, {
   name: '美食推荐',
-  icon: 'https://img.icons8.com/fluency/96/restaurant.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/7066311d30274b1b99abebfb7db0ea9e.png',
   path: '/pages/foodRecommendation/foodRecommendation'
 }, {
   name: '酒店住宿',
-  icon: 'https://img.icons8.com/fluency/96/5-star-hotel.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/9ca1a8ec657a4696aa3d998d4ec483ee.png',
   path: '/pages/hotelBooking/hotelBooking'
 }, {
   name: '停车收费',
-  icon: 'https://img.icons8.com/fluency/96/parking.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/2dfc58f626ef44f5bb2d371b689867cf.png',
   path: '/pages/parkingFees/parkingFees'
 }, {
   name: '一日畅游',
-  icon: 'https://img.icons8.com/fluency/96/beach-umbrella.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/bc6a85b0a0624618b37a3950226191e5.png',
   path: '/pages/dayTravel/dayTravel'
 }, {
   name: '社区互动',
-  icon: 'https://img.icons8.com/fluency/96/communication.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/64b9e1d520244d078c485683127c0847.png',
   path: '/pages/ticketPoints/ticketPoints'
 }, {
   name: '更多服务',
-  icon: 'https://img.icons8.com/fluency/96/more.png',
+  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/6df4c1079f444ca4843b74120c6bf281.png',
   path: '/pages/moreServices/moreServices'
 }
 ]);
