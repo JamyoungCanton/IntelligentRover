@@ -42,6 +42,18 @@ const utf8Decode = (uint8Array) => {
 	return text;
 }
 
+const handleUnauthorized = () => {
+	uni.showToast({
+	  title: '登录过期，请重新登录',
+	  icon: 'none',
+	  duration: 2000
+	});
+	userStore.token = ''; // 清除 token
+	uni.reLaunch({
+	  url: '/pages/login/login' // 假设登录页路径，按需修改
+	});
+  };
+
 const request = (url, data = {}, method = 'GET') => {
 	let header = {
 		'Content-Type': 'application/json'
@@ -57,6 +69,12 @@ const request = (url, data = {}, method = 'GET') => {
 			method,
 			header,
 			success: (res) => {
+				// resolve(res.data.result);
+				console.log(res)
+				if (res.code === 401) {
+					handleUnauthorized();
+					return;
+				}
 				resolve(res.data.result);
 			},
 			fail: (res) => {
@@ -93,6 +111,21 @@ export const StreamRequest = (url, data = {}, method = 'GET', callbackMethod) =>
 				resolve(res);
 			},
 			fail: (err) => {
+				if (err.errMsg && err.errMsg.includes('401')) {
+					uni.showModal({
+						title: '提示',
+						content: '登录过期，请重新登录',
+						showCancel: false,
+						success: (res) => {
+							if (res.confirm) {
+								handleUnauthorized();
+							}
+						}
+					});
+					return;
+				  }
+				  console.error('AI响应错误:', err);
+				  reject(err);
 				console.error('AI响应错误:', err);
 			}
 		});
