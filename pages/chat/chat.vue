@@ -162,6 +162,28 @@ import { ref, reactive, nextTick, onMounted, watch } from 'vue';
 import { StreamRequest } from '../../utils/request.js';
 import { marked } from 'marked';
 // ------------------- data -------------------
+
+import { useUserStore } from '@/store/modules/user';
+const userStore = useUserStore();
+const hasToken = () => {
+  if (userStore.token === '') {
+    // 提示未登录，请先登录
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'false',
+      duration: 2000
+    })
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+  }
+}
+
+onMounted(() => { 
+  hasToken();
+})
 // 快捷提示词列表
 const tipList = reactive([{
   icon: '/static/chat/ai图标-海钓体验.svg',
