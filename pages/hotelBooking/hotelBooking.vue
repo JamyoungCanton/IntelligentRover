@@ -109,26 +109,26 @@ const range = ref(['2025-4-10', '2025-4-12']);
 const searchContent = ref('');
 
 const imageUrls = ref([
-  "https://wuminghui.top:9000/travel/h1.jpg",
-  "https://wuminghui.top:9000/travel/h2.jpg",
-  "https://wuminghui.top:9000/travel/h3.jpg",
-  "https://wuminghui.top:9000/travel/h4.jpg",
-  "https://wuminghui.top:9000/travel/h5.jpg",
-  "https://wuminghui.top:9000/travel/h6.jpg",
-  "https://wuminghui.top:9000/travel/h7.jpg",
-  "https://wuminghui.top:9000/travel/h8.jpg",
-  "https://wuminghui.top:9000/travel/h9.jpeg",
-  "https://wuminghui.top:9000/travel/h10.jpg",
-  "https://wuminghui.top:9000/travel/h11.jpg",
-  "https://wuminghui.top:9000/travel/h12.jpg",
-  "https://wuminghui.top:9000/travel/h13.jpg",
-  "https://wuminghui.top:9000/travel/h14.jpg",
-  "https://wuminghui.top:9000/travel/h15.jpg",
-  "https://wuminghui.top:9000/travel/h16.jpg",
-  "https://wuminghui.top:9000/travel/h17.jpg",
-  "https://wuminghui.top:9000/travel/h18.jpg",
-  "https://wuminghui.top:9000/travel/h19.jpeg",
-  "https://wuminghui.top:9000/travel/h20.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h1.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f2.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f3.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f4.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f5.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f6.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f7.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f8.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f9.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f10.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h11.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h12.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h13.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h14.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h15.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h16.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h17.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h18.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h19.jpeg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h20.jpg",
 ]);
 
 const filterButtons = ref([
@@ -153,6 +153,8 @@ onMounted(() => {
 });
 
 const goHotelDetail = (hotel) => {
+  console.log('跳转酒店详情，酒店数据：', hotel);
+  console.log('酒店图片数据：', hotel.images);
   uni.navigateTo({
     url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}&images=${encodeURIComponent(JSON.stringify(hotel.images))}`
   });
@@ -303,12 +305,6 @@ if (!range.value || range.value.length !== 2) {
     icon: 'none'
   });
   return;
-}
-// 跳转详情页面
-const  goHotelDetail = (hotel) => {
- uni.navigateTo({
-    url: `/pages/hotelDetail/hotelDetail?id=${hotel.id}&images=${encodeURIComponent(JSON.stringify(hotel.images))}`
-  }) 
 }
 
 // 准备订单数据

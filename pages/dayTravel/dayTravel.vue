@@ -109,17 +109,27 @@ const tabs = ref([
 // 轮播图数据
 const carouselItems = ref([
   {
-    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/f1fd673e3bc0410f8b56564dbee2a4fb.png',
+    image: 'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-asadphoto-1449767.jpg',
   },
   {
-    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/73d9e2b8d17c4515bb6fda459577e318.png',
+    image: 'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-asadphoto-1591375.jpg',
   },
   {
-    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/8ac928eda41f4b5098c724e648660757.png',
+    image: 'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pok-rie-33563-673865.jpg',
   },
   {
-    image: 'https://wuminghui.top:9000/wlmtsys/2025/04/17/f9c2ea1cc5e44d5ebfeaeae0069d602b.png',
+    image: 'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-pok-rie-33563-982263.jpg',
   }
+]);
+
+// 景点图片存储列表（6张图片）
+const spotImages = ref([
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-asadphoto-1449767.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-francesco-ungaro-3157890.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-belle-co-99483-847393.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-pixabay-64219.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jayson-will-768546872-18817260.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jean-paul-wettstein-677916508-33779389.jpg'
 ]);
 
 // 套餐列表数据
@@ -152,11 +162,12 @@ const fetchSpots = async () => {
       const spotList = res.data.result || [];
       console.log('原始套餐数据:', JSON.stringify(spotList, null, 2));
       
-      spots.value = spotList.map(item => {
+      spots.value = spotList.map((item, index) => {
         console.log('处理套餐项:', item.id, '图片数据:', item.images);
         
-        const imageUrl = item.images && item.images.length > 0 ? item.images[0].url : '/static/default.png';
-        console.log('最终图片URL:', imageUrl);
+        // 使用存储的图片列表，循环使用6张图片
+        const imageUrl = spotImages.value[index % spotImages.value.length];
+        console.log('使用存储图片URL:', imageUrl);
         
         return {
           id: item.id || '',
@@ -212,8 +223,15 @@ const sortedSpots = computed(() => {
 
 // 跳转到套餐详情页
 const goAttraction = (id) => {
+  // 找到对应的景点项，获取其图片
+  const spotItem = spots.value.find(item => item.id === id);
+  const imageUrl = spotItem ? spotItem.image : '';
+  
+  console.log('跳转到详情页，传递图片:', imageUrl);
+  console.log('当前spots数据:', spots.value);
+  
   uni.navigateTo({
-    url: `/pages/dayTravelDetail/dayTravelDetail?id=${id}`
+    url: `/pages/dayTravelDetail/dayTravelDetail?id=${id}&imageURL=${encodeURIComponent(imageUrl)}`
   });
 };
 

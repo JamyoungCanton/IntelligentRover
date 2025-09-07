@@ -73,7 +73,7 @@
         <view class="route-badge">
         </view>
         <view class="route-banner">
-          <image src="https://wuminghui.top:9000/travel/首页-精选路线.jpg"></image>
+          <image src="https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-thorsten-technoman-109353-338504.jpg"></image>
         </view>
         <view class="route-info">
           <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
@@ -181,35 +181,35 @@ onPullDownRefresh(() => {
 // 导航按钮列表
 const navButtonList = reactive([{
   name: '景点攻略',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/c3d04413f5324828a8b4b70f4e562aab.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/beach.png',
   path: '/pages/attractionGuide/attractionGuide'
 }, {
   name: '船票预订',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/d57003a01adb43ae95bb1c8177d63cb6.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/sail-boat.png',
   path: '/pages/ticketBooking/ticketBooking'
 }, {
   name: '美食推荐',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/7066311d30274b1b99abebfb7db0ea9e.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/restaurant.png',
   path: '/pages/foodRecommendation/foodRecommendation'
 }, {
   name: '酒店住宿',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/9ca1a8ec657a4696aa3d998d4ec483ee.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/5-star-hotel.png',
   path: '/pages/hotelBooking/hotelBooking'
 }, {
   name: '停车收费',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/2dfc58f626ef44f5bb2d371b689867cf.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/parking.png',
   path: '/pages/parkingFees/parkingFees'
 }, {
   name: '一日畅游',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/bc6a85b0a0624618b37a3950226191e5.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/beach-umbrella.png',
   path: '/pages/dayTravel/dayTravel'
 }, {
   name: '社区互动',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/64b9e1d520244d078c485683127c0847.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/communication.png',
   path: '/pages/ticketPoints/ticketPoints'
 }, {
   name: '更多服务',
-  icon: 'https://wuminghui.top:9000/wlmtsys/2025/08/04/6df4c1079f444ca4843b74120c6bf281.png',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/more.png',
   path: '/pages/moreServices/moreServices'
 }
 ]);
@@ -222,9 +222,8 @@ const activeTab = ref('景点攻略'); // 默认选中的标签
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 const bannerList = ref([
-  'https://wuminghui.top:9000/travel/Banner1.jpg',
-  'https://wuminghui.top:9000/travel/Banner2.jpg',
-  'https://wuminghui.top:9000/travel/Banner3.jpg'
+  'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jayson-will-768546872-18817260.jpg',
+  'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pixabay-221471.jpg'
 ]);
 const activities = ref([]);
 const activityLoading = ref(false); // 活动列表加载状态
@@ -291,7 +290,6 @@ const handleGetSpotsList = async (type) => {
   });
   spotLoading.value = false;
 };
-
 // 获取活动列表
 const handleGetActivityList = async () => {
   activityLoading.value = true;

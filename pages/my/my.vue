@@ -17,7 +17,7 @@
       <!-- 未登录 -->
       <view class="user-info" v-else>
         <view class="avatar-container">
-          <image class="avatar" src="/static/my/noLogin.png" />
+          <image class="avatar" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/noLogin.png" />
         </view>
         <view class="user-detail" @tap="goLogin()">
           <text class="username" style="font-size: 38rpx; color: #354972; margin-left: 40rpx; ">
@@ -89,22 +89,22 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    img: 'https://wuminghui.top:9000/travel/collectItinerary.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/collectItinerary.png',
     text: '我的帖子',
     onClick: 'goCollectPost'
   },
   {
-    img: 'https://wuminghui.top:9000/travel/historyOrder.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/historyOrder.png',
     text: '历史订单',
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/386345760d1f4c23af9f7c4219530fb9.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/pendingTravelOrders.png',
     text: '活动收藏',
     onClick: 'goActivityCollect'
   },
   {
-    img: 'https://wuminghui.top:9000/travel/customerService.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/customerService.png',
     text: '客服中心'
   }
 ]);

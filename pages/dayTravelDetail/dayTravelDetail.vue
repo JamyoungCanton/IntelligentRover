@@ -210,6 +210,8 @@ const newComment = ref('');
 
 // 页面加载时获取数据
 onLoad((options) => {
+  console.log('dayTravelDetail页面收到的参数:', options);
+  
   if (options.id) {
     packageId.value = options.id;
     fetchProductDetail();
@@ -217,6 +219,15 @@ onLoad((options) => {
   if (options.date) {
     startDate.value = options.date; // 设置初始日期
   }
+  
+  // 处理传入的图片参数
+  if (options.imageURL) {
+    const imageUrl = decodeURIComponent(options.imageURL);
+    console.log('接收到传入的图片URL:', imageUrl);
+    // 优先使用传入的图片
+    productDetail.coverImage = imageUrl;
+  }
+  
   checkOrderPaid(); // 检查是否支付过该商品
 });
 
@@ -237,7 +248,10 @@ const fetchProductDetail = async () => {
       productDetail.id = data.id;
       productDetail.title = data.title;
       productDetail.subtitle = data.packname;
-      productDetail.coverImage = data.images?.[0]?.url?.replace(/<[^>]+>/g, '') || '/static/daytravelDetail/man.png';
+      // 只有在没有传入图片时才使用后端返回的图片
+      if (!productDetail.coverImage) {
+        productDetail.coverImage = data.images?.[0]?.url?.replace(/<[^>]+>/g, '') || '/static/daytravelDetail/man.png';
+      }
       productDetail.price = parseFloat(data.price);
       productDetail.originalPrice = parseFloat(data.priceDesc.split(',')[0]) || 0;
 

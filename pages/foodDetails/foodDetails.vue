@@ -5,7 +5,7 @@
 
 		<!--  店铺图片 -->
 		<view class="shop-image">
-			<image :src="foodDetails?.imageUrl || shopMainImage" mode="widthFix"></image>
+			<image :src="shopMainImage || foodDetails?.imageUrl" mode="widthFix"></image>
 			<view class="shop-info-overlay">
 				<view class="shop-name">{{ foodDetails?.name || '加载中...' }}</view>
 				<view class="shop-rating">
@@ -198,8 +198,10 @@ const getRestaurantDetailsById = (id) => {
 				foodDetails.value = details;
 				comments.value = details.comments || [];
 				
-				// 处理图片
-				if (details.images && Array.isArray(details.images)) {
+				// 处理店铺实拍图片：优先使用传入的图片数据，如果传入的图片为空，再使用后端返回的图片
+				if (shopPhotos.value && shopPhotos.value.length > 0) {
+					console.log('店铺实拍使用传入的图片数据:', shopPhotos.value);
+				} else if (details.images && Array.isArray(details.images)) {
 					const processedPhotos = details.images.reduce((acc, imgStr) => {
 						if (imgStr && typeof imgStr === 'string') {
 							const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
@@ -208,9 +210,11 @@ const getRestaurantDetailsById = (id) => {
 						return acc;
 					}, []);
 					shopPhotos.value = processedPhotos;
+					console.log('店铺实拍使用后端返回的图片数据:', shopPhotos.value);
 				} else {
 					shopPhotos.value = [];
-	}
+					console.log('店铺实拍没有可用的图片数据');
+				}
 				
 				// 如果后端返回的id为0或null，补上
 				if (!details.id) foodDetails.value.id = id;
@@ -298,6 +302,23 @@ onLoad((options) => {
 		timeRange.value.end = formatTime(decodeURIComponent(options.endTime));
 	}
 
+	// 处理传入的图片数据
+	if (options.images) {
+		try {
+			const images = JSON.parse(decodeURIComponent(options.images));
+			console.log('成功解析传入的图片数据:', images);
+			// 将传入的图片数据设置到shopPhotos中（店铺实拍）
+			if (Array.isArray(images) && images.length > 0) {
+				shopPhotos.value = images;
+				// 使用第一张图片作为主图片
+				shopMainImage.value = images[0];
+			}
+		} catch (e) {
+			console.error('解析图片数据失败:', e);
+		}
+	}
+
+	// 如果通过imageURL参数传入图片，也设置到shopMainImage
 	if (options.imageURL) {
 		shopMainImage.value = decodeURIComponent(options.imageURL);
 	}

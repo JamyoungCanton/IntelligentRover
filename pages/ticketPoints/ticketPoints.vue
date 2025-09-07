@@ -2,7 +2,7 @@
   <view class="container" :style="`padding-top: ${statusBarHeight + 44}px;`">
     <!-- 自定义顶部导航栏 -->
     
-    <view class="custom-nav" :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight}px;`">
+    <view class="custom-nav" :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight + 44}px;`">
       <view class="back-btn" @click="goBack">
         <uni-icons type="back" size="24"></uni-icons>
       </view>
@@ -170,6 +170,8 @@ const statusBarHeight = ref(0);
 
 onMounted(() => {
   statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0;
+  console.log('轮播图数据:', bannerList.value);
+  console.log('状态栏高度:', statusBarHeight.value);
 });
 
 // 看帖子页面的筛选条件
@@ -190,17 +192,17 @@ const mineTypeList = ref([
 const bannerList = ref([
   {
     id: 1,
-    imageUrl: 'https://wuminghui.top:9000/travel/19.jpg',
+    imageUrl: 'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jyoti-pur-1340574-32866461.jpg',
     title: '岛屿风光'
   },
   {
     id: 2,
-    imageUrl: 'https://wuminghui.top:9000/travel/20.webp',
+    imageUrl: 'https://gitee.com/luo-shaominggitee/island_image/raw/cbbe990dbb3a50426a6ac2eb901237fbcf0304b4/img/ticket/OIP-C.webp',
     title: '海边日落'
   },
   {
     id: 3,
-    imageUrl: 'https://wuminghui.top:9000/travel/32.jpg',
+    imageUrl: 'https://gitee.com/luo-shaominggitee/island_image/raw/cbbe990dbb3a50426a6ac2eb901237fbcf0304b4/img/ticket/5441499_140120372000_2.jpg',
     title: '蓝天白云'
   }
 ]);
@@ -783,6 +785,8 @@ const toggleCollect = async (item) => {
   width: 100%;
   height: 180px;
   position: relative;
+  margin-top: 0;
+  z-index: 1;
 }
 
 .banner-swiper {

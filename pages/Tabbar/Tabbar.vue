@@ -54,8 +54,8 @@ const tabList = ref([
         middleClass: ''
     },
     {
-        iconPath: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/c64d05235ba845b88ade471516742c80.png',
-        selectedIconPath: 'https://wuminghui.top:9000/wlmtsys/2025/06/02/c64d05235ba845b88ade471516742c80.png',
+        iconPath: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/ai_logo/AI%E5%AF%BC%E6%B8%B8%20(%E6%97%A0%E5%AD%97%E7%89%88).png',
+        selectedIconPath: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/ai_logo/AI%E5%AF%BC%E6%B8%B8%20(%E6%97%A0%E5%AD%97%E7%89%88).png',
         text: 'AI',
         pagePath: '/pages/chat/chat',
         isTabPage: true, 

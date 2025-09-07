@@ -189,26 +189,26 @@ const displayedRestaurants = computed(() => {
 });
 
 const imageUrls = ref([
-  "https://wuminghui.top:9000/travel/f1.jpg",
-  "https://wuminghui.top:9000/travel/f2.jpg",
-  "https://wuminghui.top:9000/travel/f3.jpg",
-  "https://wuminghui.top:9000/travel/f4.jpg",
-  "https://wuminghui.top:9000/travel/f5.jpg",
-  "https://wuminghui.top:9000/travel/f6.jpg",
-  "https://wuminghui.top:9000/travel/f7.jpg",
-  "https://wuminghui.top:9000/travel/f8.jpg",
-  "https://wuminghui.top:9000/travel/f9.jpg",
-  "https://wuminghui.top:9000/travel/f10.jpg",
-  "https://wuminghui.top:9000/travel/f11.jpg",
-  "https://wuminghui.top:9000/travel/f12.jpg",
-  "https://wuminghui.top:9000/travel/f13.jpg",
-  "https://wuminghui.top:9000/travel/f14.jpeg",
-  "https://wuminghui.top:9000/travel/f15.png",
-  "https://wuminghui.top:9000/travel/f16.png",
-  "https://wuminghui.top:9000/travel/f17.jpg",
-  "https://wuminghui.top:9000/travel/f18.jpg",
-  "https://wuminghui.top:9000/travel/f19.jpg",
-  "https://wuminghui.top:9000/travel/f20.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f1.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f2.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f3.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f4.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f5.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f6.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f7.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f8.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f9.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f10.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f11.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f12.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f13.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f14.jpeg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f15.png",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f16.png",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f17.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f18.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f19.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f20.jpg",
 ]);
 
 // 选择分类标签
@@ -349,9 +349,10 @@ const createOrder = (restaurant) => {
 
 // 跳转到餐厅详情页面
 const goToFoodDetails = (restaurant) => {
-  console.log("跳转到餐厅详情页面")
+  console.log("跳转到餐厅详情页面", restaurant);
+  console.log("餐厅图片数据：", restaurant.imageURL);
   uni.navigateTo({
-    url: `/pages/foodDetails/foodDetails?id=${restaurant.id}&startTime=${encodeURIComponent(restaurant.starthour)}&endTime=${encodeURIComponent(restaurant.endhour)}&imageURL=${encodeURIComponent(restaurant.imageURL)}`
+    url: `/pages/foodDetails/foodDetails?id=${restaurant.id}&startTime=${encodeURIComponent(restaurant.starthour)}&endTime=${encodeURIComponent(restaurant.endhour)}&imageURL=${encodeURIComponent(restaurant.imageURL)}&images=${encodeURIComponent(JSON.stringify([restaurant.imageURL]))}`
   });
 };
 

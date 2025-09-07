@@ -249,9 +249,13 @@ onLoad((options) => {
   if (options.images) {
     try {
       hotelImages.value = JSON.parse(decodeURIComponent(options.images))
+      console.log('成功解析传入的图片数据:', hotelImages.value);
     } catch (e) {
+      console.error('解析图片数据失败:', e);
       hotelImages.value = []
     }
+  } else {
+    console.log('未传入图片数据');
   }
   getDetailList()
   checkOrderPaid(); // 检查是否支付过该商品
@@ -274,13 +278,18 @@ const getDetailList = () => {
         if (!hotelData.value.id) {
           hotelData.value.id = hotelId.value;
         }
-        // 假设后端返回 images 字段为数组
-        if (hotelData.value.images && hotelData.value.images.length) {
+        // 优先使用传入的图片数据，如果传入的图片为空，再使用后端返回的图片
+        if (hotelImages.value && hotelImages.value.length > 0) {
+          console.log('使用传入的图片数据:', hotelImages.value);
+        } else if (hotelData.value.images && hotelData.value.images.length) {
           hotelImages.value = hotelData.value.images;
+          console.log('使用后端返回的图片数据:', hotelImages.value);
         } else if (hotelData.value.imageUrl) {
           hotelImages.value = [hotelData.value.imageUrl];
+          console.log('使用后端返回的单张图片:', hotelImages.value);
         } else {
           hotelImages.value = [];
+          console.log('没有可用的图片数据');
         }
         comments.value = res.data.result.comments || [];
         console.log('评论数据：', comments.value);
