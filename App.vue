@@ -3,8 +3,14 @@
 import { debounce } from 'lodash';
 import { useUserStore } from '@/store/modules/user';
 import { ref, computed } from 'vue';
+import Tabbar from '@/pages/Tabbar/Tabbar.vue';
+import AIFloatButton from '@/components/AIFloatButton.vue';
 
 export default {
+  components: {
+    Tabbar,
+    AIFloatButton
+  },
   onLaunch: function() {
     console.log('App Launch');
     const userStore = useUserStore();
@@ -72,8 +78,13 @@ export default {
 };
 </script>
 
+<template>
+  <view>
+    <Tabbar v-if="isTabbarPage" />
+    <AIFloatButton />
+  </view>
+</template>
+
 <style>
     /*每个页面公共css */
 </style>
-
-<Tabbar v-if="isTabbarPage" />

@@ -140,16 +140,9 @@
 
     <!-- 底部导航 -->
     <Tabbar />
-
-    <!-- AI悬浮窗 -->
-    <view class="ai-float-btn animate-pulse" @click="navigateToChat" @touchstart="startDrag" @touchmove="moveDrag"
-      @touchend="endDrag" :style="{ left: dragX + 'px', top: dragY + 'px' }">
-      <view class="ai-btn">
-        <img src="https://wuminghui.top:9000/wlmtsys/2025/06/02/c64d05235ba845b88ade471516742c80.png" alt=""
-          style="width: 45px;height: 45px;">
-      </view>
-      <text class="ai-text">智能导游</text>
-    </view>
+    
+    <!-- AI悬浮按钮 -->
+    <AIFloatButton />
   </view>
 </template>
 
@@ -158,15 +151,18 @@
 import { ref, computed, onMounted, reactive } from 'vue';
 import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import Tabbar from '../Tabbar/Tabbar.vue';
+import AIFloatButton from '@/components/AIFloatButton.vue';
 import request from '@/utils/request.js'; // 导入请求函数
 // ---------------- setup ----------------
 onShow(() => {
   handleGetActivityList();
 });
 onMounted(() => {
-  const { statusBarHeight: sbHeight, safeAreaInsets: insets } = uni.getSystemInfoSync();
-  statusBarHeight.value = sbHeight;
-  safeAreaInsets.value = insets;
+  // 使用新的 API 获取系统信息
+  const windowInfo = uni.getWindowInfo();
+  const deviceInfo = uni.getDeviceInfo();
+  statusBarHeight.value = windowInfo.statusBarHeight || 0;
+  safeAreaInsets.value = deviceInfo.safeAreaInsets || {};
   activeTab.value = '景点攻略';
   handleGetSpotsList('景点攻略');
   handleGetActivityList();
@@ -221,6 +217,7 @@ const tabList = reactive([
 const activeTab = ref('景点攻略'); // 默认选中的标签
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
+const themeColor = ref('#3c9cff'); // 主题颜色
 const bannerList = ref([
   'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jayson-will-768546872-18817260.jpg',
   'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pixabay-221471.jpg'
@@ -367,50 +364,6 @@ const navigateToSpot = (type, id) => {
   });
 };
 
-// AI悬浮窗
-const dragX = ref(uni.getSystemInfoSync().screenWidth - 58); // 96 是按钮的宽度
-const dragY = ref((uni.getSystemInfoSync().screenHeight - 58) / 2);
-const startX = ref(0);
-const startY = ref(0);
-const offsetX = ref(0);
-const offsetY = ref(0);
-// 跳转到 chat 页面
-const navigateToChat = () => {
-  uni.switchTab({
-    url: '/pages/chat/chat'
-  });
-};
-
-const startDrag = (e) => {
-  const { clientX, clientY } = e.touches[0];
-  startX.value = clientX;
-  startY.value = clientY;
-  offsetX.value = dragX.value;
-  offsetY.value = dragY.value;
-};
-
-const moveDrag = (e) => {
-  e.preventDefault(); // 阻止默认滚动行为
-  const { clientX, clientY } = e.touches[0];
-  const x = clientX - startX.value + offsetX.value;
-  const y = clientY - startY.value + offsetY.value;
-  // 实时限制按钮在页面内
-  const screenWidth = uni.getSystemInfoSync().screenWidth;
-  const screenHeight = uni.getSystemInfoSync().screenHeight;
-
-  dragX.value = Math.max(0, Math.min(x, screenWidth - 58));
-  dragY.value = Math.max(0, Math.min(y, screenHeight - 96));
-};
-
-const endDrag = () => {
-  const screenWidth = uni.getSystemInfoSync().screenWidth;
-  const screenHeight = uni.getSystemInfoSync().screenHeight;
-
-  // 限制按钮在页面内
-  dragX.value = Math.max(0, Math.min(dragX.value, screenWidth)) // 96 是按钮的宽度
-  dragY.value = Math.max(0, Math.min(dragY.value, screenHeight - 96)); // 96 是按钮的高度
-
-};
 
 // 会员充值导航
 const navigateToMembership = () => {

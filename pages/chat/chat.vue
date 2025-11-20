@@ -1,5 +1,14 @@
 <template>
   <view class="ai-container">
+    <!-- 导航栏 -->
+    <view class="nav-bar" :style="{ paddingTop: (safeAreaInsets.top || statusBarHeight) + 'px' }">
+      <view class="nav-back" @click="goBack">
+        <uni-icons type="back" size="24" color="#333333"></uni-icons>
+      </view>
+      <text class="nav-title">AI智游侠</text>
+      <view class="nav-right" style="width: 24px;"></view>
+    </view>
+    
     <!-- 缺省页面 -->
     <view v-if="chatMessageList.length == 0" class="ai-nochat-wrapper">
       <!-- 标题 -->
@@ -165,6 +174,22 @@ import { marked } from 'marked';
 
 import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
+
+// 安全区域信息
+const safeAreaInsets = ref({});
+const statusBarHeight = ref(0);
+
+// 返回上一页
+const goBack = () => {
+  uni.navigateBack({
+    fail: () => {
+      // 如果无法返回，则跳转到首页
+      uni.switchTab({
+        url: '/pages/index/index'
+      });
+    }
+  });
+};
 const hasToken = () => {
   if (userStore.token === '') {
     // 提示未登录，请先登录
@@ -183,6 +208,11 @@ const hasToken = () => {
 
 onMounted(() => { 
   hasToken();
+  // 获取安全区域信息
+  const windowInfo = uni.getWindowInfo();
+  const deviceInfo = uni.getDeviceInfo();
+  statusBarHeight.value = windowInfo.statusBarHeight || 0;
+  safeAreaInsets.value = deviceInfo.safeAreaInsets || {};
 })
 // 快捷提示词列表
 const tipList = reactive([{
@@ -611,7 +641,7 @@ page {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: 150rpx;
+    margin-top: 200rpx; // 为导航栏留出空间
 
     image {
       width: 200rpx;
@@ -754,12 +784,50 @@ page {
   gap: 20rpx;
 }
 
+// 导航栏样式
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10rpx 30rpx;
+  padding-bottom: 20rpx;
+  background-color: #fff;
+  z-index: 999;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  min-height: 88rpx;
+  
+  .nav-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60rpx;
+    height: 60rpx;
+    cursor: pointer;
+  }
+  
+  .nav-title {
+    font-size: 36rpx;
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+    text-align: center;
+  }
+  
+  .nav-right {
+    width: 60rpx;
+  }
+}
+
 .chat-list-wrapper {
   display: flex;
   flex-direction: column;
   gap: 40rpx;
-  margin-top: 150rpx;
   padding: 25rpx;
+  padding-top: 180rpx; // 为导航栏留出空间（状态栏+导航栏高度）
   font-size: $fs-base;
   color: #333;
 
