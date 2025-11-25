@@ -1,22 +1,20 @@
 <template>
   <view class="page">
-    <!-- 顶部只保留搜索和筛选 -->
-    <view class="header-fixed">
-      <view class="search-sort-row">
-        <view class="search-wrap">
-          <uni-icons type="search" size="20" color="#0faedf" class="search-icon"></uni-icons>
-          <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点、攻略" placeholder-class="placeholder"/>
+    <scroll-view class="page-scroll" scroll-y>
+      <view class="hero">
+        <image v-if="heroImage" :src="heroImage" class="hero-img" mode="aspectFill" />
+        <view class="hero-overlay">
+          <text class="hero-title">探索美丽中国</text>
+          <text class="hero-subtitle">发现令人心动的旅行目的地</text>
         </view>
-        <view class="sort-wrap">
-          <uni-data-select
-            v-model="filterValue"
-            :localdata="range"
-            @change="changeFilter"
-          ></uni-data-select>
+        <view class="hero-search">
+          <view class="search-wrap">
+            <uni-icons type="search" size="22" color="#9499A0" class="search-icon"></uni-icons>
+            <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点名称或关键词" placeholder-class="placeholder" />
+          </view>
         </view>
       </view>
-    </view>
-    <view class="category-fixed">
+
       <scroll-view class="category-list" scroll-x show-scrollbar="false">
         <view class="category-scroll">
           <button
@@ -30,32 +28,30 @@
           </button>
         </view>
       </scroll-view>
-    </view>
 
-    <scroll-view class="content" scroll-y>
-      <view class="spot-grid">
+      <view class="list">
         <view
           v-for="item in filteredAttractions"
           :key="item.id"
-          class="spot-item"
-          @click="goAttraction(item.id, item.imageUrl)"
+          class="list-item"
         >
-          <image :src="item.imageUrl" mode="aspectFill"></image>
-          <view class="spot-info">
-            <view class="name-rating-row">
-              <text class="spot-name">{{ item.name }}</text>
-              <view class="rating">
-                <uni-rate :value="item.rating" size="10" readonly></uni-rate>
+          <image :src="item.imageUrl" class="item-thumb" mode="aspectFill" />
+          <view class="item-body">
+            <view class="item-header">
+              <text class="item-title">{{ item.name }}</text>
+              <text class="badge">{{ scenicLevel(item.rating) }}</text>
+            </view>
+            <text class="item-desc">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
+            <view class="item-footer">
+              <view class="rating-line">
+                <uni-rate :value="item.rating" size="12" readonly></uni-rate>
                 <text class="rating-score">{{ item.rating }}</text>
               </view>
-            </view>
-            <text class="spot-desc">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
-            <view class="spot-footer">
-              <view class="location">
-                <text class="location-text">门票价格</text>
-              </view>
-              <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
-              <text v-if="item.ticketprice === 0" class="price">免费</text>
+              <view class="price-book">
+                <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
+                <text v-else class="price">免费</text>
+                <button class="book-btn" @click.stop="goAttraction(item.id, item.imageUrl)">预约</button>
+              </view>   
             </view>
           </view>
         </view>
@@ -142,6 +138,18 @@ const formatTime = (timeStr) => {
   return timeStr.split(':').slice(0, 2).join(':');
 };
 
+const heroImage = computed(() => {
+  const list = attractionGuidelistOriginal.value;
+  return list && list.length > 0 ? list[5].imageUrl : '';
+});
+
+const scenicLevel = (rating) => {
+  if (rating >= 4.5) return '5A景区';
+  if (rating >= 3.5) return '4A景区';
+  if (rating >= 2.5) return '3A景区';
+  return '景区';
+};
+
 onMounted(() => {
   hasToken();
   getAttractionList()
@@ -197,229 +205,35 @@ const getAttrictionDetail = () => {
 </script>
 
 <style>
-.page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  /* background: #F5F7FA; */
-  background-color: rgba(224, 250, 255);
-
-}
-
-.header-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  background: transparent;
-  box-shadow: none;
-  background-color: rgba(81, 219, 255);
-}
-
-.search-sort-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 32rpx 24rpx 12rpx 24rpx;
-  background: transparent;
-  gap: 20rpx;
-}
-
-.search-wrap {
-  flex: 1.5;
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 40rpx;
-  box-shadow: 0 4rpx 16rpx rgba(15,174,223,0.10);
-  padding: 0 28rpx;
-  height: 64rpx;
-  margin-right: 0;
-  transition: box-shadow 0.2s;
-}
-
-.search-wrap:focus-within {
-  box-shadow: 0 6rpx 24rpx rgba(15,174,223,0.18);
-}
-
-.search-icon {
-  margin-right: 10rpx;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 30rpx;
-  color: #333;
-  outline: none;
-}
-
-.placeholder {
-  color: #bbb;
-}
-
-.sort-wrap {
-  flex: 1;
-  min-width: 160rpx;
-  max-width: 200rpx;
-  background: #fff;
-  border-radius: 40rpx;
-  box-shadow: 0 4rpx 16rpx rgba(15,174,223,0.10);
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: box-shadow 0.2s;
-}
-
-.sort-wrap:focus-within {
-  box-shadow: 0 6rpx 24rpx rgba(15,174,223,0.18);
-}
-
-.sort-wrap uni-data-select {
-  width: 100%;
-  font-size: 28rpx;
-}
-.category-fixed {
-  position: fixed;
-  top: 105rpx; /* header-fixed的高度 */
-  left: 0;
-  right: 0;
-  z-index: 998;
-  background: #fff;
-}
-
-
-.content {
-  flex: 1;
-  overflow: auto;
-  margin-top: 10rpx;
-  padding-top: 175rpx; /* header-fixed高度+margin，避免内容被遮挡 */
-  min-height: 100vh;
-}
-
-.category-list {
-  padding: 10rpx 30rpx 10rpx 30rpx;
-  white-space: nowrap;
-  background: #FFFFFF;
-}
-
-.category-scroll {
-  display: inline-flex;
-  gap: 15rpx;
-}
-
-.category-item {
-  padding: 8rpx 30rpx;
-  background: #F5F7FA;
-  border-radius: 30rpx;
-  color: #666666;
-  font-size: 28rpx;
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.category-item.active {
-  background: #0faedf;
-  color: #FFFFFF;
-  box-shadow: 0 4rpx 12rpx rgba(15, 174, 223, 0.15);
-}
-
-.spot-grid {
-  padding: 20rpx 30rpx;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  
-  gap: 20rpx;
-  background: #F5F7FA;
-  background-color: rgba(224, 250, 255);
-
-}
-
-.spot-item {
-  background: #FFFFFF;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.spot-item:active {
-  transform: scale(0.98);
-}
-
-.spot-item image {
-  width: 100%;
-  height: 240rpx;
-  object-fit: cover;
-}
-
-.spot-info {
-  padding: 20rpx;
-}
-
-.name-rating-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8rpx;
-}
-
-.spot-name {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333333;
-  flex: 1;
-  margin-right: 16rpx;
-}
-
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  white-space: nowrap;
-}
-
-.rating-score {
-  font-size: 24rpx;
-  color: #FF9800;
-  line-height: 1;
-}
-
-.spot-desc {
-  font-size: 24rpx;
-  color: #999999;
-  margin-top: 8rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.spot-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16rpx;
-}
-
-.location {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-}
-
-.location-text {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-.price {
-  font-size: 32rpx;
-  color: #FF5722;
-  font-weight: bold;
-}
+.page { display: flex; height: 100vh; background-color: #f5f7fa; }
+.page-scroll { width: 100%; }
+.hero { position: relative; height: 320rpx; margin: 0 24rpx; border-radius: 24rpx; overflow: hidden; }
+.hero-img { width: 100%; height: 100%; }
+.hero-overlay { position: absolute; left: 0; right: 0; bottom: 70rpx; padding: 30rpx; background: linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.45) 100%); }
+.hero-title { color: #fff; font-size: 36rpx; font-weight: 600; }
+.hero-subtitle { color: rgba(255,255,255,0.85); font-size: 26rpx; margin-top: 8rpx; }
+.hero-search { position: absolute; left: 24rpx; right: 24rpx; bottom: 10rpx; z-index: 10; }
+.search-wrap { display: flex; align-items: center; background: #fff; border-radius: 40rpx; box-shadow: 0 8rpx 24rpx rgba(15,174,223,0.12); padding: 0 28rpx; height: 72rpx; }
+.search-icon { margin-right: 12rpx; }
+.search-input { flex: 1; border: none; background: transparent; font-size: 30rpx; color: #333; }
+.placeholder { color: #bbb; }
+.category-list { padding: 24rpx 24rpx 16rpx 24rpx; white-space: nowrap; background: #fff; border-top-left-radius: 24rpx; border-top-right-radius: 24rpx; margin: 0 0rpx; margin-top: 5rpx; }
+.category-scroll { display: inline-flex; gap: 16rpx; }
+.category-item { padding: 6rpx 32rpx; background: #f0f2f5; border-radius: 30rpx; color: #333; font-size: 28rpx; border: none; }
+.category-item.active { background: #4F46E5; color: #fff; box-shadow: 0 6rpx 16rpx rgba(15,174,223,0.18); }
+.list { padding: 16rpx 24rpx 40rpx 24rpx; }
+.list-item { display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; }
+.item-thumb { width: 240rpx; height: 180rpx; }
+.item-body { flex: 1; padding: 20rpx; }
+.item-header { display: flex; align-items: center; justify-content: space-between; }
+.item-title { font-size: 30rpx; color: #333; font-weight: 600; flex: 1; margin-right: 16rpx; }
+.badge { padding: 6rpx 16rpx; background: #e8f5ff; color: #0faedf; border-radius: 20rpx; font-size: 24rpx; }
+.item-desc { margin-top: 8rpx; font-size: 24rpx; color: #999; }
+.item-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16rpx; }
+.price-book { display: flex; align-items: center; gap: 16rpx; }
+.price { font-size: 32rpx; color: #4F46E5; font-weight: 700; }
+.book-btn { padding: 3rpx 22rpx; background: #4F46E5; color: #fff; border-radius: 26rpx; border: none; font-size: 26rpx; }
+.rating-line { display: flex; align-items: center; gap: 8rpx; }
+.rating-score { font-size: 24rpx; color: #FF9800; }
 </style>
 
