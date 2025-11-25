@@ -1,24 +1,27 @@
 <template>
   <view class="page">
-    <!-- 导航栏 -->
+    <!-- 顶部栏 -->
     <view class="nav-bar" :style="{ paddingTop: safeAreaInsets.top ? safeAreaInsets.top + 'px' : '0px' }">
-      <uni-icons @click="goBack" type="back" size="24" color="#333333"></uni-icons>
-      <text class="nav-title">停车收费</text>
-      <uni-icons type="search" size="24" color="#333333"></uni-icons>
+      <uni-icons @click="goBack" type="back" size="24" color="#FFFFFF"></uni-icons>
+      <text class="nav-title">停车缴费</text>
     </view>
 
     <!-- 主内容区 -->
     <scroll-view class="main-content" scroll-y>
-      <!-- 车牌输入卡片 -->
-      <view class="card">
+      <!-- 左侧：车牌输入 -->
+      <view class="card input-card">
         <text class="label">请输入车牌号</text>
         <view class="plate-input">
-          <input type="text" class="number-input" v-model="plateNumber" placeholder="请输入车牌号如:粤C45678" maxlength="6" />
-          <button @click="getParkingDeatil" class="change-btn">
-            查询
-          </button>
+          <input type="text" class="number-input" v-model="plateNumber" placeholder="例如：粤A12345" maxlength="8" />
         </view>
-        <!-- 新增：展示模糊查询结果 -->
+        <text class="subtip">支持新能源车牌格式</text>
+        <button @click="getParkingDeatil" class="query-btn"><uni-icons type="search" size="20" color="#FFFFFF" /> 查询停车信息</button>
+        <view class="quick-row">
+          <view class="quick-item"><uni-icons type="calendar" size="18" color="#87909A" /> 历史记录</view>
+          <view class="quick-item"><uni-icons type="chat" size="18" color="#87909A" /> 联系客服</view>
+          <view class="quick-item"><uni-icons type="gift" size="18" color="#87909A" /> 优惠券</view>
+        </view>
+
         <view v-if="filteredParkingInfoList.length > 0" class="history-plates">
           <view class="plate-item" v-for="(item, index) in filteredParkingInfoList" :key="index" @click="selectPlate(item.licensePlate)">
             {{ item.licensePlate }}
@@ -26,59 +29,40 @@
         </view>
       </view>
 
-      <!-- 停车信息卡片 -->
-      <view class="card">
-        <view class="info-row">
-          <text class="info-label">当前停车地点</text>
-          <text class="info-value">{{ parkingInfo.parkingLocation }}</text>
+      <!-- 右侧：查询结果（在下方显示） -->
+      <view v-if="hasResult" class="result-panel">
+        <view class="card result-card">
+          <view class="info-row">
+            <text class="info-label">车牌号码</text>
+            <text class="info-value">{{ parkingInfo.licensePlate || plateNumber }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">入场时间</text>
+            <text class="info-value">{{ parkingInfo.entryTime }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">当前时间</text>
+            <text class="info-value">{{ currentTime }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">停车时长</text>
+            <text class="info-value">{{ durationText }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">计费标准</text>
+            <text class="info-value">{{ parkingInfo.rateDescription }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">需缴费用</text>
+            <text class="price">￥{{ parkingInfo.amountPayable }}</text>
+          </view>
         </view>
-        <view class="info-row">
-          <text class="info-label">入场时间</text>
-          <text class="info-value">{{ parkingInfo.entryTime }}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">已停车时长</text>
-          <text class="info-value">{{ parkingInfo.parkingDuration }} 分钟</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">应付金额</text>
-          <text class="price">¥{{ parkingInfo.amountPayable }}</text>
-        </view>
-        <text class="fee-standard">收费标准：{{ parkingInfo.rateDescription }}</text>
-      </view>
 
-      <!-- 支付方式卡片 -->
-      <view class="card">
-        <text class="title">支付方式</text>
-        <view class="payment-list">
-          <label class="payment-item" v-for="(item, index) in paymentMethods" :key="index">
-            <view class="payment-info">
-              <image :src="item.icon" mode="scaleToFill" />
-              <text>{{ item.name }}</text>
-            </view>
-            <radio :value="item.value" :checked="selectedPayment === item.value" @click="selectedPayment = item.value"
-              color="#1E88E5" />
-          </label>
+        <view class="bottom-bar inline">
+          <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥{{ parkingInfo.amountPayable }}</button>
         </view>
       </view>
-
-      <view class="standard">
-        <view class="payStanding">
-          <text class="PayStandingTitle">收费标准</text>
-        </view>
-        <view class="payStandingContent">
-          <block v-for="(item, index) in parkingInfo.rateDescriptionList" :key="index">
-            <text class="standingItem">{{ index + 1 }}. {{ item }}</text>
-          </block>
-        </view>
-      </view>
-
     </scroll-view>
-
-    <!-- 底部支付栏 -->
-    <view class="bottom-bar">
-      <button class="pay-btn" @click="onPayClick(parkingInfo)">立即支付 ￥{{ parkingInfo.amountPayable }}</button>
-    </view>
 
 
   </view>
@@ -247,234 +231,66 @@ const onPayClick = (parking) => {
     });
   }, 1500);
 };
+
+// 结果展示条件
+const hasResult = computed(() => !!parkingInfo.value.entryTime && parkingInfo.value.amountPayable > 0);
+
+// 当前时间格式
+const pad = (n) => (n < 10 ? '0' + n : '' + n);
+const currentTime = computed(() => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const h = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${y}年${m}月${day}日 ${h}:${min}`;
+});
+
+// 时长格式化为“X小时Y分钟”
+const durationText = computed(() => {
+  const mins = Number(parkingInfo.value.parkingDuration || 0);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h <= 0) return `${m}分钟`;
+  return `${h}小时${m}分钟`;
+});
 </script>
 
 <style>
-page {
-  height: 100%;
-  background-color: #f5f5f5;
-}
+page { height: 100%; background-color: #f5f5f5; }
 
-.page {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+.page { height: 100%; display: flex; flex-direction: column; }
 
-.nav-bar {
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32rpx;
-  background-color: #FFFFFF;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
+.nav-bar { position: relative;height: 120rpx; display: flex; align-items: center; justify-content: space-between; padding: 0 32rpx; background-color: #1E88E5; box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08); }
+.nav-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 34rpx; font-weight: 600; color: #FFFFFF; padding-right: 50rpx;}
 
-.nav-title {
-  font-size: 34rpx;
-  font-weight: 500;
-  color: #333333;
-}
+.main-content { flex: 1; overflow: auto; }
 
-.main-content {
-  flex: 1;
-  padding: 32rpx;
-  overflow: auto;
-}
+.card { background-color: #ffffff; border-radius: 16rpx; padding: 32rpx; margin-bottom: 32rpx; width: 86%; box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06); }
+.input-card { margin: 24rpx auto; }
+.result-panel { margin: 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center; }
+.result-card { width: 86%; }
 
-.card {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  /* margin-righrt: 32rpx; */
-  margin-bottom: 32rpx;
-  width: 83%;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-}
+.label { font-size: 28rpx; color: #666666; margin-bottom: 16rpx; }
 
-.label {
-  font-size: 28rpx;
-  color: #666666;
-  margin-bottom: 16rpx;
-}
+.plate-input { display: flex; gap: 16rpx; margin-bottom: 24rpx; margin-top: 10px; }
+.number-input { flex: 1; height: 88rpx; border: 2rpx solid #e0e0e0; border-radius: 12rpx; text-align: center; font-size: 32rpx; font-weight: 500; background: #f9fafb; }
+.subtip { color: #87909A; font-size: 24rpx; margin-bottom: 24rpx; }
+.query-btn { height: 88rpx; background-color: #1E88E5; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; font-size: 30rpx; color: #ffffff; gap: 8rpx; }
+.quick-row { margin-top: 24rpx; display: flex; gap: 28rpx; color: #87909A; font-size: 24rpx; }
+.quick-item { display: flex; align-items: center; gap: 8rpx; }
 
-.plate-input {
-  display: flex;
-  gap: 16rpx;
-  margin-bottom: 32rpx;
-  margin-top: 10px;
-}
+.history-plates { display: flex; flex-direction: column; align-items: center; margin-top: 16px; }
+.plate-item { background-color: #f0f0f0; padding: 10px 20px; border: 1px solid #ccc; border-radius: 8rpx; margin-bottom: 10px; color: #666666; cursor: pointer; text-align: center; width: 100%; box-sizing: border-box; }
+.plate-item:hover { background-color: #e0e0e0; }
+.plate-item.active { border-color: #1E88E5; color: #1E88E5; }
 
-.province-input {
-  width: 100rpx;
-  height: 88rpx;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 500;
-}
+.info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26rpx; }
+.info-label { font-size: 28rpx; color: #666666; }
+.info-value { font-size: 28rpx; font-weight: 500; color: #333333; }
+.price { font-size: 36rpx; font-weight: 700; color: #1677FF; }
 
-.number-input {
-  flex: 1;
-  height: 88rpx;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 500;
-}
-
-.change-btn {
-  width: 88rpx;
-  height: 88rpx;
-  background-color: #1e88e5;
-  border-radius: 8rpx;
-  display: flex;
-  align-items: center;
-  width: 28%;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 400;
-  color: #ffffff;
-}
-
-.history-plates {
-  display: flex;
-  flex-direction: column; /* 按列方向排列 */
-  align-items: center; /* 内容居中 */
-  margin-top: 10px; /* 调整间隙 */
-}
-
-.plate-item {
-  background-color: #f0f0f0; /* 添加背景色 */
-  padding: 10px 20px; /* 调整内边距 */
-  border: 1px solid #ccc; /* 调整边框 */
-  border-radius: 8rpx;
-  margin-bottom: 10px; /* 调整间隙 */
-  color: #666666;
-  cursor: pointer;
-  text-align: center; /* 文字居中 */
-  width: 100%; /* 占满宽度 */
-  box-sizing: border-box; /* 包含内边距和边框 */
-}
-
-.plate-item:hover {
-  background-color: #e0e0e0;
-}
-
-.plate-item.active {
-  border-color: #1E88E5;
-  color: #1E88E5;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32rpx;
-}
-
-.info-label {
-  font-size: 28rpx;
-  color: #666666;
-}
-
-.info-value {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333333;
-}
-
-.price {
-  font-size: 36rpx;
-  font-weight: 500;
-  color: #1E88E5;
-}
-
-.fee-standard {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-.title {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #333333;
-  margin-bottom: 32rpx;
-}
-
-.payment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 32rpx;
-}
-
-.payment-info image {
-  width: 38rpx;
-  height: 38rpx;
-}
-
-.payment-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx;
-  /* border: 2rpx solid #e0e0e0; */
-  border-radius: 8rpx;
-}
-
-.payment-info {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
-
-.standard {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 32rpx;
-  width: 83%;
-}
-
-.payStandingContent {
-  display: flex;
-  flex-direction: column;
-}
-
-.PayStandingTitle {
-  font-size: 32rpx;
-  font-weight: 500;
-}
-
-.payStandingContent {
-  margin-top: 22rpx;
-  font-size: 26rpx;
-  font-weight: 300;
-
-}
-
-.bottom-bar {
-  height: 120rpx;
-  background-color: #ffffff;
-  padding: 0rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-content: center;
-  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
-}
-
-
-.pay-btn {
-  background-color: #1E88E5;
-  color: #ffffff;
-  padding: 0rpx 64rpx;
-  border-radius: 8rpx;
-  font-size: 32rpx;
-  width: 500rpx;
-}
+.bottom-bar.inline { width: 86%; margin: 0 auto 32rpx auto; background: transparent; box-shadow: none; }
+.pay-btn { background-color: #1677FF; color: #ffffff; padding: 0rpx 64rpx; border-radius: 12rpx; font-size: 32rpx; width: 100%; height: 88rpx; }
 </style>
