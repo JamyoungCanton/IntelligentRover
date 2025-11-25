@@ -134,21 +134,30 @@ export const StreamRequest = (url, data = {}, method = 'GET', callbackMethod) =>
 				// 二进制转字符串
 				const uint8Array = new Uint8Array(response.data);
 				const chunkStr = utf8Decode(uint8Array);
-				console.log(chunkStr);
+				console.log('收到数据块:', chunkStr);
 				
 				// 切割字符串，只获取data:data:部分
 				let dataList = chunkStr.split("data:").map(item => item.trim()).filter(item => item !== "");
 
-				dataList.forEach((item, index) => {
-					// 分步输出
-					if (item && item.length > 1) {
-						setTimeout(() => {
-							callbackMethod(item);
-						}, index * 10);
-					}
-				})
+				// 立即处理所有数据块，移除延迟以提升响应速度
+				if (dataList.length > 0) {
+					console.log(`处理 ${dataList.length} 个数据块`);
+					dataList.forEach((item) => {
+						// 立即处理，不延迟
+						if (item && item.length > 1) {
+							try {
+								const testContent = item.slice(0, 3);
+								callbackMethod(item);
+							} catch (callbackError) {
+								console.error('回调函数执行错误:', callbackError, '数据:', item);
+							}
+						}
+					})
+				} else {
+					console.warn('数据块为空或格式不正确');
+				}
 			} catch (e) {
-				console.error('解析异常:', e);
+				console.error('解析异常:', e, '响应数据:', response);
 			}
 		});
 	});

@@ -33,7 +33,7 @@
 
     <!-- 聊天内容滚动区域 -->
     <view v-if="chatMessageList.length > 0" class="chat-list-wrapper">
-      <template v-for="(msg, index) in chatMessageList" :key="index">
+      <template v-for="(msg, index) in chatMessageList" :key="`msg-${index}-${msg.id}-${globalUpdateKey}`">
         <!-- 用户对话框 -->
         <view v-if="msg.type === 'user'" class="user-message">
           <div class="message-content">{{ msg.content }}</div>
@@ -42,9 +42,178 @@
         <!-- ai回复框 -->
         <view v-else class="ai-message">
           <view class="typing-content" :class="{ typing: isTyping && index === chatMessageList.length - 1 }">
-            <template v-if="msg.content && msg.content.length > 0">
+            <!-- 工作流展示（在顶部显示） -->
+            <view v-if="workflowData.nodes.size > 0 && index === chatMessageList.length - 1" class="workflow-container">
+              <view class="workflow-header" @click.stop="toggleWorkflow" @tap.stop="toggleWorkflow">
+                <view class="workflow-title">
+                  <text class="workflow-icon">{{ workflowData.status === 'finished' ? '✓' : '⟳' }}</text>
+                  <text>工作流</text>
+                  <text class="workflow-status" :class="workflowData.status">
+                    {{ workflowData.status === 'finished' ? '已完成' : workflowData.status === 'error' ? '失败' : '运行中' }}
+                  </text>
+                </view>
+                <view class="workflow-toggle-icon">
+                  <uv-icon :name="workflowExpanded === true ? 'arrow-up' : 'arrow-down'" size="20" color="#fff"></uv-icon>
+                </view>
+              </view>
+              
+              <view v-if="workflowExpanded === true" class="workflow-content" :key="`workflow-content-${globalUpdateKey}`">
+                <!-- 渲染根节点 -->
+                <template v-for="node in workflowData.rootNodes" :key="node.id">
+                  <view class="workflow-node" :class="{ 'has-children': node.children && node.children.length > 0 }">
+                    <view class="node-item" @click="node.children && node.children.length > 0 ? toggleNode(node.id) : null">
+                      <view class="node-left">
+                        <text class="node-icon">{{ getNodeIcon(node.type) }}</text>
+                        <text class="node-title">{{ node.title }}</text>
+                      </view>
+                      <view class="node-right">
+                        <text class="node-time">{{ getNodeCurrentTime(node) }}</text>
+                        <text class="node-status" :class="node.status">{{ getNodeStatusIcon(node.status) }}</text>
+                        <uv-icon 
+                          v-if="node.children && node.children.length > 0"
+                          :name="expandedNodes.has(node.id) ? 'arrow-down' : 'arrow-right'" 
+                          size="14" 
+                          color="#666"
+                        ></uv-icon>
+                      </view>
+                    </view>
+                    <!-- 递归渲染子节点 -->
+                    <view v-if="expandedNodes.has(node.id) && node.children && node.children.length > 0" class="node-children">
+                      <view 
+                        v-for="child in node.children" 
+                        :key="child.id" 
+                        class="workflow-node child-node"
+                      >
+                        <view class="node-item" @click="child.children && child.children.length > 0 ? toggleNode(child.id) : null">
+                          <view class="node-left">
+                            <text class="node-icon">{{ getNodeIcon(child.type) }}</text>
+                            <text class="node-title">{{ child.title }}</text>
+                          </view>
+                          <view class="node-right">
+                            <text class="node-time">{{ getNodeCurrentTime(child) }}</text>
+                            <text class="node-status" :class="child.status">{{ getNodeStatusIcon(child.status) }}</text>
+                            <uv-icon 
+                              v-if="child.children && child.children.length > 0"
+                              :name="expandedNodes.has(child.id) ? 'arrow-down' : 'arrow-right'" 
+                              size="14" 
+                              color="#666"
+                            ></uv-icon>
+                          </view>
+                        </view>
+                        <!-- 递归渲染更深层的子节点 -->
+                        <view v-if="expandedNodes.has(child.id) && child.children && child.children.length > 0" class="node-children">
+                          <view 
+                            v-for="grandchild in child.children" 
+                            :key="grandchild.id" 
+                            class="workflow-node child-node"
+                          >
+                            <view class="node-item">
+                              <view class="node-left">
+                                <text class="node-icon">{{ getNodeIcon(grandchild.type) }}</text>
+                                <text class="node-title">{{ grandchild.title }}</text>
+                              </view>
+                              <view class="node-right">
+                                <text class="node-time">{{ getNodeCurrentTime(grandchild) }}</text>
+                                <text class="node-status" :class="grandchild.status">{{ getNodeStatusIcon(grandchild.status) }}</text>
+                              </view>
+                            </view>
+                          </view>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </template>
+                
+                <!-- 渲染并行分支 -->
+                <template v-for="[parallelId, parallel] in workflowData.parallelBranches" :key="parallelId">
+                  <view class="parallel-container">
+                    <view class="parallel-branches">
+                      <template v-for="[branchId, branchNodes] in parallel.branches" :key="branchId">
+                        <view class="branch-container">
+                          <view class="branch-header">
+                            分支-{{ formatBranchName(branchId, parallel.id) }}
+                          </view>
+                          <view class="branch-nodes">
+                            <view 
+                              v-for="node in branchNodes" 
+                              :key="node.id" 
+                              class="workflow-node"
+                              :class="{ 'has-children': node.children && node.children.length > 0 }"
+                            >
+                              <view class="node-item" @click="node.children && node.children.length > 0 ? toggleNode(node.id) : null">
+                                <view class="node-left">
+                                  <text class="node-icon">{{ getNodeIcon(node.type) }}</text>
+                                  <text class="node-title">{{ node.title }}</text>
+                                </view>
+                                <view class="node-right">
+                                  <text class="node-time">{{ getNodeCurrentTime(node) }}</text>
+                                  <text class="node-status" :class="node.status">{{ getNodeStatusIcon(node.status) }}</text>
+                                  <uv-icon 
+                                    v-if="node.children && node.children.length > 0"
+                                    :name="expandedNodes.has(node.id) ? 'arrow-down' : 'arrow-right'" 
+                                    size="14" 
+                                    color="#666"
+                                  ></uv-icon>
+                                </view>
+                              </view>
+                              <!-- 递归渲染子节点 -->
+                              <view v-if="expandedNodes.has(node.id) && node.children && node.children.length > 0" class="node-children">
+                                <view 
+                                  v-for="child in node.children" 
+                                  :key="child.id" 
+                                  class="workflow-node child-node"
+                                >
+                                  <view class="node-item" @click="child.children && child.children.length > 0 ? toggleNode(child.id) : null">
+                                    <view class="node-left">
+                                      <text class="node-icon">{{ getNodeIcon(child.type) }}</text>
+                                      <text class="node-title">{{ child.title }}</text>
+                                    </view>
+                                    <view class="node-right">
+                                      <text class="node-time">{{ getNodeCurrentTime(child) }}</text>
+                                      <text class="node-status" :class="child.status">{{ getNodeStatusIcon(child.status) }}</text>
+                                      <uv-icon 
+                                        v-if="child.children && child.children.length > 0"
+                                        :name="expandedNodes.has(child.id) ? 'arrow-down' : 'arrow-right'" 
+                                        size="14" 
+                                        color="#666"
+                                      ></uv-icon>
+                                    </view>
+                                  </view>
+                                  <!-- 递归渲染更深层的子节点 -->
+                                  <view v-if="expandedNodes.has(child.id) && child.children && child.children.length > 0" class="node-children">
+                                    <view 
+                                      v-for="grandchild in child.children" 
+                                      :key="grandchild.id" 
+                                      class="workflow-node child-node"
+                                    >
+                                      <view class="node-item">
+                                        <view class="node-left">
+                                          <text class="node-icon">{{ getNodeIcon(grandchild.type) }}</text>
+                                          <text class="node-title">{{ grandchild.title }}</text>
+                                        </view>
+                                        <view class="node-right">
+                                          <text class="node-time">{{ getNodeCurrentTime(grandchild) }}</text>
+                                          <text class="node-status" :class="grandchild.status">{{ getNodeStatusIcon(grandchild.status) }}</text>
+                                        </view>
+                                      </view>
+                                    </view>
+                                  </view>
+                                </view>
+                              </view>
+                            </view>
+                          </view>
+                        </view>
+                      </template>
+                    </view>
+                  </view>
+                </template>
+              </view>
+            </view>
+            
+            <!-- 优先显示内容，即使thinking为true，只要有内容就显示内容 -->
+            <template v-if="msg.content && Array.isArray(msg.content) && msg.content.length > 0">
               <view class="ai-response-content">
-                <template v-for="(item, i) in msg.content" :key="i + item.content">
+                <template v-for="(item, i) in msg.content" :key="i + (item.id || i) + item.type">
                   <view v-if="item.type === 'text'" v-html="item.content" class="message-text"></view>
                   <view
                     v-else-if="['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant'].includes(item.type)"
@@ -62,7 +231,8 @@
               </view>
             </template>
 
-            <template v-else-if="msg.thinking">
+            <!-- 只有在没有内容时才显示思考动画 -->
+            <template v-else-if="msg.thinking && (!msg.content || !Array.isArray(msg.content) || msg.content.length === 0)">
               <view class="thinking-animation">
                 <view class="time mb-20">({{ Math.floor((Date.now() - msg.startTime) / 1000) }}s)正在思考中{{ dots }}
                 </view>
@@ -79,7 +249,125 @@
                 </uv-steps>
               </view>
             </template>
-            <view v-else v-html="msg.content"></view>
+            <!-- 兜底：如果content不是数组，尝试直接显示 -->
+            <view v-else-if="msg.content && typeof msg.content === 'string'" v-html="msg.content" class="message-text"></view>
+          </view>
+          
+          <!-- 工作流展示（在思考完成后显示，如果顶部已显示则不重复） -->
+          <view v-if="workflowData.nodes.size > 0 && !msg.thinking && index === chatMessageList.length - 1" class="workflow-container">
+            <view class="workflow-header" @click.stop="toggleWorkflow">
+              <view class="workflow-title">
+                <text class="workflow-icon">{{ workflowData.status === 'finished' ? '✓' : '⟳' }}</text>
+                <text>工作流</text>
+                <text class="workflow-status" :class="workflowData.status">
+                  {{ workflowData.status === 'finished' ? '已完成' : workflowData.status === 'error' ? '失败' : '运行中' }}
+                </text>
+              </view>
+              <view class="workflow-toggle-icon">
+                <uv-icon :name="workflowExpanded === true ? 'arrow-up' : 'arrow-down'" size="20" color="#fff"></uv-icon>
+              </view>
+            </view>
+            
+            <view v-if="workflowExpanded === true" class="workflow-content" :key="`workflow-content-${globalUpdateKey}`">
+              <!-- 渲染根节点 -->
+              <template v-for="node in workflowData.rootNodes" :key="node.id">
+                <view class="workflow-node" :class="{ 'has-children': node.children && node.children.length > 0 }">
+                  <view class="node-item" @click="node.children && node.children.length > 0 ? toggleNode(node.id) : null">
+                    <view class="node-left">
+                      <text class="node-icon">{{ getNodeIcon(node.type) }}</text>
+                      <text class="node-title">{{ node.title }}</text>
+                    </view>
+                    <view class="node-right">
+                      <text class="node-time">{{ getNodeCurrentTime(node) }}</text>
+                      <text class="node-status" :class="node.status">{{ getNodeStatusIcon(node.status) }}</text>
+                      <uv-icon 
+                        v-if="node.children && node.children.length > 0"
+                        :name="expandedNodes.has(node.id) ? 'arrow-down' : 'arrow-right'" 
+                        size="14" 
+                        color="#666"
+                      ></uv-icon>
+                    </view>
+                  </view>
+                  <!-- 递归渲染子节点 -->
+                  <view v-if="expandedNodes.has(node.id) && node.children && node.children.length > 0" class="node-children">
+                    <view 
+                      v-for="child in node.children" 
+                      :key="child.id" 
+                      class="workflow-node child-node"
+                    >
+                      <view class="node-item" @click="child.children && child.children.length > 0 ? toggleNode(child.id) : null">
+                        <view class="node-left">
+                          <text class="node-icon">{{ getNodeIcon(child.type) }}</text>
+                          <text class="node-title">{{ child.title }}</text>
+                        </view>
+                        <view class="node-right">
+                          <text class="node-time">{{ getNodeCurrentTime(child) }}</text>
+                          <text class="node-status" :class="child.status">{{ getNodeStatusIcon(child.status) }}</text>
+                          <uv-icon 
+                            v-if="child.children && child.children.length > 0"
+                            :name="expandedNodes.has(child.id) ? 'arrow-down' : 'arrow-right'" 
+                            size="14" 
+                            color="#666"
+                          ></uv-icon>
+                        </view>
+                      </view>
+                      <!-- 递归渲染更深层的子节点 -->
+                      <view v-if="expandedNodes.has(child.id) && child.children && child.children.length > 0" class="node-children">
+                        <view 
+                          v-for="grandchild in child.children" 
+                          :key="grandchild.id" 
+                          class="workflow-node child-node"
+                        >
+                          <view class="node-item">
+                            <view class="node-left">
+                              <text class="node-icon">{{ getNodeIcon(grandchild.type) }}</text>
+                              <text class="node-title">{{ grandchild.title }}</text>
+                            </view>
+                            <view class="node-right">
+                              <text class="node-time">{{ getNodeCurrentTime(grandchild) }}</text>
+                              <text class="node-status" :class="grandchild.status">{{ getNodeStatusIcon(grandchild.status) }}</text>
+                            </view>
+                          </view>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </template>
+              
+              <!-- 渲染并行分支 -->
+              <template v-for="[parallelId, parallel] in workflowData.parallelBranches" :key="parallelId">
+                <view class="parallel-container">
+                  <view class="parallel-branches">
+                      <template v-for="[branchId, branchNodes] in parallel.branches" :key="branchId">
+                        <view class="branch-container">
+                          <view class="branch-header">
+                            分支-{{ formatBranchName(branchId, parallel.id) }}
+                          </view>
+                        <view class="branch-nodes">
+                          <view 
+                            v-for="node in branchNodes" 
+                            :key="node.id" 
+                            class="workflow-node"
+                          >
+                            <view class="node-item">
+                              <view class="node-left">
+                                <text class="node-icon">{{ getNodeIcon(node.type) }}</text>
+                                <text class="node-title">{{ node.title }}</text>
+                              </view>
+                              <view class="node-right">
+                                <text class="node-time" v-if="node.elapsedTime">{{ formatElapsedTime(node.elapsedTime) }}</text>
+                                <text class="node-status" :class="node.status">{{ getNodeStatusIcon(node.status) }}</text>
+                              </view>
+                            </view>
+                          </view>
+                        </view>
+                      </view>
+                    </template>
+                  </view>
+                </view>
+              </template>
+            </view>
           </view>
 
           <!-- 行程是否有帮助 -->
@@ -167,7 +455,7 @@
 <script setup>
 // ------------------ import ------------------
 import Tabbar from '../Tabbar/Tabbar.vue';
-import { ref, reactive, nextTick, onMounted, watch } from 'vue';
+import { ref, reactive, nextTick, onMounted, watch, triggerRef, computed } from 'vue';
 import { StreamRequest } from '../../utils/request.js';
 import { marked } from 'marked';
 // ------------------- data -------------------
@@ -258,8 +546,404 @@ const progressList = reactive([
 const message = ref('');
 let chatMessageList = reactive([]);
 const responseData = ref([]);
+const globalUpdateKey = ref(0); // 用于强制触发视图更新
 const isTyping = ref(false);
 const dots = ref('');
+
+// 工作流数据结构
+const workflowData = reactive({
+  nodes: new Map(), // 存储所有节点 node_id -> node
+  parallelBranches: new Map(), // 存储并行分支 parallel_id -> branches
+  rootNodes: [], // 根节点列表
+  status: 'running', // running, finished, error
+  startTime: null,
+  endTime: null
+});
+
+// 工作流展开/折叠状态
+const workflowExpanded = ref(false); // 默认收起
+const expandedNodes = reactive(new Set()); // 已展开的节点ID集合
+
+// 工作流节点图标映射（根据后端实际返回的node_type）
+const nodeIconMap = {
+  'start': '🏠',
+  'end': '🏁',
+  'llm': '🤖',
+  'question-classifier': '🔍',
+  'if-else': '🔀',
+  'condition': '🔀',  // 条件分支
+  'code': '</>',
+  'http': '🌐',
+  'variable-assigner': '=',
+  'variable-assign': '=',  // 变量赋值
+  'default': '⚙️'
+};
+
+// 格式化执行时间（始终显示毫秒）
+const formatElapsedTime = (seconds) => {
+  if (seconds === null || seconds === undefined || isNaN(seconds)) {
+    return '';
+  }
+  
+  // 确保是正数
+  const absSeconds = Math.abs(seconds);
+  const milliseconds = absSeconds * 1000;
+  
+  // 如果小于1秒，显示毫秒
+  if (absSeconds < 1) {
+    return `${Math.round(milliseconds)} ms`;
+  }
+  
+  // 如果超过1秒但小于60秒，显示秒和毫秒
+  if (absSeconds < 60) {
+    const secs = Math.floor(absSeconds);
+    const ms = Math.round((absSeconds - secs) * 1000);
+    if (ms === 0) {
+      return `${secs} s`;
+    }
+    return `${secs} s ${ms} ms`;
+  }
+  
+  // 如果超过60秒，显示分钟和秒
+  const minutes = Math.floor(absSeconds / 60);
+  const secs = Math.floor(absSeconds % 60);
+  const ms = Math.round((absSeconds % 1) * 1000);
+  
+  if (secs === 0 && ms === 0) {
+    return `${minutes} m`;
+  } else if (ms === 0) {
+    return `${minutes} m ${secs} s`;
+  } else {
+    return `${minutes} m ${secs}.${Math.floor(ms / 100)} s`;
+  }
+};
+
+// 计算节点当前已用时间（实时）
+const getNodeCurrentTime = (node) => {
+  if (!node) return '';
+  
+  // 如果节点已完成，使用elapsedTime
+  if (node.elapsedTime !== null && node.elapsedTime !== undefined && !isNaN(node.elapsedTime)) {
+    const time = node.elapsedTime;
+    // 确保时间值是合理的（大于0且小于1小时）
+    if (time >= 0 && time < 3600) {
+      return formatElapsedTime(time);
+    }
+  }
+  
+  // 如果节点还在运行中，计算当前已用时间
+  if (node.status === 'running' && node.startTime) {
+    const elapsed = (Date.now() - node.startTime) / 1000;
+    // 确保计算出的时间是合理的
+    if (elapsed >= 0 && elapsed < 3600) {
+      return formatElapsedTime(elapsed);
+    }
+  }
+  
+  return '';
+};
+
+// 处理工作流事件
+const handleWorkflowEvent = (chunk) => {
+  const event = chunk.event;
+  const data = chunk.data || {};
+  
+  try {
+    // 工作流开始
+    if (event === 'workflow_started') {
+      workflowData.status = 'running';
+      workflowData.startTime = data.created_at ? data.created_at * 1000 : Date.now();
+      workflowData.nodes.clear();
+      workflowData.parallelBranches.clear();
+      workflowData.rootNodes = [];
+      console.log('工作流开始');
+      // 启动时间更新定时器
+      startWorkflowTimeUpdate();
+    }
+    
+    // 节点开始
+    else if (event === 'node_started') {
+      const nodeId = data.node_id || data.id;
+      if (!nodeId) return;
+      
+      // 检查是否是并行开始节点（parallel_start_node_id）
+      const isParallelStartNode = data.parallel_start_node_id === nodeId || 
+                                   (data.node_type === 'parallel' || data.title?.includes('并行'));
+      
+      const node = {
+        id: nodeId,
+        title: data.title || '未知节点',
+        type: data.node_type || 'default',
+        status: 'running',
+        startTime: data.created_at ? data.created_at * 1000 : Date.now(),
+        endTime: null,
+        elapsedTime: null,
+        parallelId: data.parallel_id,
+        parallelBranchId: data.parallel_branch_id,
+        parallelStartNodeId: data.parallel_start_node_id,
+        isParallelStart: isParallelStartNode,
+        children: [],
+        parentId: data.predecessor_node_id,
+        index: data.index
+      };
+      
+      workflowData.nodes.set(nodeId, node);
+      
+      // 如果是并行开始节点，创建并行分支结构
+      if (isParallelStartNode && data.parallel_id) {
+        if (!workflowData.parallelBranches.has(data.parallel_id)) {
+          workflowData.parallelBranches.set(data.parallel_id, {
+            id: data.parallel_id,
+            startNodeId: nodeId,
+            startNodeTitle: node.title || '并行执行',
+            branches: new Map(),
+            startTime: data.created_at ? data.created_at * 1000 : Date.now()
+          });
+        }
+        // 并行开始节点不作为根节点显示，只在并行分支中显示
+        // 这样可以避免重复显示
+      }
+      // 如果是根节点（没有父节点且不在并行分支中），添加到根节点列表
+      else if (!node.parentId && !node.parallelId) {
+        if (!workflowData.rootNodes.find(n => n.id === nodeId)) {
+          workflowData.rootNodes.push(node);
+        }
+      }
+      
+      // 如果有父节点，添加到父节点的children
+      if (node.parentId && workflowData.nodes.has(node.parentId)) {
+        const parent = workflowData.nodes.get(node.parentId);
+        if (!parent.children.find(n => n.id === nodeId)) {
+          parent.children.push(node);
+        }
+      }
+      
+      // 处理并行分支中的节点
+      if (data.parallel_id && data.parallel_branch_id) {
+        if (!workflowData.parallelBranches.has(data.parallel_id)) {
+          workflowData.parallelBranches.set(data.parallel_id, {
+            id: data.parallel_id,
+            branches: new Map(),
+            startTime: data.created_at ? data.created_at * 1000 : Date.now()
+          });
+        }
+        const parallel = workflowData.parallelBranches.get(data.parallel_id);
+        if (!parallel.branches.has(data.parallel_branch_id)) {
+          parallel.branches.set(data.parallel_branch_id, []);
+        }
+        const branch = parallel.branches.get(data.parallel_branch_id);
+        if (!branch.find(n => n.id === nodeId)) {
+          branch.push(node);
+        }
+      }
+      
+      // 默认展开新节点
+      expandedNodes.add(nodeId);
+    }
+    
+    // 节点完成
+    else if (event === 'node_finished') {
+      const nodeId = data.node_id || data.id;
+      if (!nodeId || !workflowData.nodes.has(nodeId)) return;
+      
+      const node = workflowData.nodes.get(nodeId);
+      node.status = data.status === 'succeeded' ? 'success' : (data.status === 'failed' ? 'error' : 'finished');
+      node.endTime = data.finished_at ? data.finished_at * 1000 : Date.now();
+      if (node.startTime && node.endTime) {
+        node.elapsedTime = (node.endTime - node.startTime) / 1000;
+      } else if (data.elapsed_time) {
+        node.elapsedTime = data.elapsed_time;
+      }
+      
+      console.log(`节点完成: ${node.title}, 耗时: ${node.elapsedTime}s`);
+    }
+    
+    // 并行分支开始
+    else if (event === 'parallel_branch_started') {
+      const parallelId = data.parallel_id;
+      const branchId = data.parallel_branch_id;
+      if (!parallelId || !branchId) return;
+      
+      if (!workflowData.parallelBranches.has(parallelId)) {
+        workflowData.parallelBranches.set(parallelId, {
+          id: parallelId,
+          branches: new Map(),
+          startTime: data.created_at ? data.created_at * 1000 : Date.now()
+        });
+      }
+      
+      const parallel = workflowData.parallelBranches.get(parallelId);
+      if (!parallel.branches.has(branchId)) {
+        parallel.branches.set(branchId, []);
+      }
+    }
+    
+    // 并行分支完成
+    else if (event === 'parallel_branch_finished') {
+      const parallelId = data.parallel_id;
+      const branchId = data.parallel_branch_id;
+      if (parallelId && branchId && workflowData.parallelBranches.has(parallelId)) {
+        const parallel = workflowData.parallelBranches.get(parallelId);
+        if (parallel.branches.has(branchId)) {
+          // 标记分支中的所有节点为完成
+          const branch = parallel.branches.get(branchId);
+          branch.forEach(node => {
+            if (workflowData.nodes.has(node.id)) {
+              const nodeObj = workflowData.nodes.get(node.id);
+              if (nodeObj.status === 'running') {
+                nodeObj.status = 'success';
+                nodeObj.endTime = data.finished_at ? data.finished_at * 1000 : Date.now();
+                if (nodeObj.startTime && nodeObj.endTime) {
+                  nodeObj.elapsedTime = (nodeObj.endTime - nodeObj.startTime) / 1000;
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+    
+    // 工作流完成
+    else if (event === 'workflow_finished') {
+      workflowData.status = data.status === 'succeeded' ? 'finished' : 'error';
+      workflowData.endTime = data.finished_at ? data.finished_at * 1000 : Date.now();
+      
+      // 确保所有节点都标记为完成
+      workflowData.nodes.forEach(node => {
+        if (node.status === 'running') {
+          node.status = 'success';
+          if (!node.endTime) {
+            node.endTime = workflowData.endTime;
+            if (node.startTime) {
+              node.elapsedTime = (node.endTime - node.startTime) / 1000;
+            }
+          }
+        }
+      });
+      
+      console.log('工作流完成');
+      // 停止时间更新定时器（延迟一点确保最后一次更新）
+      setTimeout(() => {
+        stopWorkflowTimeUpdate();
+      }, 200);
+    }
+  } catch (error) {
+    console.error('处理工作流事件出错:', error, chunk);
+  }
+};
+
+// 切换工作流展开/折叠
+let isToggling = false; // 防止重复点击
+const toggleWorkflow = () => {
+  console.log('toggleWorkflow: 点击工作流头部', '当前状态:', workflowExpanded.value);
+  
+  // 防止重复点击导致状态混乱
+  if (isToggling) {
+    console.log('toggleWorkflow: 正在处理中，忽略重复点击');
+    return;
+  }
+  isToggling = true;
+  
+  // 直接切换值，不使用中间变量
+  workflowExpanded.value = !workflowExpanded.value;
+  console.log('toggleWorkflow: 切换后状态:', workflowExpanded.value);
+  
+  // 立即强制触发响应式更新
+  globalUpdateKey.value = Date.now();
+  
+  // 使用 nextTick 确保 DOM 更新
+  nextTick(() => {
+    // 再次强制更新，确保视图刷新
+    globalUpdateKey.value = Date.now() + 1;
+    console.log('toggleWorkflow: nextTick 完成, workflowExpanded:', workflowExpanded.value);
+  });
+  
+  // 100ms后允许再次点击（减少延迟）
+  setTimeout(() => {
+    isToggling = false;
+  }, 100);
+};
+
+// 切换节点展开/折叠
+let nodeTogglingMap = new Map(); // 防止节点重复点击
+const toggleNode = (nodeId) => {
+  // 确保 nodeId 是有效的
+  if (nodeId === undefined || nodeId === null || nodeId === '') {
+    console.warn('toggleNode: 无效的 nodeId', nodeId);
+    return;
+  }
+  
+  // 转换为字符串，确保一致性
+  const idStr = String(nodeId);
+  
+  // 防止重复点击导致状态混乱
+  if (nodeTogglingMap.has(idStr)) {
+    console.log('toggleNode: 正在处理中，忽略重复点击', idStr);
+    return;
+  }
+  nodeTogglingMap.set(idStr, true);
+  
+  console.log('toggleNode: 切换节点', idStr, '当前状态:', expandedNodes.has(idStr));
+  
+  // 使用Set的has和delete/add方法，确保状态正确切换
+  if (expandedNodes.has(idStr)) {
+    expandedNodes.delete(idStr);
+    console.log('toggleNode: 折叠节点', idStr);
+  } else {
+    expandedNodes.add(idStr);
+    console.log('toggleNode: 展开节点', idStr);
+  }
+  
+  // 强制触发响应式更新
+  globalUpdateKey.value = Date.now();
+  
+  // 200ms后允许再次点击
+  setTimeout(() => {
+    nodeTogglingMap.delete(idStr);
+  }, 200);
+};
+
+// 获取节点图标
+const getNodeIcon = (nodeType) => {
+  return nodeIconMap[nodeType] || nodeIconMap.default;
+};
+
+// 获取节点状态图标
+const getNodeStatusIcon = (status) => {
+  if (status === 'success' || status === 'finished') {
+    return '✓';
+  } else if (status === 'error' || status === 'failed') {
+    return '✗';
+  } else if (status === 'running') {
+    return '⟳';
+  }
+  return '○';
+};
+
+// 格式化分支名称（将分支ID转换为字母）
+const formatBranchName = (branchId, parallelId) => {
+  if (!branchId) return 'A';
+  
+  // 如果 branchId 是数字，转换为字母
+  if (typeof branchId === 'number' || /^\d+$/.test(String(branchId))) {
+    const num = parseInt(branchId);
+    return String.fromCharCode(65 + (num % 26)); // A-Z
+  }
+  
+  // 如果 branchId 是字符串，取第一个字符
+  const str = String(branchId);
+  if (str.length > 0) {
+    const firstChar = str.charAt(0).toUpperCase();
+    if (firstChar >= 'A' && firstChar <= 'Z') {
+      return firstChar;
+    }
+    // 如果不是字母，转换为字母
+    const code = firstChar.charCodeAt(0);
+    return String.fromCharCode(65 + (code % 26));
+  }
+  
+  return 'A';
+};
 const selectedDays = ref(1);
 const personList = reactive([{
   name: '6岁以下婴幼儿',
@@ -368,43 +1052,118 @@ const scrollToBottom = () => {
 
 // 发送消息
 const sendMessage = async () => {
-  if (!message.value.trim()) return;
+  try {
+    if (!message.value.trim()) return;
 
-  // 添加用户消息
-  chatMessageList.push({ type: 'user', content: message.value });
-  const userInput = message.value;
-  message.value = ''; // 清空输入框
+    // 添加用户消息
+    chatMessageList.push({ type: 'user', content: message.value });
+    const userInput = message.value;
+    message.value = ''; // 清空输入框
 
-  // 添加AI消息（初始为空）
-  const newAiMessage = {
-    type: 'ai',
-    content: [],
-    id: Date.now(),
-    startTime: Date.now(), // 记录开始时间
-    thinking: true, // 显示思考动画
-    typing: true,
-    showOptimizer: false, // 初始不显示优化组件
-    isCurrent: true // 标记为当前消息
-  };
-  chatMessageList.push(newAiMessage);
+    // 重置进度条
+    progressCurrent.value = 0;
+    progressList[0].time = '';
+    progressList[1].time = '';
+    progressList[2].time = '';
 
-  // 清空当前响应数据，确保新消息从初始状态开始
-  responseData.value = [];
+    // 重置工作流数据
+    workflowData.nodes.clear();
+    workflowData.parallelBranches.clear();
+    workflowData.rootNodes = [];
+    workflowData.status = 'running';
+    workflowData.startTime = Date.now();
+    workflowData.endTime = null;
+    expandedNodes.clear();
+    workflowExpanded.value = false; // 默认收起
 
-  // 启动思考动画
-  startThinkingAnimation();
+    // 添加AI消息（初始为空）
+    const newAiMessage = {
+      type: 'ai',
+      content: [],
+      id: Date.now(),
+      startTime: Date.now(), // 记录开始时间
+      thinking: true, // 显示思考动画
+      typing: true,
+      showOptimizer: false, // 初始不显示优化组件
+      isCurrent: true // 标记为当前消息
+    };
+    chatMessageList.push(newAiMessage);
 
-  // 发送AI请求
-  await sendAiRequest(userInput);
+    // 清空当前响应数据，确保新消息从初始状态开始
+    responseData.value = [];
+
+    // 启动思考动画
+    startThinkingAnimation();
+
+    // 发送AI请求
+    await sendAiRequest(userInput);
+  } catch (error) {
+    console.error('发送消息时出错:', error);
+    // 确保清除思考状态
+    if (chatMessageList.length > 0) {
+      const lastIndex = chatMessageList.length - 1;
+      if (chatMessageList[lastIndex].thinking) {
+        chatMessageList[lastIndex].thinking = false;
+        chatMessageList[lastIndex].typing = false;
+        if (!chatMessageList[lastIndex].content || chatMessageList[lastIndex].content.length === 0) {
+          chatMessageList[lastIndex].content = [{
+            type: 'text',
+            content: '抱歉，发送消息时出错，请稍后重试。'
+          }];
+        }
+      }
+    }
+    uni.showToast({
+      title: '发送失败，请重试',
+      icon: 'none',
+      duration: 2000
+    });
+  }
 };
 
 const finalChunk = ref("");
+let isProcessingResponse = false; // 标记是否正在处理响应，防止重复处理
 
 // 流式请求回调方法
 const handleGetBuffer = (e) => {
   try {
-    let chunk = JSON.parse(e);
+    // 防止未定义或空数据
+    if (!e || typeof e !== 'string') {
+      console.warn('handleGetBuffer: 收到无效数据', e);
+      return;
+    }
+    
+    // 标记已收到数据，清除超时定时器
+    if (!hasReceivedData) {
+      hasReceivedData = true;
+      if (requestTimeout) {
+        clearTimeout(requestTimeout);
+        requestTimeout = null;
+      }
+    }
+
+    // 尝试解析JSON，如果失败则记录日志
+    let chunk;
+    try {
+      chunk = JSON.parse(e);
+      console.log('解析成功，chunk数据:', chunk);
+    } catch (parseError) {
+      console.warn('JSON解析失败，原始数据:', e);
+      return;
+    }
+
+    // 记录所有接收到的事件类型，便于调试
+    if (chunk.event) {
+      console.log('收到事件类型:', chunk.event);
+    }
+
+    // 处理工作流事件
+    handleWorkflowEvent(chunk);
+
     let title = chunk.data?.title;
+
+    // 注意：不要在这里清除thinking状态，保持等待界面显示
+    // 只有在workflow_finished事件并准备显示内容时，才清除thinking状态
 
     if (title == '用户意图解析') {
       progressCurrent.value = 1;
@@ -413,7 +1172,7 @@ const handleGetBuffer = (e) => {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
       progressList[0].time= `${hours}:${minutes}`;
-    } if (title == '查询后台数据') {
+    } else if (title == '查询后台数据') {
       progressCurrent.value = 2;
       // 取时分
       const date = new Date(chunk.data.created_at * 1000);
@@ -422,98 +1181,488 @@ const handleGetBuffer = (e) => {
       progressList[1].time = `${hours}:${minutes}`; // 将时分格式化为HH:mm
     }
 
-    // 工作流结束
-    if (chunk.event == "workflow_finished") {
+    // 工作流结束 - 只处理真正的 workflow_finished 事件，忽略 node_finished 等中间事件
+    // 这样可以避免后端发送的多个中间事件干扰最终结果
+    const isWorkflowFinished = chunk.event === "workflow_finished";
+    
+    if (isWorkflowFinished) {
+      console.log("检测到真正的workflow_finished事件，完整数据:", JSON.stringify(chunk, null, 2));
+      
+      // 尝试多种方式获取answer数据
+      let answerData = null;
+      
+      // 方式1: chunk.data.outputs.answer (这是最标准的格式)
+      if (chunk.data?.outputs?.answer) {
+        answerData = chunk.data.outputs.answer;
+        console.log("从 chunk.data.outputs.answer 获取数据");
+      }
+      // 方式2: chunk.data.answer
+      else if (chunk.data?.answer) {
+        answerData = chunk.data.answer;
+        console.log("从 chunk.data.answer 获取数据");
+      }
+      // 方式3: chunk.answer
+      else if (chunk.answer) {
+        answerData = chunk.answer;
+        console.log("从 chunk.answer 获取数据");
+      }
+      // 方式4: chunk.data 本身可能就是答案
+      else if (chunk.data && typeof chunk.data === 'string') {
+        answerData = chunk.data;
+        console.log("从 chunk.data (字符串) 获取数据");
+      }
 
-      console.log("直接返回!!!!!!!!!!!!!!!!!!!!!!!!!", chunk.data.outputs.answer);
-      finalChunk.value = chunk.data.outputs.answer;
-      const processedContent = processResponseData(chunk.data.outputs.answer);
+      if (answerData) {
+        console.log("找到答案数据，类型:", typeof answerData, "内容:", answerData);
+        
+        // 检查是否已经有更完整的数据在处理
+        if (isProcessingResponse && finalChunk.value) {
+          // 比较新数据和已有数据，如果新数据更完整（长度更长），则更新
+          const newDataStr = typeof answerData === 'string' ? answerData : JSON.stringify(answerData);
+          const oldDataStr = typeof finalChunk.value === 'string' ? finalChunk.value : JSON.stringify(finalChunk.value);
+          
+          if (newDataStr.length <= oldDataStr.length) {
+            console.log("新数据不完整或相同，跳过处理。新数据长度:", newDataStr.length, "已有数据长度:", oldDataStr.length);
+            return;
+          } else {
+            console.log("新数据更完整，更新处理。新数据长度:", newDataStr.length, "已有数据长度:", oldDataStr.length);
+            // 重置标记，允许处理新数据
+            isProcessingResponse = false;
+          }
+        }
+        
+        // 防止重复处理同一个响应
+        if (isProcessingResponse) {
+          console.log("正在处理响应，跳过重复的workflow_finished事件");
+          return;
+        }
+        
+        isProcessingResponse = true;
+        finalChunk.value = answerData;
+        
+        try {
+          const processedContent = processResponseData(answerData);
       console.log("处理后的内容", processedContent);
 
-      if (chatMessageList.length > 0) {
+          if (chatMessageList.length > 0 && processedContent && processedContent.length > 0) {
         const lastIndex = chatMessageList.length - 1;
-        chatMessageList[lastIndex] = {
-          ...chatMessageList[lastIndex],
-          content: reactive([]),
-          typing: false,
-          showOptimizer: ref(false), // 初始不显示优化组件
-          isCurrent: ref(false), // 标记为已完成
-          isLike: ref(""),
-        };
+            
+            console.log("开始显示内容，processedContent长度:", processedContent.length);
+            console.log("processedContent内容:", processedContent);
+            console.log("当前消息索引:", lastIndex);
+            console.log("当前消息状态:", chatMessageList[lastIndex]);
+            
+            // 直接显示完整内容，不使用打字机效果，确保内容能正确显示
+            try {
+              // 直接赋值内容，确保Vue能检测到变化
+              const contentArray = processedContent.map((item, idx) => {
+                const newItem = {
+                  type: item.type || 'text',
+                  id: item.id || '',
+                  content: typeof item.content === 'string' ? item.content : String(item.content || '')
+                };
+                console.log(`处理第${idx}项:`, newItem.type, newItem.content?.substring(0, 50));
+                return newItem;
+              });
+              
+              // 使用Vue的响应式更新方式 - 先赋值content，再清除thinking
+              // 这样可以确保内容显示后，等待界面才消失
+              
+              // 强制更新：先清空再赋值，确保Vue能检测到变化
+              // 这是最可靠的方法，通过清空再赋值来强制触发响应式更新
+              const tempContent = [...contentArray];
+              chatMessageList[lastIndex].content = [];
+              
+                // 使用nextTick确保清空操作完成后再赋值，这样可以强制触发Vue的响应式更新
+              nextTick(() => {
+                chatMessageList[lastIndex].content = tempContent;
+                // 先赋值内容，再清除thinking，确保内容显示后等待界面才消失
+                chatMessageList[lastIndex].typing = false;
+                chatMessageList[lastIndex].showOptimizer = true;
+                chatMessageList[lastIndex].isCurrent = true;
+                
+                // 在下一个tick清除thinking，确保内容已经显示
+                nextTick(() => {
+                  chatMessageList[lastIndex].thinking = false;
+                });
+                
+                if (!chatMessageList[lastIndex].isLike) {
+                  chatMessageList[lastIndex].isLike = "";
+                }
+                
+                // 强制触发视图更新
+                globalUpdateKey.value = Date.now();
+                
+                console.log("nextTick赋值后内容长度:", chatMessageList[lastIndex].content.length);
+                console.log("消息状态:", {
+                  thinking: chatMessageList[lastIndex].thinking,
+                  typing: chatMessageList[lastIndex].typing,
+                  contentLength: chatMessageList[lastIndex].content.length,
+                  hasContent: chatMessageList[lastIndex].content && chatMessageList[lastIndex].content.length > 0,
+                  content: chatMessageList[lastIndex].content
+                });
+                
+                scrollToBottom();
+                
+                // 再次确认状态
+                nextTick(() => {
+                  console.log("最终消息状态:", {
+                    thinking: chatMessageList[lastIndex].thinking,
+                    contentLength: chatMessageList[lastIndex].content.length,
+                    contentIsArray: Array.isArray(chatMessageList[lastIndex].content),
+                    firstItem: chatMessageList[lastIndex].content[0],
+                    templateShouldShow: !chatMessageList[lastIndex].thinking && 
+                                        chatMessageList[lastIndex].content && 
+                                        Array.isArray(chatMessageList[lastIndex].content) && 
+                                        chatMessageList[lastIndex].content.length > 0
+                  });
+                  
+                  // 再次强制更新key，确保视图重新渲染
+                  globalUpdateKey.value = Date.now() + 1;
+                  scrollToBottom();
+                });
+              });
+            } catch (error) {
+              console.error("直接显示内容时出错:", error);
+              // 如果出错，尝试使用打字机效果
+              chatMessageList[lastIndex].thinking = false;
+              nextTick(() => {
         startTypingEffect(processedContent, 0, 0);
+              });
+            }
+          } else {
+            console.warn("处理后的内容为空或无效，processedContent:", processedContent);
+            // 即使内容为空，也要清除思考状态
+            if (chatMessageList.length > 0) {
+              const lastIndex = chatMessageList.length - 1;
+              chatMessageList[lastIndex].thinking = false;
+              chatMessageList[lastIndex].typing = false;
+            }
+            isProcessingResponse = false; // 重置标记
+          }
+        } catch (processError) {
+          console.error("处理响应数据时出错:", processError);
+          // 即使处理失败，也显示原始数据
+          if (chatMessageList.length > 0) {
+            const lastIndex = chatMessageList.length - 1;
+            chatMessageList[lastIndex].content = [{
+              type: 'text',
+              content: typeof answerData === 'string' ? answerData : JSON.stringify(answerData)
+            }];
+            chatMessageList[lastIndex].thinking = false;
+            chatMessageList[lastIndex].typing = false;
+          }
+          isProcessingResponse = false; // 重置标记
+        }
+      } else {
+        console.warn("未找到答案数据，chunk结构:", chunk);
+        // 如果找不到答案，至少清除思考状态
+        if (chatMessageList.length > 0) {
+          const lastIndex = chatMessageList.length - 1;
+          chatMessageList[lastIndex].thinking = false;
+        }
+        isProcessingResponse = false; // 重置标记
       }
     }
   } catch (error) {
-    console.error(error);
+    console.error('处理数据块时出错:', error, '原始数据:', e);
+    // 即使出错也要清除思考状态
+    if (chatMessageList.length > 0) {
+      const lastIndex = chatMessageList.length - 1;
+      if (chatMessageList[lastIndex].thinking) {
+        chatMessageList[lastIndex].thinking = false;
+      }
+    }
   }
 };
 
-// 打字机效果
+// 打字机效果 - 优化延迟以提升响应速度
 const startTypingEffect = (processedContent, rowIndex, charIndex) => {
   const lastIndex = chatMessageList.length - 1;
+  
+  // 检查索引有效性
+  if (lastIndex < 0) {
+    console.error('消息列表为空，无法显示内容');
+    return;
+  }
+  
+  // 确保content数组存在
+  if (!chatMessageList[lastIndex].content) {
+    chatMessageList[lastIndex].content = [];
+  }
+  
   let messageList = chatMessageList[lastIndex].content;
-  if (rowIndex <= processedContent.length - 1) {
-    let lastStreamMessage = JSON.parse(JSON.stringify(processedContent[rowIndex])); // 深拷贝处理后内容
+  
+  if (rowIndex < processedContent.length) {
+    const currentItem = processedContent[rowIndex];
+    
+    // 确保currentItem存在且有content属性
+    if (!currentItem) {
+      console.warn('当前项无效，跳过，rowIndex:', rowIndex);
+      startTypingEffect(processedContent, rowIndex + 1, 0);
+      return;
+    }
+    
+    if (!currentItem.content) {
+      console.warn('当前项没有content属性，跳过:', currentItem);
+      startTypingEffect(processedContent, rowIndex + 1, 0);
+      return;
+    }
+    
+    let lastStreamMessage = JSON.parse(JSON.stringify(currentItem)); // 深拷贝处理后内容
+    const contentLength = typeof lastStreamMessage.content === 'string' 
+      ? lastStreamMessage.content.length 
+      : 0;
+    
+    if (contentLength === 0) {
+      console.warn('内容长度为0，跳过');
+      startTypingEffect(processedContent, rowIndex + 1, 0);
+      return;
+    }
+    
     lastStreamMessage.content = lastStreamMessage.content.slice(0, charIndex + 1);
+    
     if (charIndex == 0) {
-      let lsm = reactive(lastStreamMessage)
-      messageList.push(lsm);
+      // 添加新项
+      messageList.push(lastStreamMessage);
+      console.log('添加新消息项，类型:', lastStreamMessage.type, '内容长度:', contentLength);
     } else {
+      // 更新现有项
+      if (messageList[rowIndex]) {
       messageList[rowIndex].content = lastStreamMessage.content;
+      } else {
+        console.warn('messageList[rowIndex]不存在，rowIndex:', rowIndex, 'messageList长度:', messageList.length);
+      }
     }
 
     scrollToBottom();
+    
+    // 减少延迟从30ms到10ms，提升打字机效果速度
     setTimeout(() => {
-      if (charIndex < processedContent[rowIndex].content.length - 1) {
-        startTypingEffect(processedContent, rowIndex, charIndex + 1)
+      if (charIndex < contentLength - 1) {
+        startTypingEffect(processedContent, rowIndex, charIndex + 1);
       } else {
-        startTypingEffect(processedContent, rowIndex + 1, 0)
+        // 当前项完成，继续下一项
+        console.log('完成第', rowIndex, '项，继续下一项');
+        startTypingEffect(processedContent, rowIndex + 1, 0);
       }
-    }, 30);
+    }, 10);
   } else {
-    console.log('完成');
-
-    chatMessageList[lastIndex].showOptimizer.value = true; // 显示优化组件
-    chatMessageList[lastIndex].isCurrent.value = true;  // 标记为已完成
+    // 所有内容都显示完成
+    console.log('打字机效果完成，共显示', processedContent.length, '项，实际显示', messageList.length, '项');
+    
+    if (chatMessageList[lastIndex]) {
+      chatMessageList[lastIndex].typing = false; // 停止打字状态
+      chatMessageList[lastIndex].showOptimizer = true; // 显示优化组件
+      chatMessageList[lastIndex].isCurrent = true;  // 标记为已完成
+      console.log('最终消息内容:', chatMessageList[lastIndex].content);
+      console.log('最终消息内容长度:', chatMessageList[lastIndex].content.length);
+      
+      // 确保内容正确显示
+      console.log('最终消息对象:', chatMessageList[lastIndex]);
+      console.log('最终内容数组:', chatMessageList[lastIndex].content);
+      
+      // 如果内容为空，直接赋值完整内容
+      if (chatMessageList[lastIndex].content.length === 0 && processedContent.length > 0) {
+        console.warn('内容数组为空，直接赋值完整内容');
+        chatMessageList[lastIndex].content = processedContent.map(item => ({
+          ...item,
+          content: typeof item.content === 'string' ? item.content : String(item.content)
+        }));
+      }
+      
+      scrollToBottom();
+    }
+    
+    // 重置处理标记
+    isProcessingResponse = false;
+    
+    scrollToBottom();
   }
 };
 
 
 /**
  * 处理响应数据，提取workflow_finished事件的answer字段
- * @param {Object} response - API响应对象
+ * @param {string|Object|Array} answer - API响应数据
  * @returns {Array} 结构化消息数组
  */
 const processResponseData = (answer) => {
   try {
-    // 解析answer字段
-    const parsedData = JSON.parse(answer);
-    console.log('parsedData', parsedData);
+    console.log('processResponseData 输入:', typeof answer, answer);
+    
+    let parsedData;
+    
+    // 如果answer已经是数组，直接使用
+    if (Array.isArray(answer)) {
+      parsedData = answer;
+      console.log('answer 是数组，直接使用');
+    }
+    // 如果answer是对象，尝试转换为数组
+    else if (typeof answer === 'object' && answer !== null) {
+      parsedData = [answer];
+      console.log('answer 是对象，转换为数组');
+    }
+    // 如果answer是字符串，尝试解析JSON
+    else if (typeof answer === 'string') {
+      try {
+        parsedData = JSON.parse(answer);
+        console.log('answer 是字符串，解析为JSON成功');
+        
+        // 如果解析后不是数组，转换为数组
+        if (!Array.isArray(parsedData)) {
+          parsedData = [parsedData];
+          console.log('解析后不是数组，转换为数组');
+        }
+      } catch (parseError) {
+        // 如果解析失败，当作纯文本处理
+        console.log('JSON解析失败，当作纯文本处理');
+        return [{
+          type: 'text',
+          content: marked(answer)
+        }];
+      }
+    }
+    // 其他类型，转换为文本
+    else {
+      console.log('answer 是其他类型，转换为文本');
+      return [{
+        type: 'text',
+        content: marked(String(answer))
+      }];
+    }
 
-    const processedData = parsedData.map(item => {
+    // 确保parsedData是数组
+    if (!Array.isArray(parsedData)) {
+      console.warn('parsedData 不是数组，强制转换');
+      parsedData = [parsedData];
+    }
+
+    console.log('处理前的parsedData:', parsedData);
+
+    // 解析文本中的标签（如<Activity>、<Transport>等），拆分成多个项
+    const parseTagsInText = (text) => {
+      const result = [];
+      const tagPattern = /<(Activity|Attraction|Transport|Accommodation|Restaurant|ask)>(.*?)<\/\1>/g;
+      let lastIndex = 0;
+      let match;
+
+      while ((match = tagPattern.exec(text)) !== null) {
+        // 添加标签前的文本
+        if (match.index > lastIndex) {
+          const textBefore = text.substring(lastIndex, match.index).trim();
+          if (textBefore) {
+            result.push({
+              type: 'text',
+              content: textBefore
+            });
+          }
+        }
+        
+        // 添加标签项
+        const tagType = match[1];
+        const tagContent = match[2];
+        // 解析标签内容，格式可能是 "ID-Name" 或只有 "Name"
+        const parts = tagContent.split('-');
+        const id = parts.length > 1 ? parts[0].trim() : '';
+        const name = parts.length > 1 ? parts.slice(1).join('-').trim() : tagContent.trim();
+        
+        result.push({
+          type: tagType,
+          id: id || '',
+          content: name
+        });
+        
+        lastIndex = tagPattern.lastIndex;
+      }
+      
+      // 添加剩余的文本
+      if (lastIndex < text.length) {
+        const remainingText = text.substring(lastIndex).trim();
+        if (remainingText) {
+          result.push({
+            type: 'text',
+            content: remainingText
+          });
+        }
+      }
+      
+      return result.length > 0 ? result : [{ type: 'text', content: text }];
+    };
+
+    const processedData = [];
+    
+    parsedData.forEach((item, index) => {
+      // 如果item是字符串，转换为文本对象
+      if (typeof item === 'string') {
+        const parsedItems = parseTagsInText(item);
+        processedData.push(...parsedItems.map(parsedItem => ({
+          ...parsedItem,
+          content: parsedItem.type === 'text' ? marked(parsedItem.content) : parsedItem.content
+        })));
+        return;
+      }
+      
+      // 如果item没有type，默认为text
+      if (!item.type) {
+        item.type = 'text';
+      }
+      
+      // 如果item没有content，尝试使用其他字段
+      if (!item.content && item.text) {
+        item.content = item.text;
+      }
+      if (!item.content && item.message) {
+        item.content = item.message;
+      }
+      if (!item.content) {
+        item.content = JSON.stringify(item);
+      }
+
+      // 如果item是text类型且包含标签，解析标签
+      if (item.type === 'text' && typeof item.content === 'string' && 
+          /<(Activity|Attraction|Transport|Accommodation|Restaurant|ask)>/.test(item.content)) {
+        const parsedItems = parseTagsInText(item.content);
+        processedData.push(...parsedItems.map(parsedItem => ({
+          ...parsedItem,
+          content: parsedItem.type === 'text' ? marked(parsedItem.content) : parsedItem.content
+        })));
+        return;
+      }
+
       // 处理表格 内容中有<table>
-      if (item.type === 'text' && item.content.includes('<table')) {
+      if (item.type === 'text' && typeof item.content === 'string' && item.content.includes('<table')) {
         item.content = item.content
           .replace(/<table/g, '<table style="width:100%; border-collapse: collapse; border: 1px solid #ddd; border-top-left-radius: 8px; border-top-right-radius: 8px; overflow: hidden; margin: 20px 0; box-shadow: 0 3px 9px #eee;"')
           .replace(/<th/g, '<th style="border: 1px solid #ddd; padding: 15px 10px; text-align: left; background: #fff; font-size: 14px;"')
           .replace(/<td/g, '<td style="border: 1px solid #ddd; padding: 15px 10px; font-size: 14px; background: #fff; border-bottom: 1px solid #f0f0f0;"');
       }
+      
       // 将普通文本消息转换为Markdown格式
-      if (!['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant'].includes(item.type)) {
+      if (!['Activity', 'Attraction', 'Transport', 'Accommodation', 'Restaurant', 'ask'].includes(item.type) && 
+          typeof item.content === 'string') {
         item.content = marked(item.content);
       }
-      return item;
+      
+      processedData.push(item);
     });
+    
+    console.log('处理后的processedData:', processedData);
     return processedData;
 
   } catch (error) {
-    console.error('处理响应数据出错:', error);
+    console.error('处理响应数据出错:', error, '原始数据:', answer);
+    // 返回错误提示，但至少显示原始数据
     return [{
       type: 'text',
-      content: `处理响应数据时出错: ${error.message}`
+      content: `处理响应数据时出错: ${error.message}。原始数据: ${typeof answer === 'string' ? answer : JSON.stringify(answer)}`
     }];
   }
 }
+
+// 超时处理
+let requestTimeout = null;
+let hasReceivedData = false; // 标记是否已收到数据
 
 const sendAiRequest = async (userInput) => {
   const requestData = {
@@ -526,9 +1675,69 @@ const sendAiRequest = async (userInput) => {
     webMode: 'MAPP-小程序'
   };
 
-  const res = await StreamRequest(`/front/ai/chat/chatMessage-stream-flux`, requestData, 'POST', handleGetBuffer);
-  console.log("结束！！！！！", res);
+  // 重置数据接收标记和处理标记
+  hasReceivedData = false;
+  isProcessingResponse = false;
 
+  // 设置30秒超时，如果30秒内没有收到任何数据，显示错误
+  requestTimeout = setTimeout(() => {
+    if (!hasReceivedData && chatMessageList.length > 0) {
+      const lastIndex = chatMessageList.length - 1;
+      if (chatMessageList[lastIndex].thinking) {
+        chatMessageList[lastIndex].thinking = false;
+        chatMessageList[lastIndex].typing = false;
+        if (chatMessageList[lastIndex].content.length === 0) {
+          chatMessageList[lastIndex].content = [{
+            type: 'text',
+            content: '抱歉，AI响应超时，请检查网络连接后重试。'
+          }];
+        }
+        uni.showToast({
+          title: '响应超时，请重试',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    }
+  }, 30000); // 30秒超时
+
+  try {
+    const res = await StreamRequest(`/front/ai/chat/chatMessage-stream-flux`, requestData, 'POST', handleGetBuffer);
+    console.log("结束！！！！！", res);
+    // 清除超时定时器
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      requestTimeout = null;
+    }
+  } catch (error) {
+    console.error('AI请求失败:', error);
+    // 清除超时定时器
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      requestTimeout = null;
+    }
+    // 确保清除思考动画
+    try {
+      if (chatMessageList.length > 0) {
+        const lastIndex = chatMessageList.length - 1;
+        chatMessageList[lastIndex].thinking = false;
+        chatMessageList[lastIndex].typing = false;
+        if (!chatMessageList[lastIndex].content || chatMessageList[lastIndex].content.length === 0) {
+          chatMessageList[lastIndex].content = [{
+            type: 'text',
+            content: '抱歉，AI响应失败，请稍后重试。'
+          }];
+        }
+      }
+      uni.showToast({
+        title: 'AI响应失败，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    } catch (displayError) {
+      console.error('显示错误消息时出错:', displayError);
+    }
+  }
 }
 
 
@@ -977,5 +2186,333 @@ page {
 .uv-steps-item__wrapper {
   background-color: #f8f8f8 !important;
   padding: 0rpx 40rpx;
+}
+
+/* 工作流样式 - 图片卡片风格 */
+.workflow-container {
+  margin-top: 20rpx;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 1;
+  
+  .workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20rpx 24rpx;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    
+    &:active {
+      opacity: 0.9;
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2rpx;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .workflow-title {
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
+      font-size: 30rpx;
+      font-weight: 700;
+      color: #fff;
+      
+      .workflow-icon {
+        font-size: 36rpx;
+        filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
+      }
+      
+      .workflow-status {
+        font-size: 22rpx;
+        padding: 6rpx 16rpx;
+        border-radius: 20rpx;
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+        backdrop-filter: blur(10rpx);
+        font-weight: 500;
+        
+        &.finished {
+          background: rgba(76, 175, 80, 0.3);
+        }
+        
+        &.error {
+          background: rgba(244, 67, 54, 0.3);
+        }
+      }
+    }
+    
+    .workflow-toggle-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48rpx;
+      height: 48rpx;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+      
+      &:active {
+        transform: scale(0.9);
+        background: rgba(255, 255, 255, 0.35);
+      }
+      
+      // 箭头旋转动画
+      :deep(.uv-icon) {
+        transition: transform 0.3s ease;
+        filter: drop-shadow(0 1rpx 2rpx rgba(0, 0, 0, 0.2));
+      }
+    }
+  }
+  
+  .workflow-content {
+    padding: 16rpx;
+    overflow: visible;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    max-width: 100%;
+    
+    /* 确保内容可见 */
+    &::-webkit-scrollbar {
+      width: 8rpx;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 4rpx;
+    }
+  }
+  
+  .workflow-node {
+    margin-bottom: 12rpx;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: visible;
+    
+    &.has-children .node-item {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:active {
+        transform: scale(0.98);
+        background: #f5f7fa;
+      }
+    }
+    
+    &.child-node {
+      margin-left: 30rpx;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: -20rpx;
+        top: 0;
+        bottom: 0;
+        width: 2rpx;
+        background: linear-gradient(to bottom, #e0e0e0, transparent);
+      }
+    }
+    
+    .node-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14rpx 16rpx;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      border-radius: 16rpx;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+      gap: 10rpx;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: visible;
+      width: 100%;
+      box-sizing: border-box;
+      
+      &:active {
+        box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08);
+      }
+      
+      .node-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 10rpx;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
+        
+        .node-icon {
+          font-size: 28rpx;
+          width: 44rpx;
+          height: 44rpx;
+          min-width: 44rpx;
+          max-width: 44rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+          border-radius: 12rpx;
+          box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+          flex-shrink: 0;
+        }
+        
+        .node-title {
+          font-size: 24rpx;
+          color: #2c3e50;
+          font-weight: 500;
+          flex: 1;
+          min-width: 0;
+          word-break: break-all;
+          overflow-wrap: break-word;
+          line-height: 1.5;
+          padding-top: 2rpx;
+          overflow: visible;
+          white-space: normal;
+        }
+      }
+      
+      .node-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6rpx;
+        flex-shrink: 0;
+        min-width: 110rpx;
+        padding-left: 10rpx;
+        
+        .node-time {
+          font-size: 20rpx;
+          color: #7f8c8d;
+          font-weight: 500;
+          background: #f8f9fa;
+          padding: 3rpx 8rpx;
+          border-radius: 6rpx;
+          white-space: nowrap;
+          line-height: 1.2;
+          text-align: right;
+          overflow: visible;
+        }
+        
+        .node-status {
+          font-size: 22rpx;
+          width: 36rpx;
+          height: 36rpx;
+          min-width: 36rpx;
+          max-width: 36rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+          flex-shrink: 0;
+          
+          &.success, &.finished {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: #fff;
+          }
+          
+          &.error, &.failed {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: #fff;
+          }
+          
+          &.running {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: #fff;
+            animation: rotate 1s linear infinite;
+          }
+        }
+      }
+    }
+    
+    .node-children {
+      margin-top: 12rpx;
+    }
+  }
+  
+  .parallel-container {
+    margin-top: 24rpx;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 16rpx;
+    padding: 20rpx;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    
+    .parallel-branches {
+      padding-left: 0;
+      
+      .branch-container {
+        margin-bottom: 20rpx;
+        background: #fff;
+        border-radius: 12rpx;
+        padding: 16rpx;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        
+        .branch-header {
+          font-size: 26rpx;
+          color: #667eea;
+          margin-bottom: 12rpx;
+          padding-left: 12rpx;
+          font-weight: 600;
+          position: relative;
+          
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4rpx;
+            height: 20rpx;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2rpx;
+          }
+        }
+        
+        .branch-nodes {
+          .workflow-node {
+            margin-left: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
