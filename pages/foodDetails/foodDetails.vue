@@ -3,75 +3,44 @@
 		<!-- 顶部导航栏 --> 
 		
 
-		<!--  店铺图片 -->
-		<view class="shop-image">
-			<image :src="shopMainImage || foodDetails?.imageUrl" mode="widthFix"></image>
-			<view class="shop-info-overlay">
-				<view class="shop-name">{{ foodDetails?.name || '加载中...' }}</view>
-				<view class="shop-rating">
-					<view class="star-rating">
-						<template v-for="(star, index) in renderStars(foodDetails?.rating || 0)" :key="index">
-							<uni-icons :type="star.type" size="18" :color="star.color"></uni-icons>
-						</template>
-					</view>
-					<text class="rating">{{ foodDetails?.rating || 0 }}</text>
-					<text class="monthly-sales">月售 {{ foodDetails?.monthSale || 0 }}</text>
-					<text class="average-price">人均 ¥{{ foodDetails?.priceaverage || 0 }}</text>
-				</view>
-			</view>
-		</view>
+    <view class="hero">
+      <image :src="shopMainImage || foodDetails?.imageUrl" class="hero-img" mode="aspectFill" />
+    </view>
+
+    <view class="intro-card">
+      <view class="attraction-name"><text>{{ foodDetails?.name || '加载中...' }}</text></view>
+      <view class="section-title">餐厅介绍</view>
+      <view class="info-row">
+        <view class="rating-line">
+          <uni-rate :value="foodDetails?.rating || 0" size="14" readonly></uni-rate>
+          <text class="rating-score">{{ foodDetails?.rating || 0 }}</text>
+        </view>
+        <view class="addr-right">
+          <uni-icons type="location" size="16" color="#999" />
+          <text class="addr-text">{{ foodDetails?.address || '暂无地址' }}</text>
+        </view>
+      </view>
+      <view class="info-row">
+        <uni-icons type="phone" size="16" color="#666" />
+        <text class="info-label">电话</text>
+        <text class="info-value">{{ foodDetails?.phone || '暂无电话' }}</text>
+      </view>
+      <view class="info-row">
+        <uni-icons type="time" size="16" color="#666" />
+        <text class="info-label">营业时间</text>
+        <text class="info-value">{{ formatTime(foodDetails?.starthour) }} - {{ formatTime(foodDetails?.endhour) }}</text>
+      </view>
+      <text class="intro-desc">{{ introText }}</text>
+    </view>
 
 
-		<!-- 店铺详情 -->
-		<view class="shop-details">
-			<view class="detail-item">
-				<view class="detail-icon">
-					<uni-icons type="location" size="20" color="#666"></uni-icons>
-				</view>
-				<view class="detail-content">
-					<text class="detail-label">营业时间</text>
-					<view class="detail-value">
-						<uni-icons type="time" size="16" color="#666"></uni-icons>
-						<text>{{ foodDetails?.starthour || '00:00' }}-{{ foodDetails?.endhour || '00:00' }}</text>
-					</view>
-				</view>
-			</view>
-			<view class="detail-item">
-				<view class="detail-icon">
-					<uni-icons type="location" size="20" color="#666"></uni-icons>
-				</view>
-				<view class="detail-content">
-					<text class="detail-label">地址</text>
-					<view class="detail-value">
-						<text>{{ foodDetails?.address || '暂无地址' }}</text>
-					</view>
-				</view>
-			</view>
-			<view class="detail-item">
-				<view class="detail-icon">
-					<uni-icons type="phone" size="20" color="#666"></uni-icons>
-				</view>
-				<view class="detail-content">
-					<text class="detail-label">电话</text>
-					<view class="detail-value">
-						<text>{{ foodDetails?.phone || '暂无电话' }}</text>
-					</view>
-				</view>
-			</view>
-		</view>
-
-		<!-- 餐厅介绍 -->
-		<view class="restaurant-intro">
-			<view class="section-title">餐厅介绍</view>
-			<view class="intro-content">
-				<text class="intro-text" :class="{ 'collapsed': !isIntroUnfolded }" ref="introText">
-					{{ foodDetails?.description || '暂无介绍' }}
-				</text>
-				<view class="unfold" @click="toggleIntro">
-					<text :class="isIntroUnfolded ? 'fold-text' : 'unfold-text'">{{ isIntroUnfolded ? '收起' : '展开' }}</text>
-				</view>
-			</view>
-		</view>
+    <view class="section ticket-section">
+      <view><text class="section-title">餐位费</text></view>
+      <view class="ticket-row">
+        <view class="ticket-left"><text class="ticket-type">费用</text><text class="ticket-price">￥{{ foodDetails?.price || 0 }}</text></view>
+        <button class="ticket-btn" @click="bookNow">立即购买</button>
+      </view>
+    </view>
 
 		<!-- 店铺实拍 -->
 		<view class="shop-photos" v-if="shopPhotos.length">
@@ -84,83 +53,24 @@
 		</view>
 
 
-		<!-- 用户评价 -->
-		<view class="reviews">
-			<scroll-view scroll-x class="comment-scroll">
-				<view class="comment-row">
-					<view
-						class="comment-card"
-						v-for="(item, idx) in displayedComments"
-						:key="item.id || idx"
-					>
-						<view class="comment-header">
-							<image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
-							<view class="comment-user">
-								<text class="comment-username">{{ item.username || '匿名用户' }}</text>
-								<text class="comment-date">{{ item.createTime }}</text>
-							</view>
-						</view>
-						<view class="comment-content">
-							<view v-if="getValidImages(item.images).length">
-								<image
-									v-for="(img, i) in getValidImages(item.images)"
-									:key="i"
-									:src="img"
-									class="comment-img"
-									mode="aspectFill"
-								/>
-							</view>
-							{{ item.comment }}
-						</view>
-					</view>
-					<view
-						v-if="!showAllComments && comments.length > 3"
-						class="comment-more-btn"
-						@click="toggleComments"
-					>
-						<view class="see-all-btn-img">
-							<text class="see-all-text">查<br/>看<br/>全<br/>部</text>
-							<view class="see-all-arrow">
-								<uni-icons type="arrowright" size="18" color="#fff" />
-							</view>
-						</view>
-					</view>
-				</view>
-			</scroll-view>
-		</view>
-		<view style="color:#999;text-align:center;padding:20px 0;">
-			仅限已支付该商品订单的用户评论
-		</view>
-
-		<!-- 推荐菜品 -->
-		<view class="recommended-dishes">
-			<view class="section-title">推荐菜品</view>
-			<scroll-view class="dishes-scroll" scroll-x enable-flex>
-				<view class="dish-item" v-for="(dish, index) in recommendedDishes" :key="index">
-					<image :src="dish.image" mode="aspectFill"></image>
-					<view class="dish-name">{{ dish.name }}</view>
-					<view class="dish-desc">{{ dish.desc }}</view>
-					<view class="dish-price">¥{{ dish.price }}</view>
-				</view>
-			</scroll-view>
-		</view>
-
-		<!-- 在推荐菜品后面，立即预订按钮前面添加时间选择部分 -->
-		
-			<view class="date-picker">
-				<uni-icons type="calendar" size="22" color="#007aff" style="margin-right:8px;" />
-				<text>选择用餐日期：</text>
-				<picker mode="date" :value="diningDate" :start="todayStr" @change="onDiningDateChange">
-					<view :class="['picker-value', !diningDate ? 'unselected' : '']">
-						{{ diningDate || '请选择' }}
-					</view>
-				</picker>
-			</view>
-
-		<!-- 立即预订按钮 -->
-		<view class="book-now" :style="{ paddingBottom: `${safeAreaInsets.bottom}px` }">
-			<button class="book-button" @click="bookNow">立即预订</button>
-		</view>
+    <view class="reviews-card">
+      <view class="reviews-header"><text class="reviews-title">用户评价（{{ comments.length }}）</text></view>
+      <view v-if="displayedComments.length === 0" class="no-comments">暂无评价</view>
+      <view v-for="(item, idx) in displayedComments" :key="item.id || idx" class="review-item">
+        <view class="review-user">
+          <image :src="(item.avatar && String(item.avatar).replace(/[`\s]/g,'')) || '/static/my/default-avatar.png'" class="review-avatar" />
+          <view class="review-user-info">
+            <text class="review-username">{{ item.username || '匿名用户' }}</text>
+            <text class="review-time">{{ item.createTime }}</text>
+          </view>
+        </view>
+        <view class="review-content">{{ item.comment }}</view>
+        <view v-if="itemMergedImages(item).length" class="review-images">
+          <image v-for="(img, i) in itemMergedImages(item)" :key="i" :src="img" class="review-img" mode="aspectFill" />
+        </view>
+      </view>
+      <view v-if="!showAllComments && comments.length > 3" class="show-more" @click="toggleComments">查看更多</view>
+    </view>
 	</view>
 </template>
 
@@ -184,19 +94,24 @@ const displayedComments = computed(() => showAllComments.value ? comments.value 
 
 // 获取餐厅详情
 const getRestaurantDetailsById = (id) => {
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
-		method: 'GET',
-		data: { id },
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token || ''
-		},
-		success: (res) => {
-			if (res.data && res.data.result) {
-				const details = res.data.result;
-				foodDetails.value = details;
-				comments.value = details.comments || [];
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/product/ilDining/queryById',
+    method: 'GET',
+    data: { id },
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token || ''
+    },
+    success: (res) => {
+      console.log('餐厅详情接口返回数据:', res.data);
+      if (res.data && res.data.result) {
+        const details = res.data.result;
+        console.log('餐厅详情result字段:', details);
+        foodDetails.value = details;
+        comments.value = (details.comments || []).map(c => ({
+          ...c,
+          avatar: typeof c.avatar === 'string' ? c.avatar.replace(/[`\s]/g, '') : c.avatar
+        }));
 				
 				// 处理店铺实拍图片：优先使用传入的图片数据，如果传入的图片为空，再使用后端返回的图片
 				if (shopPhotos.value && shopPhotos.value.length > 0) {
@@ -256,29 +171,40 @@ const toggleComments = () => {
 
 // 获取评论
 const getComments = async () => {
-	const res = await uni.request({
-		url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
-		method: 'GET',
-		data: { productId: id.value, type: 'Dining' },
-		header: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'X-Access-Token': userStore.token
-		}
-	});
-	if (res.data.success && Array.isArray(res.data.result)) {
-		comments.value = res.data.result;
-	} else {
-		comments.value = [];
-	}
+  const res = await uni.request({
+    url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
+    method: 'GET',
+    data: { productId: id.value, type: 'Dining' },
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    }
+  });
+  if (res.data && res.data.success && Array.isArray(res.data.result) && res.data.result.length > 0) {
+    comments.value = res.data.result.map(c => ({
+      ...c,
+      avatar: typeof c.avatar === 'string' ? c.avatar.replace(/[`\s]/g, '') : c.avatar
+    }));
+    console.log('评论列表(独立接口):', comments.value);
+  } else {
+    console.log('评论列表接口未返回有效数据，保留详情接口中的评论');
+  }
 };
 
 // 获取有效的图片数组
 function getValidImages(images) {
-	if (!images) return [];
-	if (Array.isArray(images)) return images.filter(Boolean);
-	if (typeof images === 'string') return images.split(',').filter(Boolean);
-	return [];
+  if (!images) return [];
+  if (Array.isArray(images)) return images.filter(Boolean);
+  if (typeof images === 'string') return images.split(',').filter(Boolean);
+  return [];
 }
+
+const itemMergedImages = (item) => {
+  const imgs = item.images || item.imageList || item.pics || '';
+  if (Array.isArray(imgs)) return imgs.map(s => String(s).replace(/[`\s]/g,'')).filter(Boolean);
+  if (typeof imgs === 'string') return imgs.split(',').map(s => s.trim().replace(/[`\s]/g,'')).filter(Boolean);
+  return [];
+};
 
 onLoad((options) => {
 	console.log('饮食详情页面收到的参数:', options);
@@ -384,105 +310,101 @@ const onDiningDateChange = (e) => {
 
 // 修改 bookNow 函数
 const bookNow = () => {
-	console.log('点击预订按钮');
-	console.log('当前餐厅信息:', foodDetails.value);
-	
-	// 检查是否获取到了餐厅详情
-	if (!foodDetails.value || !foodDetails.value.id) {
-		uni.showToast({
-			title: '请先获取餐厅信息',
-			icon: 'none',
-			duration: 2000
-		});
-		return;
-	}
+  console.log('点击预订按钮');
+  console.log('当前餐厅信息:', foodDetails.value);
+  
+  // 检查是否获取到了餐厅详情
+  if (!foodDetails.value || !foodDetails.value.id) {
+    uni.showToast({
+      title: '请先获取餐厅信息',
+      icon: 'none',
+      duration: 2000
+    });
+    return;
+  }
+  if (!userStore.token) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    setTimeout(() => {
+      uni.navigateTo({ url: '/pages/login/login' });
+    }, 800);
+    return;
+  }
+  const dateValue = diningDate.value || todayStr;
+  const startTime = (timeRange.value.start || '10:00').length === 5
+    ? timeRange.value.start + ':00'
+    : timeRange.value.start || '10:00:00';
+  const endTime = (timeRange.value.end || '22:00').length === 5
+    ? timeRange.value.end + ':00'
+    : timeRange.value.end || '22:00:00';
 
-	// 检查是否选择了日期
-	if (!diningDate.value) {
-		uni.showToast({
-			title: '请选择用餐日期',
-			icon: 'none',
-			duration: 2000
-		});
-		return;
-	}
+  const startDateTime = `${dateValue} ${startTime}`;
+  const endDateTime = `${dateValue} ${endTime}`;
 
-	console.log('开始创建订单，日期:', diningDate.value);
-	
-	// 拼接营业时间
-	const startTime = (timeRange.value.start || '10:00').length === 5
-		? timeRange.value.start + ':00'
-		: timeRange.value.start || '10:00:00';
-	const endTime = (timeRange.value.end || '22:00').length === 5
-		? timeRange.value.end + ':00'
-		: timeRange.value.end || '22:00:00';
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo?.realname || '游客',
+      contractPhone: userStore.userInfo?.phone || '13800138000'
+    },
+    items: [
+      {
+        bookInfo: {
+          date: dateValue,
+          fullname: userStore.userInfo?.realname || '游客',
+          idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
+          idCardType: "ID_CARD",
+          schedule: `${startTime}-${endTime}`
+        },
+        productId: foodDetails.value.id,
+        productType: "Dining",
+        quantity: 1,
+        price: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
+        amount: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
+        name: foodDetails.value.name,
+        image: foodDetails.value.imageUrl || foodDetails.value.image,
+        specs: `${startTime}-${endTime}`
+      }
+    ],
+    travelStartDate: startDateTime,
+    travelEndDate: endDateTime
+  };
 
-	const startDateTime = `${diningDate.value} ${startTime}`;
-	const endDateTime = `${diningDate.value} ${endTime}`;
+  console.log('订单数据(创建前):', orderData);
 
-	const orderData = {
-		contract: {
-			contractName: userStore.userInfo?.realname || '游客',
-			contractPhone: userStore.userInfo?.phone || '13800138000'
-		},
-		items: [
-			{
-				bookInfo: {
-					date: diningDate.value,
-					fullname: userStore.userInfo?.realname || '游客',
-					idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
-					idCardType: "ID_CARD",
-					schedule: `${startTime}-${endTime}`
-				},
-				productId: foodDetails.value.id,
-				productType: "Dining",
-				quantity: 1,
-				price: foodDetails.value.price,
-				amount: foodDetails.value.price * 1,
-				name: foodDetails.value.name,
-				image: foodDetails.value.image,
-				specs: `${startTime}-${endTime}`
-			}
-		],
-		travelStartDate: startDateTime,
-		travelEndDate: endDateTime
-	};
-
-	console.log('订单数据:', orderData);
-
-	// 发送创建订单请求
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-		method: 'POST',
-		data: orderData,
-		header: {
-			'Content-Type': 'application/json',
-			'X-Access-Token': userStore.token || ''
-		},
-		success: (res) => {
-			console.log('创建订单响应:', res.data);
-			if (res.data.success) {
-				// 创建订单成功后跳转到确认页面
-				uni.navigateTo({
-					url: `/pages/foodConfirm/foodConfirm?id=${foodDetails.value.id}&date=${encodeURIComponent(diningDate.value)}&startDateTime=${encodeURIComponent(startDateTime)}&endDateTime=${encodeURIComponent(endDateTime)}&orderId=${res.data.result.id}`
-				});
-			} else {
-				uni.showToast({
-					title: res.data.message || '预订失败',
-					icon: 'none',
-					duration: 2000
-				});
-			}
-		},
-		fail: (err) => {
-			console.error('创建订单失败:', err);
-			uni.showToast({
-				title: '网络错误，请重试',
-				icon: 'none',
-				duration: 2000
-			});
-		}
-	});
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    data: orderData,
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token || ''
+    },
+    success: (res) => {
+      console.log('创建订单响应:', res.data);
+      if (res.data && (res.data.success || res.data.code === 200) && res.data.result) {
+        const orderSn = res.data.result.orderSn || res.data.result.id || '';
+        const item = {
+          id: foodDetails.value.id,
+          name: foodDetails.value.name,
+          type: foodDetails.value.type,
+          ticketprice: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
+          starttime: formatTime(foodDetails.value.starthour || timeRange.value.start),
+          endtime: formatTime(foodDetails.value.endhour || timeRange.value.end)
+        };
+        const itemsParam = encodeURIComponent(JSON.stringify([item]));
+        const orderSnsParam = encodeURIComponent(JSON.stringify(orderSn ? [orderSn] : []));
+        const priceParam = encodeURIComponent(String(item.ticketprice || 0));
+        uni.navigateTo({
+          url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
+        });
+      } else {
+        uni.showToast({ title: res.data.message || '未能创建订单', icon: 'none' });
+      }
+    },
+    fail: (err) => {
+      console.error('创建订单失败:', err);
+      uni.showToast({ title: '网络错误，请重试', icon: 'none' });
+    }
+  });
 };
 
 const handleImageError = (e) => {
@@ -495,54 +417,33 @@ const imageLoading = ref(true);
 
 // 在 script setup 中添加
 const userInfo = computed(() => userStore.userInfo || {});
+
+const introText = computed(() => {
+  const raw = foodDetails.value?.description || '';
+  return String(raw).replace(/<[^>]*>/g, '').trim() || '暂无介绍';
+});
 </script>
 
 <style scoped>
 .container {
-	background-color: #f5f5f5;
-	min-height: 100vh;
-	padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* 为底部按钮留出空间 */
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* 为底部按钮留出空间 */
 }
 
-.shop-image {
-	position: relative;
-}
+.hero { position: relative; }
+.hero-img { width: 100%; height: 230px; object-fit: cover; }
 
-.shop-info-overlay {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	z-index: 10;
-	/* 确保在图片上层 */
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
-	color: white;
-	padding: 15px;
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-}
-
-.shop-info-overlay .shop-name {
-	font-size: 20px;
-	font-weight: bold;
-	margin-bottom: 10px;
-}
-
-.shop-info-overlay .shop-rating {
-	display: flex;
-	align-items: center;
-	width: 100%;
-	flex-wrap: wrap;
-}
-
-.shop-info-overlay .rating,
-.shop-info-overlay .monthly-sales,
-.shop-info-overlay .average-price {
-	color: white;
-	margin-left: 10px;
-	font-size: 12px;
-}
+.intro-card { position: relative; margin: -40px 12px 12px 12px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.08); padding: 16px; z-index: 2; }
+.attraction-name { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 12px; }
+.info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.rating-line { display: flex; align-items: center; gap: 8px; }
+.rating-score { font-size: 24rpx; color: #FF9800; }
+.addr-right { display: flex; align-items: center; gap: 6px; color: #666; }
+.addr-text { max-width: 52vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.info-label { color: #333; font-size: 15px;  }
+.info-value { color: #666; font-size: 15px; margin-left: auto; }
+.intro-desc { margin-top: 8px; font-size: 14px; color: #444; line-height: 1.7; }
 
 /* 顶部导航栏 */
 .header {
@@ -655,36 +556,14 @@ const userInfo = computed(() => userStore.userInfo || {});
 	font-size: 14px;
 }
 
-/* 店铺详情 */
-.shop-details {
-	background-color: #fff;
-	padding: 15px;
-	margin-bottom: 10px;
-}
-
-.detail-item {
-	display: flex;
-	align-items: center;
-	margin-bottom: 15px;
-}
-
-.detail-icon {
-	margin-right: 0px;
-	/* 增加detail-icon和detail-content之间的距离 */
-	display: flex;
-	align-items: center;
-}
-
-.detail-label {
-	margin-left: 10px;
-	font-weight: bold;
-}
-
-.detail-value {
-	flex: 1;
-	color: #666;
-	margin-left: 16rpx;
-}
+.section { margin: 24px 0 0 0; padding: 18px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(59,130,246,0.04); }
+.section-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+.ticket-section { margin: 16px 12px; }
+.ticket-row { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ticket-left { display: flex; align-items: baseline; gap: 10px; }
+.ticket-type { font-size: 16px; color: #333; }
+.ticket-price { font-size: 20px; color: #FF5A32; font-weight: 700; }
+.ticket-btn { background: #1677FF; color: #fff; padding: 3px 16px; border-radius: 10px; border: none; font-size: 14px; margin-right: 5rpx;}
 
 /* 餐厅介绍 */
 .restaurant-intro {
@@ -780,87 +659,20 @@ const userInfo = computed(() => userStore.userInfo || {});
 	object-fit: cover;
 }
 
-/* 用户评价 */
-.reviews {
-	width: 100%;
-	background: none;
-	border: none;
-	border-radius: 0;
-	box-shadow: none;
-	margin: 0;
-	padding: 0;
-}
-
-.comment-scroll {
-	width: 100%;
-}
-
-.comment-row {
-	display: flex;
-	flex-direction: row;
-	align-items: stretch;
-}
-
-.comment-card {
-	display: flex;
-	flex-direction: column;
-	min-width: 220px;
-	max-width: 70vw;
-	background: #fff;
-	border-radius: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	padding: 16px;
-	margin-right: 12px;
-	height: 120px;
-	box-sizing: border-box;
-}
-
-.comment-header { display: flex; align-items: center; }
-.comment-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-.comment-user { display: flex; flex-direction: column; }
-.comment-username { font-weight: bold; color: #333; }
-.comment-date { color: #aaa; font-size: 12px; }
-.comment-content { color: #444; font-size: 15px; margin-top: 6px; }
-.comment-more-btn {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	min-width: 80px;
-	height: 120px;
-	background: #e9e6e6;
-	border-radius: 18px;
-	margin-right: 12px;
-	margin-bottom: 5px;
-	cursor: pointer;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.see-all-btn-img {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
-.see-all-text {
-	writing-mode: vertical-rl;
-	font-size: 18px;
-	color: #222;
-	letter-spacing: 2px;
-	margin-bottom: 8px;
-	font-weight: bold;
-}
-.see-all-arrow {
-	width: 23px;
-	height: 23px;
-	background: #222;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-.see-all-arrow uni-icons {
-	color: #fff !important;
-}
+.reviews-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 16px 12px; padding: 16px; }
+.reviews-header { margin-bottom: 12px; }
+.reviews-title { font-size: 18px; font-weight: 700; color: #333; }
+.no-comments { text-align: center; color: #999; padding: 16px 0; }
+.review-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.review-user { display: flex; align-items: center; margin-bottom: 16rpx; }
+.review-avatar { width: 60rpx; height: 60rpx; border-radius: 50%; margin-right: 16rpx; }
+.review-user-info { flex: 1; }
+.review-username { font-size: 26rpx; color: #333; font-weight: 500; margin-bottom: 4rpx; }
+.review-time { font-size: 22rpx; color: #999; }
+.review-content { font-size: 15px; color: #333; line-height: 1.7; margin: 6px 0 8px 76rpx; }
+.review-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-left: 76rpx; }
+.review-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; }
+.show-more { display: flex; align-items: center; justify-content: center; padding: 20rpx 0; color: #3B82F6; font-size: 26rpx; gap: 8rpx; }
 
 /* 推荐菜品 */
 .recommended-dishes {
@@ -929,36 +741,7 @@ const userInfo = computed(() => userStore.userInfo || {});
 }
 
 /* 立即预订按钮 */
-.book-now {
-	position: fixed;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background-color: #fff;
-	padding: 15px;
-	padding-bottom: calc(15px + env(safe-area-inset-bottom)); /* 适配底部安全区域 */
-	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-	z-index: 100;
-}
-
-.book-button {
-	background-color: #3b82f6;
-	color: #fff;
-	border: none;
-	border-radius: 25px;
-	padding: 6px 0;
-	font-size: 18px;
-	font-weight: bold;
-	width: 100%;
-	box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-	transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.book-button:active {
-	transform: scale(0.98);
-	background-color: #3b82f6;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* 移除固定底部按钮，改为票务区按钮 */
 
 .time-picker-section {
 	background-color: #ffffff;

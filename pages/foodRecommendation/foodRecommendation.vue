@@ -6,23 +6,38 @@
         <view class="back-icon" @click="goBack">
           <uni-icons type="back" size="24" color="#333"></uni-icons>
         </view>
-        <text class="header-title">美食推荐</text>
+        <text class="header-title">餐厅列表</text>
       </view>
-      <view class="search-box">
-        <input 
-          type="text" 
-          v-model="searchKeyword" 
-          placeholder="搜索餐厅" 
-          class="search-input" 
-          @confirm="onSearch"
-          confirm-type="search"
-        />
-        <uni-icons type="search" size="24" color="#333" @click="onSearch" />
+      <view class="search-sort-row">
+        <view class="search-box">
+          <input 
+            type="text" 
+            v-model="searchKeyword" 
+            placeholder="请输入..." 
+            class="search-input" 
+            @confirm="onSearch"
+            confirm-type="search"
+          />
+          <uni-icons type="search" size="24" color="#333" @click="onSearch" />
+        </view>
+        <view class="sort-selector" @click="toggleSortPopup">
+          <text class="sort-text">{{ currentSort.name }}</text>
+          <uni-icons type="down" size="12" color="#999" />
+        </view>
       </view>
     </view>
 
     <!-- 主内容区域 -->
     <view class="main">
+      <!-- 顶部图片区域（模仿景点攻略） -->
+      <view class="hero">
+        <image :src="heroImage || (imageUrls[4] || '')" class="hero-img" mode="aspectFill" />
+        <view class="hero-dim"></view>
+        <view class="hero-overlay">
+          <text class="hero-title">餐厅列表</text>
+          <text class="hero-subtitle">发现令人心动的美食之地</text>
+        </view>
+      </view>
       <!-- 筛选标签 -->
       <scroll-view class="filter-scroll" scroll-x>
         <view class="filter-tags">
@@ -33,11 +48,7 @@
         </view>
       </scroll-view>
 
-      <!-- 排序选择器 -->
-      <view class="sort-selector" @click="toggleSortPopup">
-        <text class="sort-text">{{ currentSort.name }}</text>
-        <uni-icons type="down" size="12" color="#999" />
-      </view>
+      
 
       <!-- 排序弹出层 -->
       <view class="sort-popup" v-if="showSortPopup">
@@ -51,46 +62,44 @@
       </view>
 
       <!-- 餐厅列表 -->
-      <scroll-view scroll-y class="restaurant-list">
+      <view class="restaurant-list">
         <view v-for="(restaurant, index) in displayedRestaurants" :key="index" class="restaurant-card">
           <view class="restaurant-image" @click="goToFoodDetails(restaurant)">
             <image :src="restaurant.imageURL" mode="aspectFill" />
-            <text :class="['tag', restaurant.tagType]">{{ restaurant.tag }}</text>
           </view>
           <view class="restaurant-info">
-            <!-- 第一行：餐厅名称和地址 -->
-            <view class="name-address-row">
+            <!-- 标题 -->
+            <view class="name-row">
               <text class="restaurant-name" @click="goToFoodDetails(restaurant)">{{ restaurant.name }}</text>
-              <text class="distance">{{ restaurant.address }}</text>
             </view>
-            <!-- 第二行：营业时间 -->
-            <view class="business-hours-row">
-              <text class="business-hours">营业时间: {{ formatTime(restaurant.starthour) }} - {{
-                formatTime(restaurant.endhour) }}</text>
-            </view>
-            <!-- 第三行：评分和月售 -->
-            <view class="rating-box">
+            <!-- 评分 -->
+            <view class="rating-row">
               <view class="star-rating">
-                <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'"
-                  size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFA500' : '#CCCCCC'" />
-                <text v-if="restaurant.rating % 1 !== 0" class="half-star">
-                  <!-- <uni-icons type="star-filled" size="14" color="#FFA500" style="width: 50%;" /> -->
-                </text>
+                <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'" size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFB020' : '#E5E7EB'" />
               </view>
               <text class="rating">{{ restaurant.rating }}</text>
-              <text class="monthly-sale">月售 {{ restaurant.monthSale }}</text>
             </view>
-            <!-- 第四行：价格和预订按钮 -->
-            <view class="price-book-row">
+            <!-- 价格 + 地址 -->
+            <view class="price-address-row">
               <text class="price">人均 ¥{{ restaurant.priceaverage }}</text>
-              <view class="book-button" @click.stop="onBooking(restaurant)"
-                style="padding: 8rpx 50rpx; font-size: 30rpx; height: 60rpx; line-height: 60rpx;">
-                预订
+              <view class="addr">
+                <uni-icons type="location" size="16" color="#9CA3AF" />
+                <text class="distance">{{ restaurant.address }}</text>
               </view>
+            </view>
+            <!-- 营业时间（绿色点） -->
+            <view class="business-hours-row">
+              <view class="green-dot"></view>
+              <text class="business-hours">营业时间：{{ formatTime(restaurant.starthour) }} - {{ formatTime(restaurant.endhour) }}</text>
+            </view>
+            <!-- 底部：月售 + 立即预订 -->
+            <view class="bottom-row">
+              <text class="monthly-sale">月售 {{ restaurant.monthSale }} 单</text>
+              <view class="book-button" @click.stop="goToFoodDetails(restaurant)">立即预订</view>
             </view>
           </view>
         </view>
-      </scroll-view>
+      </view>
     </view>
 
     <!-- 悬浮按钮 -->
@@ -126,9 +135,9 @@ const currentSort = computed(() => {
   return sortOptions.value.find(sort => sort.active) || sortOptions.value[0];
 });
 
-const restaurants = ref([]);
-const userStore = useUserStore();
-const combinedArray = ref([]);
+  const restaurants = ref([]);
+  const userStore = useUserStore();
+  const combinedArray = ref([]);
 const showSortPopup = ref(false);
 const searchKeyword = ref('');
 
@@ -475,14 +484,11 @@ page {
 }
 
 .header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  width: 100%;
   background: #FFFFFF;
   padding: 0 32rpx;
   border-bottom: 1px solid #f5f5f5;
-  z-index: 100;
 }
 
 .header-content {
@@ -500,14 +506,8 @@ page {
   z-index: 101;
 }
 
-.search-box {
-  display: flex;
-  align-items: center;
-  background-color: #F5F5F5;
-  border-radius: 32rpx;
-  padding: 8rpx 16rpx;
-  margin: 16rpx 0;
-}
+.search-sort-row { display:flex; gap:16rpx; align-items:center; margin:16rpx 0; }
+.search-box { flex:1; display:flex; align-items:center; background-color:#F5F5F5; border-radius:16rpx; padding:8rpx 16rpx; }
 
 .search-input {
   flex: 1;
@@ -527,10 +527,21 @@ page {
 
 .main {
   flex: 1;
-  margin-top: calc(40rpx + var(--status-bar-height));
+  margin-top: 0;
   padding: 0 32rpx;
-  overflow: hidden;
 }
+
+/* 顶部图片（模仿景点攻略） */
+.hero { position: relative; height: 320rpx; margin: 0 0 16rpx 0; border-radius: 24rpx; overflow: hidden; }
+.hero-img { width: 100%; height: 100%; }
+.hero-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.20); z-index: 1; }
+.hero-overlay { position: absolute; left: 0; right: 0; bottom: 80rpx; padding: 0 24rpx; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+.hero-title { color: #fff; font-size: 40rpx; font-weight: 800; }
+.hero-subtitle { color: rgba(255,255,255,0.85); font-size: 26rpx; margin-top: 10rpx; }
+.hero-search { position: absolute; left: 24rpx; right: 24rpx; bottom: 10rpx; z-index: 3; }
+.search-wrap { display: flex; align-items: center; background: #fff; border-radius: 40rpx; box-shadow: 0 8rpx 24rpx rgba(15,174,223,0.12); padding: 0 28rpx; height: 72rpx; }
+.search-icon { margin-right: 12rpx; }
+.placeholder { color: #bbb; }
 
 .filter-scroll {
   margin: 0 -32rpx;
@@ -558,15 +569,7 @@ page {
   background-color: rgba(0, 102, 255, 0.1);
 }
 
-.sort-selector {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 90rpx 0rpx 20rpx 0rpx;
-  padding: 16rpx;
-  background-color: #F5F5F5;
-  border-radius: 16rpx;
-}
+.sort-selector { display:flex; align-items:center; padding:16rpx 20rpx; background-color:#F5F5F5; border-radius:16rpx; }
 
 .sort-text {
   font-size: 14px;
@@ -618,10 +621,7 @@ page {
   color: #0066FF;
 }
 
-.restaurant-list {
-  height: calc(100vh - 400rpx);
-  overflow: auto;
-}
+.restaurant-list { }
 
 .restaurant-card {
   margin-bottom: 32rpx;
@@ -681,6 +681,9 @@ page {
   /* 添加鼠标悬停样式 */
 }
 
+.name-row { margin-bottom: 12rpx; }
+.rating-row { display:flex; align-items:center; gap:12rpx; margin-bottom:12rpx; }
+
 .rating-box {
   display: flex;
   align-items: center;
@@ -698,49 +701,26 @@ page {
   color: #999999;
 }
 
-.business-hours-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
+.business-hours-row { display: flex; align-items: center; gap: 8rpx; margin: 12rpx 0; }
+.green-dot { width: 12rpx; height: 12rpx; background: #22C55E; border-radius: 50%; }
 
 .business-hours {
   font-size: 14px;
   color: #666666;
 }
 
-.price-book-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16rpx;
-}
+.price-address-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12rpx; }
+.addr { display: flex; align-items: center; gap: 8rpx; max-width: 60%; }
 
 .price {
   font-size: 14px;
   color: #666666;
 }
 
-.distance {
-  font-size: 14px;
-  color: #999999;
-  flex: 1;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-left: 16rpx;
-}
+.distance { font-size: 14px; color: #999999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.book-button {
-  background: #1B4B98;
-  color: #FFFFFF;
-  font-size: 28rpx;
-  padding: 1rpx 35rpx;
-  border-radius: 8rpx;
-  margin-right: 10rpx;
-  margin-top: -10rpx;
-}
+.bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16rpx; }
+.book-button { background: #FF7A45; color: #FFFFFF; font-size: 28rpx; padding: 10rpx 32rpx; border-radius: 9999rpx; }
 
 .float-button {
   position: fixed;
@@ -756,3 +736,9 @@ page {
   box-shadow: 0 6rpx 20rpx rgba(0, 102, 255, 0.3);
 }
 </style>
+  const heroImage = computed(() => {
+    const list = combinedArray.value || [];
+    if (!list.length) return '';
+    const top = list.slice().sort((a,b) => Number(b.rating || 0) - Number(a.rating || 0))[0];
+    return top?.imageURL || '';
+  });

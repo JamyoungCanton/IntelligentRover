@@ -46,7 +46,7 @@ const tabList = ref([
         iconPath: '/static/index/社区.svg', 
         selectedIconPath: '/static/index/首页-社区互动.svg',
         text: '社交',
-        pagePath: '/pages/ticketPoints/ticketPointsTab',
+        pagePath: '/pages/ticketPoints/ticketPoints',
         isTabPage: true
     },
     {

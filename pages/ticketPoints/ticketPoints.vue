@@ -1,27 +1,9 @@
 <template>
-  <view class="container" :style="`padding-top: ${statusBarHeight + 44}px;`">
-    <!-- 自定义顶部导航栏 -->
-    
-    <view class="custom-nav" :style="`padding-top: ${statusBarHeight}px; height: ${statusBarHeight + 44}px;`">
-      <view class="back-btn" @click="goBack">
-        <uni-icons type="back" size="24"></uni-icons>
+    <view class="discover-section discover-gradient">
+      <text class="discover-title">发现精彩旅程</text>
+      <view class="discover-search">
+        <uv-search placeholder="搜索帖子" shape="round" :showAction="false" bgColor="#ffffff"></uv-search>
       </view>
-      <view class="search-bar">
-        <uv-search placeholder="请输入搜索内容" shape="square" :showAction="false"></uv-search>
-      </view>
-    </view>
-
-    <!-- 轮播图（放在筛选栏上面） -->
-    <view class="banner-section">
-      <swiper class="banner-swiper" circular autoplay interval="3000" duration="500" indicator-dots
-        indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#ffffff">
-        <swiper-item v-for="(item, index) in bannerList" :key="index">
-          <image :src="item.imageUrl" mode="aspectFill" class="banner-image" />
-          <view class="banner-title">
-            <text>{{ item.title }}</text>
-          </view>
-        </swiper-item>
-      </swiper>
     </view>
 
     <!-- 帖子分类区不再固定在顶部 -->
@@ -77,9 +59,9 @@
               :style="getImageStyle(item.images.length, imgIndex)" />
           </view>
           <view class="item-bottom">
-            <view class="item-bottom-left">
-              <text class="left-data">{{ formatCreateTime(item.createTime) }} · {{ item.area }}</text>
-            </view>
+          <view class="item-bottom-left">
+            <text class="left-data">{{ getTimeAgo(item.createTime) }}</text>
+          </view>
             <view class="item-bottom-right">
               <view @click.stop="toggleLike(item)" class="right-data">
                 <uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="18" :color="item.liked ? '#ff0000' : '#999'"></uni-icons>
@@ -153,8 +135,9 @@
         </view>
       </template>
     </view>
+    <view class="fab" @click="goToCreatePost">+</view>
     <view style="height: 50px;"></view>
-  </view>
+  <Tabbar />
 </template>
 
 <script setup>
@@ -827,6 +810,52 @@ const toggleCollect = async (item) => {
   padding-bottom: 100px;
 }
 
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: linear-gradient(90deg, #6b80ff 0%, #8aa6ff 50%, #b4c6ff 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10rpx;
+  box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.08);
+}
+.page-title {
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.header-curve {
+  height: 30rpx;
+  background: linear-gradient(90deg, #6b80ff 0%, #8aa6ff 50%, #b4c6ff 100%);
+  border-bottom-left-radius: 24rpx;
+  border-bottom-right-radius: 24rpx;
+}
+
+.discover-section {
+  margin: 0 20rpx 20rpx 20rpx;
+  background: linear-gradient(180deg, #fff 0%, #f4f7ff 60%);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06);
+}
+.discover-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 700;
+}
+.discover-search {
+  margin-top: 16rpx;
+}
+
+.discover-gradient {
+  background: linear-gradient(90deg, #6b80ff 0%, #8f6bff 50%, #ff8a00 100%);
+}
+
 .postTypeSelect {
   /* 取消 sticky/fixed 和 margin-top，恢复普通流式布局 */
   position: static;
@@ -1093,6 +1122,22 @@ const toggleCollect = async (item) => {
 
 .floating-plus-button {
   display: none;
+}
+
+.fab {
+  position: fixed;
+  right: 30rpx;
+  bottom: 130rpx;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: #6b80ff;
+  color: #fff;
+  font-size: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 24rpx rgba(107,128,255,0.35);
 }
 
 

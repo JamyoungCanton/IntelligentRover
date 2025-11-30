@@ -3,8 +3,9 @@
     <scroll-view class="page-scroll" scroll-y>
       <view class="hero">
         <image v-if="heroImage" :src="heroImage" class="hero-img" mode="aspectFill" />
+        <view class="hero-dim"></view>
         <view class="hero-overlay">
-          <text class="hero-title">探索美丽中国</text>
+          <text class="hero-itle">探索美丽海岛</text>
           <text class="hero-subtitle">发现令人心动的旅行目的地</text>
         </view>
         <view class="hero-search">
@@ -140,7 +141,7 @@ const formatTime = (timeStr) => {
 
 const heroImage = computed(() => {
   const list = attractionGuidelistOriginal.value;
-  return list && list.length > 0 ? list[5].imageUrl : '';
+  return list && list.length > 0 ? list[9].imageUrl : '';
 });
 
 const scenicLevel = (rating) => {
@@ -209,9 +210,11 @@ const getAttrictionDetail = () => {
 .page-scroll { width: 100%; }
 .hero { position: relative; height: 320rpx; margin: 0 24rpx; border-radius: 24rpx; overflow: hidden; }
 .hero-img { width: 100%; height: 100%; }
-.hero-overlay { position: absolute; left: 0; right: 0; bottom: 70rpx; padding: 30rpx; background: linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.45) 100%); }
-.hero-title { color: #fff; font-size: 36rpx; font-weight: 600; }
-.hero-subtitle { color: rgba(255,255,255,0.85); font-size: 26rpx; margin-top: 8rpx; }
+.hero-overlay { width: 100%; height:150rpx;position: absolute; left: 50%; transform: translateX(-50%); right: 0; bottom: 70rpx; padding: 30rpx; background: transparent; z-index: 2; }
+.hero-itle{ position: absolute; color: #fff; text-align: center;font-size: 40rpx;font-weight: 800;margin-bottom: 20rpx;margin-left: 46%;transform: translateX(-46%);}
+.hero-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.20); z-index: 1; }
+.hero-title { color: #fff; font-size: 50rpx; margin-bottom: 190rpx; align-items: center;}
+.hero-subtitle {position: absolute;top:100rpx;left: 51%;transform: translateX(-50%); color: rgba(255, 255, 255, 0.85); font-size: 26rpx; margin-top: 20rpx; align-items: center;}
 .hero-search { position: absolute; left: 24rpx; right: 24rpx; bottom: 10rpx; z-index: 10; }
 .search-wrap { display: flex; align-items: center; background: #fff; border-radius: 40rpx; box-shadow: 0 8rpx 24rpx rgba(15,174,223,0.12); padding: 0 28rpx; height: 72rpx; }
 .search-icon { margin-right: 12rpx; }
@@ -232,7 +235,7 @@ const getAttrictionDetail = () => {
 .item-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16rpx; }
 .price-book { display: flex; align-items: center; gap: 16rpx; }
 .price { font-size: 32rpx; color: #4F46E5; font-weight: 700; }
-.book-btn { padding: 3rpx 22rpx; background: #4F46E5; color: #fff; border-radius: 26rpx; border: none; font-size: 26rpx; }
+.book-btn { padding: 3rpx 22rpx; background: #4F46E5; color: #fff; border-radius: 15rpx; border: none; font-size: 26rpx; }
 .rating-line { display: flex; align-items: center; gap: 8rpx; }
 .rating-score { font-size: 24rpx; color: #FF9800; }
 </style>

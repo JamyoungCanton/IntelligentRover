@@ -1,96 +1,57 @@
 <template>
   <view class="container">
-    <!-- 顶部图片轮播 -->
-    <swiper v-if="attractionImages.length > 0" class="header-swiper" :indicator-dots="true" :autoplay="false" :circular="true" :interval="4000" :duration="500">
-      <swiper-item v-for="(img, idx) in attractionImages" :key="idx">
-        <image :src="img.url || img" mode="aspectFill" style="width:100%;height:230px;object-fit:cover;" />
-      </swiper-item>
-    </swiper>
-    <view v-else class="no-image-placeholder">
-      <uni-icons type="image" size="60" color="#ccc" />
-      <text style="color:#999;">暂无图片</text>
-    </view>
-
-    <!-- 信息栏 -->
-    <view class="info-bar">
-      <!-- 景点名称 -->
-      <view class="attraction-name">
-        <text>{{ hotelData.name }}</text>
-      </view>
-      <view class="price-row">
-        <text class="price-main">￥{{ hotelData.ticketprice || '免费' }}</text>
-        <text class="price-desc">起/人</text>
-      </view>
-      <view class="info-row">
-        <uni-icons type="location" size="18" color="#3B82F6" />
-        <text class="info-label">交通路线：</text>
-        <text class="info-value">{{ hotelData.location }}</text>
+    <view class="hero">
+      <swiper v-if="attractionImages.length > 0" class="header-swiper" :indicator-dots="true" :autoplay="false" :circular="true" :interval="4000" :duration="500">
+        <swiper-item v-for="(img, idx) in attractionImages" :key="idx">
+          <image :src="img.url || img" mode="aspectFill" class="hero-img" />
+        </swiper-item>
+      </swiper>
+      <view v-else class="no-image-placeholder">
+        <uni-icons type="image" size="60" color="#ccc" />
+        <text style="color:#999;">暂无图片</text>
       </view>
     </view>
 
-    <!-- 景点介绍 -->
-    <view class="section">
-      <view>
-        <text class="section-title">景点介绍</text>
+    <view class="intro-card">
+      <view class="badge-row">
+        <text class="badge">{{ scenicLevel }}</text>
+        <text class="badge type">{{ hotelData.type }}</text>
+        <text class="badge ghost">可开电子发票</text>
       </view>
-      <text class="section-content">{{ hotelData.description.replace(/<[^>]*>/g, '') }}</text>
+      <view class="attraction-name"><text>{{ hotelData.name }}</text></view>
+      <text class="intro-desc">{{ introDescription }}</text>
     </view>
+    <view class="intro-spacer"></view>
 
-    <!-- 日期选择 -->
-    <view class="booking-card">
-      <view class="booking-row">
-        <uni-icons type="calendar" size="22" color="#3B82F6" />
-        <text class="booking-label">游玩日期</text>
-        <picker
-          mode="date"
-          :value="playDate"
-          :start="monthStart"
-          :end="monthEnd"
-          @change="onPlayDateChange"
-        >
-          <text class="booking-value">{{ playDate || '请选择' }}</text>
-        </picker>
-      </view>
-      <view class="booking-divider"></view>
-      <view class="booking-row end-row">
-        <uni-icons type="flag" size="20" color="#3B82F6" />
-        <text class="booking-label">运营时间</text>
-        <text class="booking-value">{{ hotelData.starttime || '--:--' }} - {{ hotelData.endtime || '--:--' }}</text>
+    
+
+    <view class="section ticket-section">
+      <view><text class="section-title">景区购票</text></view>
+      <view class="ticket-row">
+        <view class="ticket-left"><text class="ticket-type">成人票</text><text class="ticket-price">￥{{ hotelData.ticketprice || 0 }}</text></view>
+        <button class="ticket-btn" @click="creaOrder(hotelData)">立即购买</button>
       </view>
     </view>
 
-    <!-- 评论区 -->
-    <view class="reviews">
-      <scroll-view scroll-x class="comment-scroll">
-        <view class="comment-row">
-          <view
-            class="comment-card"
-            v-for="(item, idx) in displayedComments"
-            :key="item.id || idx"
-          >
-            <view class="comment-header">
-              <image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
-              <view class="comment-user">
-                <text class="comment-username">{{ item.username || '匿名用户' }}</text>
-                <text class="comment-date">{{ item.createTime }}</text>
-              </view>
-            </view>
-            <view class="comment-content">{{ item.comment }}</view>
-          </view>
-          <view
-            v-if="!showAllComments && comments.length > 3"
-            class="comment-more-btn"
-            @click="toggleComments"
-          >
-            <view class="see-all-btn-img">
-              <text class="see-all-text">查<br/>看<br/>全<br/>部</text>
-              <view class="see-all-arrow">
-                <uni-icons type="arrowright" size="18" color="#fff" />
-              </view>
-            </view>
+    
+
+    <view class="reviews-card">
+      <view class="reviews-header"><text class="reviews-title">用户评价（{{ groupedComments.length }}）</text></view>
+      <view v-if="displayedComments.length === 0" class="no-comments">暂无评价</view>
+      <view v-for="(item, idx) in displayedComments" :key="item.id || idx" class="review-item">
+        <view class="review-user">
+          <image :src="item.avatar || '/static/my/default-avatar.png'" class="review-avatar" />
+          <view class="review-user-info">
+            <text class="review-username">{{ item.username || '匿名用户' }}</text>
+            <text class="review-time">{{ item.createTime }}</text>
           </view>
         </view>
-      </scroll-view>
+        <view class="review-content">{{ item.comment }}</view>
+        <view v-if="itemMergedImages(item).length" class="review-images">
+          <image v-for="(img, i) in itemMergedImages(item)" :key="i" :src="img" class="review-img" mode="aspectFill" />
+        </view>
+      </view>
+      <view v-if="!showAllComments && comments.length > 2" class="show-more" @click="toggleComments">查看更多</view>
     </view>
 
     <!-- 游客实拍 -->
@@ -109,13 +70,6 @@
       </scroll-view>
     </view>
 
-    <!-- 占位，防止被底部按钮遮挡 -->
-    <view class="bottom-placeholder"></view>
-
-    <!-- 底部按钮 -->
-    <view class="fixed-bottom-bar">
-      <button class="book-now-btn" @click="creaOrder(hotelData)">立即预订</button>
-    </view>
   </view>
 </template>
 
@@ -133,17 +87,21 @@
     { score: 10, comment: '很满意', username: '王五', createTime: '2024-06-10' }
   ]);
   const id = ref(0);
-  const playDate = ref('');
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
   const pad = n => n < 10 ? '0' + n : n;
-  const monthStart = `${year}-${pad(month)}-01`;
-  const monthEnd = `${year}-${pad(month)}-${pad(new Date(year, month, 0).getDate())}`;
   const newComment = ref('');
   const showAllComments = ref(false);
   const allowComment = ref(false); // 是否允许评论
   const commentDetail = ref(null);
+  const scenicLevel = computed(() => {
+    const r = Number(hotelData.value.rating || 4.6);
+    if (r >= 4.5) return '5A 景区';
+    if (r >= 3.5) return '4A 景区';
+    if (r >= 2.5) return '3A 景区';
+    return '景区';
+  });
+  const introDescription = computed(() => {
+    return String(hotelData.value.description || '').replace(/<[^>]*>/g, '');
+  });
 
   console.log('attractionDetail.vue 页面已加载');
 
@@ -178,8 +136,8 @@
           
           // 处理图片
           if (res.data.result.imageUrl) {
-            console.log('景点主图:', res.data.result.imageUrl);
-            attractionImages.value = [res.data.result.imageUrl];
+            const mainUrl = String(res.data.result.imageUrl).trim().replace(/[`\s]/g, '');
+            attractionImages.value = [mainUrl];
           } else {
             console.log('没有景点主图');
             attractionImages.value = [];
@@ -190,8 +148,11 @@
           if (res.data.result.images && Array.isArray(res.data.result.images)) {
             // 拆分每个字符串里的多个图片URL
             const processedImages = res.data.result.images.reduce((acc, imgStr) => {
-              if (imgStr && typeof imgStr === 'string') {
-                const urls = imgStr.split(',').map(url => url.trim()).filter(url => url);
+              if (imgStr) {
+                const urls = String(imgStr)
+                  .split(',')
+                  .map(url => url.trim().replace(/[`\s]/g, ''))
+                  .filter(Boolean);
                 return [...acc, ...urls];
               }
               return acc;
@@ -240,10 +201,6 @@
   // 创建订单
   const creaOrder = (hotel) => {
     console.log('预订时的 productId:', hotel.id);
-    if (!playDate.value) {
-      uni.showToast({ title: '请选择游玩日期', icon: 'none' });
-      return;
-    }
     if (hotel.ticketprice === 0) {
       // ...免费逻辑
       return;
@@ -255,10 +212,10 @@
     const endTime = (hotel.endtime || '22:00').length === 5
       ? hotel.endtime + ':00'
       : hotel.endtime || '22:00:00';
-
-    // 拼接完整的开始和结束时间
-    const startDateTime = `${playDate.value} ${startTime}`;
-    const endDateTime = `${playDate.value} ${endTime}`;
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const startDateTime = `${dateStr} ${startTime}`;
+    const endDateTime = `${dateStr} ${endTime}`;
 
     const orderData = {
       contract: {
@@ -268,7 +225,7 @@
       items: [
         {
           bookInfo: {
-            date: playDate.value,
+            date: dateStr,
             fullname: userStore.userInfo?.realname || '游客',
             idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
             idCardType: "ID_CARD",
@@ -300,10 +257,19 @@
             icon: 'success',
             duration: 1500
           });
-          // 可以跳转到订单详情页或其他页面
           const orderSn = res.data.result.orderSn;
+          const itemsParam = encodeURIComponent(JSON.stringify([{
+            id: hotelData.value.id,
+            name: hotelData.value.name,
+            type: hotelData.value.type,
+            ticketprice: hotelData.value.ticketprice,
+            price: hotelData.value.ticketprice,
+            starttime: hotelData.value.starttime,
+            endtime: hotelData.value.endtime
+          }]));
+          const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn]));
           uni.navigateTo({
-            url: `/pages/comfirmAttractionOrder/confirmAttrationOrder?id=${hotelData.value.id}&orderSn=${orderSn}&type=景点&productId=${hotelData.value.id}`,
+            url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotelData.value.ticketprice || 0))}`,
             success: () => {
               // 跳转成功后的操作
               getAttrictionDetail();
@@ -337,9 +303,7 @@
     getAttrictionDetail();
   })
 
-  const onPlayDateChange = (e) => {
-    playDate.value = e.detail.value;
-  };
+  
 
   // 检查是否支付过该商品
   const checkOrderPaid = async () => {
@@ -439,7 +403,38 @@
   };
 
   // 添加计算属性来控制显示的评论数量
-  const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
+  const displayedComments = computed(() => showAllComments.value ? groupedComments.value : groupedComments.value.slice(0, 3));
+  const groupedComments = computed(() => {
+    const map = new Map();
+    (comments.value || []).forEach((c) => {
+      const key = c.userId || c.user_id || c.username || c.id || Math.random();
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          username: c.username,
+          avatar: c.avatar,
+          createTime: c.createTime,
+          score: c.score,
+          comment: c.comment || '',
+          images: itemMergedImages(c)
+        });
+      } else {
+        const exist = map.get(key);
+        exist.comment = exist.comment ? exist.comment + '\n' + (c.comment || '') : (c.comment || '');
+        exist.createTime = exist.createTime || c.createTime;
+        exist.score = exist.score || c.score;
+        exist.images = [...exist.images, ...itemMergedImages(c)].filter(Boolean);
+      }
+    });
+    return Array.from(map.values());
+  });
+  const itemMergedImages = (item) => {
+    const arr = [];
+    const imgs = item.images || item.imageList || item.pics || '';
+    if (Array.isArray(imgs)) arr.push(...imgs.filter(Boolean));
+    if (typeof imgs === 'string') arr.push(...imgs.split(',').map(s => s.trim()).filter(Boolean));
+    return arr;
+  };
 
   // 添加切换显示状态的方法
   const toggleComments = () => {
@@ -468,6 +463,13 @@
     console.log('跳转到所有评论页面', id);
   };
 
+  const extractImgs = (item) => {
+    const imgs = item.images || item.imageList || item.pics || '';
+    if (Array.isArray(imgs)) return imgs.filter(Boolean);
+    if (typeof imgs === 'string') return imgs.split(',').map(s => s.trim()).filter(Boolean);
+    return [];
+  };
+
   if (!hotelData.value.starttime || !hotelData.value.endtime) {
     hotelData.value.starttime = '10:00';
     hotelData.value.endtime = '22:00';
@@ -482,18 +484,19 @@
   background-color: #f8f8f8;
   padding-bottom: 30px;
 }
+.hero { position: relative; }
+.hero-img { width: 100%; height: 230px; object-fit: cover; }
 .header-swiper {
   width: 100vw;
   height: 230px;
   background: #eee;
 }
-.info-bar {
-  background: #fff;
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 4px 24px rgba(59,130,246,0.06);
-  margin-top: -5px;
-  padding: 18px 20px 10px 20px;
-}
+.intro-card { position: relative; margin: -40px 12px 12px 12px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.08); padding: 16px; z-index: 2;}
+.intro-spacer { height: 0; }
+.badge-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.badge { padding: 4px 10px; background: #fff3cd; color: #946200; border-radius: 16px; font-size: 12px; }
+.badge.ghost { background: #e9f3ff; color: #1677FF; }
+.badge.type { background: #f0e9ff; color: #6C63FF; }
 .price-row {
   display: flex;
   align-items: baseline;
@@ -510,6 +513,15 @@
   font-size: 15px;
   margin-right: 10px;
 }
+.tag-row { display: flex; gap: 8px; margin: 6px 0 12px 0; }
+.tag { padding: 6px 12px; background: #f0f2f5; border-radius: 14px; font-size: 12px; color: #666; }
+.tab-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.tab { padding: 6px 10px; border-radius: 10px; background: #eef3ff; color: #3B82F6; font-size: 13px; }
+.tab.active { background: #dfe9ff; }
+.info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 8px 0; }
+.info-item { display: flex; align-items: center; gap: 6px; color: #333; font-size: 14px; }
+.open-time { margin-top: 8px; font-size: 13px; color: #666; }
+.intro-desc { margin-top: 8px; font-size: 14px; color: #444; line-height: 1.7; }
 .child-price {
   color: #FF9800;
   font-size: 16px;
@@ -554,6 +566,13 @@
   color: #444;
   line-height: 1.7;
 }
+.ticket-section { margin: 16px 12px; }
+.ticket-row { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ticket-left { display: flex; align-items: baseline; gap: 10px; }
+.ticket-type { font-size: 16px; color: #333; }
+.ticket-price { font-size: 20px; color: #FF5A32; font-weight: 700; }
+.ticket-btn { background: #1677FF; color: #fff; padding: 3px 16px;margin-right: 10rpx; border-radius: 10px; border: none; font-size: 14px; }
+.ticket-more { color: #1677FF; font-size: 14px; }
 .booking-card {
   background: #fff;
   border-radius: 18px;
@@ -622,26 +641,11 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); /* 添加阴影 */
   transition: all 0.3s ease; /* 添加过渡效果 */
 }
-
-.book-now-btn:active {
-  background: #2563EB; /* 点击时加深背景颜色 */
-  transform: translateY(2px); /* 点击时向下移动 2px */
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); /* 点击时减小阴影 */
-}
-
-.book-now-btn:hover {
-  background: #2563EB; /* 悬停时加深背景颜色 */
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4); /* 悬停时增大阴影 */
-}
-.reviews, .user-reviews, .review-list {
-  width: 100%;
-  background: none;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  margin: 0;
-  padding: 0;
-}
+.book-now-btn:active { }
+.book-now-btn:hover { }
+.reviews-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 16px 12px; padding: 16px; }
+.reviews-header { margin-bottom: 12px; }
+.reviews-title { font-size: 18px; font-weight: 700; color: #333; }
 .review-header {
   margin-bottom: 20rpx;
 }
@@ -729,10 +733,7 @@
 .submit-btn[disabled] {
   background-color: #ccc;
 }
-.review-item {
-  padding: 20rpx 0;
-  border-bottom: 1px solid #f0f0f0;
-}
+.review-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 .review-user {
   display: flex;
   align-items: center;
@@ -757,12 +758,9 @@
   font-size: 22rpx;
   color: #999;
 }
-.review-content {
-  font-size: 28rpx;
-  color: #333;
-  line-height: 1.6;
-  margin-left: 76rpx;
-}
+.review-content { font-size: 15px; color: #333; line-height: 1.7; margin: 6px 0 8px 76rpx; }
+.review-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-left: 76rpx; }
+.review-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; }
 .show-more {
   display: flex;
   align-items: center;
@@ -886,9 +884,7 @@
   object-fit: cover;
   margin-right: 8px;
 }
-.bottom-placeholder {
-  height: 70px; /* 与底部按钮高度一致 */
-}
+.bottom-placeholder { height: 0; }
 .attraction-name {
   font-size: 22px;
   font-weight: bold;

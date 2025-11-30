@@ -4,24 +4,25 @@
     <view class="nav-bar-wrapper" :style="{ paddingTop: `${statusBarHeight}px` }">
       <!-- 顶部导航栏标题 -->
       <view class="nav-bar-title" :style="{ paddingTop: safeAreaInsets.top + 'px' }">山海智游侠</view>
-      <!-- 轮播图 -->
-      <swiper class="banner-swiper" :autoplay="true" :interval="3000" circular>
-        <swiper-item v-for="item in bannerList" :key="item">
-          <image class="banner-item" :src="item" mode="widthFix"></image>
-        </swiper-item>
-      </swiper>
+      <!-- AI入口卡片 -->
+      <view class="ai-entry-card" @click="navigateToChat">
+        <view class="ai-title">你好，今天想去哪里？</view>
+        <view class="ai-input">
+          <uv-icon name="search" :size="18" color="#9CA3AF"></uv-icon>
+          <text class="ai-input-placeholder">请输入目的地或关键词...</text>
+        </view>
+        <view class="ai-tags">
+          <view class="ai-tag">海岛游</view>
+          <view class="ai-tag">亲子游</view>
+          <view class="ai-tag">浮潜行</view>
+          <view class="ai-tag">休闲度</view>
+        </view>
+      </view>
     </view>
 
     <!-- 主要内容区 -->
     <view class="index-main-wrapper">
-      <!-- 通知栏 -->
-      <view class="notice-wrapper">
-        <view class="notice-tag">通知</view>
-        <view class="notice-text-container">
-          <view class="notice-text">欢迎来到山海智游侠，这里为您带来意想不到的海岛之旅，欢乐无限，期待您的到来~</view>
-        </view>
-      </view>
-
+     
       <!-- 图标导航 -->
       <view class="icon-nav-wrapper">
         <view v-for="item in navButtonList" :key="item.name" class="icon-item" @click="toPage(item.path)">
@@ -32,107 +33,47 @@
         </view>
       </view>
 
-      <!-- 热门活动 -->
-      <view class="section-wrapper">
-        <view class="section-title">热门活动</view>
-      </view>
-      <view class="activity-wrapper">
-        <template v-if="!activityLoading">
-          <view class="activity-card" v-for="activity in activities" :key="activity.id"
-            @click="toActivity(activity.id)">
-            <view class="activity-img">
-              <image :src="activity.image"></image>
-            </view>
-            <view class="activity-info">
-              <text class="activity-name">{{ activity.name }}</text>
-              <view class="activity-rating">
-                <text class="rating">{{ activity.rating }}</text>
-                <text class="comments">{{ activity.comments }}</text>
-              </view>
-              <view class="price-container">
-                <text class="original-price">优惠价 ¥{{ activity.discountPrice }}</text>
-                <text class="discount-price">¥{{ activity.originalPrice }}</text>
-              </view>
-            </view>
-          </view>
-        </template>
-        <template v-else>
-          <uv-skeletons :loading="activityLoading" :skeleton="activitySkeleton"></uv-skeletons>
-        </template>
-      </view>
 
-
-      <!-- 精选路线 -->
-      <view class="section-wrapper">
-        <view class="section-title">精选路线</view>
-      </view>
-      <!-- <view class="route-hot-tag">
-          <image class="hot-img" src="https://wuminghui.top:9000/travel/角标-推荐.svg"></image>
-        </view> -->
-      <view class="route-wrapper"  @click="viewMore('热门活动')">
-        <view class="route-badge">
-        </view>
-        <view class="route-banner">
-          <image src="https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-thorsten-technoman-109353-338504.jpg"></image>
-        </view>
-        <view class="route-info">
-          <text class="route-name">浪漫双岛游游 东澳岛-外伶仃岛2日游</text>
-          <view class="route-rating">
-            <text class="rating">4.7分</text>
-            <text class="comments"> 1205条评论</text>
-            <text class="route-price">¥688.00起</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 景点攻略部分 -->
+      <!-- 帖子瀑布流 -->
       <view class="section-wrapper mb-30">
-        <uv-tabs :list="tabList" @click="handleChangeTab" :lineColor="themeColor" :scrollable="false"
-          :activeStyle="{ color: '#303133', fontWeight: 'bold', transform: 'scale(1.05)' }"></uv-tabs>
+        <view class="section-title">发现更多</view>
       </view>
-      <view v-if="!spotLoading" class="spot-wrapper">
-        <view class="spot-item" v-for="spot in spotList" :key="spot.id" @click="navigateToSpot(activeTab, spot.id)">
-          <image class="spot-img" :src="spot.imageUrl ? spot.imageUrl : defaultImage"></image>
-          <view class="spot-info">
-            <view class="spot-name">{{ spot.name }} <uv-tags v-if="spot.type" :text="spot.type" size="mini" key="" plain
-                plainFill />
+      <view class="waterfall-wrapper">
+        <view v-if="!postLoading" class="waterfall-alt">
+          <view class="column">
+            <view class="post-card animated" v-for="(item, idx) in leftPosts" :key="'L' + item.id" :style="{ animationDelay: `${idx * 60}ms` }" @click="toPostDetail(item.id)">
+              <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+              <view class="post-info">
+                <text class="post-title">{{ item.title || '无标题' }}</text>
+                <view class="post-actions">
+                  <view class="action-left">
+                    <uv-icon name="thumb-up" :size="16"></uv-icon>
+                    <text>{{ item.likes || 0 }}</text>
+                  </view>
+                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">一键抄作业</button>
+                </view>
+              </view>
             </view>
-            <template v-if="activeTab == '景点攻略'">
-              <view class="spot-desc">
-                <uv-icon name="map" :top="1" :size="12"></uv-icon> <text class="mr-20">{{ spot.location }}</text>
-                <uv-icon name="clock" :top="1" :size="12"></uv-icon> <text>{{ spot.time }}</text>
+          </view>
+          <view class="column">
+            <view class="post-card animated" v-for="(item, idx) in rightPosts" :key="'R' + item.id" :style="{ animationDelay: `${idx * 60}ms` }" @click="toPostDetail(item.id)">
+              <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+              <view class="post-info">
+                <text class="post-title">{{ item.title || '无标题' }}</text>
+                <view class="post-actions">
+                  <view class="action-left">
+                    <uv-icon name="thumb-up" :size="16"></uv-icon>
+                    <text>{{ item.likes || 0 }}</text>
+                  </view>
+                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">一键抄作业</button>
+                </view>
               </view>
-              <view class="spot-desc" v-html="spot.description"></view>
-            </template>
-            <template v-if="activeTab == '酒店住宿'">
-              <view class="spot-desc">
-                <uv-icon name="phone" :top="2" :size="12"></uv-icon> <text>{{ spot.bookingmethod }}</text>
-              </view>
-            </template>
-            <template v-if="activeTab == '美食推荐'">
-              <view class="spot-desc">
-                <uv-icon name="map" :top="1" :size="12"></uv-icon> <text class="mr-20">{{ spot.address }}</text>
-                <uv-icon name="clock" :top="1" :size="12"></uv-icon> <text>{{ spot.time }}</text>
-              </view>
-              <view class="spot-desc" v-html="spot.description"></view>
-            </template>
-            <view class="spot-rating">
-              <uv-rate v-model="spot.rating" :size="14" activeColor="#ffb800" allowHalf></uv-rate>
-              <text class="spot-price">{{ spot.price }}</text>
             </view>
           </view>
         </view>
-
-        <!-- 注释掉展开更多按钮但保留代码 -->
-        <!-- <view class="expand-btn" @click="toggleExpand">
-          <text>{{ isExpanded ? '收起' : '展开更多' }}</text>
-          <image class="expand-icon"
-            :src="isExpanded ? 'https://wuminghui.top:9000/travel/up.png' : 'https://wuminghui.top:9000/travel/down.png'">
-          </image>
-        </view> -->
-      </view>
-      <view v-else class="spot-wrapper" style="margin: 0 20rpx;">
-        <uv-skeletons :loading="spotLoading" :skeleton="spotSkeleton"></uv-skeletons>
+        <view v-else class="spot-wrapper" style="margin: 0 20rpx;">
+          <uv-skeletons :loading="postLoading" :skeleton="spotSkeleton"></uv-skeletons>
+        </view>
       </view>
     </view>
 
@@ -149,13 +90,12 @@
 <script setup>
 // ---------------- import ----------------
 import { ref, computed, onMounted, reactive } from 'vue';
-import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app';
 import Tabbar from '../Tabbar/Tabbar.vue';
 import AIFloatButton from '@/components/AIFloatButton.vue';
-import request from '@/utils/request.js'; // 导入请求函数
+import { useUserStore } from '@/store/modules/user';
 // ---------------- setup ----------------
 onShow(() => {
-  handleGetActivityList();
 });
 onMounted(() => {
   // 使用新的 API 获取系统信息
@@ -163,15 +103,14 @@ onMounted(() => {
   const deviceInfo = uni.getDeviceInfo();
   statusBarHeight.value = windowInfo.statusBarHeight || 0;
   safeAreaInsets.value = deviceInfo.safeAreaInsets || {};
-  activeTab.value = '景点攻略';
-  handleGetSpotsList('景点攻略');
-  handleGetActivityList();
+  reloadPosts();
 });
 onPullDownRefresh(() => {
-  activeTab.value = '景点攻略';
-  handleGetSpotsList('景点攻略');
-  handleGetActivityList();
+  reloadPosts();
   uni.stopPullDownRefresh();
+});
+onReachBottom(() => {
+  fetchPosts();
 });
 // ---------------- data ----------------
 // 导航按钮列表
@@ -180,9 +119,9 @@ const navButtonList = reactive([{
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/beach.png',
   path: '/pages/attractionGuide/attractionGuide'
 }, {
-  name: '船票预订',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/sail-boat.png',
-  path: '/pages/ticketBooking/ticketBooking'
+  name: '我的收藏',
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/heart.png',
+  path: '/pages/favorite/favorite'
 }, {
   name: '美食推荐',
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/restaurant.png',
@@ -191,178 +130,159 @@ const navButtonList = reactive([{
   name: '酒店住宿',
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/5-star-hotel.png',
   path: '/pages/hotelBooking/hotelBooking'
-}, {
-  name: '停车收费',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/parking.png',
-  path: '/pages/parkingFees/parkingFees'
-}, {
-  name: '一日畅游',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/beach-umbrella.png',
-  path: '/pages/dayTravel/dayTravel'
-}, {
-  name: '社区互动',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/communication.png',
-  path: '/pages/ticketPoints/ticketPoints'
-}, {
-  name: '更多服务',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/more.png',
-  path: '/pages/moreServices/moreServices'
 }
 ]);
-const tabList = reactive([
-  { name: '景点攻略' },
-  { name: '酒店住宿' },
-  { name: '美食推荐' }
-])
-const activeTab = ref('景点攻略'); // 默认选中的标签
+// 帖子数据
+const posts = ref([]);
+const postLoading = ref(false);
+const postPageNo = ref(1);
+const postPageSize = ref(20);
+const hasMore = ref(true);
+const userStore = useUserStore();
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
-const themeColor = ref('#3c9cff'); // 主题颜色
-const bannerList = ref([
+  const themeColor = ref('#3c9cff'); // 主题颜色
+  const bannerList = ref([
   'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jayson-will-768546872-18817260.jpg',
   'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pixabay-221471.jpg'
 ]);
-const activities = ref([]);
-const activityLoading = ref(false); // 活动列表加载状态
-const activitySkeleton = ref([{
-  type: 'flex',
-  children: [{
-    type: 'custom',
-    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;'
-  }, {
-    type: 'custom',
-    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;marginLeft:20rpx;'
-  }, {
-    type: 'custom',
-    style: 'width:300rpx;height:360rpx;borderRadius:25rpx;marginLeft:20rpx;'
-  }]
-}])
-const spotList = ref([]); // 景点列表数据
 const spotSkeleton = ref([{
   type: 'flex',
-  num: 3,
-  children: [{
-    type: 'custom',
-    num: 1,
-    style: 'width:150rpx;height:150rpx;marginRight: 30rpx;marginLeft: 20rpx;'
-  }, {
-    type: 'line',
-    num: 3,
-    style: [null, 'width:360rpx;', 'width:200rpx;']
-  }]
+  num: 2,
+  children: [{ type: 'custom', style: 'width:300rpx;height:360rpx;borderRadius:25rpx;' }, { type: 'custom', style: 'width:300rpx;height:300rpx;borderRadius:25rpx;marginLeft:20rpx;' }]
 }]);
-const spotLoading = ref(false); // 景点列表加载状态
 // 缺省图片
 const defaultImage = ref('https://wuminghui.top:9000/travel/retouch_2025032816113042(1).png');
+const sortedPosts = computed(() => posts.value.slice().sort((a,b) => Number(b.likes||0) - Number(a.likes||0)));
+const leftPosts = computed(() => sortedPosts.value.filter((_, i) => i % 2 === 0));
+const rightPosts = computed(() => sortedPosts.value.filter((_, i) => i % 2 === 1));
 // 注释掉但保留展开/收起方法
 // const toggleExpand = () => {
 //   isExpanded.value = !isExpanded.value;
 // };
 // ---------------- methods ----------------
-// 管理接口
-const handleGetSpotsList = async (type) => {
-  spotLoading.value = true;
-  let res;
-  if (type === '景点攻略') {
-    res = await request(`/product/ilAttractions/list`);
-  } else if (type === '酒店住宿') {
-    res = await request(`/product/ilAccommodations/list`, { pageNo: 1, pageSize: 50 });
-  } else if (type === '美食推荐') {
-    res = await request(`/product/ilDining/list`, { pageNo: 1, pageSize: 50 });
-  }
-  // 数据处理
-  spotList.value = res.records.map(item => {
-    if (type === '景点攻略') {
-      item.price = item.ticketprice === 0 ? '免费' : `¥${item.ticketprice}/人`
-      // 06:00:00 - 18:00:00  -> 06:00 - 18:00
-      item.time = item.starttime.replace(/:00$/, '') + ' - ' + item.endtime.replace(/:00$/, '')
-    } else if (type === '酒店住宿') {
-      item.type = item.hoteltheme;
-      item.price = item.price === 0 ? '免费' : `¥${item.price}/人`
-    } else if (type === '美食推荐') {
-      item.time = item.starthour.replace(/:00$/, '') + ' - ' + item.endhour.replace(/:00$/, '')
-      item.price = item.price === 0 ? '免费' : `¥${item.price}/人`
+// 获取帖子列表（分页）
+const fetchPosts = async () => {
+  if (postLoading.value || !hasMore.value) return;
+  postLoading.value = true;
+  const params = {
+    isAsc: true,
+    order: 1,
+    pageNo: postPageNo.value,
+    pageSize: postPageSize.value
+  };
+  console.log('Posts API params:', params);
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/page',
+    method: 'GET',
+    header: {
+      'X-Access-Token': userStore?.token || '',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data: params,
+    success: (res) => {
+      console.log('Posts API response:', res.data);
+      if (res.statusCode === 200 && res.data && res.data.code === 200) {
+        const list = (res.data && res.data.result && Array.isArray(res.data.result.list)) ? res.data.result.list : [];
+        console.log('Posts API list length:', list.length);
+        const filtered = list.filter(p => Array.isArray(p.images) && p.images.length > 0);
+        const sorted = filtered.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
+        const mapped = sorted.map(post => ({ ...post, liked: !!post.liked, collected: !!post.collected, routeCollected: false }));
+        posts.value = posts.value.concat(mapped);
+        // 全局按点赞数降序
+        posts.value = posts.value.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
+        hasMore.value = sorted.length >= postPageSize.value;
+        postPageNo.value += 1;
+        if (posts.value.length === 0 && postPageNo.value === 2) {
+          const fallbackParams = { ...params, area: '日常活动' };
+          console.log('Fallback fetch with area:', fallbackParams);
+          uni.request({
+            url: 'https://island.zhangshuiyi.com/island/posts/page',
+            method: 'GET',
+            header: {
+              'X-Access-Token': userStore?.token || '',
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            data: fallbackParams,
+            success: (res2) => {
+              console.log('Fallback response:', res2.data);
+              const list2 = (res2.data && res2.data.result && Array.isArray(res2.data.result.list)) ? res2.data.result.list : [];
+              const filtered2 = list2.filter(p => Array.isArray(p.images) && p.images.length > 0);
+              const sorted2 = filtered2.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
+              const mapped2 = sorted2.map(post => ({ ...post, liked: !!post.liked, collected: !!post.collected, routeCollected: false }));
+              posts.value = posts.value.concat(mapped2);
+              posts.value = posts.value.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
+              hasMore.value = sorted2.length >= postPageSize.value;
+            },
+            complete: () => { postLoading.value = false; }
+          });
+          return;
+        }
+      } else {
+        uni.showToast({ title: '获取帖子失败', icon: 'none' });
+        hasMore.value = false;
+      }
+      postLoading.value = false;
+    },
+    fail: (err) => {
+      console.error('Posts API error:', err);
+      postLoading.value = false;
+      uni.showToast({ title: '网络错误', icon: 'none' });
     }
-    return item;
   });
-  spotLoading.value = false;
 };
-// 获取活动列表
-const handleGetActivityList = async () => {
-  activityLoading.value = true;
-  const res = await request(`/product/ilActivities/list`, { pageNo: 1, pageSize: 300 });
-  activities.value = res.records.map(activity => {
-    const priceNum = Number(activity.price) || 0;
-    const originalPrice = (priceNum * 1.2).toFixed(2); // 原价为现价*1.2
-    return {
-      id: activity.id,
-      name: activity.type,
-      image: activity.imageUrl || 'https://wuminghui.top:9000/travel/首页-热门活动-海钓体验.jpg',
-      rating: '4.7分',
-      comments: '1205条评论',
-      priceNum,
-      discountPrice: priceNum.toFixed(2), // 优惠价就是现价
-      originalPrice: originalPrice,       // 原价为现价*1.2
-      price: '¥' + priceNum + '/人起'
-    };
-  });
-  activityLoading.value = false;
+const reloadPosts = async () => {
+  hasMore.value = true;
+  postPageNo.value = 1;
+  posts.value = [];
+  await fetchPosts();
 };
 
-// 换页   
-const handleChangeTab = (tab) => {
-  activeTab.value = tab.name;
-  handleGetSpotsList(tab.name);
+// 页面跳转
+const toPostDetail = (id) => {
+  uni.navigateTo({ url: `/pages/post/postDetail?id=${id}` });
 };
 
-// 查看更多
-const viewMore = (type) => {
-  uni.navigateTo({
-    url: `/pages/${type === '热门活动' ? 'activity/activity' : 'itinerary/itinerary'}`
+// 收藏/取消收藏（一键抄作业）
+const collectProduct = async (item) => {
+  const userId = userStore?.userInfo?.userId || userStore?.userInfo?.id;
+  if (!userId) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    return;
+  }
+  const dto = {
+    operation: item.collected ? 0 : 1,
+    postsId: String(item.id || ''),
+    userId: String(userId)
+  };
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/posts/collect',
+    method: 'POST',
+    header: {
+      'X-Access-Token': userStore?.token || '',
+      'Content-Type': 'application/json'
+    },
+    data: dto,
+    success: (res) => {
+      if (res.statusCode === 200 && res.data && res.data.success) {
+        item.collected = !item.collected;
+        uni.showToast({ title: item.collected ? '已收藏' : '已取消收藏', icon: 'success' });
+      } else {
+        uni.showToast({ title: res.data?.message || '收藏失败', icon: 'none' });
+      }
+    },
+    fail: () => {
+      uni.showToast({ title: '网络错误', icon: 'none' });
+    }
   });
 };
+
 
 const toPage = (path) => {
     uni.navigateTo({ url: path });
 };
 
-const toActivity = (id) => {
-  console.log("跳转到活动详情页面");
-  console.log(`/pages/activity/activity?id=${id}`);
-  uni.navigateTo({
-    url: `/pages/activity/activity?id=${id}`
-  });
-};
-
-const navigateToRoute = (routeId) => {
-  console.log("跳转到路线详情页面");
-  console.log(`/pages/itineraryDetails/itineraryDetails?id=${routeId}`);
-  // uni.navigateTo({
-  //   url: `/pages/itineraryDetails/itineraryDetails?id=${routeId}`
-  // });
-  uni.navigateTo({
-    url: '/pages/route/route'
-  });
-};
-
-const navigateToSpot = (type, id) => {
-  console.log(type, id)
-  let url = '';
-  switch (type) {
-    case '景点攻略':
-      url = `/pages/attractionDetail/attractionDetail?id=${id}`;
-      break;
-    case '美食推荐':
-      url = `/pages/foodDetails/foodDetails?id=${id}`;
-      break;
-    case '酒店住宿':
-      url = `/pages/hotelDetail/hotelDetail?id=${id}`;
-      break;
-  }
-  uni.navigateTo({
-    url: url
-  });
-};
+// 其他保留方法
 
 
 // 会员充值导航
@@ -372,16 +292,11 @@ const navigateToMembership = () => {
   });
 };
 
-// 提取纯数字价格
-const getOriginalPrice = (priceStr) => {
-  // 只取第一个数字
-  const match = priceStr.match(/\\d+(\\.\\d+)?/);
-  return match ? Number(match[0]).toFixed(2) : '0.00';
+// AI入口跳转
+const navigateToChat = () => {
+  uni.navigateTo({ url: '/pages/chat/chat' });
 };
-const getDiscountPrice = (priceStr) => {
-  const original = getOriginalPrice(priceStr);
-  return (original * 0.9).toFixed(2);
-};
+
 </script>
 
 <style lang="scss" scoped>
@@ -409,20 +324,46 @@ const getDiscountPrice = (priceStr) => {
   }
 
   /* 轮播图 */
-  .banner-swiper {
-    width: 100%;
-    height: 500rpx;
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    .banner-item {
-      width: 100%;
-      height: 260rpx;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
+  .ai-entry-card {
+    width: 92%;
+    margin: 0 auto;
+    margin-top: 80rpx;
+    background: #6CA5FA;
+    border-radius: 24rpx;
+    box-shadow: $app-shadow;
+    padding: 24rpx;
+  }
+  .ai-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 20rpx;
+  }
+  .ai-input {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    background: #F3F4F6;
+    border-radius: 16rpx;
+    height: 72rpx;
+    padding: 0 20rpx;
+    margin-bottom: 20rpx;
+  }
+  .ai-input-placeholder {
+    font-size: 26rpx;
+    color: #9CA3AF;
+  }
+  .ai-tags {
+    display: flex;
+    gap: 16rpx;
+    flex-wrap: wrap;
+  }
+  .ai-tag {
+    background: #F9FAFB;
+    color: #6B7280;
+    border-radius: 9999rpx;
+    padding: 10rpx 22rpx;
+    font-size: 24rpx;
   }
 
   /* 主要内容区 */
@@ -513,115 +454,7 @@ const getDiscountPrice = (priceStr) => {
       }
     }
 
-    // 精选路线
-    .route-wrapper {
-      width: 100%;
-      height: 400rpx;
-      position: relative;
-
-      .route-badge {
-        position: absolute;
-        z-index: 15;
-        top: -10rpx;
-        right: 0;
-        overflow: hidden;
-        width: 150rpx;
-        height: 150rpx;
-        // background-color: #00b2b2;
-
-        &::before {
-          background-color: #cd5c5c;
-          position: absolute;
-          z-index: 19;
-          top: 0;
-          left: 26rpx;
-          content: "";
-          width: 50rpx;
-          height: 10rpx;
-        }
-
-        // 徽标
-        &::after {
-            position: absolute;
-            z-index: 20;
-            content: "推荐";
-            text-align: center;
-            background-color: #f56c6c;
-            color: #fff;
-            width: 180rpx;
-            height: 50rpx;
-            transform: rotate(45deg);
-            top: 20rpx;
-            right: -45rpx;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            text-transform: uppercase;
-            font-size: $fs-base;
-          }
-      }
-
-      .route-banner {
-        width: 100%;
-        height: 100%;
-        position: relative;
-
-        image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          position: absolute;
-        }
-
-        &::before {
-          position: absolute;
-          content: "";
-          width: 100%;
-          height: 100%;
-          z-index: 10;
-          background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7));
-        }
-      }
-
-      .route-info {
-        width: calc(100% - 40rpx);
-        padding: 20rpx;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        z-index: 20;
-        color: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 10rpx;
-
-        .route-name {
-          font-size: $fs-large;
-          font-weight: bold;
-        }
-
-        .route-rating {
-          display: flex;
-          align-items: flex-end;
-          font-size: 24rpx;
-          color: #ddd;
-
-          .rating::after {
-            content: "|";
-            margin: 0 8rpx;
-            color: #ccc;
-          }
-
-          .route-price {
-            margin-left: auto;
-            color: #ff6600;
-            font-size: $fs-large;
-            font-weight: bold;
-          }
-        }
-      }
-    }
+    
   }
 }
 
@@ -642,162 +475,23 @@ const getDiscountPrice = (priceStr) => {
   }
 }
 
+/* 瀑布流 */
+.waterfall-wrapper { padding: 0 10rpx; }
+.waterfall-alt { display:flex; gap: 20rpx; }
+.column { flex: 1; display: flex; flex-direction: column; gap: 20rpx; }
+.post-card { background: #fff; border-radius: 20rpx; overflow: hidden; box-shadow: $app-shadow; }
+.animated { animation: fadeUp 320ms ease both; }
+.post-img { width: 100%; height: auto; display: block; }
+.post-info { padding: 16rpx; }
+.post-title { font-size: $fs-base; font-weight: bold; color: #111827; line-height: 1.4; }
+.post-actions { margin-top: 10rpx; display:flex; justify-content: space-between; align-items:center; }
+.action-left { display:flex; align-items:center; gap: 8rpx; color:#666; font-size: $fs-small; }
+.copy-btn { background: #e6f0ff; color: #3c78ff; border: none; border-radius: 28rpx; padding: 10rpx 18rpx; font-size: $fs-small; }
+.copy-btn.active { background: #3c78ff; color: #fff; }
 
-
-
-/* 热门活动的卡片样式 */
-.activity-wrapper {
-  display: flex;
-  width: 100%;
-  overflow-x: scroll;
-  gap: 20rpx;
-  padding: 20rpx;
-  scrollbar-width: none;
-  /* 隐藏滚动条 */
-  -webkit-overflow-scrolling: touch;
-
-  /* iOS平滑滚动 */
-  &::-webkit-scrollbar {
-    display: none;
-    /* 隐藏滚动条 */
-  }
-
-  // 活动卡片样式
-  .activity-card {
-    width: 300rpx;
-    flex-shrink: 0;
-    background-color: #fff;
-    border-radius: 25rpx;
-    overflow: hidden;
-    box-shadow: $app-shadow;
-
-    // 活动图片
-    .activity-img {
-      width: 100%;
-      height: 250rpx;
-
-      image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
-
-    // 活动信息
-    .activity-info {
-      display: flex;
-      flex-direction: column;
-      background-color: #fff;
-      padding: 5rpx 20rpx;
-
-      // 活动名称
-      .activity-name {
-        width: 100%;
-        color: #111827;
-        font-size: $fs-base;
-        font-weight: bold;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      // 活动评分
-      .activity-rating {
-        display: flex;
-        align-items: center;
-        font-size: $fs-small;
-        color: #666;
-
-        // 丨分割线
-        .rating::after {
-          content: "|";
-          margin: 0 4rpx;
-        }
-      }
-
-      /* 添加热门活动价格容器样式 */
-      .price-container {
-        display: flex;
-        align-items: flex-end;
-        gap: 8rpx;
-
-
-        // 原价
-        .original-price {
-          color: #FF9500;
-          font-size: $fs-small;
-          margin-right: 8rpx;
-          white-space: nowrap;
-        }
-
-        .discount-price {
-          color: #999;
-          font-size: $fs-tiny;
-          text-decoration: line-through;
-        }
-      }
-    }
-  }
-}
-
-// 热门景点
-.spot-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  margin-bottom: 20rpx;
-
-  .spot-item {
-    display: flex;
-    background-color: white;
-    overflow: hidden;
-    padding: 20rpx 40rpx;
-    border-bottom: 1px solid #f5f5f5;
-
-    .spot-img {
-      width: 150rpx;
-      height: 150rpx;
-      flex-shrink: 0;
-      border-radius: 15rpx;
-    }
-
-    .spot-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      margin-left: 30rpx;
-
-      .spot-name {
-        display: flex;
-        align-items: center;
-        gap: 10rpx;
-        font-size: $fs-large;
-        font-weight: bold;
-        line-height: 1em;
-      }
-
-      .spot-desc {
-        display: flex;
-        align-items: center;
-        gap: 5rpx;
-        font-size: $fs-small;
-        color: #999;
-      }
-
-      .spot-rating {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        .spot-price {
-          color: #ff5757;
-          font-size: $fs-base;
-          font-weight: bold;
-        }
-      }
-    }
-  }
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(12rpx); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 
@@ -811,28 +505,5 @@ const getDiscountPrice = (priceStr) => {
   align-items: center;
 }
 
-/* 热门标签和折扣标签样式 */
-.hot-tag {
-  position: absolute;
-  top: 10rpx;
-  left: 0;
-  background-color: #FF3B30;
-  color: white;
-  font-size: 20rpx;
-  padding: 3rpx 10rpx 3rpx 15rpx;
-  border-radius: 0 15rpx 15rpx 0;
-  z-index: 1;
-}
-
-.discount-tag {
-  position: absolute;
-  top: 40rpx;
-  right: 10rpx;
-  background-color: #FF9500;
-  color: white;
-  font-size: 20rpx;
-  padding: 3rpx 10rpx;
-  border-radius: 15rpx;
-  z-index: 1;
-}
 </style>
+ 

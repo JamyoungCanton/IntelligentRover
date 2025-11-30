@@ -1,15 +1,15 @@
 <template>
   <view class="app-container">
+    <view class="top-curve"></view>
     <!-- 用户信息 -->
     <view class="author-info">
       <image
         class="app-avatar avatar"
         :src="postDetailList.userVO.avatar || defaultAvatar"
-        mode="scaleToFill"
+        mode="aspectFill"
       />
       <view class="info">
         <view class="name">{{ postDetailList.userVO.username}}</view>
-        <view class="desc">lv3</view>
       </view>
       <view class="follow-btn" @click="toggleFollowAuthor">
         <text :class="['btn-text', isFollowing ? 'following' : '']">
@@ -23,14 +23,21 @@
 
     <!-- 帖子内容 -->
     <view class="post-content">
-      <swiper v-if="postDetailList.images && postDetailList.images.length > 0" indicator-dots autoplay circular>
-        <swiper-item v-for="item in postDetailList.images" :key="item.id">
-          <image :src="item.url" mode="aspectFill" />
-        </swiper-item>
-      </swiper>
+      <view class="post-meta">
+        <text class="meta-date">{{ formatChineseDate(postDetailList.updateTime) }}</text>
+      </view>
       <view class="app-title">{{ postDetailList.title}}</view>
       <view class="app-content">
         {{ postDetailList.content }}
+      </view>
+      <view class="divider"></view>
+      <view class="image-grid" v-if="postDetailList.images && postDetailList.images.length > 0">
+        <image v-for="(img, idx) in postDetailList.images.slice(0,2)" :key="idx" :src="img.url" mode="widthFix" class="grid-image" />
+      </view>
+      <view class="recommend-card">
+        <view class="rec-title">{{ recommendTitle }}</view>
+        <view class="rec-desc">{{ recommendDesc }}</view>
+        <button class="rec-btn" @click="openRecommend">查看详情</button>
       </view>
       <view class="tags">
         <view class="tag">#{{ postDetailList.area }}</view>
@@ -44,9 +51,8 @@
     <!-- 评论区 -->
     <view class="comment-area">
       <view class="comment-bar">
-        <view class="bar">
-          <uni-icons type="chat" size="20" color="#666"></uni-icons>
-          <text class="bar-text">总共{{ commentCount }}条评论</text>
+        <view class="bar-pointer">
+          <text class="bar-text">最新评价（{{ commentCount }}）</text>
         </view>
       </view>
       <view class="comment-list">
@@ -57,7 +63,6 @@
           <view class="comment-content">
             <view class="info">
               <text class="name">{{item.userVO.username}}</text>
-              <text class="desc">lv3</text>
             </view>
             <view class="content">{{ item.content}}</view>
             <view class="time">{{ formatRelativeTime(item.createTime) }}</view>
@@ -93,12 +98,6 @@
     <!-- 底部操作栏 -->
     <view class="footer-bar">
       <view class="ava-input">
-        <view class="bar-ava">
-          <image
-            src="/static/foodDetails/avatar2.jpg"
-            mode="scaleToFill"
-          />
-        </view>
         <view class="bar-input" @click="showEditComment">说点什么...</view>
       </view>
       <view class="bar-icon-deta">
@@ -144,7 +143,6 @@
           </view>
           <button class="sub-btn" @click="showEditComment">回复</button>
           <button class="sub-btn">复制</button>
-          <button class="sub-btn">删除</button>
           <button class="sub-btn" @click="closeSubPopup">取消</button>
         </view>
 
@@ -161,6 +159,11 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
+
+const statusBarHeight = ref(0);
+onMounted(() => {
+  statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight || 0;
+});
 
 const type = ref('');
 
@@ -606,6 +609,30 @@ const toggleShowAllSubComments = (comment) => {
   showAllSubComments.value[comment.id] = !showAllSubComments.value[comment.id];
 };
 
+const formatChineseDate = (time) => {
+  if (!time) return '';
+  const d = new Date(time);
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${y}年${m}月${day}日`;
+};
+
+const recommendTitle = computed(() => postDetailList.value.area || '推荐目的地');
+const recommendDesc = computed(() => (postDetailList.value.content || '').slice(0, 60) + '...');
+const openRecommend = () => {
+  uni.showToast({ title: '敬请期待', icon: 'none' });
+};
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+  } else {
+    uni.switchTab({ url: '/pages/index/index' });
+  }
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -618,13 +645,42 @@ page {
   padding: 20rpx;
 }
 
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: linear-gradient(90deg, #6b80ff 0%, #8f6bff 50%, #ff8a00 100%);
+}
+.top-bar-inner {
+  height: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  position: relative;
+}
+.top-title {
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 700;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.top-curve { height: 28rpx; background: linear-gradient(90deg, #6b80ff 0%, #8f6bff 50%, #ff8a00 100%); border-bottom-left-radius: 24rpx; border-bottom-right-radius: 24rpx; }
+.top-bar-inner .uni-icons { background: rgba(255,255,255,0.9); border-radius: 50%; padding: 10rpx; }
+
 .author-info {
   display: flex;
   align-items: center;
   width: 100%;
   border-bottom: solid 1px #eee;
-  padding: 20rpx 25rpx;
+  padding: 15rpx 25rpx;
   background-color: #fff;
+  height: 50rpx;
+  line-height: 50rpx;
 
   .avatar {
     width: 80rpx;
@@ -646,11 +702,13 @@ page {
       font-size: 32rpx;
       font-weight: bold;
       margin-right: 20rpx;
+      position: absolute;
+      left: 120rpx;
     }
 
     .desc {
       font-size: 24rpx;
-      color: #999;
+      color: #000000;
     }
   }
 
@@ -665,6 +723,8 @@ page {
     align-items: center;
     justify-content: center;
     min-width: 120rpx;
+    height: 60rpx;
+    align-self: center;
     
     .btn-text {
       font-size: 28rpx;
@@ -720,6 +780,72 @@ page {
     text-indent: 2em;
   }
 
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    margin-bottom: 12rpx;
+  }
+
+  .meta-avatar {
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: 24rpx;
+  }
+
+  .meta-date {
+    color: #999;
+    font-size: 24rpx;
+  }
+
+  .divider {
+    height: 2rpx;
+    background: #eee;
+    margin: 14rpx 0 20rpx;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16rpx;
+  }
+
+  .grid-image {
+    width: 100%;
+    height: auto;
+    max-height: 900rpx;
+    border-radius: 16rpx;
+    display: block;
+  }
+
+  .recommend-card {
+    margin-top: 16rpx;
+    background: #eef2ff;
+    border-radius: 16rpx;
+    padding: 24rpx;
+  }
+
+  .rec-title {
+    font-size: 30rpx;
+    color: #1f2a44;
+    font-weight: 600;
+  }
+
+  .rec-desc {
+    font-size: 26rpx;
+    color: #3b4a6e;
+    margin: 10rpx 0 16rpx;
+  }
+
+  .rec-btn {
+    background: #6b80ff;
+    color: #fff;
+    border-radius: 12rpx;
+    padding: 10rpx 20rpx;
+    font-size: 26rpx;
+  }
+}
+
   .tags {
     display: flex;
     margin-top: 20rpx;
@@ -745,11 +871,10 @@ page {
       margin-right: 20rpx;
     }
   }
-}
 
 .comment-area {
   width: 100%;
-  padding-bottom: 20rpx;
+  padding-bottom: 25rpx;
   
 
   .comment-bar {
@@ -899,7 +1024,7 @@ page {
 
   
   .bar-ava {
-    width: 80rpx;
+    width: 30rpx;
     height: 80rpx;
     border-radius: 20rpx;
     overflow: hidden;
@@ -914,7 +1039,7 @@ page {
     align-items: center;
     align-content: center;
     height: 100%;
-    width: 65%;
+    width: 75%;
   }
 
   .bar-input {
@@ -946,8 +1071,20 @@ page {
     height: 100%;
     justify-content: center;
   }
-
-  
+  .bar-pointer {
+    font-size: 300rpx;
+      color: #000000;
+      width: 700rpx;
+      display: flex;
+      align-items: center;
+      padding: 0 30rpx;
+      border-radius: 50rpx;
+      height: 80rpx;
+  }
+  .bar-text{
+    font-size: 300rpx;
+    font-weight: 700;
+  }
 }
 
 

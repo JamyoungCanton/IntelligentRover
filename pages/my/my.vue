@@ -37,21 +37,21 @@
       <view class="menu-card">
         <view class="menu-item border-bottom"  @tap="goLoginOut">
           <view class="menu-left">
-            <uni-icons type="gear" size="18" color="#3B82F6" />
+            <image class="menu-icon-img" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E8%AE%BE%E7%BD%AE.png" mode="aspectFit" />
             <text class="menu-text">账号设置</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
         <view class="menu-item border-bottom" @click="goSettingNotice">
           <view class="menu-left">
-            <uni-icons type="notification" size="18" color="#3B82F6" />
+            <image class="menu-icon-img" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E9%80%9A%E7%9F%A5.png" mode="aspectFit" />
             <text class="menu-text">通知设置</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
         <view class="menu-item" @click="goLanguage">
           <view class="menu-left">
-            <uni-icons type="spinner-cycle" size="18" color="#3B82F6" />
+            <image class="menu-icon-img" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E8%AF%AD%E8%A8%80.png" mode="aspectFit" />
             <text class="menu-text">语言切换</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
@@ -61,14 +61,14 @@
       <view class="menu-card">
         <view class="menu-item border-bottom" @click="goFeedback">
           <view class="menu-left">
-            <uni-icons type="chatboxes" size="18" color="#3B82F6" />
+            <image class="menu-icon-img" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E6%84%8F%E8%A7%81.png" mode="aspectFit" />
             <text class="menu-text">意见反馈</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
         </view>
         <view class="menu-item" @click="goAboutUs">
           <view class="menu-left">
-            <uni-icons type="info" size="18" color="#3B82F6" />
+            <image class="menu-icon-img" src="https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E5%85%B3%E4%BA%8E%E6%88%91%E4%BB%AC.png" mode="aspectFit" />
             <text class="menu-text">关于我们</text>
           </view>
           <uni-icons type="right" size="14" color="#999" />
@@ -89,23 +89,23 @@ const userStore = useUserStore();
 
 const gridItems = ref([
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/collectItinerary.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E5%B8%96%E5%AD%90%20(1).png',
     text: '我的帖子',
     onClick: 'goCollectPost'
   },
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/historyOrder.png',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E8%AE%A2%E5%8D%95.png',
     text: '历史订单',
 	onClick: 'gohisorder'
   },
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/pendingTravelOrders.png',
-    text: '活动收藏',
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E6%94%B6%E8%97%8F%20(3).png',
+    text: '我的收藏',
     onClick: 'goActivityCollect'
   },
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/my/customerService.png',
-    text: '客服中心'
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E5%85%B3%E6%B3%A8%E6%88%91%E4%BB%AC.png',
+    text: '我的关注'
   }
 ]);
 
@@ -140,7 +140,7 @@ const handleGridItemClick = (item) => {
     return;
   }
   // 如果没有 onClick 字段，且是客服中心
-  if (item.text === '客服中心') {
+  if (item.text === '我的关注') {
     uni.showToast({
       title: '未到营业时间',
       icon: 'none',
@@ -346,6 +346,11 @@ page {
 .menu-left {
   display: flex;
   align-items: center;
+}
+.menu-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 8rpx;
 }
 
 .menu-text {

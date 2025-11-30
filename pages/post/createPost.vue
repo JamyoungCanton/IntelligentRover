@@ -60,7 +60,7 @@
       <view class="post-image">
         <view class="form-label">
           <uni-icons type="image" size="16" color="#0066CC"></uni-icons>
-          <text>上传图片</text>
+          <text>上传图片/视频</text>
           <text class="label-hint">(最多9张)</text>
         </view>
         <view class="image-container">

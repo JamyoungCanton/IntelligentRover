@@ -342,13 +342,20 @@
 				"navigationBarTitleText": ""
 			}
 		},
-		{
-			"path": "pages/activityCollect/activityCollect",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		}
-	],
+      {
+        "path": "pages/activityCollect/activityCollect",
+        "style": {
+          "navigationBarTitleText": ""
+        }
+      }
+      ,
+      {
+        "path": "pages/multiConfirmPay/multiConfirmPay",
+        "style": {
+          "navigationStyle": "custom"
+        }
+      }
+    ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
