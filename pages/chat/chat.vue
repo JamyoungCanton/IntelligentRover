@@ -1,6 +1,5 @@
 <template>
   <view class="ai-container">
-    <!-- 导航栏 -->
     <view class="nav-bar" :style="{ paddingTop: (safeAreaInsets.top || statusBarHeight) + 'px' }">
       <view class="nav-back" @click="goBack">
         <uni-icons type="back" size="24" color="#333333"></uni-icons>
@@ -9,9 +8,7 @@
       <view class="nav-right" style="width: 24px;"></view>
     </view>
     
-    <!-- 缺省页面 -->
     <view v-if="chatMessageList.length == 0" class="ai-nochat-wrapper">
-      <!-- 标题 -->
       <view class="ai-nochat-header">
         <image src="/static/chat/ai.png" mode="widthFix"></image>
         <view class="ai-nochat-header-title">智游侠</view>
@@ -19,7 +16,6 @@
           懂旅游的AI助手，为您提供个性化旅游建议
         </view>
       </view>
-      <!-- 快捷提示词 -->
       <view class="tips-wrapper">
         <view class="tips-item" v-for="item in tipList" :key="item.title" @click="handleTipsClick(item.title)">
           <image :src="item.icon" mode="scaleToFill"></image>
@@ -31,18 +27,14 @@
       </view>
     </view>
 
-    <!-- 聊天内容滚动区域 -->
     <view v-if="chatMessageList.length > 0" class="chat-list-wrapper">
       <template v-for="(msg, index) in chatMessageList" :key="`msg-${index}-${msg.id}-${globalUpdateKey}`">
-        <!-- 用户对话框 -->
         <view v-if="msg.type === 'user'" class="user-message">
           <div class="message-content">{{ msg.content }}</div>
         </view>
 
-        <!-- ai回复框 -->
         <view v-else class="ai-message">
           <view class="typing-content" :class="{ typing: isTyping && index === chatMessageList.length - 1 }">
-            <!-- 工作流展示（在顶部显示） -->
             <view v-if="workflowData.nodes.size > 0 && index === chatMessageList.length - 1" class="workflow-container">
               <view class="workflow-header" @click.stop="toggleWorkflow" @tap.stop="toggleWorkflow">
                 <view class="workflow-title">
@@ -58,7 +50,6 @@
               </view>
               
               <view v-if="workflowExpanded === true" class="workflow-content" :key="`workflow-content-${globalUpdateKey}`">
-                <!-- 渲染根节点 -->
                 <template v-for="node in workflowData.rootNodes" :key="node.id">
                   <view class="workflow-node" :class="{ 'has-children': node.children && node.children.length > 0 }">
                     <view class="node-item" @click="node.children && node.children.length > 0 ? toggleNode(node.id) : null">
@@ -124,7 +115,6 @@
                   </view>
                 </template>
                 
-                <!-- 渲染并行分支 -->
                 <template v-for="[parallelId, parallel] in workflowData.parallelBranches" :key="parallelId">
                   <view class="parallel-container">
                     <view class="parallel-branches">
@@ -210,7 +200,6 @@
               </view>
             </view>
             
-            <!-- 优先显示内容，即使thinking为true，只要有内容就显示内容 -->
             <template v-if="msg.content && Array.isArray(msg.content) && msg.content.length > 0">
               <view class="ai-response-content">
                 <template v-for="(item, i) in msg.content" :key="i + (item.id || i) + item.type">
@@ -231,7 +220,6 @@
               </view>
             </template>
 
-            <!-- 只有在没有内容时才显示思考动画 -->
             <template v-else-if="msg.thinking && (!msg.content || !Array.isArray(msg.content) || msg.content.length === 0)">
               <view class="thinking-animation">
                 <view class="time mb-20">({{ Math.floor((Date.now() - msg.startTime) / 1000) }}s)正在思考中{{ dots }}
@@ -249,11 +237,9 @@
                 </uv-steps>
               </view>
             </template>
-            <!-- 兜底：如果content不是数组，尝试直接显示 -->
             <view v-else-if="msg.content && typeof msg.content === 'string'" v-html="msg.content" class="message-text"></view>
           </view>
           
-          <!-- 工作流展示（在思考完成后显示，如果顶部已显示则不重复） -->
           <view v-if="workflowData.nodes.size > 0 && !msg.thinking && index === chatMessageList.length - 1" class="workflow-container">
             <view class="workflow-header" @click.stop="toggleWorkflow">
               <view class="workflow-title">
@@ -370,7 +356,6 @@
             </view>
           </view>
 
-          <!-- 行程是否有帮助 -->
           <view class="action-button-wrapper" v-if="msg.type === 'ai' && msg.showOptimizer">
             <view class="action-button" @click="handleLike('like')">
               <uv-icon :name="msg.isLike.value == 'like' ? 'thumb-up-fill' : 'thumb-up'"
@@ -391,7 +376,6 @@
               </view>
             </view>
           </view>
-          <!-- 行程优化组件 -->
           <view class="trip-optimizer" v-if="msg.type === 'ai' && msg.showOptimizer">
             <view class="optimizer-header">
               <text class="optimizer-title">优化行程</text>
@@ -426,19 +410,17 @@
             <view class="confirm-button-wrapper">
               <uv-button color="linear-gradient(to right, #1976D2, #1565C0)" shape="circle"
                 @click="optimizeTrip">优化行程规划</uv-button>
-              <uv-button color="linear-gradient(to right, #FF9800, #F57C00)" shape="circle">一键下单</uv-button>
+              <uv-button color="linear-gradient(to right, #FF9800, #F57C00)" shape="circle" @click="oneClickOrder">一键下单</uv-button>
             </view>
 
 
           </view>
         </view>
       </template>
-      <!-- 占位符 -->
       <view style="height: 300rpx;"></view>
     </view>
 
 
-    <!-- 底部输入栏 -->
     <view class="input-wrapper">
       <uv-textarea v-model="message" placeholder="请输入旅游目的地或旅游问题" :maxlength="1000" autoHeight></uv-textarea>
       <view class="input-btn-wrapper">
@@ -453,25 +435,20 @@
 </template>
 
 <script setup>
-// ------------------ import ------------------
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { ref, reactive, nextTick, onMounted, watch, triggerRef, computed } from 'vue';
 import { StreamRequest } from '../../utils/request.js';
 import { marked } from 'marked';
-// ------------------- data -------------------
 
 import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 
-// 安全区域信息
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
 
-// 返回上一页
 const goBack = () => {
   uni.navigateBack({
     fail: () => {
-      // 如果无法返回，则跳转到首页
       uni.switchTab({
         url: '/pages/index/index'
       });
@@ -480,7 +457,6 @@ const goBack = () => {
 };
 const hasToken = () => {
   if (userStore.token === '') {
-    // 提示未登录，请先登录
     uni.showToast({
       title: '未登录,请先登录',
       icon: 'false',
@@ -496,13 +472,11 @@ const hasToken = () => {
 
 onMounted(() => { 
   hasToken();
-  // 获取安全区域信息
   const windowInfo = uni.getWindowInfo();
   const deviceInfo = uni.getDeviceInfo();
   statusBarHeight.value = windowInfo.statusBarHeight || 0;
   safeAreaInsets.value = deviceInfo.safeAreaInsets || {};
 })
-// 快捷提示词列表
 const tipList = reactive([{
   icon: '/static/chat/ai图标-海钓体验.svg',
   title: '海岛体验',
@@ -525,7 +499,6 @@ const tipList = reactive([{
   content: '海岛介绍、历史文化、旅游攻略'
 }])
 
-// 图标对照表
 const iconMap = reactive({
   'Activity': '📍',
   'Accommodation': '🏨',
@@ -534,9 +507,7 @@ const iconMap = reactive({
   'Attraction': '🏞️',
 })
 
-// 进度条位置
 const progressCurrent = ref(0);
-// 进度条列表
 const progressList = reactive([
   { title: '意图解析', time: '' },
   { title: '查询数据', time: '' },
@@ -546,55 +517,48 @@ const progressList = reactive([
 const message = ref('');
 let chatMessageList = reactive([]);
 const responseData = ref([]);
-const globalUpdateKey = ref(0); // 用于强制触发视图更新
+const globalUpdateKey = ref(0);
 const isTyping = ref(false);
 const dots = ref('');
 
-// 工作流数据结构
 const workflowData = reactive({
-  nodes: new Map(), // 存储所有节点 node_id -> node
-  parallelBranches: new Map(), // 存储并行分支 parallel_id -> branches
-  rootNodes: [], // 根节点列表
-  status: 'running', // running, finished, error
+  nodes: new Map(),
+  parallelBranches: new Map(),
+  rootNodes: [],
+  status: 'running',
   startTime: null,
   endTime: null
 });
 
-// 工作流展开/折叠状态
-const workflowExpanded = ref(false); // 默认收起
-const expandedNodes = reactive(new Set()); // 已展开的节点ID集合
+const workflowExpanded = ref(false);
+const expandedNodes = reactive(new Set());
 
-// 工作流节点图标映射（根据后端实际返回的node_type）
 const nodeIconMap = {
   'start': '🏠',
   'end': '🏁',
   'llm': '🤖',
   'question-classifier': '🔍',
   'if-else': '🔀',
-  'condition': '🔀',  // 条件分支
+  'condition': '🔀',
   'code': '</>',
   'http': '🌐',
   'variable-assigner': '=',
-  'variable-assign': '=',  // 变量赋值
+  'variable-assign': '=',
   'default': '⚙️'
 };
 
-// 格式化执行时间（始终显示毫秒）
 const formatElapsedTime = (seconds) => {
   if (seconds === null || seconds === undefined || isNaN(seconds)) {
     return '';
   }
   
-  // 确保是正数
   const absSeconds = Math.abs(seconds);
   const milliseconds = absSeconds * 1000;
   
-  // 如果小于1秒，显示毫秒
   if (absSeconds < 1) {
     return `${Math.round(milliseconds)} ms`;
   }
   
-  // 如果超过1秒但小于60秒，显示秒和毫秒
   if (absSeconds < 60) {
     const secs = Math.floor(absSeconds);
     const ms = Math.round((absSeconds - secs) * 1000);
@@ -604,7 +568,6 @@ const formatElapsedTime = (seconds) => {
     return `${secs} s ${ms} ms`;
   }
   
-  // 如果超过60秒，显示分钟和秒
   const minutes = Math.floor(absSeconds / 60);
   const secs = Math.floor(absSeconds % 60);
   const ms = Math.round((absSeconds % 1) * 1000);
@@ -618,23 +581,18 @@ const formatElapsedTime = (seconds) => {
   }
 };
 
-// 计算节点当前已用时间（实时）
 const getNodeCurrentTime = (node) => {
   if (!node) return '';
   
-  // 如果节点已完成，使用elapsedTime
   if (node.elapsedTime !== null && node.elapsedTime !== undefined && !isNaN(node.elapsedTime)) {
     const time = node.elapsedTime;
-    // 确保时间值是合理的（大于0且小于1小时）
     if (time >= 0 && time < 3600) {
       return formatElapsedTime(time);
     }
   }
   
-  // 如果节点还在运行中，计算当前已用时间
   if (node.status === 'running' && node.startTime) {
     const elapsed = (Date.now() - node.startTime) / 1000;
-    // 确保计算出的时间是合理的
     if (elapsed >= 0 && elapsed < 3600) {
       return formatElapsedTime(elapsed);
     }
@@ -643,13 +601,11 @@ const getNodeCurrentTime = (node) => {
   return '';
 };
 
-// 处理工作流事件
 const handleWorkflowEvent = (chunk) => {
   const event = chunk.event;
   const data = chunk.data || {};
   
   try {
-    // 工作流开始
     if (event === 'workflow_started') {
       workflowData.status = 'running';
       workflowData.startTime = data.created_at ? data.created_at * 1000 : Date.now();
@@ -657,16 +613,13 @@ const handleWorkflowEvent = (chunk) => {
       workflowData.parallelBranches.clear();
       workflowData.rootNodes = [];
       console.log('工作流开始');
-      // 启动时间更新定时器
       startWorkflowTimeUpdate();
     }
     
-    // 节点开始
     else if (event === 'node_started') {
       const nodeId = data.node_id || data.id;
       if (!nodeId) return;
       
-      // 检查是否是并行开始节点（parallel_start_node_id）
       const isParallelStartNode = data.parallel_start_node_id === nodeId || 
                                    (data.node_type === 'parallel' || data.title?.includes('并行'));
       
@@ -689,7 +642,6 @@ const handleWorkflowEvent = (chunk) => {
       
       workflowData.nodes.set(nodeId, node);
       
-      // 如果是并行开始节点，创建并行分支结构
       if (isParallelStartNode && data.parallel_id) {
         if (!workflowData.parallelBranches.has(data.parallel_id)) {
           workflowData.parallelBranches.set(data.parallel_id, {
@@ -700,17 +652,13 @@ const handleWorkflowEvent = (chunk) => {
             startTime: data.created_at ? data.created_at * 1000 : Date.now()
           });
         }
-        // 并行开始节点不作为根节点显示，只在并行分支中显示
-        // 这样可以避免重复显示
       }
-      // 如果是根节点（没有父节点且不在并行分支中），添加到根节点列表
       else if (!node.parentId && !node.parallelId) {
         if (!workflowData.rootNodes.find(n => n.id === nodeId)) {
           workflowData.rootNodes.push(node);
         }
       }
       
-      // 如果有父节点，添加到父节点的children
       if (node.parentId && workflowData.nodes.has(node.parentId)) {
         const parent = workflowData.nodes.get(node.parentId);
         if (!parent.children.find(n => n.id === nodeId)) {
@@ -718,7 +666,6 @@ const handleWorkflowEvent = (chunk) => {
         }
       }
       
-      // 处理并行分支中的节点
       if (data.parallel_id && data.parallel_branch_id) {
         if (!workflowData.parallelBranches.has(data.parallel_id)) {
           workflowData.parallelBranches.set(data.parallel_id, {
@@ -737,11 +684,9 @@ const handleWorkflowEvent = (chunk) => {
         }
       }
       
-      // 默认展开新节点
       expandedNodes.add(nodeId);
     }
     
-    // 节点完成
     else if (event === 'node_finished') {
       const nodeId = data.node_id || data.id;
       if (!nodeId || !workflowData.nodes.has(nodeId)) return;
@@ -758,7 +703,6 @@ const handleWorkflowEvent = (chunk) => {
       console.log(`节点完成: ${node.title}, 耗时: ${node.elapsedTime}s`);
     }
     
-    // 并行分支开始
     else if (event === 'parallel_branch_started') {
       const parallelId = data.parallel_id;
       const branchId = data.parallel_branch_id;
@@ -778,14 +722,12 @@ const handleWorkflowEvent = (chunk) => {
       }
     }
     
-    // 并行分支完成
     else if (event === 'parallel_branch_finished') {
       const parallelId = data.parallel_id;
       const branchId = data.parallel_branch_id;
       if (parallelId && branchId && workflowData.parallelBranches.has(parallelId)) {
         const parallel = workflowData.parallelBranches.get(parallelId);
         if (parallel.branches.has(branchId)) {
-          // 标记分支中的所有节点为完成
           const branch = parallel.branches.get(branchId);
           branch.forEach(node => {
             if (workflowData.nodes.has(node.id)) {
@@ -803,12 +745,10 @@ const handleWorkflowEvent = (chunk) => {
       }
     }
     
-    // 工作流完成
     else if (event === 'workflow_finished') {
       workflowData.status = data.status === 'succeeded' ? 'finished' : 'error';
       workflowData.endTime = data.finished_at ? data.finished_at * 1000 : Date.now();
       
-      // 确保所有节点都标记为完成
       workflowData.nodes.forEach(node => {
         if (node.status === 'running') {
           node.status = 'success';
@@ -822,7 +762,6 @@ const handleWorkflowEvent = (chunk) => {
       });
       
       console.log('工作流完成');
-      // 停止时间更新定时器（延迟一点确保最后一次更新）
       setTimeout(() => {
         stopWorkflowTimeUpdate();
       }, 200);
@@ -832,8 +771,7 @@ const handleWorkflowEvent = (chunk) => {
   }
 };
 
-// 切换工作流展开/折叠
-let isToggling = false; // 防止重复点击
+let isToggling = false;
 const toggleWorkflow = () => {
   console.log('toggleWorkflow: 点击工作流头部', '当前状态:', workflowExpanded.value);
   
@@ -844,36 +782,28 @@ const toggleWorkflow = () => {
   }
   isToggling = true;
   
-  // 直接切换值，不使用中间变量
   workflowExpanded.value = !workflowExpanded.value;
   console.log('toggleWorkflow: 切换后状态:', workflowExpanded.value);
   
-  // 立即强制触发响应式更新
   globalUpdateKey.value = Date.now();
   
-  // 使用 nextTick 确保 DOM 更新
   nextTick(() => {
-    // 再次强制更新，确保视图刷新
     globalUpdateKey.value = Date.now() + 1;
     console.log('toggleWorkflow: nextTick 完成, workflowExpanded:', workflowExpanded.value);
   });
   
-  // 100ms后允许再次点击（减少延迟）
   setTimeout(() => {
     isToggling = false;
   }, 100);
 };
 
-// 切换节点展开/折叠
-let nodeTogglingMap = new Map(); // 防止节点重复点击
+let nodeTogglingMap = new Map();
 const toggleNode = (nodeId) => {
-  // 确保 nodeId 是有效的
   if (nodeId === undefined || nodeId === null || nodeId === '') {
     console.warn('toggleNode: 无效的 nodeId', nodeId);
     return;
   }
   
-  // 转换为字符串，确保一致性
   const idStr = String(nodeId);
   
   // 防止重复点击导致状态混乱
@@ -885,7 +815,6 @@ const toggleNode = (nodeId) => {
   
   console.log('toggleNode: 切换节点', idStr, '当前状态:', expandedNodes.has(idStr));
   
-  // 使用Set的has和delete/add方法，确保状态正确切换
   if (expandedNodes.has(idStr)) {
     expandedNodes.delete(idStr);
     console.log('toggleNode: 折叠节点', idStr);
@@ -894,21 +823,17 @@ const toggleNode = (nodeId) => {
     console.log('toggleNode: 展开节点', idStr);
   }
   
-  // 强制触发响应式更新
   globalUpdateKey.value = Date.now();
   
-  // 200ms后允许再次点击
   setTimeout(() => {
     nodeTogglingMap.delete(idStr);
   }, 200);
 };
 
-// 获取节点图标
 const getNodeIcon = (nodeType) => {
   return nodeIconMap[nodeType] || nodeIconMap.default;
 };
 
-// 获取节点状态图标
 const getNodeStatusIcon = (status) => {
   if (status === 'success' || status === 'finished') {
     return '✓';
@@ -920,14 +845,12 @@ const getNodeStatusIcon = (status) => {
   return '○';
 };
 
-// 格式化分支名称（将分支ID转换为字母）
 const formatBranchName = (branchId, parallelId) => {
   if (!branchId) return 'A';
   
-  // 如果 branchId 是数字，转换为字母
   if (typeof branchId === 'number' || /^\d+$/.test(String(branchId))) {
     const num = parseInt(branchId);
-    return String.fromCharCode(65 + (num % 26)); // A-Z
+    return String.fromCharCode(65 + (num % 26));
   }
   
   // 如果 branchId 是字符串，取第一个字符
@@ -1795,6 +1718,147 @@ const handleItemClick = (item) => {
     console.warn('未知的类型:', item.type);
   }
 
+};
+
+// 一键下单：从最后一条 AI 回复中提取商品并创建订单
+const oneClickOrder = () => {
+  if (!userStore.token) {
+    uni.showToast({
+      title: '未登录,请先登录',
+      icon: 'none',
+      duration: 1500
+    });
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
+    }, 500);
+    return;
+  }
+
+  // 找到最后一条 AI 消息
+  const lastAiMsg = [...chatMessageList].reverse().find(m => m.type === 'ai' && Array.isArray(m.content) && m.content.length > 0);
+  if (!lastAiMsg) {
+    uni.showToast({
+      title: '当前没有可下单的推荐内容',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 从 AI 内容中提取带 id 的项目
+  const rawItems = lastAiMsg.content.filter(item => item && item.id && item.type && item.type !== 'text' && item.type !== 'ask');
+  if (!rawItems.length) {
+    uni.showToast({
+      title: 'AI 推荐中未找到可下单商品',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 去重（按 id + 类型）
+  const seen = new Set();
+  const itemsForOrder = rawItems.reduce((acc, cur) => {
+    const key = `${cur.type}-${cur.id}`;
+    if (seen.has(key)) return acc;
+    seen.add(key);
+
+    // 映射为后端 productType
+    const typeMap = {
+      Activity: 'Activities',
+      Transport: 'Transportation',
+      Accommodation: 'Accommodations',
+      Restaurant: 'Dining',
+      Attraction: 'Attractions'
+    };
+    const productType = typeMap[cur.type];
+    if (!productType) return acc;
+
+    acc.push({
+      productId: cur.id,
+      productType
+    });
+    return acc;
+  }, []);
+
+  if (!itemsForOrder.length) {
+    uni.showToast({
+      title: 'AI 推荐类型暂不支持下单',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 直接创建订单（不弹原生确认框，避免平台兼容问题）
+  const today = new Date();
+  const pad = (n) => (n < 10 ? '0' + n : '' + n);
+  const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+  const orderData = {
+    contract: {
+      contractName: userStore.userInfo?.realname || '游客',
+      contractPhone: userStore.userInfo?.phone || '13800138000'
+    },
+    items: itemsForOrder.map(it => ({
+      bookInfo: {
+        date: dateStr,
+        fullname: userStore.userInfo?.realname || '游客',
+        idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
+        idCardType: 'ID_CARD',
+        schedule: ''
+      },
+      productId: it.productId,
+      productType: it.productType,
+      quantity: 1
+    })),
+    travelStartDate: `${dateStr} 00:00:00`,
+    travelEndDate: `${dateStr} 23:59:59`
+  };
+
+  console.log('AI 一键下单参数:', JSON.stringify(orderData));
+
+  uni.showLoading({
+    title: '订单创建中...'
+  });
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    data: orderData,
+    success: (resp) => {
+      uni.hideLoading();
+      if (resp.data && resp.data.code === 200 && resp.data.success) {
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
+        });
+        
+        setTimeout(() => {
+          uni.switchTab({
+            url: '/pages/order/order'
+          });
+        }, 800);
+      } else {
+        uni.showToast({
+          title: resp.data?.message || '订单创建失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      uni.hideLoading();
+      console.error('AI 一键下单失败:', err);
+      uni.showToast({
+        title: '网络异常，请稍后重试',
+        icon: 'none'
+      });
+    }
+  });
 };
 
 /**
