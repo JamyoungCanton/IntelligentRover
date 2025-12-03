@@ -1,14 +1,53 @@
 <template>
   <view class="page">
+    <!-- 顶部导航栏 -->
+    <view class="top-bar">
+      <view class="top-bar-left" @click="goBack">
+        <uni-icons type="back" size="20" color="#333"></uni-icons>
+      </view>
+      <text class="top-bar-title">酒店房型</text>
+      <view class="top-bar-right">
+        <uni-icons type="settings" size="20" color="#333"></uni-icons>
+      </view>
+    </view>
+
     <view class="header">
+      <!-- 搜索框 -->
       <view class="search-header">
         <view class="search-input-wrap">
           <uni-icons type="search" size="16" color="#999999" class="search-icon"></uni-icons>
-          <input type="text" v-model="searchContent" class="search-input" placeholder="搜索酒店名称、地标、商圈"
-            placeholder-class="placeholder" />
+          <input
+            type="text"
+            v-model="searchContent"
+            class="search-input"
+            placeholder="搜索酒店名称、地标、商圈"
+            placeholder-class="placeholder"
+          />
         </view>
       </view>
 
+      <!-- 排序选择行：推荐优先 / 价格排序 / 评分排序 -->
+      <view class="sort-row">
+        <view class="sort-left" @click="toggleSortMenu">
+          <text class="sort-text">{{ currentSortLabel }}</text>
+          <uni-icons :type="showSortMenu ? 'top' : 'bottom'" size="16" color="#666"></uni-icons>
+        </view>
+      </view>
+      <!-- 排序下拉菜单 -->
+      <view v-if="showSortMenu" class="sort-menu">
+        <view
+          class="sort-menu-item"
+          v-for="item in sortOptions"
+          :key="item.value"
+          @click="selectSort(item.value)"
+        >
+          <text :class="['sort-menu-text', { 'sort-menu-text-active': currentSort === item.value }]">
+            {{ item.label }}
+          </text>
+        </view>
+      </view>
+
+      <!-- 入住/人数行 -->
       <view class="date-guest">
         <view class="date-section">
           <text class="label">入住-离店</text>
@@ -27,50 +66,48 @@
     </view>
 
     <scroll-view class="content" scroll-y>
-      <scroll-view class="filter-scroll" scroll-x>
-        <view class="filter-wrap">
-          <view v-for="(btn, index) in filterButtons" :key="index" class="filter-btn"
-            :class="{ active: activeFilter === btn.value }" @click="setActiveFilter(btn.value)">
-            {{ btn.label }}
-          </view>
-        </view>
-      </scroll-view>
-
       <view class="hotel-list">
         <view class="hotel-card" v-for="(hotel, index) in filteredHotels" :key="index">
-          <image @click="goHotelDetail(hotel)" :src="hotel.imageURL" mode="aspectFill" class="hotel-image"></image>
+          <image
+            @click="goHotelDetail(hotel)"
+            :src="hotel.imageURL"
+            mode="aspectFill"
+            class="hotel-image"
+          ></image>
           <view class="hotel-info">
+            <!-- 酒店名称 -->
             <view class="hotel-header">
-              <text class="hotel-name">{{ hotel.name }}</text>
-              <view class="rating">
-                <text class="score">{{ hotel.rating }}</text>
-                <uni-rate :value="hotel.rating" size="10" readonly></uni-rate>
+              <text class="hotel-name ellipsis">{{ hotel.name }}</text>
+            </view>
+
+            <!-- 标签行：房型 / 类型 / 主题 -->
+            <view class="tag-row">
+              <text v-if="hotel.roomtype" class="tag tag-blue">{{ hotel.roomtype }}</text>
+              <text v-if="hotel.hoteltype" class="tag tag-yellow">{{ hotel.hoteltype }}</text>
+              <text v-if="hotel.hoteltheme" class="tag tag-green">{{ hotel.hoteltheme }}</text>
+            </view>
+
+            <!-- 评分行 -->
+            <view class="rating-row">
+              <view class="rating-left">
+                <uni-icons type="star-filled" size="16" color="#FFB400"></uni-icons>
+                <text class="score">{{ hotel.rating || 4.6 }}</text>
+                <text class="rating-count">
+                  {{ hotel.commentnum ? `${hotel.commentnum} 条评价` : '98 条评价' }}
+                </text>
               </view>
             </view>
-            <view class="location">
-              <view class="start">
-                <text class="location-text">星级: </text>
-                <text class="location-amount">{{ hotel.starrating }}</text>
+
+            <!-- 价格 + 预订按钮 -->
+            <view class="hotel-distance-row">
+              <view class="price-book">
+                <view class="price">
+                  <text class="price-currency">¥</text>
+                  <text class="price-amount">{{ hotel.price }}</text>
+                  <text class="price-unit">起/晚</text>
+                </view>
+                <button class="book-btn" @click="goHotelDetail(hotel)">立即预订</button>
               </view>
-              <view class="start">
-                <text class="location-text">房型: </text>
-                <text class="location-amount">{{ hotel.roomtype }}</text>
-              </view>
-              <view class="start">
-                <text class="location-text">类型: </text>
-                <text class="location-amount">{{ hotel.hoteltype }}</text>
-              </view>
-              <view class="start">
-                <text class="location-text">主题: </text>
-                <text class="location-amount">{{ hotel.hoteltheme }}</text>
-              </view>
-            </view>
-            <view class="price-book">
-              <view class="price">
-                <text class="price-label">起价</text>
-                <text class="price-amount">¥{{ hotel.price }}</text>
-              </view>
-              <button class="book-btn" @click="goHotelDetail(hotel)">立即预订</button>
             </view>
           </view>
         </view>
@@ -131,20 +168,35 @@ const imageUrls = ref([
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h20.jpg",
 ]);
 
-const filterButtons = ref([
-  { label: '综合排序', value: 'comprehensive' },
-  { label: '价格↑', value: 'priceup' },
-  { label: '价格↓', value: 'pricedown' },
-  { label: '评分', value: 'rating' }
+// 排序选项
+const sortOptions = ref([
+  { label: '推荐优先', value: 'default' },
+  { label: '价格从低到高', value: 'priceAsc' },
+  { label: '价格从高到低', value: 'priceDesc' },
+  { label: '评分优先', value: 'rating' }
 ]);
 
-const activeFilter = ref('comprehensive');
+const currentSort = ref('default');
+const showSortMenu = ref(false);
+
+const currentSortLabel = computed(() => {
+  const found = sortOptions.value.find(item => item.value === currentSort.value);
+  return found ? found.label : '推荐优先';
+});
+
 const guestCount = ref(2); // 初始人数
 const guestOptions = ref([1, 2, 3, 4]); // 可选人数
 const showGuestPickerModal = ref(false); // 控制弹出框显示隐藏
 
-const setActiveFilter = (value) => {
-  activeFilter.value = value;
+// 打开/关闭排序下拉
+const toggleSortMenu = () => {
+  showSortMenu.value = !showSortMenu.value;
+};
+
+// 选择排序方式
+const selectSort = (value) => {
+  currentSort.value = value;
+  showSortMenu.value = false;
 };
 
 onMounted(() => {
@@ -206,21 +258,30 @@ const getHotelList = () => {
 };
 
 const filteredHotels = computed(() => {
+  let list = combinedArray.value.slice();
+
   if (searchContent.value) {
-    return combinedArray.value.filter(item => item.name.includes(searchContent.value))
+    list = list.filter(item => item.name && item.name.includes(searchContent.value));
   }
-  switch (activeFilter.value) {
-    case 'comprehensive':
-      return combinedArray.value;
-    case 'priceup':
-      return combinedArray.value.sort((a, b) => a.price - b.price);
-    case 'pricedown':
-      return combinedArray.value.sort((a, b) => b.price - a.price);
+
+  // 根据当前排序方式排序
+  switch (currentSort.value) {
+    case 'priceAsc':
+      list.sort((a, b) => (a.price || 0) - (b.price || 0));
+      break;
+    case 'priceDesc':
+      list.sort((a, b) => (b.price || 0) - (a.price || 0));
+      break;
     case 'rating':
-      return combinedArray.value.sort((a, b) => b.rating - a.rating);
-    case 'location':
-      return combinedArray.value.sort((a, b) => b.location - a.location);
+      list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+    case 'default':
+    default:
+      // 推荐优先：这里暂时保持接口原顺序
+      break;
   }
+
+  return list;
 });
 
 // 监听数据变化
@@ -257,6 +318,15 @@ const change = (e) => {
 
 const changeLog = (e) => {
   console.log('change事件:', e);
+};
+
+const goBack = () => {
+  uni.navigateBack({
+    delta: 1,
+    fail: () => {
+      uni.switchTab({ url: '/pages/index/index' });
+    }
+  });
 };
 
 const maskClick = (e) => {
@@ -381,6 +451,34 @@ page {
   height: 100%;
 }
 
+/* 顶部导航栏 */
+.top-bar {
+  padding: 20rpx 30rpx;
+  padding-top: 60rpx;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.top-bar-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.top-bar-left,
+.top-bar-right {
+  width: 60rpx;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.top-bar-right {
+  justify-content: flex-end;
+}
+
 .header {
   background: #FFFFFF;
   flex-shrink: 0;
@@ -457,30 +555,77 @@ page {
 }
 
 .filter-scroll {
-  padding: 20rpx 30rpx;
+  padding: 20rpx 30rpx 0;
   white-space: nowrap;
 }
 
 .filter-wrap {
   display: inline-flex;
-  display: flex;
-  justify-content: space-between;
   gap: 20rpx;
 }
 
 .filter-btn {
-  flex: 1;
-  padding: 12rpx 30rpx;
-  background: #e2e1e1;
-  border-radius: 8rpx;
+  padding: 14rpx 34rpx;
+  background: #f5f5f7;
+  border-radius: 40rpx;
   text-align: center;
   font-size: 28rpx;
   color: #666666;
+  border-width: 0;
 }
 
 .filter-btn.active {
   background: #1B4B98;
   color: #FFFFFF;
+  box-shadow: 0 6rpx 12rpx rgba(27, 75, 152, 0.28);
+}
+
+.sort-row {
+  padding: 10rpx 30rpx 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sort-left {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background-color: #f7f8fa;
+  border-radius: 40rpx;
+}
+
+.sort-text {
+  font-size: 26rpx;
+  color: #333;
+  margin-right: 6rpx;
+}
+
+.sort-menu {
+  margin: 10rpx 30rpx 0;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.sort-menu-item {
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f2f2f2;
+}
+
+.sort-menu-item:last-child {
+  border-bottom-width: 0;
+}
+
+.sort-menu-text {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.sort-menu-text-active {
+  color: #1B4B98;
+  font-weight: 600;
 }
 
 .content {
@@ -496,28 +641,108 @@ page {
 .hotel-card {
   background: #FFFFFF;
   border-radius: 16rpx;
-  overflow: hidden;
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: row;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.04);
 }
 
 .hotel-image {
-  width: 100%;
-  height: 380rpx;
+  width: 220rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
 }
 
 .hotel-info {
-  padding: 30rpx;
-}
-
-.hotel-header {
+  flex: 1;
+  padding-left: 20rpx;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start;
 }
 
 .hotel-name {
   font-size: 32rpx;
   font-weight: 500;
+  color: #333;
+  max-width: 420rpx;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotel-tag {
+  padding: 4rpx 14rpx;
+  background: #f0f4ff;
+  color: #1b4b98;
+  border-radius: 100rpx;
+  font-size: 22rpx;
+}
+
+.hotel-desc-row {
+  margin-top: 8rpx;
+}
+
+.hotel-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.tag-row {
+  margin-top: 8rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.tag {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 100rpx;
+}
+
+.tag-blue {
+  background-color: #e6f1ff;
+  color: #1b4b98;
+}
+
+.tag-yellow {
+  background-color: #fff5e0;
+  color: #f59a23;
+}
+
+.tag-green {
+  background-color: #e7f8ec;
+  color: #25a86b;
+}
+
+.hotel-distance-row {
+  margin-top: 4rpx;
+}
+
+.distance-text {
+  font-size: 22rpx;
+  color: #1b8cff;
+}
+
+.hotel-bottom {
+  margin-top: 10rpx;
+}
+
+.rating-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rating-score {
+  display: flex;
+  align-items: center;
 }
 
 .rating {
@@ -529,6 +754,12 @@ page {
   color: #1B4B98;
   font-weight: 500;
   margin-right: 10rpx;
+}
+
+.rating-count {
+  margin-left: 10rpx;
+  font-size: 22rpx;
+  color: #999;
 }
 
 .stars {
@@ -562,24 +793,30 @@ page {
   margin-top: 20rpx;
 }
 
-.price-label {
-  font-size: 24rpx;
-  color: #999999;
+.price-amount {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #ff4081;
+  margin-left: 4rpx;
 }
 
-.price-amount {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #1B4B98;
-  margin-left: 8rpx;
+.price-currency {
+  font-size: 24rpx;
+  color: #ff4081;
+}
+
+.price-unit {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 6rpx;
 }
 
 .book-btn {
   background: #1B4B98;
   color: #FFFFFF;
   font-size: 28rpx;
-  padding: 1rpx 35rpx;
-  border-radius: 8rpx;
+  padding: 8rpx 32rpx;
+  border-radius: 40rpx;
   margin-right: 10rpx;
 }
 

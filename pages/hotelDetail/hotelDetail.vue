@@ -1,69 +1,59 @@
 <template>
   <view class="hotel-detail-container">
-    <!-- 顶部图片轮播 -->
-    <swiper class="hotel-swiper" :indicator-dots="true" :autoplay="true" :interval="4000" :duration="500">
-      <swiper-item v-for="(img, idx) in hotelImages" :key="idx">
-        <image :src="img" class="hotel-img" mode="aspectFill" />
-      </swiper-item>
-    </swiper>
-    <!-- 酒店信息 -->
-    <view class="hotel-info">
-      <view class="hotel-title-row">
-        <text class="hotel-title">{{ hotelData.name }}</text>
-        <view class="hotel-rating">
-          <uni-rate :value="hotelData.rating" size="20" readonly />
-          <text class="score">{{ hotelData.rating }}</text>
+    <!-- 顶部大图卡片 -->
+    <view class="top-card">
+      <swiper class="hotel-swiper" :indicator-dots="true" :autoplay="true" :interval="4000" :duration="500">
+        <swiper-item v-for="(img, idx) in hotelImages" :key="idx">
+          <image :src="img" class="hotel-img" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
+      <view class="top-card-inner">
+        <text class="hotel-title">{{ hotelData.name || '酒店名称' }}</text>
+        <view class="hotel-sub-row">
+          <view class="tag tag-blue">精选</view>
+          <view class="tag tag-border">{{ hotelData.category || '高档型' }}</view>
         </view>
-      </view>
-      <view class="hotel-checkin-row">
-        <view class="checkin-item">
-          <uni-icons type="calendar" size="18" color="#007AFF" />
-          <text>入住时间：14:00</text>
+        <view class="score-row">
+          <view class="score-left">
+            <uni-rate :value="hotelData.rating || 4.7" size="18" readonly />
+            <text class="score-text">{{ hotelData.rating || 4.7 }}</text>
+            <text class="score-desc">
+              {{ hotelData.commentnum ? `${hotelData.commentnum} 条点评` : '472 条点评' }}
+            </text>
+          </view>
         </view>
-        <view class="checkin-item" style="margin-left: 32rpx;">
-          <uni-icons type="calendar" size="18" color="#007AFF" />
-          <text>退房时间：12:00</text>
-        </view>
-      </view>
-      <view class="hotel-tags">
-        <text class="tag" v-for="tag in hotelTags" :key="tag">{{ tag }}</text>
-      </view>
-    </view>
-    <!-- 价格区块 -->
-    <view class="hotel-price-card">
-      <text class="current-price">¥{{ hotelData.price }}</text>
-      <text class="original-price">¥{{ originalPrice }} 起/晚</text>
-      <button class="discount-btn">限时特惠</button>
-    </view>
-    <!-- 房型信息 -->
-    <view class="room-info-section">
-      <view class="room-features">
-        <view class="feature-item" v-for="f in roomFeatures" :key="f.name">
-          <image :src="f.icon" class="feature-icon" />
-          <text class="feature-label" :class="{ highlight: f.highlight }">{{ f.label }}</text>
-        </view>
-      </view>
-      <view class="room-detail-list">
-        <view class="room-detail-item">
-          <uni-icons type="person" size="18" color="#1B4B98" />
-          <text>床型由酒店前台随机安排，可住2人</text>
-        </view>
-        <view class="room-detail-item">
-          <uni-icons type="info" size="18" color="#1B4B98" />
-          <text>加床：该房型不可加床</text>
-        </view>
-        <view class="room-detail-item">
-          <uni-icons type="info" size="18" color="#1B4B98" />
-          <text>无餐食</text>
-        </view>
-        <view class="room-detail-item">
-          <uni-icons type="info" size="18" color="#1B4B98" />
-          <text>自助早餐￥48每份</text>
+        <view class="hotel-brief">
+          <text class="brief-text">
+            {{ hotelData.address || '坐落于热门商圈，临近地铁口，步行可达多处景点。' }}
+          </text>
         </view>
       </view>
     </view>
+
+    <!-- 酒店亮点 / 设施简要 -->
+    <view class="highlight-section">
+      <text class="highlight-title">酒店亮点</text>
+      <view class="highlight-grid">
+        <view
+          class="highlight-card"
+          v-for="item in highlightFacilities"
+          :key="item.label"
+        >
+          <image
+            class="highlight-card-icon"
+            :src="item.icon"
+            mode="aspectFit"
+          />
+          <text class="highlight-card-text">{{ item.label }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 房型信息（已按需求去除“客房亮点”模块） -->
+
     <!-- 设施信息 -->
     <view class="facility-section">
+      <text class="section-title">酒店设施</text>
       <view v-for="(group, idx) in displayedFacilityGroups" :key="idx" class="facility-group">
         <view class="facility-title">
           <image v-if="group.icon" :src="group.icon" class="facility-icon" />
@@ -77,56 +67,49 @@
         </view>
       </view>
       <view class="toggle-btn" @click="toggleFacilities">
-        <text>{{ showAllFacilities ? '收起' : '查看更多' }}</text>
+        <text>{{ showAllFacilities ? '收起全部设施' : '查看更多设施' }}</text>
         <uni-icons :type="showAllFacilities ? 'top' : 'bottom'" size="18" color="#007AFF" />
       </view>
     </view>
-    <!-- 评论区 -->
+
+    <!-- 评论区（改为与景点详情类似的纵向列表样式） -->
     <view class="hotel-reviews">
-      <text class="section-title">住客点评</text>
-      <!-- 评论列表横滑，仅保留最新评论 -->
-      <scroll-view scroll-x class="comment-scroll" v-if="comments.length">
-        <view
-          class="comment-card"
-          v-for="(item, idx) in displayedComments"
-          :key="item.id || idx"
-        >
-          <view class="comment-header">
-            <image :src="item.avatar || '/static/my/default-avatar.png'" class="comment-avatar" />
-            <view class="comment-user">
-              <text class="comment-username">{{ item.username || '匿名用户' }}</text>
-              <text class="comment-date">{{ item.createTime }}</text>
+      <text class="section-title">用户评价（{{ comments.length }}）</text>
+      <view v-if="displayedComments.length === 0" class="no-comments">暂无评论</view>
+      <view
+        v-for="(item, idx) in displayedComments"
+        :key="item.id || idx"
+        class="review-item"
+      >
+        <view class="review-user">
+          <image :src="item.avatar || '/static/my/default-avatar.png'" class="review-avatar" />
+          <view class="review-user-info">
+            <text class="review-username">{{ item.username || '匿名用户' }}</text>
+            <text class="review-time">{{ item.createTime }}</text>
           </view>
-          </view>
-          <view class="comment-content">{{ item.comment }}</view>
-          <!-- 评论图片横滑 -->
-          <scroll-view scroll-x class="comment-img-scroll" v-if="item.images && item.images.length">
-            <image
-              v-for="(img, imgIdx) in item.images"
-              :key="imgIdx"
-              :src="img"
-              class="comment-img"
-            />
-          </scroll-view>
-          </view>
-        <!-- "查看更多"按钮 -->
-        <view
-          v-if="!showAllComments && comments.length > 3"
-          class="comment-more-btn"
-          @click="toggleComments"
-        >
-          查看更多
         </view>
-      </scroll-view>
-      <view v-else class="no-comments">
-        <uni-icons type="chat" size="24" color="#999"></uni-icons>
-        <text>暂无评论</text>
+        <view class="review-content">{{ item.comment }}</view>
+        <view v-if="item.images && item.images.length" class="review-images">
+          <image
+            v-for="(img, imgIdx) in item.images"
+            :key="imgIdx"
+            :src="img"
+            class="review-img"
+            mode="aspectFill"
+          />
+        </view>
       </view>
-      <!-- 游客实拍 -->
+      <view
+        v-if="!showAllComments && comments.length > 3"
+        class="show-more"
+        @click="toggleComments"
+      >
+        查看更多
+      </view>
       <view class="tourist-album-section" v-if="touristImages.length">
         <view class="album-title-row">
           <text class="album-title">游客实拍</text>
-            </view>
+        </view>
         <scroll-view scroll-x class="tourist-album-scroll">
           <image
             v-for="(img, idx) in touristImages"
@@ -135,8 +118,9 @@
             class="tourist-album-img"
           />
         </scroll-view>
-          </view>
+      </view>
     </view>
+
     <!-- 日期选择 -->
     <view class="date-picker-section">
       <view class="date-picker-row">
@@ -385,12 +369,22 @@ const createOrder = (hotel) => {
   });
 };
 
-const roomFeatures = [
-  { icon: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/6d41ad755669479499f89b809c17ea0a.png', label: '30-45㎡', name: 'area' },
-  { icon: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/b112f7d21da844f3a457ce5f86af8187.png', label: '7-18层', name: 'floor' },
-  { icon: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/547a5244f25349ed94e371ba683afabd.png', label: 'Wi-Fi 免费', name: 'wifi', highlight: true },
-  { icon: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/13857e1feecc4befb7daaf69f407f088.png', label: '封闭窗', name: 'window' },
-  { icon: 'https://wuminghui.top:9000/wlmtsys/2025/06/04/15a03126aed746fb9b62e3a46907b347.png', label: '部分禁烟', name: 'smoke' }
+// 原“客房亮点”模块已移除，如需恢复可在此重新配置 roomFeatures
+
+// 酒店亮点卡片展示
+const highlightFacilities = [
+  {
+    icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/master/Wi-Fi.png',
+    label: '免费 Wi‑Fi'
+  },
+  {
+    icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/master/%E6%B8%B8%E6%B3%B3%E6%B1%A0.png',
+    label: '游泳池'
+  },
+  {
+    icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/master/%E5%93%91%E9%93%83%20.png',
+    label: '健身房'
+  }
 ];
 
 const originalPrice = computed(() => {
@@ -404,7 +398,10 @@ const originalPrice = computed(() => {
 const comments = ref([]);
 const newComment = ref('');
 const showAllComments = ref(false);
-const displayedComments = computed(() => showAllFacilities.value ? comments.value : comments.value.slice(0, 3));
+// 显示前 3 条，点击“查看更多”后显示全部
+const displayedComments = computed(() =>
+  showAllComments.value ? comments.value : comments.value.slice(0, 3)
+);
 const toggleComments = () => { showAllComments.value = true; };
 
 // 聚合所有评论图片
@@ -554,140 +551,151 @@ const toggleFacilities = () => {
   min-height: 100vh;
   padding-bottom: 120rpx;
 }
-.hotel-swiper {
-  width: 100vw;
-  height: 340rpx;
-  border-radius: 0 0 24rpx 24rpx;
+.top-card {
+  margin: 16rpx 24rpx 0;
+  background-color: #ffffff;
+  border-radius: 24rpx;
   overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.08);
+}
+.hotel-swiper {
+  width: 100%;
+  height: 360rpx;
 }
 .hotel-img {
-  width: 100vw;
-  height: 340rpx;
+  width: 100%;
+  height: 360rpx;
   object-fit: cover;
 }
-.hotel-info {
-  background: #fff;
-  border-radius: 18rpx;
-  margin: -40rpx 24rpx 0 24rpx;
-  padding: 32rpx 24rpx 24rpx 24rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.06);
-  position: relative;
-  z-index: 2;
+.top-card-inner {
+  padding: 24rpx 24rpx 20rpx;
 }
-.hotel-title-row {
+.hotel-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #111827;
+}
+.hotel-sub-row {
+  margin-top: 8rpx;
+  display: flex;
+  gap: 10rpx;
+}
+.tag {
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+}
+.tag-blue {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+.tag-border {
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: #e5e7eb;
+  color: #6b7280;
+  background-color: #fff;
+}
+.score-row {
+  margin-top: 10rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.hotel-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #222;
-}
-.hotel-rating {
+.score-left {
   display: flex;
   align-items: center;
 }
-.score {
+.score-text {
   margin-left: 8rpx;
-  color: #ff9800;
-  font-size: 24rpx;
+  color: #f59e0b;
+  font-size: 26rpx;
+  font-weight: 600;
 }
-.hotel-checkin-row {
-  display: flex;
-  gap: 32rpx;
-  margin-top: 12rpx;
-  margin-bottom: 8rpx;
-}
-.checkin-item {
-  display: flex;
-  align-items: center;
-  font-size: 24rpx;
-  color: #666;
-}
-.checkin-item uni-icons {
-  margin-right: 6rpx;
-}
-.hotel-tags {
-  margin: 16rpx 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-.tag {
-  background: #e0f2fe;
-  color: #007AFF;
-  border-radius: 20rpx;
-  padding: 6rpx 18rpx;
+.score-desc {
+  margin-left: 8rpx;
   font-size: 22rpx;
+  color: #9ca3af;
 }
-.hotel-price-card {
-  background: linear-gradient(90deg, #fff7e6 0%, #fff 100%);
-  margin: 24rpx;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  box-shadow: 0 2rpx 8rpx rgba(255, 105, 5, 0.08);
+.hotel-brief {
+  margin-top: 10rpx;
 }
-.current-price {
-  color: #ff5722;
-  font-size: 32rpx;
-  font-weight: bold;
-}
-.original-price {
-  color: #bbb;
-  text-decoration: line-through;
-  margin-left: 12rpx;
-}
-.discount-btn {
-  background: #ff5722;
-  color: #fff;
-  border-radius: 20rpx;
-  padding: 6rpx 18rpx;
-  margin-right: 5px;
+.brief-text {
   font-size: 22rpx;
+  color: #6b7280;
+  line-height: 1.5;
+}
+.highlight-section {
+  margin: 16rpx 24rpx 0;
+  padding: 20rpx 4rpx;
+}
+.highlight-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6rpx;
+}
+.highlight-grid {
+  margin-top: 14rpx;
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.highlight-card {
+  flex: 1;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 26rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.06);
+}
+.highlight-card-icon {
+  width: 52rpx;
+  height: 52rpx;
+  margin-bottom: 12rpx;
+}
+.highlight-card-text {
+  font-size: 24rpx;
+  color: #111827;
 }
 .hotel-reviews {
   background-color: #fff;
-  border: solid 1px #dbeafe;
-  padding: 15px;
-  margin-top: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 16px;
+  margin: 16px 12px 0 12px;
 }
-.review-card {
+.review-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.review-user {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 24rpx;
+  align-items: center;
+  margin-bottom: 16rpx;
 }
 .review-avatar {
   width: 60rpx;
   height: 60rpx;
   border-radius: 50%;
-  margin-right: 18rpx;
+  margin-right: 16rpx;
 }
-.review-content {
+.review-user-info {
   flex: 1;
 }
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8rpx;
+.review-username {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 4rpx;
 }
-.review-user {
-  font-weight: bold;
-  color: #222;
+.review-time {
+  font-size: 22rpx;
+  color: #999;
 }
-.review-date {
-  color: #bbb;
-  font-size: 20rpx;
-}
-.review-text {
-  color: #444;
-  font-size: 24rpx;
-}
+.review-content { font-size: 15px; color: #333; line-height: 1.7; margin: 6px 0 8px 76rpx; }
+.review-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-left: 76rpx; }
+.review-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; }
 .date-picker-section {
   background: #fff;
   border-radius: 16rpx;
@@ -768,13 +776,6 @@ const toggleFacilities = () => {
   padding: 18rpx 0;
   font-weight: bold;
   border: none;
-}
-.room-info-section {
-  background: #fff;
-  border-radius: 16rpx;
-  margin: 24rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 .section-title {
   font-size: 28rpx;
