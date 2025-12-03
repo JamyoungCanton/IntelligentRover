@@ -222,7 +222,7 @@ const getAttrictionDetail = () => {
 .placeholder { color: #bbb; }
 .category-list { padding: 24rpx 24rpx 16rpx 24rpx; white-space: nowrap; background: #fff; border-top-left-radius: 24rpx; border-top-right-radius: 24rpx; margin: 0 0rpx; margin-top: 5rpx; }
 .category-scroll { display: inline-flex; gap: 16rpx; }
-.category-item { padding: 6rpx 32rpx; background: #f0f2f5; border-radius: 30rpx; color: #333; font-size: 28rpx; border: none; }
+.category-item { padding: 6rpx 32rpx; background: #f0f2f5; border-radius: 30rpx; color: #333; font-size: 28rpx; border: 3rpx solid rgba(15,174,223,0.08); }
 .category-item.active { background: #4F46E5; color: #fff; box-shadow: 0 6rpx 16rpx rgba(15,174,223,0.18); }
 .list { padding: 16rpx 24rpx 40rpx 24rpx; }
 .list-item { display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; }

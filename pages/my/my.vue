@@ -135,7 +135,7 @@ const handleGridItemClick = (item) => {
   }
   if (item.onClick === 'goActivityCollect') {
     uni.navigateTo({
-      url: '/pages/activityCollect/activityCollect'
+      url: '/pages/productCollect/productCollect'
     });
     return;
   }

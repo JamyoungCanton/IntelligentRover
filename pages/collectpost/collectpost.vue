@@ -1,35 +1,21 @@
 <template>
   <view class="container">
-    <scroll-view 
-      scroll-y 
-      class="scroll-container"
-      @refresherrefresh="onRefresh"
-      refresher-enabled
-      :refresher-triggered="isRefreshing"
-    >
-      <view v-if="loading && !isRefreshing" class="loading">
-        <uni-icons type="spinner-cycle" size="24" color="#666"></uni-icons>
-        <text>加载中...</text>
-      </view>
-      <view v-else-if="posts.length === 0" class="no-posts">
-        <uni-icons type="star" size="48" color="#999"></uni-icons>
-        <text>你还没有收藏任何帖子</text>
-      </view>
-      <view v-else class="post-list">
-        <view 
-          class="post-card" 
-          v-for="post in posts" 
-          :key="post.id"
-          @tap="toDetail(post.id)"
-        >
+    <view v-if="loading" class="loading">加载中...</view>
+    <view v-else-if="posts.length === 0" class="no-posts">你还没有收藏任何帖子</view>
+    <view v-else class="post-list">
+      <view 
+        class="post-card" 
+        v-for="post in posts" 
+        :key="postIdFor(post) || post.id"
+      >
+        <view @tap="toDetail(postIdFor(post))">
           <view class="post-header">
-            <text class="post-title">{{ post.title || '未命名帖子' }}</text>
-            <text class="post-time">{{ formatTime(post.createTime) }}</text>
+            <text class="post-title">{{ titleOf(post) }}</text>
           </view>
-          <view class="post-content">{{ post.content }}</view>
+          <view class="post-content">{{ contentOf(post) }}</view>
           <image
-            v-if="post.images?.length"
-            :src="post.images[0].url"
+            v-if="firstImage(post)"
+            :src="firstImage(post)"
             class="post-image"
             mode="aspectFill"
           />
@@ -37,27 +23,21 @@
           <view class="item-bottom">
             <view class="item-bottom-left">
               <text class="left-data">
-                {{ formatCreateTime(post.createTime) }} · {{ post.area || '未知分区' }}
+                {{ formatCreateTime(createTimeOf(post)) }} · {{ areaOf(post) }}
               </text>
             </view>
             <view class="item-bottom-right">
-              <view class="right-data">
-                <uni-icons type="heart" size="18" color="#999" />
-                <text class="data-detail">{{ post.likes ?? 0 }}</text>
-              </view>
-              <view class="right-data">
-                <uni-icons type="star" size="18" color="#999" />
-                <text class="data-detail">{{ post.collect ?? post.focus ?? 0 }}</text>
-              </view>
-              <view class="right-data">
-                <uni-icons type="chat" size="18" color="#999" />
-                <text class="data-detail">{{ post.comments ?? 0 }}</text>
-              </view>
+              <uni-icons type="heart" size="18" color="#999" />
+              <text class="data-detail">{{ post.likes ?? 0 }}</text>
+              <uni-icons type="star" size="18" color="#999" />
+              <text class="data-detail">{{ post.collect ?? post.focus ?? 0 }}</text>
+              <uni-icons type="chat" size="18" color="#999" />
+              <text class="data-detail">{{ post.comments ?? 0 }}</text>
             </view>
           </view>
         </view>
       </view>
-    </scroll-view>
+    </view>
 
     <view class="bottom-tab-bar">
       <view
@@ -87,12 +67,49 @@ import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
-const isRefreshing = ref(false);
 const currentTab = ref<'my' | 'collect'>('collect');
 
 // 格式化时间
-const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
 const formatCreateTime = (t: string) => t ? t.slice(0, 16) : '';
+
+const firstImage = (p: any): string => {
+  if (!p) return '';
+  const pickFromArr = (arr: any[]) => {
+    if (!Array.isArray(arr) || !arr.length) return '';
+    const v0 = arr[0];
+    if (v0 && typeof v0 === 'object' && v0.url) return v0.url;
+    if (typeof v0 === 'string') return v0;
+    return '';
+  };
+  return (
+    pickFromArr(p.images) ||
+    pickFromArr(p.imageList) ||
+    (p.imageURL || p.imageUrl || '') ||
+    (p.post ? (pickFromArr(p.post.images) || p.post.imageURL || p.post.imageUrl || '') : '') ||
+    (p.cover || '')
+  );
+};
+
+const postIdFor = (p: any): string => {
+  if (!p) return '';
+  return String(p.id || p.postId || (p.post ? p.post.id : ''));
+};
+
+const titleOf = (p: any): string => {
+  return (p.title || (p.post ? p.post.title : '') || '未命名帖子');
+};
+
+const contentOf = (p: any): string => {
+  return (p.content || (p.post ? p.post.content : '') || '');
+};
+
+const areaOf = (p: any): string => {
+  return (p.area || (p.post ? p.post.area : '') || '未知分区');
+};
+
+const createTimeOf = (p: any): string => {
+  return (p.createTime || (p.post ? p.post.createTime : '') || '');
+};
 
 // 获取收藏帖子
 async function fetchCollectPosts() {
@@ -138,14 +155,7 @@ async function fetchCollectPosts() {
     });
   } finally {
     loading.value = false;
-    isRefreshing.value = false;
   }
-}
-
-// 下拉刷新
-async function onRefresh() {
-  isRefreshing.value = true;
-  await fetchCollectPosts();
 }
 
 // 跳转详情
@@ -181,109 +191,116 @@ onMounted(fetchCollectPosts);
 </script>
 
 <style lang="scss" scoped>
-.container {
-  min-height: 100vh;
-  background-color: #f8f8f8;
+.post-type-buttons {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1002;
   display: flex;
-  flex-direction: column;
-}
-
-.scroll-container {
-  flex: 1;
-  height: calc(100vh - 120rpx);
-  padding-bottom: 100rpx;
-}
-
-.loading, .no-posts {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 40rpx;
-  color: #888;
-  font-size: 28rpx;
-  gap: 20rpx;
+  gap: 12px;
+  padding: 10px 0 20px 0;
+  background-color: #fff;
+  border-top: 1px solid #f0f0f0;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+}
+.type-button {
+  width: auto;
+  min-width: 110px;
+  flex: none;
+  padding: 10px 22px;
 }
 
+.container {
+  padding: 30rpx;
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+.loading, .no-posts {
+  text-align: center;
+  margin-top: 100rpx;
+  color: #888;
+  font-size: 32rpx;
+}
 .post-list {
-  padding: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 30rpx;
 }
-
 .post-card {
+  position: relative;
+  padding: 20rpx;
   background: #fff;
   border-radius: 16rpx;
-  padding: 30rpx;
   box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
 }
-
-.post-card:active {
-  transform: scale(0.98);
-}
-
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 10rpx;
 }
-
 .post-title {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: bold;
-  color: #333;
 }
-
 .post-time {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
 }
-
 .post-content {
   font-size: 28rpx;
-  color: #666;
-  margin-bottom: 20rpx;
-  line-height: 1.6;
+  margin-bottom: 10rpx;
 }
-
 .post-image {
   width: 100%;
   height: 300rpx;
   border-radius: 12rpx;
   object-fit: cover;
-  margin-bottom: 20rpx;
 }
 
-.item-bottom {
+.item-bottom{
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-top: 20rpx;
-  border-top: 1px solid #f0f0f0;
+  padding: 12px 15px;
+  border-top: solid 1px #f0f0f0;
+  margin-top: 5px;
+  background: linear-gradient(to bottom, rgba(250,250,250,0.5), rgba(255,255,255,0.8));
 }
 
-.item-bottom-left {
-  font-size: 24rpx;
+.item-bottom-left{
+  font-size: 13px;
   color: #999;
 }
 
-.item-bottom-right {
-  display: flex;
-  gap: 20rpx;
-}
-
-.right-data {
+.item-bottom-right{
   display: flex;
   align-items: center;
-  gap: 8rpx;
 }
 
-.data-detail {
-  font-size: 24rpx;
-  color: #999;
+.right-data{
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+  
+  .uni-icons {
+    transition: all 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+    
+    &:active {
+      background-color: rgba(0, 0, 0, 0.05);
+      transform: scale(1.1);
+    }
+  }
+}
+
+.data-detail{
+  margin: 0 12px 0 4px;
 }
 
 .bottom-tab-bar {

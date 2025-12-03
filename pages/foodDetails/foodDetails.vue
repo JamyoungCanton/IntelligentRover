@@ -8,7 +8,13 @@
     </view>
 
     <view class="intro-card">
-      <view class="attraction-name"><text>{{ foodDetails?.name || '加载中...' }}</text></view>
+      <view class="name-row">
+        <text class="attraction-name">{{ foodDetails?.name || '加载中...' }}</text>
+        <view class="collect-btn" :class="{ collected }" @tap="toggleCollect">
+          <uni-icons :type="collected ? 'star-filled' : 'star'" size="20" :color="collected ? '#FFB020' : '#007aff'" />
+          <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
+        </view>
+      </view>
       <view class="section-title">餐厅介绍</view>
       <view class="info-row">
         <view class="rating-line">
@@ -77,7 +83,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import uniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
 const safeAreaInsets = ref({});
@@ -251,6 +257,7 @@ onLoad((options) => {
 
 	getRestaurantDetailsById(id.value);
 	getComments();
+	checkCollected();
 });
 
 onMounted(() => {
@@ -422,6 +429,92 @@ const introText = computed(() => {
   const raw = foodDetails.value?.description || '';
   return String(raw).replace(/<[^>]*>/g, '').trim() || '暂无介绍';
 });
+
+const collected = ref(false);
+const collecting = ref(false);
+const extractCollectList = (resp) => {
+  const r = resp?.data?.result;
+  if (Array.isArray(r?.result)) return r.result;
+  if (Array.isArray(r?.records)) return r.records;
+  if (Array.isArray(resp?.data?.result)) return resp.data.result;
+  return [];
+};
+const checkCollected = async () => {
+  if (!userStore.token) { collected.value = false; return; }
+  try {
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+      data: { productType: 'Dining', pageNo: 1, pageSize: 100 }
+    });
+    let list = [];
+    if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 0)) {
+      list = extractCollectList(res);
+    }
+    if (!list || list.length === 0) {
+      const resAll = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+        data: { pageNo: 1, pageSize: 100 }
+      });
+      if ((resAll.statusCode === 200 || resAll.statusCode === 0) && (resAll.data.success || resAll.data.code === 0)) {
+        list = extractCollectList(resAll);
+      }
+    }
+    const pid = String(foodDetails.value?.id || id.value || '');
+    collected.value = (list || []).some(x => String(x.productId ?? x.product_id ?? x.id ?? x.goodsId ?? x.productID ?? '') === pid && String(x.productType ?? x.type ?? '').toLowerCase() === 'dining');
+    console.log('food checkCollected listLen', (list || []).length, 'matched', collected.value);
+  } catch (e) {
+    collected.value = false;
+    console.log('food checkCollected error', e);
+  }
+};
+const toggleCollect = async () => {
+  if (!userStore.token) { uni.showToast({ title: '请先登录', icon: 'none' }); return; }
+  if (collecting.value) return;
+  collecting.value = true;
+  try {
+    const desiredOp = collected.value ? 0 : 1;
+    const dto = {
+      productId: String(foodDetails.value?.id || id.value || ''),
+      productType: 'Dining',
+      productImage: foodDetails.value?.imageUrl || '',
+      productName: foodDetails.value?.name || '',
+      operation: desiredOp
+    };
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/island/productCollect/collectProduct',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+      data: dto
+    });
+    if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 200 || res.data.code === 0)) {
+      collected.value = desiredOp === 1;
+      uni.showToast({ title: desiredOp === 1 ? '已收藏' : '已取消收藏', icon: 'success' });
+    } else {
+      const msg = res.data?.message || '操作失败';
+      if (desiredOp === 1 && (msg.includes('存在') || msg.toLowerCase().includes('exist'))) {
+        collected.value = true;
+        uni.showToast({ title: '已收藏', icon: 'success' });
+      } else if (desiredOp === 0 && (msg.includes('不存在') || msg.toLowerCase().includes('not exist'))) {
+        collected.value = false;
+        uni.showToast({ title: '已取消收藏', icon: 'success' });
+      } else {
+        uni.showToast({ title: msg, icon: 'none' });
+      }
+    }
+    await checkCollected();
+  } catch (e) {
+    uni.showToast({ title: '网络异常', icon: 'none' });
+    console.log('food toggleCollect error', e);
+  } finally {
+    collecting.value = false;
+  }
+};
+
+onShow(() => { checkCollected(); });
 </script>
 
 <style scoped>
@@ -435,7 +528,12 @@ const introText = computed(() => {
 .hero-img { width: 100%; height: 230px; object-fit: cover; }
 
 .intro-card { position: relative; margin: -40px 12px 12px 12px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.08); padding: 16px; z-index: 2; }
+.name-row { position: relative; display: flex; align-items: center; }
 .attraction-name { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 12px; }
+.collect-btn { position: absolute; right: 0; top: 0; transform: translateY(0); display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #007aff; border-radius: 30rpx; padding: 10rpx 30rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 120rpx; height: 60rpx; justify-content: center; }
+.collect-btn.collected { border-color: #FFB020; background: rgba(255,176,32,0.08); }
+.collect-text { font-size: 28rpx; color: #007aff; }
+.collect-btn.collected .collect-text { color: #FFB020; }
 .info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .rating-line { display: flex; align-items: center; gap: 8px; }
 .rating-score { font-size: 24rpx; color: #FF9800; }

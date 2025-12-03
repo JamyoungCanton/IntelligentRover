@@ -39,7 +39,6 @@
             <image class="itemava" :src="item.userVO?.avatar || defaultAvatar" mode="aspectFill" />
             <view class="user-info">
               <text class="itemname">{{ item.userVO?.username }}</text>
-              <text class="itemlv">lv3</text>
             </view>
             <view class="follow-button" @click.stop="toggleFollowStatus(item)">
               <u-button plain shape="circle" size="small" :color="item.isFollowing ? '#999' : '#007aff'"

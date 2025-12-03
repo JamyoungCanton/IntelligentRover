@@ -13,12 +13,6 @@
 			}
 		},
 		{
-			"path": "pages/membership/membership",
-			"style": {
-				"navigationStyle": "custom"
-			}
-		},
-		{
 			"path": "pages/order/order",
 			"style": {
 				"navigationBarTitleText": "订单"
@@ -162,12 +156,6 @@
 			}
 		},
 		{
-			"path": "pages/Orders/Orders",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
-		{
 			"path": "pages/test/test",
 			"style": {
 				"navigationBarTitleText": ""
@@ -300,6 +288,12 @@
 			}
 		},
 		{
+			"path": "pages/productCollect/productCollect",
+			"style": {
+				"navigationBarTitleText": "我的收藏"
+			}
+		},
+		{
 			"path": "pages/my/aboutUs",
 			"style": {
 				"navigationBarTitleText": ""
@@ -342,13 +336,6 @@
 				"navigationBarTitleText": ""
 			}
 		},
-      {
-        "path": "pages/activityCollect/activityCollect",
-        "style": {
-          "navigationBarTitleText": ""
-        }
-      }
-      ,
       {
         "path": "pages/multiConfirmPay/multiConfirmPay",
         "style": {

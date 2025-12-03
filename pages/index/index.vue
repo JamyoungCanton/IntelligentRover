@@ -15,7 +15,7 @@
           <view class="ai-tag">海岛游</view>
           <view class="ai-tag">亲子游</view>
           <view class="ai-tag">浮潜行</view>
-          <view class="ai-tag">休闲度</view>
+          <view class="ai-tag">休闲旅</view>
         </view>
       </view>
     </view>
@@ -120,8 +120,8 @@ const navButtonList = reactive([{
   path: '/pages/attractionGuide/attractionGuide'
 }, {
   name: '我的收藏',
-  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/heart.png',
-  path: '/pages/favorite/favorite'
+  icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/more.png',
+  path: '/pages/productCollect/productCollect'
 }, {
   name: '美食推荐',
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/restaurant.png',

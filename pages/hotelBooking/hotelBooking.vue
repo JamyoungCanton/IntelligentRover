@@ -1,16 +1,5 @@
 <template>
   <view class="page">
-    <!-- 顶部导航栏 -->
-    <view class="top-bar">
-      <view class="top-bar-left" @click="goBack">
-        <uni-icons type="back" size="20" color="#333"></uni-icons>
-      </view>
-      <text class="top-bar-title">酒店房型</text>
-      <view class="top-bar-right">
-        <uni-icons type="settings" size="20" color="#333"></uni-icons>
-      </view>
-    </view>
-
     <view class="header">
       <!-- 搜索框 -->
       <view class="search-header">
@@ -147,15 +136,6 @@ const searchContent = ref('');
 
 const imageUrls = ref([
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h1.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f2.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f3.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f4.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f5.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f6.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f7.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f8.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f9.jpg",
-  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f10.jpg",
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h11.jpg",
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h12.jpg",
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h13.jpg",
@@ -166,6 +146,15 @@ const imageUrls = ref([
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h18.jpg",
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h19.jpeg",
   "https://gitee.com/luo-shaominggitee/island_image/raw/main/hotel/h20.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f2.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f3.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f4.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f5.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f6.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f7.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f8.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f9.jpg",
+  "https://gitee.com/luo-shaominggitee/island_image/raw/main/food/f10.jpg"
 ]);
 
 // 排序选项

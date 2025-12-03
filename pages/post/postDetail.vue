@@ -97,9 +97,6 @@
 
     <!-- 底部操作栏 -->
     <view class="footer-bar">
-      <view class="ava-input">
-        <view class="bar-input" @click="showEditComment">说点什么...</view>
-      </view>
       <view class="bar-icon-deta">
         <view class="bar-item" @click="addLikes">
           <uni-icons type="heart" size="24" :color="postDetailList.liked ? '#ff0000' : '#666'"></uni-icons>
@@ -110,9 +107,8 @@
           <uni-icons type="star" size="24" :color="postDetailList.collected ? '#ff0000' : '#666'" ></uni-icons>
           <text class="data-detail">{{ postDetailList.collect }}</text>
         </view>
-        <view class="bar-item" @click="showEditComment">
-          <uni-icons type="chat" size="24" color="#666" ></uni-icons>
-          <text class="data-detail"> {{ commentCount }} </text>
+        <view class="ava-input">
+          <view class="bar-input" @click="showEditComment">说点什么...</view>
         </view>
       </view>
       
@@ -715,7 +711,7 @@ page {
   .follow-btn {
     margin-left: auto;
     margin-right: 30rpx;
-    padding: 10rpx 30rpx;
+    padding: 10rpx 20rpx;
     border-radius: 30rpx;
     background-color: #fff;
     border: 1px solid #007aff;
@@ -723,7 +719,7 @@ page {
     align-items: center;
     justify-content: center;
     min-width: 120rpx;
-    height: 60rpx;
+    height: 40rpx;
     align-self: center;
     
     .btn-text {
@@ -1039,17 +1035,17 @@ page {
     align-items: center;
     align-content: center;
     height: 100%;
-    width: 75%;
+    width: 70%;
   }
 
   .bar-input {
-    width: 70%;
+    width: 400rpx;
     height: 80rpx;
     border-radius: 28rpx;
     background-color: #eee;
     padding: 0 20rpx;
     font-size: 28rpx;
-    margin-left: 10px;
+    margin-right: 10px;
     display: flex;
     align-items: center;
     color: #999;

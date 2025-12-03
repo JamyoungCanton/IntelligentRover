@@ -18,7 +18,13 @@
         <text class="badge type">{{ hotelData.type }}</text>
         <text class="badge ghost">可开电子发票</text>
       </view>
-      <view class="attraction-name"><text>{{ hotelData.name }}</text></view>
+      <view class="name-row">
+        <text class="attraction-name">{{ hotelData.name }}</text>
+        <view class="collect-btn" :class="{ collected }" @tap="toggleCollect">
+          <uni-icons :type="collected ? 'star-filled' : 'star'" size="20" :color="collected ? '#FFB020' : '#999'" />
+          <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
+        </view>
+      </view>
       <text class="intro-desc">{{ introDescription }}</text>
     </view>
     <view class="intro-spacer"></view>
@@ -73,47 +79,94 @@
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { ref, onMounted, computed } from 'vue'
   import { onLoad, onShow } from '@dcloudio/uni-app'
   import { useUserStore } from '@/store/modules/user'
 
   const userStore = useUserStore();
-  const hotelData = ref({});
-  const attractionImages = ref([]);
-  const comments = ref([
+  type CommentItem = {
+    score?: number;
+    comment?: string;
+    username?: string;
+    createTime?: string;
+    userId?: string | number;
+    user_id?: string | number;
+    avatar?: string;
+    images?: string[] | string;
+    imageList?: string[] | string;
+    pics?: string[] | string;
+    id?: string | number;
+  };
+  type GroupedComment = {
+    id: string | number;
+    username?: string;
+    avatar?: string;
+    createTime?: string;
+    score?: number;
+    comment: string;
+    images: string[];
+  };
+  type Attraction = {
+    id?: string | number;
+    rating?: number | string;
+    type?: string;
+    description?: string;
+    imageUrl?: string;
+    images?: string[];
+    comments?: CommentItem[];
+    ticketprice?: number;
+    starttime?: string;
+    endtime?: string;
+    name?: string;
+  };
+  const hotelData = ref<Attraction>({});
+  const attractionImages = ref<string[]>([]);
+  const comments = ref<CommentItem[]>([
     { score: 10, comment: '非常棒', username: '张三', createTime: '2024-06-12' },
     { score: 9, comment: '不错', username: '李四', createTime: '2024-06-11' },
     { score: 10, comment: '很满意', username: '王五', createTime: '2024-06-10' }
   ]);
-  const id = ref(0);
-  const pad = n => n < 10 ? '0' + n : n;
-  const newComment = ref('');
-  const showAllComments = ref(false);
-  const allowComment = ref(false); // 是否允许评论
-  const commentDetail = ref(null);
-  const scenicLevel = computed(() => {
+  const id = ref<string | number>(0);
+  const pad = (n: number) => n < 10 ? '0' + n : n;
+  const newComment = ref<string>('');
+  const showAllComments = ref<boolean>(false);
+  const allowComment = ref<boolean>(false);
+  const commentDetail = ref<Record<string, unknown> | null>(null);
+  const scenicLevel = computed<string>(() => {
     const r = Number(hotelData.value.rating || 4.6);
     if (r >= 4.5) return '5A 景区';
     if (r >= 3.5) return '4A 景区';
     if (r >= 2.5) return '3A 景区';
     return '景区';
   });
-  const introDescription = computed(() => {
+  const introDescription = computed<string>(() => {
     return String(hotelData.value.description || '').replace(/<[^>]*>/g, '');
   });
+  const collected = ref(false);
+  const collecting = ref(false);
+  type ApiResp<T = any> = { statusCode: number; data: { success?: boolean; code?: number; message?: string; result?: T } };
+  const extractCollectList = (resp: ApiResp<any>): any[] => {
+    const r: any = resp?.data?.result;
+    if (Array.isArray(r?.result)) return r.result;
+    if (Array.isArray(r?.records)) return r.records;
+    if (Array.isArray(resp?.data?.result)) return resp.data.result as any[];
+    return [];
+  };
 
   console.log('attractionDetail.vue 页面已加载');
 
-  onLoad((options) => {
+  onLoad((options: Record<string, any>) => {
     id.value = options.id;
     console.log('onLoad 传入的 id:', id.value);
+    checkCollected();
     getAttrictionDetail();
     checkOrderPaid();
     getCommentDetail(options.id);
   })
 
   onShow(() => {
+    checkCollected();
     getAttrictionDetail();
   });
 
@@ -128,7 +181,7 @@
         'X-Access-Token': userStore.token || ''
       },
       data: { id: id.value },
-      success: (res) => {
+      success: (res: UniApp.RequestSuccessCallbackResult) => {
         console.log('景点详情接口返回数据:', res.data);
         if (res.data.success && res.data.result) {
           hotelData.value = res.data.result;
@@ -167,18 +220,106 @@
           // 处理评论
           comments.value = res.data.result.comments || [];
           console.log('评论数据:', comments.value);
+          checkCollected();
         } else {
           console.log('获取景点详情失败:', res.data);
         }
       },
-      fail: (err) => {
+      fail: (err: any) => {
         console.error('请求景点详情失败:', err);
       }
     });
   };
 
+  const checkCollected = async () => {
+    if (!userStore.token) { collected.value = false; return; }
+    try {
+      const bodyA = { productType: 'Attractions', pageNo: 1, pageSize: 100 } as any;
+      const resA = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+        data: bodyA
+      }) as ApiResp<any>;
+      let list: any[] = [];
+      if ((resA.statusCode === 200 || resA.statusCode === 0) && (resA.data.success || resA.data.code === 0)) {
+        list = extractCollectList(resA);
+      }
+      if (!list || list.length === 0) {
+        const resB = await uni.request({
+          url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+          method: 'POST',
+          header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+          data: { pageNo: 1, pageSize: 100 }
+        }) as ApiResp<any>;
+        if ((resB.statusCode === 200 || resB.statusCode === 0) && (resB.data.success || resB.data.code === 0)) {
+          list = extractCollectList(resB);
+        }
+      }
+      const pid = String(id.value);
+      const matched = (list || []).some((x: any) => {
+        const xid = String(x.productId ?? x.product_id ?? x.id ?? x.goodsId ?? x.productID ?? '');
+        const xtype = String(x.productType ?? x.type ?? '').toLowerCase();
+        return xid === pid && (xtype === 'attractions' || !xtype);
+      });
+      collected.value = matched;
+      console.log('checkCollected listLen', (list || []).length, 'ids', (list || []).map(i => i.productId || i.id), 'matched', matched);
+    } catch (e) {
+      collected.value = false;
+      console.log('checkCollected error', e);
+    }
+  };
+
+  const toggleCollect = async () => {
+    if (!userStore.token) { uni.showToast({ title: '请先登录', icon: 'none' }); return; }
+    if (collecting.value) return;
+    collecting.value = true;
+    try {
+      const desiredOp = collected.value ? 0 : 1;
+      console.log('toggleCollect start', { id: String(hotelData.value.id || id.value), desiredOp, collected: collected.value });
+      const dto = {
+        productId: String(hotelData.value.id || id.value),
+        productType: 'Attractions',
+        productImage: hotelData.value.imageUrl || '',
+        productName: hotelData.value.name || '',
+        operation: desiredOp
+      };
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/island/productCollect/collectProduct',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+        data: dto
+      }) as ApiResp<any>;
+      console.log('toggleCollect resp', { statusCode: res.statusCode, data: res.data });
+      if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 200 || res.data.code === 0)) {
+        collected.value = desiredOp === 1;
+        uni.showToast({ title: desiredOp === 1 ? '已收藏' : '已取消收藏', icon: 'success' });
+        await checkCollected();
+        console.log('toggleCollect final collected', collected.value);
+      } else {
+        const msg = res.data.message || '操作失败';
+        console.log('toggleCollect fail', msg);
+        if (desiredOp === 1 && (msg.includes('存在') || msg.toLowerCase().includes('exist'))) {
+          collected.value = true;
+          uni.showToast({ title: '已收藏', icon: 'success' });
+        } else if (desiredOp === 0 && (msg.includes('不存在') || msg.toLowerCase().includes('not exist'))) {
+          collected.value = false;
+          uni.showToast({ title: '已取消收藏', icon: 'success' });
+        } else {
+          uni.showToast({ title: msg, icon: 'none' });
+        }
+        await checkCollected();
+      }
+    } catch (e) {
+      uni.showToast({ title: '网络异常', icon: 'none' });
+      console.log('toggleCollect error', e);
+    } finally {
+      collecting.value = false;
+    }
+  };
+
   // 预览单张图片
-  const previewImage = (index) => {
+  const previewImage = (index: number) => {
     if (!hotelData.value.images || !Array.isArray(hotelData.value.images)) {
       console.log('没有可预览的图片');
       return;
@@ -199,7 +340,7 @@
   };
 
   // 创建订单
-  const creaOrder = (hotel) => {
+  const creaOrder = (hotel: Attraction) => {
     console.log('预订时的 productId:', hotel.id);
     if (hotel.ticketprice === 0) {
       // ...免费逻辑
@@ -248,7 +389,7 @@
         'X-Access-Token': userStore.token
       },
       data: orderData,
-      success: (res) => {
+      success: (res: UniApp.RequestSuccessCallbackResult) => {
         console.log("订单创建结果："+res.data);
         
         if (res.data.code === 200) {
@@ -289,7 +430,7 @@
           });
         }
       },
-      fail: (err) => {
+      fail: (err: any) => {
         console.error('创建订单失败', err);
         uni.showToast({
           title: '创建订单失败，请稍后重试',
@@ -323,10 +464,10 @@
           pageNo: 1,
           pageSize: 100
         }
-      });
-      if (res.data.success && res.data.result && Array.isArray(res.data.result.records)) {
+      }) as ApiResp<{ records: any[] }>;
+      if (res.data.success && res.data.result && Array.isArray((res.data.result as any).records)) {
         // 只要有 payStatus === 'PAID' 且 goodsId === 当前景点id
-        allowComment.value = res.data.result.records.some(item =>
+        allowComment.value = (res.data.result as any).records.some((item: any) =>
           String(item.goodsId) === String(id.value) && item.payStatus === 'PAID'
         );
       } else {
@@ -403,11 +544,11 @@
   };
 
   // 添加计算属性来控制显示的评论数量
-  const displayedComments = computed(() => showAllComments.value ? groupedComments.value : groupedComments.value.slice(0, 3));
-  const groupedComments = computed(() => {
-    const map = new Map();
-    (comments.value || []).forEach((c) => {
-      const key = c.userId || c.user_id || c.username || c.id || Math.random();
+  const displayedComments = computed<GroupedComment[]>(() => showAllComments.value ? groupedComments.value : groupedComments.value.slice(0, 3));
+  const groupedComments = computed<GroupedComment[]>(() => {
+    const map = new Map<string | number, GroupedComment>();
+    (comments.value || []).forEach((c: CommentItem) => {
+      const key: string | number = c.userId || c.user_id || (c.username as string) || (c.id as number) || Math.random();
       if (!map.has(key)) {
         map.set(key, {
           id: key,
@@ -419,7 +560,7 @@
           images: itemMergedImages(c)
         });
       } else {
-        const exist = map.get(key);
+        const exist = map.get(key)!;
         exist.comment = exist.comment ? exist.comment + '\n' + (c.comment || '') : (c.comment || '');
         exist.createTime = exist.createTime || c.createTime;
         exist.score = exist.score || c.score;
@@ -428,10 +569,10 @@
     });
     return Array.from(map.values());
   });
-  const itemMergedImages = (item) => {
-    const arr = [];
+  const itemMergedImages = (item: CommentItem): string[] => {
+    const arr: string[] = [];
     const imgs = item.images || item.imageList || item.pics || '';
-    if (Array.isArray(imgs)) arr.push(...imgs.filter(Boolean));
+    if (Array.isArray(imgs)) arr.push(...(imgs as string[]).filter(Boolean));
     if (typeof imgs === 'string') arr.push(...imgs.split(',').map(s => s.trim()).filter(Boolean));
     return arr;
   };
@@ -441,7 +582,7 @@
     showAllComments.value = true;
   };
 
-  const getCommentDetail = (id) => {
+  const getCommentDetail = (id: string | number) => {
     uni.request({
       url: 'https://island.zhangshuiyi.com/island/il-user-comments/CommentsDetail',
       method: 'GET',
@@ -458,12 +599,12 @@
     });
   };
 
-  const goToAllComments = (id) => {
+  const goToAllComments = (id: string | number) => {
     // 实现跳转到所有评论页面的逻辑
     console.log('跳转到所有评论页面', id);
   };
 
-  const extractImgs = (item) => {
+  const extractImgs = (item: CommentItem): string[] => {
     const imgs = item.images || item.imageList || item.pics || '';
     if (Array.isArray(imgs)) return imgs.filter(Boolean);
     if (typeof imgs === 'string') return imgs.split(',').map(s => s.trim()).filter(Boolean);
@@ -497,6 +638,12 @@
 .badge { padding: 4px 10px; background: #fff3cd; color: #946200; border-radius: 16px; font-size: 12px; }
 .badge.ghost { background: #e9f3ff; color: #1677FF; }
 .badge.type { background: #f0e9ff; color: #6C63FF; }
+.name-row { position: relative; display: flex; align-items: center; }
+.attraction-name { font-size: 18px; font-weight: 700; color: #333; }
+.collect-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #eee; border-radius: 9999rpx; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.collect-btn.collected { border-color: #FFB020; background: rgba(255,176,32,0.08); }
+.collect-text { font-size: 12px; color: #666; }
+.collect-btn.collected .collect-text { color: #FFB020; }
 .price-row {
   display: flex;
   align-items: baseline;
@@ -517,6 +664,8 @@
 .tag { padding: 6px 12px; background: #f0f2f5; border-radius: 14px; font-size: 12px; color: #666; }
 .tab-row { display: flex; gap: 12px; margin-bottom: 12px; }
 .tab { padding: 6px 10px; border-radius: 10px; background: #eef3ff; color: #3B82F6; font-size: 13px; }
+.collect-fab { position: absolute; right: 12px; top: 12px; display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #eee; border-radius: 9999rpx; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.collect-text { font-size: 12px; color: #666; }
 .tab.active { background: #dfe9ff; }
 .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 8px 0; }
 .info-item { display: flex; align-items: center; gap: 6px; color: #333; font-size: 14px; }

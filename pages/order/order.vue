@@ -28,43 +28,48 @@
 
       <view class="order-list">
         <!-- 无订单数据时显示 -->
-        <view v-if="filteredOrders.length === 0" class="no-order">
+        <view v-if="groupedOrders.length === 0" class="no-order">
           <text>暂无符合条件的订单数据</text>
         </view>
 
-        <!-- 动态渲染订单列表 -->
-        <view v-else v-for="(order, index) in filteredOrders" :key="order.id || index" class="order-item">
-          <view class="order-header">
-            <text class="order-title">{{ order.goodsName || '未知商品' }}</text>
-            <text class="order-status" :class="{
-              'waiting': order.payStatus === 'UNPAID',
-              'paid': order.payStatus === 'PAID',
-              'completed': order.payStatus === 'CANCEL'
-            }">
-              {{ order.payStatus === 'UNPAID' ? '待支付' :
-                order.payStatus === 'PAID' ? '已支付' :
-                  order.payStatus === 'CANCEL' ? '已取消' : '未知状态' }}
-            </text>
+        <!-- 动态渲染分组列表 -->
+        <view v-else v-for="group in groupedOrders" :key="group.key" class="order-item">
+          <view class="card-top">
+            <text class="order-price">¥ {{ group.totalAmount }}</text>
+            <view class="order-title-row">
+              <text class="order-title">{{ group.first.goodsName || '未知商品' }}</text>
+              <text class="type-tag" :class="{ 'pkg': group.isPackage }">{{ group.isPackage ? '套餐' : '单项' }}</text>
+            </view>
+            <text class="status-badge" :class="statusBadgeClass(group.first)">{{ statusBadgeText(group.first) }}</text>
           </view>
           <view class="order-info">
-            <image class="order-image"
-              :src="order.imageUrl" mode="aspectFill">
-            </image>
+            <image class="order-image" :src="group.first.imageUrl" mode="aspectFill"></image>
             <view class="order-details">
-              <text class="detail-text">创建时间：{{ order.createTime || '未知' }}</text>
-              <text class="detail-text">联系人：{{ order.createBy || '未知' }}</text>
-              <text class="detail-text">订单号：{{ order.orderSn || '未知' }}</text>
+              <text class="detail-text">订单号：{{ group.first.orderSn || '未知' }}</text>
+              <text class="detail-text">下单时间：{{ group.first.createTime || '未知' }}</text>
+              <text class="detail-text">到达时间：{{ getOrderStartDate(group.first) || '未知' }}</text>
             </view>
           </view>
           <view class="order-footer">
-            <text class="price">¥ {{ order.price || order.amount || 0 }}</text>
             <view class="button-group">
-<!-- v-if="order.payStatus === 'UNPAID'" -->
-              <button class="btn btn-default" v-if="order.payStatus === 'UNPAID'"
-                @click="deleteOrder(order)">取消订单</button>
+              <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-default" @click="deleteOrder(group.first)">取消订单</button>
+              <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(group.first)">立即支付</button>
+              <button v-if="group.isPackage && group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="payGroup(group)">立即支付</button>
+              <button v-if="!group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="getOrderDetailById1(group.first.orderSn)">查看详情</button>
+              <button v-if="group.isPackage" class="btn btn-default" @click="toggleGroup(group.key)">{{ expandedGroups[group.key] ? '收起' : '展开' }}</button>
+            </view>
+          </view>
 
-              <button v-if="order.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(order)">立即支付</button>
-              <button v-else class="btn btn-primary" @click="getOrderDetailById1(order.orderSn)">查看详情</button>
+          <view v-if="group.isPackage && expandedGroups[group.key]" class="package-list">
+            <view v-for="item in group.orders" :key="item.id || item.orderSn" class="package-item">
+              <image class="package-image" :src="item.imageUrl" mode="aspectFill"></image>
+              <view class="package-info">
+                <text class="package-title">{{ item.goodsName || '未知商品' }}</text>
+                <text class="package-price">¥ {{ item.price || item.amount || 0 }}</text>
+              </view>
+              <view class="package-actions">
+                <uni-icons v-if="item.payStatus === 'UNPAID'" type="close" size="20" color="#999" @click="deleteOrder(item)"></uni-icons>
+              </view>
             </view>
           </view>
         </view>
@@ -98,7 +103,7 @@
             </view>
             <view class="detail-row">
               <text class="label">订单金额：</text>
-              <text class="value">¥{{ currentOrderDetail.amount || '0' }}</text>
+              <text class="value order-price">¥{{ currentOrderDetail.amount || '0' }}</text>
             </view>
             <view class="detail-row">
               <text class="label">支付状态：</text>
@@ -152,6 +157,7 @@ const showDetailPopup = ref(false); // 控制弹窗显示
 const currentOrderDetail = ref(null); // 当前订单详情
 
 const DEBUG = false; // 调试时可设为true
+const expandedGroups = ref({});
 
 // 订单状态映射（去除已支付、待出行）
 const statusMap = {
@@ -202,6 +208,36 @@ function isOrderCompleted(order, now) {
   const endDate = new Date(endDateStr);
   if (isNaN(endDate.getTime())) return false;
   return order.payStatus === 'PAID' && now > endDate;
+}
+
+function isPackage(order) {
+  const key = order.mainOrder?.orderSn || order.mainOrderSn || order.batchId || '';
+  if (key) {
+    const count = orders.value.filter(o => (o.mainOrder?.orderSn || o.mainOrderSn || o.batchId || '') === key).length;
+    if (count > 1) return true;
+  }
+  const ct = order.createTime || '';
+  if (ct) {
+    const same = orders.value.filter(o => o.createTime === ct).length;
+    if (same > 1) return true;
+  }
+  return false;
+}
+
+function statusBadgeText(order) {
+  if (order.payStatus === 'UNPAID') return '待支付';
+  const now = new Date();
+  if (isOrderOngoing(order, now)) return '进行中';
+  if (isOrderCompleted(order, now)) return '已完成';
+  return '已支付';
+}
+
+function statusBadgeClass(order) {
+  if (order.payStatus === 'UNPAID') return 'status-waiting-badge';
+  const now = new Date();
+  if (isOrderOngoing(order, now)) return 'status-ongoing-badge';
+  if (isOrderCompleted(order, now)) return 'status-completed-badge';
+  return 'status-paid-badge';
 }
 
 // 根据当前标签和搜索关键词过滤订单
@@ -257,6 +293,33 @@ const filteredOrders = computed(() => {
 
   return result;
 });
+
+const groupedOrders = computed(() => {
+  const list = filteredOrders.value;
+  const map = new Map();
+  list.forEach(o => {
+    const key = o.mainOrder?.orderSn || o.mainOrderSn || o.batchId || (o.createTime || '');
+    const k = key || (o.orderSn || '');
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(o);
+  });
+  const arr = Array.from(map.entries()).map(([key, orders]) => {
+    const total = orders.reduce((s, it) => s + Number(it.price || it.amount || 0), 0);
+    const first = orders[0];
+    const isPkg = orders.length > 1 || isPackage(first);
+    return { key, orders, totalAmount: total, first, isPackage: isPkg };
+  });
+  arr.sort((a, b) => {
+    const pa = new Date(String(a.first.createTime || '').replace(/-/g, '/'));
+    const pb = new Date(String(b.first.createTime || '').replace(/-/g, '/'));
+    return pb.getTime() - pa.getTime();
+  });
+  return arr;
+});
+
+const toggleGroup = (key) => {
+  expandedGroups.value[key] = !expandedGroups.value[key];
+};
 
 
 // 搜索功能
@@ -601,6 +664,23 @@ function getBeijingTime() {
 }
 // 用法
 const now = getBeijingTime();
+
+function payGroup(group) {
+  try {
+    const unpaid = (group.orders || []).filter(o => o.payStatus === 'UNPAID');
+    if (unpaid.length === 0) {
+      uni.showToast({ title: '暂无待支付订单', icon: 'none' });
+      return;
+    }
+    const orderSns = unpaid.map(o => o.orderSn).filter(Boolean);
+    const items = unpaid.map(o => ({ name: o.goodsName, type: o.orderType, price: Number(o.price || o.amount || 0) }));
+    const url = `/pages/multiConfirmPay/multiConfirmPay?orderSns=${encodeURIComponent(JSON.stringify(orderSns))}&items=${encodeURIComponent(JSON.stringify(items))}&price=${group.totalAmount}`;
+    uni.navigateTo({ url });
+  } catch (e) {
+    console.log('payGroup error', e);
+    uni.showToast({ title: '无法发起支付', icon: 'none' });
+  }
+}
 </script>
 
 <style>
@@ -705,6 +785,104 @@ page {
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.order-price {
+  color: #333;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.order-title-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin: 0 20rpx;
+}
+
+.type-tag {
+  margin-left: 12rpx;
+  font-size: 22rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 100rpx;
+  background-color: #DBEAFE;
+  color: #5385F0;
+}
+
+.type-tag.pkg {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.status-badge {
+  font-size: 22rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 100rpx;
+}
+
+.status-waiting-badge {
+  background-color: #fff7e6;
+  color: #faad14;
+}
+
+.status-ongoing-badge {
+  background-color: #e6fffb;
+  color: #13c2c2;
+}
+
+.status-completed-badge {
+  background-color: #f0f0f0;
+  color: #888;
+}
+
+.status-paid-badge {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.package-list {
+  margin-top: 20rpx;
+}
+
+.package-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.package-image {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 8rpx;
+}
+
+.package-info {
+  flex: 1;
+  margin-left: 16rpx;
+}
+
+.package-title {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.package-price {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.package-actions {
+  width: 40rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .order-header {
   display: flex;
   justify-content: space-between;
@@ -757,17 +935,13 @@ page {
 
 .order-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding-top: 20rpx;
   border-top: 2rpx solid #f5f5f5;
 }
 
-.price {
-  color: #f3a200;
-  font-size: 32rpx;
-  font-weight: 500;
-}
+.price { display: none; }
 
 .button-group {
   display: flex;
@@ -902,5 +1076,9 @@ page {
 
 .status-cancel {
   color: #999;
+}
+
+.order-price{
+  color: #FFA620;
 }
 </style>

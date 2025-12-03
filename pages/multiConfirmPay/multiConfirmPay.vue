@@ -30,7 +30,6 @@
             <text class="date-week">{{ d.week }}</text>
             <text class="date-month">{{ d.month }}</text>
           </view>
-          <view v-if="showMore" class="date-chip more" @click="openCalendar">更多</view>
         </view>
         <view class="open-time">
           <text>开放时间： {{ openTime }}</text>
@@ -82,7 +81,7 @@ const form = ref({
 })
 
 const selectedDate = ref('')
-const showMore = ref(true)
+const showMore = ref(false)
 const dateOptions = ref([])
 const loadedDays = ref(0)
 const weeks = ['周日','周一','周二','周三','周四','周五','周六']
@@ -125,7 +124,7 @@ onLoad((options) => {
       const arr = JSON.parse(decodeURIComponent(options.orderSns))
       orderSns.value = Array.isArray(arr) ? arr : []
     }
-    addDays(3)
+    addDays(5)
     if (options.price) {
       const p = Number(options.price)
       if (!isNaN(p)) {
@@ -146,7 +145,7 @@ onLoad((options) => {
 
 const goBack = () => { uni.navigateBack() }
 
-const openCalendar = () => { addDays(2); showMore.value = false }
+// 已移除更多按钮，默认展开日期
 
 const handlePay = () => {
   if (isPaying.value) return

@@ -13,6 +13,10 @@
           <view class="tag tag-blue">精选</view>
           <view class="tag tag-border">{{ hotelData.category || '高档型' }}</view>
         </view>
+        <view class="price-inline">
+          <text class="price-chip">¥{{ displayPrice }}</text>
+          <text class="per-night">起 / 晚</text>
+        </view>
         <view class="score-row">
           <view class="score-left">
             <uni-rate :value="hotelData.rating || 4.7" size="18" readonly />
@@ -121,32 +125,7 @@
       </view>
     </view>
 
-    <!-- 日期选择 -->
-    <view class="date-picker-section">
-      <view class="date-picker-row">
-        <view class="date-picker-item">
-          <text class="date-label">入住</text>
-          <picker mode="date" :value="checkinDate" :start="todayStr" @change="onCheckinDateChange">
-            <view class="picker-value" :class="{ 'unselected': !checkinDate }">
-              {{ checkinDate || '请选择' }}
-            </view>
-          </picker>
-        </view>
-        <view class="date-divider">
-          <view class="divider-line"></view>
-          <text class="divider-text">至</text>
-          <view class="divider-line"></view>
-        </view>
-        <view class="date-picker-item">
-          <text class="date-label">退房</text>
-          <picker mode="date" :value="checkoutDate" :start="checkinDate || todayStr" @change="onCheckoutDateChange">
-            <view class="picker-value" :class="{ 'unselected': !checkoutDate }">
-              {{ checkoutDate || '请选择' }}
-            </view>
-          </picker>
-        </view>
-      </view>
-    </view>
+    
     <!-- 预订按钮吸底 -->
     <view class="book-bar">
       <button class="book-now-btn" @click="createOrder(hotelData)">立即预订</button>
@@ -164,33 +143,7 @@ let hotelId = ref('')
 let hotelData = ref({})
 const hotelImages = ref([])
 
-const checkinDate = ref('');
-const checkoutDate = ref('');
-const today = new Date();
 const pad = n => n < 10 ? '0' + n : n;
-const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-
-const onCheckinDateChange = (e) => {
-  checkinDate.value = e.detail.value;
-  // 如果退房日期早于入住日期，自动清空退房日期
-  if (checkoutDate.value && checkoutDate.value <= checkinDate.value) {
-    checkoutDate.value = '';
-    uni.showToast({
-      title: '退房日期已重置',
-      icon: 'none'
-    });
-  }
-};
-const onCheckoutDateChange = (e) => {
-  if (e.detail.value <= checkinDate.value) {
-    uni.showToast({
-      title: '退房日期不能早于入住日期',
-      icon: 'none'
-    });
-    return;
-  }
-  checkoutDate.value = e.detail.value;
-};
 
 const allowComment = ref(false); // 是否允许评论
 
@@ -283,23 +236,13 @@ const getDetailList = () => {
 }
 
 const createOrder = (hotel) => {
-  console.log('createOrder hotel:', hotel); // 打印 hotel
-  if (!hotel.id) {
-    uni.showToast({ title: '商品ID为空，无法下单', icon: 'none' });
-    return;
-  }
-  if (!checkinDate.value) {
-    uni.showToast({ title: '请选择入住日期', icon: 'none' });
-    return;
-  }
-  if (!checkoutDate.value) {
-    uni.showToast({ title: '请选择退房日期', icon: 'none' });
-    return;
-  }
-  // 拼接入住和退房时间
-  const travelStartDate = `${checkinDate.value} 14:00:00`;
-  const travelEndDate = `${checkoutDate.value} 12:00:00`;
-
+  if (!hotel.id) { uni.showToast({ title: '商品ID为空，无法下单', icon: 'none' }); return; }
+  const d = new Date();
+  const todayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  const nextStr = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
+  const travelStartDate = `${todayStr} 14:00:00`;
+  const travelEndDate = `${nextStr} 12:00:00`;
   const orderData = {
     contract: {
       contractName: userStore.userInfo.realname || '',
@@ -308,64 +251,36 @@ const createOrder = (hotel) => {
     items: [
       {
         bookInfo: {
-          date: checkinDate.value,
+          date: todayStr,
           fullname: userStore.userInfo.realname || '',
           idCardNo: userStore.userInfo.idCardNo || '',
           idCardType: 'ID_CARD',
           schedule: ''
         },
         productId: hotel.id,
-        productType: "Accommodations",
+        productType: 'Accommodations',
         quantity: 1
       }
     ],
     travelStartDate,
     travelEndDate
   };
-
-  console.log('下单参数：', JSON.stringify(orderData, null, 2));
-
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
     method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
-    },
+    header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
     data: orderData,
     success: (res) => {
       if (res.data.code === 200) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
         const orderSn = res.data.result.orderSn;
-        uni.navigateTo({
-          url: `/pages/confirmHotelOrder/confirmHotelOrder?id=${hotelData.value.id}&orderSn=${orderSn}&type=住宿&productId=${hotelData.value.id}`,
-          success: () => {
-            // 成功跳转后，可以添加一些逻辑，比如重置表单或更新状态
-          },
-          fail: (err) => {
-            uni.showToast({
-              title: '跳转失败，请稍后重试',
-              icon: 'none'
-            });
-          }
-        });
+        const itemsParam = encodeURIComponent(JSON.stringify([{ id: hotelData.value.id, name: hotelData.value.name, type: 'Accommodations', ticketprice: Number(hotelData.value.price || 0), price: Number(hotelData.value.price || 0), starttime: '14:00:00', endtime: '12:00:00' }]))
+        const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn]))
+        uni.navigateTo({ url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotelData.value.price || 0))}` })
       } else {
-        uni.showToast({
-          title: res.data.message || '订单创建失败',
-          icon: 'none'
-        });
+        uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
       }
     },
-    fail: (err) => {
-      uni.showToast({
-        title: '创建订单失败，请稍后重试',
-        icon: 'none'
-      });
-    }
+    fail: () => { uni.showToast({ title: '创建订单失败，请稍后重试', icon: 'none' }); }
   });
 };
 
@@ -393,6 +308,10 @@ const originalPrice = computed(() => {
   // 乘以1.3并四舍五入到整数
   return Math.round(price * 1.3);
   // 如果要保留一位小数用：return (price * 1.3).toFixed(1);
+});
+const displayPrice = computed(() => {
+  const v = Number(hotelData.value.price) || 0;
+  try { return v.toLocaleString('zh-CN'); } catch { return String(v); }
 });
 
 const comments = ref([]);
@@ -616,6 +535,24 @@ const toggleFacilities = () => {
   margin-left: 8rpx;
   font-size: 22rpx;
   color: #9ca3af;
+}
+.price-inline {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.price-chip {
+  background-color: #1890FF;
+  color: #fff;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.per-night {
+  color: #909399;
+  font-size: 24rpx;
 }
 .hotel-brief {
   margin-top: 10rpx;
