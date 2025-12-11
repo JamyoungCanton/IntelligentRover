@@ -147,7 +147,7 @@ const goBack = () => { uni.navigateBack() }
 
 // 已移除更多按钮，默认展开日期
 
-const handlePay = () => {
+const handlePay = async () => {
   if (isPaying.value) return
   if (!form.value.name || !form.value.phone || !form.value.idCardNo) {
     uni.showToast({ title: '请完善个人信息', icon: 'none' })
@@ -159,36 +159,115 @@ const handlePay = () => {
   }
 
   isPaying.value = true
-  uni.showLoading({ title: '支付处理中...' })
+  uni.showLoading({ title: '处理中...' })
 
-  const payEach = async () => {
-    for (const sn of orderSns.value) {
-      await new Promise((resolve) => {
-        uni.request({
-          url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-          method: 'POST',
-          header: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Access-Token': userStore.token,
-          },
-          data: { orderSn: sn },
-          success: (res) => { resolve(res) },
-          fail: (err) => { console.error('支付失败', err); resolve(err) }
-        })
-      })
+  try {
+    // 1. 如果没有订单号，先创建订单
+    if (!orderSns.value || orderSns.value.length === 0) {
+      const newSns = []
+      for (const item of items.value) {
+        const sn = await createOrderRequest(item)
+        if (sn) newSns.push(sn)
+      }
+      if (newSns.length === 0) throw new Error('订单创建失败')
+      orderSns.value = newSns
     }
-  }
 
-  payEach().then(() => {
+    // 2. 支付订单 (已移除，改为跳转到详情页支付)
+    // for (const sn of orderSns.value) {
+    //   await payOrderRequest(sn)
+    // }
+
+    // 3. 成功跳转
     uni.hideLoading()
     isPaying.value = false
-    uni.navigateTo({
-      url: `/pages/pay_success/pay_success?amount=${totalPrice.value}&orderId=${encodeURIComponent(orderSns.value.join(','))}&type=${encodeURIComponent('多商品')}`
+    
+    // 跳转到订单详情页
+    const allSns = JSON.stringify(orderSns.value);
+    uni.redirectTo({
+      url: `/pages/order/detail?orderSns=${encodeURIComponent(allSns)}`
     })
-  }).catch(() => {
+
+  } catch (err) {
+    console.error(err)
     isPaying.value = false
     uni.hideLoading()
-    uni.showToast({ title: '支付失败', icon: 'none' })
+    uni.showToast({ title: err.message || '支付失败', icon: 'none' })
+  }
+}
+
+const createOrderRequest = (item) => {
+  return new Promise((resolve, reject) => {
+    const getFullTime = (t, defaultT) => {
+      const time = t || defaultT
+      if (time.length === 5) return time + ':00'
+      return time
+    }
+    const startTime = getFullTime(item.starttime, '10:00:00')
+    const endTime = getFullTime(item.endtime, '22:00:00')
+    const dateStr = selectedDate.value
+    const startDateTime = `${dateStr} ${startTime}`
+    const endDateTime = `${dateStr} ${endTime}`
+
+    const orderData = {
+      contract: {
+        contractName: form.value.name,
+        contractPhone: form.value.phone
+      },
+      items: [
+        {
+          bookInfo: {
+            date: dateStr,
+            fullname: form.value.name,
+            idCardNo: form.value.idCardNo,
+            idCardType: "ID_CARD",
+            schedule: startTime
+          },
+          productId: item.id,
+          productType: item.type || "Attractions",
+          imageUrl: item.imageUrl || '',
+          quantity: 1
+        }
+      ],
+      travelStartDate: startDateTime,
+      travelEndDate: endDateTime
+    }
+    
+    uni.request({
+      url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token
+      },
+      data: orderData,
+      success: (res) => {
+        if (res.data.success && res.data.code === 200) {
+          resolve(res.data.result.orderSn)
+        } else {
+          reject(new Error(res.data.message || '创建订单失败'))
+        }
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+const payOrderRequest = (sn) => {
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${sn}`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': userStore.token,
+      },
+      success: (res) => { 
+        if (res.data.success) resolve(res)
+        else reject(new Error(res.data.message || '支付失败'))
+      },
+      fail: (err) => reject(err)
+    })
   })
 }
 </script>

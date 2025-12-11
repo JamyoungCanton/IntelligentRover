@@ -14,8 +14,7 @@
 
     <view class="intro-card">
       <view class="badge-row">
-        <text class="badge">{{ scenicLevel }}</text>
-        <text class="badge type">{{ hotelData.type }}</text>
+        <text class="badge">广东省珠海</text>
         <text class="badge ghost">可开电子发票</text>
       </view>
       <view class="name-row">
@@ -25,7 +24,8 @@
           <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
         </view>
       </view>
-      <text class="intro-desc">{{ introDescription }}</text>
+      <view class="open-time" v-if="hotelData.starttime && hotelData.endtime">开放时间：{{ formatTime(hotelData.starttime) }} - {{ formatTime(hotelData.endtime) }}</view>
+      <view class="intro-desc">{{ introDescription }}</view>
     </view>
     <view class="intro-spacer"></view>
 
@@ -129,17 +129,14 @@
   ]);
   const id = ref<string | number>(0);
   const pad = (n: number) => n < 10 ? '0' + n : n;
+  const formatTime = (timeStr: string | undefined) => {
+    if (!timeStr) return '';
+    return timeStr.split(':').slice(0, 2).join(':');
+  };
   const newComment = ref<string>('');
   const showAllComments = ref<boolean>(false);
   const allowComment = ref<boolean>(false);
   const commentDetail = ref<Record<string, unknown> | null>(null);
-  const scenicLevel = computed<string>(() => {
-    const r = Number(hotelData.value.rating || 4.6);
-    if (r >= 4.5) return '5A 景区';
-    if (r >= 3.5) return '4A 景区';
-    if (r >= 2.5) return '3A 景区';
-    return '景区';
-  });
   const introDescription = computed<string>(() => {
     return String(hotelData.value.description || '').replace(/<[^>]*>/g, '');
   });
@@ -339,101 +336,36 @@
     });
   };
 
-  // 创建订单
+  // 跳转到确认订单页面
   const creaOrder = (hotel: Attraction) => {
     console.log('预订时的 productId:', hotel.id);
     if (hotel.ticketprice === 0) {
       // ...免费逻辑
       return;
     }
-    // 获取餐厅运营时间
-    const startTime = (hotel.starttime || '10:00').length === 5
-      ? hotel.starttime + ':00'
-      : hotel.starttime || '10:00:00';
-    const endTime = (hotel.endtime || '22:00').length === 5
-      ? hotel.endtime + ':00'
-      : hotel.endtime || '22:00:00';
-    const d = new Date();
-    const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const startDateTime = `${dateStr} ${startTime}`;
-    const endDateTime = `${dateStr} ${endTime}`;
+    
+    // 不再直接创建订单，而是跳转到 multiConfirmPay 页面进行确认和支付
+    // 传递必要的商品信息
+    const itemsParam = encodeURIComponent(JSON.stringify([{
+      id: hotel.id,
+      name: hotel.name,
+      type: 'Attractions', // 明确类型
+      ticketprice: hotel.ticketprice,
+      price: hotel.ticketprice,
+      starttime: hotel.starttime || '10:00',
+      endtime: hotel.endtime || '22:00',
+      imageUrl: hotel.imageUrl || (hotel.images && hotel.images[0]) || ''
+    }]));
 
-    const orderData = {
-      contract: {
-        contractName: userStore.userInfo?.realname || '游客',
-        contractPhone: userStore.userInfo?.phone || '13800138000'
-      },
-      items: [
-        {
-          bookInfo: {
-            date: dateStr,
-            fullname: userStore.userInfo?.realname || '游客',
-            idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
-            idCardType: "ID_CARD",
-            schedule: startTime
-          },
-          productId: hotel.id,
-          productType: "Attractions",
-          imageUrl: hotel.imageUrl,
-          quantity: 1
-        }
-      ],
-      travelStartDate: startDateTime,
-      travelEndDate: endDateTime
-    };
-    uni.request({
-      url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-      method: 'POST',
-      header: {
-        'Content-Type': 'application/json',
-        'X-Access-Token': userStore.token
-      },
-      data: orderData,
-      success: (res: UniApp.RequestSuccessCallbackResult) => {
-        console.log("订单创建结果："+res.data);
-        
-        if (res.data.code === 200) {
-          uni.showToast({
-            title: '订单创建成功',
-            icon: 'success',
-            duration: 1500
-          });
-          const orderSn = res.data.result.orderSn;
-          const itemsParam = encodeURIComponent(JSON.stringify([{
-            id: hotelData.value.id,
-            name: hotelData.value.name,
-            type: hotelData.value.type,
-            ticketprice: hotelData.value.ticketprice,
-            price: hotelData.value.ticketprice,
-            starttime: hotelData.value.starttime,
-            endtime: hotelData.value.endtime
-          }]));
-          const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn]));
-          uni.navigateTo({
-            url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotelData.value.ticketprice || 0))}`,
-            success: () => {
-              // 跳转成功后的操作
-              getAttrictionDetail();
-            },
-            fail: (err) => {
-              console.error('页面跳转失败:', err);
-              uni.showToast({
-                title: '页面跳转失败',
-                icon: 'none'
-              });
-            }
-          });
-        } else {
-          uni.showToast({
-            title: '未开放，维护中',
-            icon: 'none'
-          });
-        }
-      },
-      fail: (err: any) => {
-        console.error('创建订单失败', err);
+    // orderSns 为空，表示还未创建订单
+    const orderSnsParam = encodeURIComponent(JSON.stringify([]));
+    
+    uni.navigateTo({
+      url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotel.ticketprice || 0))}`,
+      fail: (err) => {
+        console.error('页面跳转失败:', err);
         uni.showToast({
-          title: '创建订单失败，请稍后重试',
+          title: '页面跳转失败',
           icon: 'none'
         });
       }

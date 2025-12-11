@@ -55,7 +55,7 @@
               <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-default" @click="deleteOrder(group.first)">取消订单</button>
               <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(group.first)">立即支付</button>
               <button v-if="group.isPackage && group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="payGroup(group)">立即支付</button>
-              <button v-if="!group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="getOrderDetailById1(group.first.orderSn)">查看详情</button>
+              <button v-if="!group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="goToDetail(group.first.orderSn)">查看详情</button>
               <button v-if="group.isPackage" class="btn btn-default" @click="toggleGroup(group.key)">{{ expandedGroups[group.key] ? '收起' : '展开' }}</button>
             </view>
           </view>
@@ -406,6 +406,13 @@ const getOrderList = () => {
   });
 };
 
+// 跳转到订单详情页
+const goToDetail = (orderSn) => {
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${orderSn}`
+  });
+};
+
 
 // 根据订单ID查询订单详情  GET
 const getOrderDetailById1 = (orderSn) => {
@@ -597,7 +604,48 @@ const deleteOrder = (order) => {
 //   });
 // };
 
-// 立即支付跳转支付页面
+// 统一支付处理函数
+const handlePay = (orderSn) => {
+  if (!orderSn) {
+    uni.showToast({ title: '订单编号无效', icon: 'none' });
+    return;
+  }
+  
+  uni.showLoading({ title: '支付处理中...' });
+  
+  uni.request({
+    url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn}`,
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      console.log('支付响应:', res.data);
+      if (res.data.success) {
+        uni.showToast({ title: '支付成功', icon: 'success' });
+        // 延迟刷新列表
+        setTimeout(() => {
+          getOrderList();
+        }, 1500);
+      } else {
+        uni.showToast({
+          title: res.data.message || '支付失败',
+          icon: 'none'
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('支付请求失败:', err);
+      uni.showToast({ title: '网络请求失败', icon: 'none' });
+    },
+    complete: () => {
+      uni.hideLoading();
+    }
+  });
+};
+
+// 立即支付跳转支付页面或直接支付
 const payOrder = (order) => {
 	console.log('点击立即支付，order:', order);
 	uni.showLoading({ title: '刷新订单中...' });
@@ -612,31 +660,23 @@ const payOrder = (order) => {
 				const now = new Date();
 				const startDate = new Date(fixDateStr(result.travelStartDate));
 				const endDate = new Date(fixDateStr(result.travelEndDate));
-				console.log('接口返回travelStartDate:', result.travelStartDate, 'travelEndDate:', result.travelEndDate);
-				console.log('startDate:', startDate, 'endDate:', endDate, 'now:', now);
-				console.log('startDate.getTime():', startDate.getTime(), 'endDate.getTime():', endDate.getTime());
-				console.log('isNaN(startDate.getTime()):', isNaN(startDate.getTime()));
-				console.log('isNaN(endDate.getTime()):', isNaN(endDate.getTime()));
-				console.log('startDate <= now:', startDate <= now);
-				console.log('endDate < startDate:', endDate < startDate);
+				
 				if (
 					isNaN(startDate.getTime()) ||
 					isNaN(endDate.getTime()) ||
-					startDate <= now ||
+					endDate <= now ||
 					endDate < startDate
 				) {
 					uni.hideLoading();
-					console.log('日期校验不通过');
 					uni.showToast({ title: '旅游开始/结束时间无效，无法支付', icon: 'none' });
 					getOrderList();
 					return;
 				}
 				uni.hideLoading();
-				console.log('跳转到支付页:', order.orderSn);
-				uni.navigateTo({ url: `/pages/activityPay/activityPay?orderSn=${order.orderSn}` });
+        // 校验通过，调用支付接口
+        handlePay(order.orderSn);
 			} else {
 				uni.hideLoading();
-				console.log('订单状态不允许支付');
 				uni.showToast({ title: '订单状态已变更，请刷新订单列表', icon: 'none' });
 				getOrderList();
 			}
@@ -666,20 +706,25 @@ function getBeijingTime() {
 const now = getBeijingTime();
 
 function payGroup(group) {
-  try {
-    const unpaid = (group.orders || []).filter(o => o.payStatus === 'UNPAID');
-    if (unpaid.length === 0) {
-      uni.showToast({ title: '暂无待支付订单', icon: 'none' });
-      return;
-    }
-    const orderSns = unpaid.map(o => o.orderSn).filter(Boolean);
-    const items = unpaid.map(o => ({ name: o.goodsName, type: o.orderType, price: Number(o.price || o.amount || 0) }));
-    const url = `/pages/multiConfirmPay/multiConfirmPay?orderSns=${encodeURIComponent(JSON.stringify(orderSns))}&items=${encodeURIComponent(JSON.stringify(items))}&price=${group.totalAmount}`;
-    uni.navigateTo({ url });
-  } catch (e) {
-    console.log('payGroup error', e);
-    uni.showToast({ title: '无法发起支付', icon: 'none' });
+  const unpaid = (group.orders || []).filter(o => o.payStatus === 'UNPAID');
+  if (unpaid.length === 0) {
+    uni.showToast({ title: '暂无待支付订单', icon: 'none' });
+    return;
   }
+  
+  // 使用 group.key 作为主订单号进行支付
+  // 假设 group.key 是 mainOrderSn
+  const orderSn = group.key;
+  
+  uni.showModal({
+    title: '套餐支付',
+    content: `确认支付套餐订单？总金额：¥${group.totalAmount}`,
+    success: (res) => {
+      if (res.confirm) {
+        handlePay(orderSn);
+      }
+    }
+  });
 }
 </script>
 

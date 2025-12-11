@@ -1,81 +1,110 @@
 <template>
 	<view class="container">
-		<!-- 顶部导航栏 --> 
-		
-
-    <view class="hero">
-      <image :src="shopMainImage || foodDetails?.imageUrl" class="hero-img" mode="aspectFill" />
-    </view>
-
-    <view class="intro-card">
-      <view class="name-row">
-        <text class="attraction-name">{{ foodDetails?.name || '加载中...' }}</text>
-        <view class="collect-btn" :class="{ collected }" @tap="toggleCollect">
-          <uni-icons :type="collected ? 'star-filled' : 'star'" size="20" :color="collected ? '#FFB020' : '#007aff'" />
-          <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
-        </view>
+    <view class="main">
+      <view class="hero">
+        <image :src="shopMainImage || foodDetails?.imageUrl" class="hero-img" mode="aspectFill" />
       </view>
-      <view class="section-title">餐厅介绍</view>
-      <view class="info-row">
-        <view class="rating-line">
-          <uni-rate :value="foodDetails?.rating || 0" size="14" readonly></uni-rate>
-          <text class="rating-score">{{ foodDetails?.rating || 0 }}</text>
-        </view>
-        <view class="addr-right">
-          <uni-icons type="location" size="16" color="#999" />
-          <text class="addr-text">{{ foodDetails?.address || '暂无地址' }}</text>
-        </view>
-      </view>
-      <view class="info-row">
-        <uni-icons type="phone" size="16" color="#666" />
-        <text class="info-label">电话</text>
-        <text class="info-value">{{ foodDetails?.phone || '暂无电话' }}</text>
-      </view>
-      <view class="info-row">
-        <uni-icons type="time" size="16" color="#666" />
-        <text class="info-label">营业时间</text>
-        <text class="info-value">{{ formatTime(foodDetails?.starthour) }} - {{ formatTime(foodDetails?.endhour) }}</text>
-      </view>
-      <text class="intro-desc">{{ introText }}</text>
-    </view>
 
-
-    <view class="section ticket-section">
-      <view><text class="section-title">餐位费</text></view>
-      <view class="ticket-row">
-        <view class="ticket-left"><text class="ticket-type">费用</text><text class="ticket-price">￥{{ foodDetails?.price || 0 }}</text></view>
-        <button class="ticket-btn" @click="bookNow">立即购买</button>
-      </view>
-    </view>
-
-		<!-- 店铺实拍 -->
-		<view class="shop-photos" v-if="shopPhotos.length">
-			<view class="section-title">店铺实拍</view>
-			<scroll-view class="photo-scroll" scroll-x enable-flex>
-				<view class="photo-item" v-for="(photo, index) in shopPhotos" :key="index">
-					<image :src="photo" mode="aspectFill"></image>
-				</view>
-			</scroll-view>
-		</view>
-
-
-    <view class="reviews-card">
-      <view class="reviews-header"><text class="reviews-title">用户评价（{{ comments.length }}）</text></view>
-      <view v-if="displayedComments.length === 0" class="no-comments">暂无评价</view>
-      <view v-for="(item, idx) in displayedComments" :key="item.id || idx" class="review-item">
-        <view class="review-user">
-          <image :src="(item.avatar && String(item.avatar).replace(/[`\s]/g,'')) || '/static/my/default-avatar.png'" class="review-avatar" />
-          <view class="review-user-info">
-            <text class="review-username">{{ item.username || '匿名用户' }}</text>
-            <text class="review-time">{{ item.createTime }}</text>
+      <view class="intro-card">
+        <view class="name-row">
+          <text class="attraction-name">{{ foodDetails?.name || '加载中...' }}</text>
+          <view class="collect-btn" :class="{ collected }" @tap="toggleCollect">
+            <uni-icons :type="collected ? 'star-filled' : 'star'" size="20" :color="collected ? '#FFB020' : '#007aff'" />
+            <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
           </view>
         </view>
-        <view class="review-content">{{ item.comment }}</view>
-        <view v-if="itemMergedImages(item).length" class="review-images">
-          <image v-for="(img, i) in itemMergedImages(item)" :key="i" :src="img" class="review-img" mode="aspectFill" />
+        
+        <view class="section-header-line">
+          <text class="section-title-active">餐厅介绍</text>
+        </view>
+        
+        <view class="info-grid">
+          <!-- 第一行：评分 和 地址 -->
+          <view class="info-row-new">
+             <view class="rating-box">
+                <uni-rate :value="foodDetails?.rating || 4.6" size="14" readonly active-color="#FFB020" color="#E5E5E5" />
+                <text class="rating-num">{{ foodDetails?.rating || 4.6 }}</text>
+             </view>
+             <view class="address-box">
+                <text class="info-label-s">地址：</text>
+                <text class="info-val-s text-ellipsis">{{ foodDetails?.address || '暂无地址' }}</text>
+             </view>
+          </view>
+          
+          <!-- 第二行：电话 和 营业时间 -->
+          <view class="info-row-new">
+             <view class="phone-box">
+                <text class="info-label-s">电话：</text>
+                <text class="info-val-s">{{ foodDetails?.phone || '暂无' }}</text>
+             </view>
+             <view class="hours-box">
+                <text class="info-label-s">营业时间：</text>
+                <text class="info-val-s">{{ formatTime(foodDetails?.starthour) }} - {{ formatTime(foodDetails?.endhour) }}</text>
+             </view>
+          </view>
+        </view>
+        
+        <text class="intro-desc">{{ introText }}</text>
+      </view>
+
+
+      <view class="section ticket-section">
+        <view><text class="section-title">餐位费</text></view>
+        <view class="ticket-row">
+          <view class="ticket-left"><text class="ticket-type">费用</text><text class="ticket-price">￥{{ foodDetails?.price || 0 }}</text></view>
+          <button class="ticket-btn" @click="bookNow">立即购买</button>
         </view>
       </view>
-      <view v-if="!showAllComments && comments.length > 3" class="show-more" @click="toggleComments">查看更多</view>
+      
+      <!-- 菜单功能 (模仿图片效果) -->
+      <view class="section menu-section">
+        <view class="menu-header-row">
+          <text class="menu-title-large">菜品</text>
+          <view class="menu-view-all">
+            <text>查看全部</text>
+            <uni-icons type="right" size="14" color="#999" />
+          </view>
+        </view>
+        
+        <view class="menu-book-container">
+          <!-- 顶部金色夹子 -->
+          <view class="clip-top"></view>
+          <!-- 纸张主体 -->
+          <view class="menu-paper">
+            <text class="menu-paper-title">菜单({{ menuItems.length }})</text>
+            <view class="menu-grid">
+              <view class="menu-grid-item" v-for="(item, index) in menuItems" :key="index">
+                <text class="menu-item-en">{{ item.enName }}</text>
+                <view class="menu-item-zh-row">
+                  <text class="menu-item-zh">{{ item.name }}</text>
+                  <view class="red-seal"></view>
+                </view>
+              </view>
+            </view>
+          </view>
+          <!-- 底部金色横条 -->
+          <view class="bar-bottom"></view>
+        </view>
+      </view>
+
+      <view class="reviews-card">
+        <view class="reviews-header"><text class="reviews-title">用户评价（{{ comments.length }}）</text></view>
+        <view v-if="displayedComments.length === 0" class="no-comments">暂无评价</view>
+        <view v-for="(item, idx) in displayedComments" :key="item.id || idx" class="review-item">
+          <view class="review-user">
+            <image :src="(item.avatar && String(item.avatar).replace(/[`\s]/g,'')) || '/static/my/default-avatar.png'" class="review-avatar" />
+            <view class="review-user-info">
+              <text class="review-username">{{ item.username || '匿名用户' }}</text>
+              <text class="review-time">{{ item.createTime }}</text>
+            </view>
+          </view>
+          <view class="review-content">{{ item.comment }}</view>
+          <view v-if="itemMergedImages(item).length" class="review-images">
+            <image v-for="(img, i) in itemMergedImages(item)" :key="i" :src="img" class="review-img" mode="aspectFill" />
+          </view>
+        </view>
+        <view v-if="!showAllComments && comments.length > 3" class="show-more" @click="toggleComments">查看更多</view>
+      </view>
     </view>
 	</view>
 </template>
@@ -97,6 +126,14 @@ const shopPhotos = ref([]);
 const comments = ref([]);
 const showAllComments = ref(false);
 const displayedComments = computed(() => showAllComments.value ? comments.value : comments.value.slice(0, 3));
+
+// 菜单数据 (结构化数据)
+const menuItems = ref([
+  { name: '香辣酸菜鱼', enName: 'Spicy Pickled Fish' },
+  { name: '罐香坛子肉', enName: 'Fragrant Jar Meat' },
+  { name: '当家鲜炒黄牛肉', enName: 'Homemade Fried Yellow Beef' },
+  { name: '仿入湘当家坛子肉', enName: 'Imitation Hunan Dangjia Jar Meat' },
+]);
 
 // 获取餐厅详情
 const getRestaurantDetailsById = (id) => {
@@ -528,236 +565,114 @@ onShow(() => { checkCollected(); });
 .hero-img { width: 100%; height: 230px; object-fit: cover; }
 
 .intro-card { position: relative; margin: -40px 12px 12px 12px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.08); padding: 16px; z-index: 2; }
-.name-row { position: relative; display: flex; align-items: center; }
-.attraction-name { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 12px; }
+.name-row { position: relative; display: flex; align-items: center; margin-bottom: 24rpx; }
+.attraction-name { font-size: 22px; font-weight: bold; color: #333; flex: 1; padding-right: 140rpx; }
 .collect-btn { position: absolute; right: 0; top: 0; transform: translateY(0); display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #007aff; border-radius: 30rpx; padding: 10rpx 30rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 120rpx; height: 60rpx; justify-content: center; }
 .collect-btn.collected { border-color: #FFB020; background: rgba(255,176,32,0.08); }
 .collect-text { font-size: 28rpx; color: #007aff; }
 .collect-btn.collected .collect-text { color: #FFB020; }
-.info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.rating-line { display: flex; align-items: center; gap: 8px; }
-.rating-score { font-size: 24rpx; color: #FF9800; }
-.addr-right { display: flex; align-items: center; gap: 6px; color: #666; }
-.addr-text { max-width: 52vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.info-label { color: #333; font-size: 15px;  }
-.info-value { color: #666; font-size: 15px; margin-left: auto; }
-.intro-desc { margin-top: 8px; font-size: 14px; color: #444; line-height: 1.7; }
 
-/* 顶部导航栏 */
-.header {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	background-color: #fff;
-	z-index: 100;
-}
+.section-header-line { margin-bottom: 20rpx; border-bottom: 1px solid #f0f0f0; padding-bottom: 16rpx; }
+.section-title-active { font-size: 16px; font-weight: 600; color: #FF7A45; border-bottom: 2px solid #FF7A45; padding-bottom: 14rpx; display: inline-block; }
 
-.header-content {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	height: 88rpx;
-	padding: 0 32rpx;
-	position: relative;
-}
+.info-grid { margin-bottom: 20rpx; }
+.info-row-new { display: flex; align-items: center; margin-bottom: 16rpx; }
+.rating-box, .phone-box { width: 42%; flex-shrink: 0; display: flex; align-items: center; gap: 10rpx; }
+.rating-num { font-size: 28rpx; font-weight: 600; color: #333; }
+.address-box, .hours-box { flex: 1; display: flex; align-items: center; overflow: hidden; }
+.address-box .info-label-s, .hours-box .info-label-s { flex-shrink: 0; }
+.text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 
-.back-icon {
-	position: absolute;
-	left: 32rpx;
-	padding: 10rpx;
-	z-index: 101;
-}
+.info-label-s { font-size: 26rpx; color: #666; }
+.info-val-s { font-size: 26rpx; color: #333; font-weight: 500; }
 
-.share-icon {
-	position: absolute;
-	right: 32rpx;
-	padding: 10rpx;
-	z-index: 101;
-}
-
-.header-title {
-	flex: 1;
-	text-align: center;
-	font-size: 32rpx;
-	font-weight: 500;
-	color: #333;
-}
+.intro-desc { margin-top: 16rpx; font-size: 28rpx; color: #444; line-height: 1.6; }
 
 /* 确保主内容区域不被头部遮挡 */
 .main {
-	margin-top: calc(88rpx + var(--status-bar-height));
+	/* margin-top: calc(88rpx + var(--status-bar-height)); */
+  /* 移除自定义导航栏的顶部边距 */
+  margin-top: 0;
 }
 
-/* 店铺图片 */
-.shop-image {
-	width: 100%;
-	height: 400rpx;
-	overflow: hidden;
+.section { margin: 24rpx 24rpx; padding: 24rpx; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.section-title { font-size: 18px; font-weight: bold; margin-bottom: 20rpx; color: #333; }
+.ticket-row { display: flex; align-items: center; justify-content: space-between; }
+.ticket-left { display: flex; align-items: baseline; gap: 12rpx; }
+.ticket-type { font-size: 28rpx; color: #666; }
+.ticket-price { font-size: 36rpx; color: #FF5A32; font-weight: 700; }
+.ticket-btn { background: #FF7A45; color: #fff; padding: 10rpx 40rpx; border-radius: 40rpx; font-size: 28rpx; line-height: 1.5; margin: 0; }
+
+/* 菜单 - 新样式 */
+.menu-section { background-color: #ffff; box-shadow: none !important; padding: 0 24rpx !important; }
+.menu-header-row { display: flex;margin-top: 20rpx; justify-content: space-between; align-items: center; margin-bottom: 16rpx; padding: 0 12rpx; }
+.menu-title-large { font-size: 36rpx; font-weight: 800; color: #333; }
+.menu-view-all { display: flex; align-items: center; margin-top: 20rpx;gap: 4rpx; font-size: 26rpx; color: #999; }
+
+.menu-book-container { position: relative; padding-bottom: 24rpx; }
+.clip-top { 
+  width: 120rpx; 
+  height: 30rpx; 
+  background: linear-gradient(to bottom, #FAD961, #F76B1C); 
+  margin: 0 auto; 
+  position: relative; 
+  z-index: 2; 
+  border-radius: 8rpx 8rpx 0 0; 
+  box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.2);
+}
+.clip-top::after {
+  content: ''; position: absolute; left: 50%; bottom: -4rpx; transform: translateX(-50%);
+  width: 140rpx; height: 12rpx; background: #FAD961; border-radius: 6rpx;
 }
 
-.shop-image image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	/* 裁剪图片以填满容器 */
+.menu-paper {
+  position: relative;
+  background-color: #FDFBF7;
+  background-image: radial-gradient(#E8E0D5 1px, transparent 1px);
+  background-size: 20px 20px;
+  border-radius: 8rpx;
+  padding: 40rpx 32rpx 60rpx 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  margin-top: -10rpx;
+  z-index: 1;
+  border: 1px solid #EAE0D0;
+}
+/* 右上角卷角效果 (简单模拟) */
+.menu-paper::before {
+  content: ''; position: absolute; top: 0; right: 0;
+  border-width: 0 40rpx 40rpx 0;
+  border-style: solid;
+  border-color: #F1EBE0 #fff #F1EBE0 #EAE0D0;
+  display: block; width: 0;
+  box-shadow: -2rpx 2rpx 4rpx rgba(0,0,0,0.05);
 }
 
-/* 店铺信息 */
-.shop-info {
-	padding: 15px;
-	background-color: #fff;
-	margin-bottom: 10px;
-}
+.menu-paper-title { font-size: 32rpx; font-weight: bold; color: #333; margin-bottom: 32rpx; display: block; }
 
-.shop-name {
-	font-size: 22px;
-	font-weight: bold;
-	margin-bottom: 10px;
-}
+.menu-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32rpx 0; }
+.menu-grid-item { width: 48%; }
+.menu-item-en { font-size: 20rpx; color: #A0522D; margin-bottom: 4rpx; display: block; font-family: serif; }
+.menu-item-zh-row { display: flex; align-items: center; gap: 8rpx; }
+.menu-item-zh { font-size: 30rpx; font-weight: bold; color: #000; font-family: "KaiTi", "STKaiti", serif; }
+.red-seal { width: 16rpx; height: 16rpx; border: 1px solid #D32F2F; border-radius: 50%; position: relative; opacity: 0.7; }
+.red-seal::after { content: '味'; font-size: 10rpx; color: #D32F2F; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.8); }
 
-.shop-rating {
-	display: flex;
-	align-items: center;
-}
-
-.rating {
-	font-size: 18px;
-	font-weight: bold;
-	margin-left: 5px;
-}
-
-.monthly-sales,
-.average-price {
-	margin-left: 15px;
-	color: #666;
-}
-
-/* 功能按钮 */
-.function-buttons {
-	display: flex;
-	justify-content: space-around;
-	padding: 15px;
-	background-color: #fff;
-	margin-bottom: 10px;
-}
-
-.function-item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	width: 80px;
-}
-
-.function-item text {
-	margin-top: 5px;
-	font-size: 14px;
-}
-
-.section { margin: 24px 0 0 0; padding: 18px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(59,130,246,0.04); }
-.section-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
-.ticket-section { margin: 16px 12px; }
-.ticket-row { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.ticket-left { display: flex; align-items: baseline; gap: 10px; }
-.ticket-type { font-size: 16px; color: #333; }
-.ticket-price { font-size: 20px; color: #FF5A32; font-weight: 700; }
-.ticket-btn { background: #1677FF; color: #fff; padding: 3px 16px; border-radius: 10px; border: none; font-size: 14px; margin-right: 5rpx;}
-
-/* 餐厅介绍 */
-.restaurant-intro {
-	background-color: #fff;
-	padding: 15px;
-	margin-bottom: 10px;
-}
-
-.section-title {
-	font-size: 18px;
-	font-weight: bold;
-	margin-bottom: 10px;
-}
-
-.intro-content {
-	position: relative;
-}
-
-.intro-text {
-	line-height: 1.6;
-	transition: all 0.3s ease;
-}
-
-.intro-text.collapsed {
-	display: -webkit-box;
-	-webkit-line-clamp: 1;
-	/* 修改为1行 */
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	max-height: 1.6em;
-}
-
-.unfold-text {
-	color: #007AFF;
-	margin-top: 10px;
-}
-
-.fold-text {
-	color: #007AFF;
-	margin-top: 10px;
-}
-
-.unfold {
-	display: flex;
-	justify-content: center;
+.bar-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 24rpx;
+  background: #FAD961;
+  border-radius: 0 0 12rpx 12rpx;
+  z-index: 2;
+  box-shadow: 0 -2rpx 4rpx rgba(0,0,0,0.1);
 }
 
 /* 店铺实拍 */
-.shop-photos {
-	background-color: #fff;
-	padding: 15px;
-	margin-bottom: 10px;
-}
+.shop-photos { margin: 24rpx 24rpx; padding: 24rpx; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.photo-scroll { display: flex; overflow-x: auto; white-space: nowrap; }
+.photo-item { width: 220rpx; height: 160rpx; margin-right: 16rpx; flex-shrink: 0; border-radius: 8rpx; overflow: hidden; }
+.photo-item image { width: 100%; height: 100%; }
 
-.photo-scroll {
-	display: flex;
-	overflow-x: auto;
-	white-space: nowrap;
-	padding: 10px 0;
-	scrollbar-width: none;
-	-ms-overflow-style: none;
-}
-
-.photo-scroll::-webkit-scrollbar {
-	display: none;
-}
-
-.photo-item {
-	display: inline-block;
-	flex: 0 0 auto;
-	width: 200px;
-	/* 增加宽度 */
-	height: 130px;
-	/* 增加高度 */
-	margin-right: 15px;
-	border-radius: 10px;
-	overflow: hidden;
-	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-	transition: transform 0.3s ease;
-}
-
-.photo-item:last-child {
-	margin-right: 0;
-}
-
-.photo-item:hover {
-	transform: scale(1.03);
-}
-
-.photo-item image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.reviews-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 16px 12px; padding: 16px; }
+.reviews-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 24rpx; padding: 24rpx; }
 .reviews-header { margin-bottom: 12px; }
 .reviews-title { font-size: 18px; font-weight: 700; color: #333; }
 .no-comments { text-align: center; color: #999; padding: 16px 0; }
@@ -772,139 +687,4 @@ onShow(() => { checkCollected(); });
 .review-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; }
 .show-more { display: flex; align-items: center; justify-content: center; padding: 20rpx 0; color: #3B82F6; font-size: 26rpx; gap: 8rpx; }
 
-/* 推荐菜品 */
-.recommended-dishes {
-	background-color: #fff;
-	padding: 15px;
-	margin-bottom: 10px;
-}
-
-.dishes-scroll {
-	display: flex;
-	overflow-x: auto;
-	white-space: nowrap;
-	padding: 10px 0;
-	scrollbar-width: none;
-	-ms-overflow-style: none;
-}
-
-.dishes-scroll::-webkit-scrollbar {
-	display: none;
-}
-
-.dish-item {
-	display: inline-block;
-	flex: 0 0 auto;
-	width: 200px;
-	margin-right: 15px;
-	border-radius: 10px;
-	overflow: hidden;
-	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-	transition: transform 0.3s ease;
-}
-
-.dish-item:last-child {
-	margin-right: 0;
-}
-
-.dish-item:hover {
-	transform: scale(1.03);
-}
-
-.dish-item image {
-	width: 100%;
-	height: 200px;
-	object-fit: cover;
-	margin-bottom: 10px;
-}
-
-.dish-name {
-	font-weight: bold;
-	margin-bottom: 5px;
-	padding: 0 10px;
-}
-
-.dish-desc {
-	color: #666;
-	font-size: 14px;
-	margin-bottom: 5px;
-	padding: 0 10px;
-}
-
-.dish-price {
-	color: #FF6B6B;
-	font-weight: bold;
-	padding: 0 10px;
-	margin-bottom: 10px;
-}
-
-/* 立即预订按钮 */
-/* 移除固定底部按钮，改为票务区按钮 */
-
-.time-picker-section {
-	background-color: #ffffff;
-	border-radius: 10rpx;
-	padding: 20rpx;
-	margin: 20rpx;
-	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.date-picker {
-	display: flex;
-	align-items: center;
-	justify-content: space-between; /* 左右分布 */
-	margin: 16px 0;
-	padding: 12px 18px;
-	border-radius: 12px;
-	background: #f8fafc;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	border: 1px solid #e6e6e6;
-}
-
-.date-picker text {
-	font-size: 16px;
-	color: #222;
-	font-weight: 500;
-	margin-right: 10px;
-}
-
-.picker-value {
-	display: inline-block;
-	min-width: 110px;
-	text-align: center;
-	color: #007aff;
-	font-size: 16px;
-	background: #fff;
-	border-radius: 8px;
-	padding: 8px 18px;
-	border: 1.5px solid #e0e0e0;
-	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-	transition: border-color 0.2s, box-shadow 0.2s;
-	cursor: pointer;
-}
-
-.picker-value:active,
-.picker-value:focus {
-	border-color: #007aff;
-	box-shadow: 0 2px 8px rgba(0,122,255,0.08);
-}
-
-.picker-value.unselected {
-	color: #bbb;
-	border-color: #eee;
-	background: #f5f5f5;
-}
-
-.loading-placeholder {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	background-color: rgb(255, 255, 255);
-	border-radius: 10px;
-}
 </style>

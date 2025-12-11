@@ -23,17 +23,11 @@
 
     <!-- 帖子内容 -->
     <view class="post-content">
-      <view class="post-meta">
-        <text class="meta-date">{{ formatChineseDate(postDetailList.updateTime) }}</text>
-      </view>
-      <view class="app-title">{{ postDetailList.title}}</view>
-      <view class="app-content">
-        {{ postDetailList.content }}
-      </view>
-      <view class="divider"></view>
-      <view class="image-grid" v-if="postDetailList.images && postDetailList.images.length > 0">
-        <image v-for="(img, idx) in postDetailList.images.slice(0,2)" :key="idx" :src="img.url" mode="widthFix" class="grid-image" />
-      </view>
+      <swiper class="media-swiper" v-if="postDetailList.images && postDetailList.images.length > 0" indicator-dots circular>
+        <swiper-item v-for="(img, idx) in postDetailList.images" :key="idx">
+          <image :src="img.url" mode="aspectFill" class="media-image" />
+        </swiper-item>
+      </swiper>
       <view class="recommend-card">
         <view class="rec-title">{{ recommendTitle }}</view>
         <view class="rec-desc">{{ recommendDesc }}</view>
@@ -98,20 +92,24 @@
     <!-- 底部操作栏 -->
     <view class="footer-bar">
       <view class="bar-icon-deta">
-        <view class="bar-item" @click="addLikes">
-          <uni-icons type="heart" size="24" :color="postDetailList.liked ? '#ff0000' : '#666'"></uni-icons>
-          <text class="data-detail">{{ postDetailList.likes }}</text>
+        <view class="bar-item column" @click="addLikes">
+          <image class="bar-icon" :src="likeIcon" mode="widthFix" />
+          <text class="data-detail data-count">{{ postDetailList.likes }}</text>
         </view>
-        
-        <view class="bar-item" @click="addCollect">
-          <uni-icons type="star" size="24" :color="postDetailList.collected ? '#ff0000' : '#666'" ></uni-icons>
-          <text class="data-detail">{{ postDetailList.collect }}</text>
+        <view class="bar-item column" @click="addCollect">
+          <image class="bar-icon" :src="collectIcon" mode="widthFix" />
+          <text class="data-detail data-count">{{ postDetailList.collect }}</text>
+        </view>
+        <view class="bar-item column share-item">
+          <image class="bar-icon" :src="shareIcon" mode="widthFix" />
+          <text class="data-label">分享</text>
+          <button class="share-overlay" open-type="share"></button>
         </view>
         <view class="ava-input">
-          <view class="bar-input" @click="showEditComment">说点什么...</view>
+          <view class="bar-input" @click="showEditComment">写评论..</view>
+          <button class="copy-btn" @click="copyHomework">一键抄作业</button>
         </view>
       </view>
-      
     </view>
 
     <!-- 评论框 -->
@@ -151,7 +149,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
@@ -620,6 +618,49 @@ const openRecommend = () => {
   uni.showToast({ title: '敬请期待', icon: 'none' });
 };
 
+const likeIcon = computed(() => postDetailList.value.liked ? '/static/activity/heart_filled.png' : '/static/activity/heart.png');
+const collectIcon = computed(() => postDetailList.value.collected ? '/static/itinerary/star.png' : '/static/itinerary/no-star.png');
+const shareIcon = '/static/hotel-attctive/share.png';
+
+const buildHomeworkText = computed(() => {
+  const title = postDetailList.value.title || '';
+  const content = postDetailList.value.content || '';
+  return `【抄作业】${title}\n${content}`;
+});
+const copyHomework = () => {
+  commentContent.value = `看了这篇：${postDetailList.value.title || ''}，mark一下～`;
+  uni.setClipboardData({
+    data: buildHomeworkText.value,
+    success: () => {
+      uni.showToast({ title: '已复制内容', icon: 'success' });
+    }
+  });
+  showEditComment();
+};
+onShareAppMessage(() => {
+  const pid = postId.value?.id || ''
+  const title = postDetailList.value.title || '帖子'
+  const imageUrl = (postDetailList.value.images && postDetailList.value.images[0] && postDetailList.value.images[0].url) ? postDetailList.value.images[0].url : ''
+  const shareFrom = userStore.userInfo?.id || ''
+  return {
+    title,
+    path: `/pages/post/postDetail?id=${pid}&shareFrom=${shareFrom}`,
+    imageUrl
+  }
+})
+
+onShareTimeline(() => {
+  const pid = postId.value?.id || ''
+  const title = postDetailList.value.title || '帖子'
+  const imageUrl = (postDetailList.value.images && postDetailList.value.images[0] && postDetailList.value.images[0].url) ? postDetailList.value.images[0].url : ''
+  const shareFrom = userStore.userInfo?.id || ''
+  return {
+    title,
+    query: `id=${pid}&shareFrom=${shareFrom}&shareType=timeline`,
+    imageUrl
+  }
+})
+
 function goBack() {
   const pages = getCurrentPages();
   if (pages.length > 1) {
@@ -744,20 +785,19 @@ page {
   border-bottom: solid 1px #eee;
   padding-bottom: 20rpx;
 
-  swiper {
+  .media-swiper {
     width: 100%;
-    height: 400rpx;
+    height: 420rpx;
     background-color: #fff;
     margin-bottom: 20rpx;
-
-    swiper-item {
-      width: 100%;
-      height: 100%;
-
-      image {
-        width: 100%;
-      }
-    }
+    border-radius: 16rpx;
+    overflow: hidden;
+  }
+  .media-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 16rpx;
   }
 
   .app-title {
@@ -1013,10 +1053,11 @@ page {
   height: 100rpx;
   background-color: #fff;
   box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
-  // padding: 0 25rpx;
+  padding: 0 25rpx;
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
 
   
   .bar-ava {
@@ -1035,17 +1076,16 @@ page {
     align-items: center;
     align-content: center;
     height: 100%;
-    width: 70%;
+    width: 50%;
   }
 
   .bar-input {
-    width: 400rpx;
+    width: 300rpx;
     height: 80rpx;
     border-radius: 28rpx;
     background-color: #eee;
     padding: 0 20rpx;
     font-size: 28rpx;
-    margin-right: 10px;
     display: flex;
     align-items: center;
     color: #999;
@@ -1054,6 +1094,12 @@ page {
     display: flex;
     flex-direction: row;
     align-items: center;
+  }
+
+  .bar-icon {
+    width: 36rpx;
+    height: 36rpx;
+    margin-right: 10rpx;
   }
 
  .bar-item {
@@ -1066,6 +1112,34 @@ page {
     padding: 0 20rpx;
     height: 100%;
     justify-content: center;
+  }
+  .column {
+    flex-direction: column;
+  }
+  .data-count {
+    margin-top: 6rpx;
+    font-size: 22rpx;
+    color: #999;
+    margin-right: 18rpx;
+  }
+  .data-label{
+    margin-top: 6rpx;
+    font-size: 22rpx;
+    color: #666;
+  }
+  .share-item{
+    position: relative;
+  }
+  .share-overlay{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+    opacity: 0;
   }
   .bar-pointer {
     font-size: 300rpx;
@@ -1080,6 +1154,19 @@ page {
   .bar-text{
     font-size: 300rpx;
     font-weight: 700;
+  }
+
+  .copy-btn{
+    min-width: 200rpx;
+    height: 72rpx;
+    line-height: 72rpx;
+    text-align: center;
+    background-color: #2d8cf0;
+    color: #fff;
+    border-radius: 36rpx;
+    font-size: 28rpx;
+    padding: 0 24rpx;
+    margin-left: 16rpx;
   }
 }
 

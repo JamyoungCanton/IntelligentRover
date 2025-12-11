@@ -19,6 +19,12 @@
 			}
 		},
 		{
+			"path": "pages/order/detail",
+			"style": {
+				"navigationBarTitleText": "订单详情"
+			}
+		},
+		{
 			"path": "pages/my/my",
 			"style": {
 				"navigationBarTitleText": "我的"
@@ -194,19 +200,19 @@
 		{
 			"path": "pages/foodDetails/foodDetails",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "餐厅详情"
 			}
 		},
 		{
 			"path": "pages/hotelDetail/hotelDetail",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "酒店详情"
 			}
 		},
 		{
 			"path": "pages/attractionDetail/attractionDetail",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "景区详情"
 			}
 		},
 		{
@@ -245,12 +251,14 @@
 				"navigationBarTitleText": ""
 			}
 		},
-		{
-			"path": "pages/post/postDetail",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
+      {
+          "path": "pages/post/postDetail",
+          "style": {
+                "navigationBarTitleText": "",
+                "enableShareAppMessage": true,
+                "enableShareTimeline": true
+          }
+      },
 		{
 			"path": "pages/historical-Orders/historical-Orders",
 			"style": {
@@ -365,7 +373,7 @@
 				"pagePath": "pages/my/my"
 			},
 			{
-				"pagePath": "pages/ticketPoints/ticketPointsTab"
+				"pagePath": "pages/ticketPoints/ticketPoints"
 			}
 		]
 	},

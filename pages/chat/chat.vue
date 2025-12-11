@@ -1720,8 +1720,65 @@ const handleItemClick = (item) => {
 
 };
 
+// 根据名称兜底查ID（当工作流未返回id时）
+const resolveIdByName = async (productType, name) => {
+  try {
+    const n = String(name || '').trim();
+    if (!n) return '';
+    if (productType === 'Attractions') {
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/product/ilAttractions/list',
+        method: 'GET',
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Access-Token': userStore.token || '' },
+        data: { pageNo: 1, pageSize: 100 }
+      });
+      const list = res?.data?.result?.records || [];
+      const found = list.find(i => String(i.name || '').includes(n));
+      return found?.id ? String(found.id) : '';
+    }
+    if (productType === 'Accommodations') {
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/product/ilAccommodations/list',
+        method: 'GET',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token || '' },
+        data: { pageNo: 1, pageSize: 100 }
+      });
+      const list = res?.data?.result?.records || [];
+      const found = list.find(i => String(i.name || '').includes(n));
+      return found?.id ? String(found.id) : '';
+    }
+    if (productType === 'Dining') {
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/product/ilDining/list',
+        method: 'GET',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token || '' },
+        data: { pageNo: 1, pageSize: 100 }
+      });
+      const list = res?.data?.result?.records || [];
+      const found = list.find(i => String(i.name || '').includes(n));
+      return found?.id ? String(found.id) : '';
+    }
+    if (productType === 'Activities') {
+      const res = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/il-package/list',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token || '' },
+        data: JSON.stringify({ type: null })
+      });
+      const list = res?.data?.result || [];
+      const found = list.find(i => String(i.packname || i.title || '').includes(n));
+      return found?.id ? String(found.id) : '';
+    }
+    // 运输类暂不做兜底（参数较多，避免误配）
+    return '';
+  } catch (e) {
+    console.log('resolveIdByName error', e);
+    return '';
+  }
+};
+
 // 一键下单：从最后一条 AI 回复中提取商品并创建订单
-const oneClickOrder = () => {
+const oneClickOrder = async () => {
   if (!userStore.token) {
     uni.showToast({
       title: '未登录,请先登录',
@@ -1756,11 +1813,15 @@ const oneClickOrder = () => {
     return;
   }
 
+  uni.showLoading({ title: '准备订单中...' });
+
   // 去重（按 id + 类型）
   const seen = new Set();
-  const itemsForOrder = rawItems.reduce((acc, cur) => {
+  const itemsForOrder = [];
+
+  for (const cur of rawItems) {
     const key = `${cur.type}-${cur.id}`;
-    if (seen.has(key)) return acc;
+    if (seen.has(key)) continue;
     seen.add(key);
 
     // 映射为后端 productType
@@ -1772,14 +1833,93 @@ const oneClickOrder = () => {
       Attraction: 'Attractions'
     };
     const productType = typeMap[cur.type];
-    if (!productType) return acc;
+    if (!productType) continue;
 
-    acc.push({
-      productId: cur.id,
-      productType
+    // 兜底ID：若未返回id，尝试按名称查询列表获取id
+    let productId = String(cur.id || '').trim();
+    if (!productId) {
+      productId = await resolveIdByName(productType, cur.content);
+      if (!productId) {
+        console.log('跳过无id商品', cur);
+        continue;
+      }
+    }
+
+    // 获取价格
+    let price = 0;
+    let starttime = '';
+    let endtime = '';
+    try {
+      let apiUrl = '';
+      let isPackage = false;
+      
+      if (productType === 'Attractions') {
+        apiUrl = 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById';
+      } else if (productType === 'Accommodations') {
+        apiUrl = 'https://island.zhangshuiyi.com/island/product/ilAccommodations/queryById';
+      } else if (productType === 'Transportation') {
+        apiUrl = 'https://island.zhangshuiyi.com/island/product/ilTransportation/queryById';
+      } else if (productType === 'Dining') {
+        apiUrl = 'https://island.zhangshuiyi.com/island/product/ilDining/queryById';
+      } else if (productType === 'Activities') {
+         isPackage = true;
+         apiUrl = `https://island.zhangshuiyi.com/island/il-package/get/${productId}`;
+      }
+
+      let res;
+      if (isPackage) {
+         res = await uni.request({
+            url: apiUrl,
+            method: 'GET',
+            header: {
+               'Content-Type': 'application/json',
+               'X-Access-Token': userStore.token || ''
+            }
+         });
+         if (res.statusCode === 200 && res.data && res.data.result) {
+            price = parseFloat(res.data.result.price) || 0;
+         }
+      } else {
+         res = await uni.request({
+            url: apiUrl,
+            method: 'GET',
+            header: {
+               'Content-Type': 'application/x-www-form-urlencoded',
+               'X-Access-Token': userStore.token || ''
+            },
+            data: { id: productId }
+         });
+         
+         if (res.data && (res.data.success || res.data.code === 200) && res.data.result) {
+            const r = res.data.result;
+            // 尝试查找价格字段
+            if (r.ticketprice !== undefined) price = parseFloat(r.ticketprice);
+            else if (r.price !== undefined) price = parseFloat(r.price);
+            else if (r.minPrice !== undefined) price = parseFloat(r.minPrice);
+
+            // 尝试查找时间字段
+            if (r.starttime) starttime = r.starttime;
+            if (r.endtime) endtime = r.endtime;
+            // 餐饮类可能使用 starthour/endhour
+            if (r.starthour) starttime = r.starthour;
+            if (r.endhour) endtime = r.endhour;
+         }
+      }
+    } catch (e) {
+      console.error('获取商品详情失败', cur.name, e);
+    }
+
+    itemsForOrder.push({
+      id: productId,
+      name: cur.content,
+      type: productType,
+      ticketprice: price || 0,
+      starttime: starttime,
+      endtime: endtime
     });
-    return acc;
-  }, []);
+  }
+
+  uni.hideLoading();
 
   if (!itemsForOrder.length) {
     uni.showToast({
@@ -1789,75 +1929,9 @@ const oneClickOrder = () => {
     return;
   }
 
-  // 直接创建订单（不弹原生确认框，避免平台兼容问题）
-  const today = new Date();
-  const pad = (n) => (n < 10 ? '0' + n : '' + n);
-  const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo?.realname || '游客',
-      contractPhone: userStore.userInfo?.phone || '13800138000'
-    },
-    items: itemsForOrder.map(it => ({
-      bookInfo: {
-        date: dateStr,
-        fullname: userStore.userInfo?.realname || '游客',
-        idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
-        idCardType: 'ID_CARD',
-        schedule: ''
-      },
-      productId: it.productId,
-      productType: it.productType,
-      quantity: 1
-    })),
-    travelStartDate: `${dateStr} 00:00:00`,
-    travelEndDate: `${dateStr} 23:59:59`
-  };
-
-  console.log('AI 一键下单参数:', JSON.stringify(orderData));
-
-  uni.showLoading({
-    title: '订单创建中...'
-  });
-
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token
-    },
-    data: orderData,
-    success: (resp) => {
-      uni.hideLoading();
-      if (resp.data && resp.data.code === 200 && resp.data.success) {
-        uni.showToast({
-          title: '订单创建成功',
-          icon: 'success',
-          duration: 1500
-        });
-        
-        setTimeout(() => {
-          uni.switchTab({
-            url: '/pages/order/order'
-          });
-        }, 800);
-      } else {
-        uni.showToast({
-          title: resp.data?.message || '订单创建失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      uni.hideLoading();
-      console.error('AI 一键下单失败:', err);
-      uni.showToast({
-        title: '网络异常，请稍后重试',
-        icon: 'none'
-      });
-    }
+  // 跳转到多商品确认支付页面
+  uni.navigateTo({
+    url: `/pages/multiConfirmPay/multiConfirmPay?items=${encodeURIComponent(JSON.stringify(itemsForOrder))}`
   });
 };
 

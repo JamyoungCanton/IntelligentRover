@@ -45,7 +45,7 @@ const types = ref([
   { label: '全部', value: 'all' },
   { label: '景点收藏', value: 'Attractions' },
   { label: '酒店收藏', value: 'Accommodations' },
-  { label: '餐厅收藏', value: 'Dining' },
+  { label: '美食收藏', value: 'Dining' },
 ]);
 const currentType = ref('all');
 
@@ -53,15 +53,33 @@ const labelOf = (type: string) => {
   const m: Record<string, string> = {
     Attractions: '景点收藏',
     Accommodations: '酒店收藏',
-    Dining: '餐厅收藏',
+    Dining: '美食收藏',
     Transportation: '交通收藏',
     FeaturedRoute: '路线收藏'
   };
   return m[type] || '全部';
 };
 
+const fallbackImage = (type: string) => {
+  const t = (type || '').toLowerCase();
+  const map: Record<string, string> = {
+    dining: '/static/dayTravel/food.png',
+    attractions: '/static/dayTravel/travel.png',
+    accommodations: '/static/hotel-attctive/start.png',
+    transportation: '/static/ticket/boat.png',
+    featuredroute: '/static/dayTravel/star.png'
+  };
+  return map[t] || '/static/index/首页-社区互动.svg';
+};
+
 const imageOf = (it: any) => {
-  return it.productImage || it.imageURL || it.imageUrl || it.coverImage || '/static/my/default-avatar.png';
+  const img = it.productImage 
+    || it.imageURL 
+    || it.imageUrl 
+    || it.image 
+    || it.coverImage 
+    || (Array.isArray(it.images) ? it.images[0] : '');
+  return img || fallbackImage(it.productType);
 };
 const nameOf = (it: any) => {
   return it.productName || it.name || it.title || '未知产品';
@@ -116,7 +134,8 @@ async function enrichItems() {
     const pid = String(it.productId || it.id || '');
     const type = String(it.productType || '').toLowerCase();
     if (!pid) return;
-    if (imageOf(it) && nameOf(it) !== '未知产品') return;
+    const hasRealImage = !!(it.productImage || it.imageURL || it.imageUrl || it.image || it.coverImage || (Array.isArray(it.images) && it.images[0]));
+    if (hasRealImage && nameOf(it) !== '未知产品') return;
     let url = '';
     if (type === 'dining') url = 'https://island.zhangshuiyi.com/island/product/ilDining/queryById';
     else if (type === 'attractions') url = 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById';
@@ -129,7 +148,7 @@ async function enrichItems() {
         data: { id: pid }
       });
       const d = res?.data?.result || {};
-      const image = d.imageUrl || d.image || '';
+      const image = d.imageUrl || d.image || (Array.isArray(d.images) ? d.images[0] : '') || '';
       const title = d.name || d.title || '';
       if (image) items.value[idx].imageUrl = image;
       if (title) items.value[idx].productName = title;
@@ -142,6 +161,10 @@ function switchType(v: string) {
   if (currentType.value === v) return;
   currentType.value = v;
   fetchCollect();
+}
+
+function goBack() {
+  uni.navigateBack({ delta: 1 });
 }
 
 function toDetail(it: any) {
@@ -197,14 +220,16 @@ onMounted(fetchCollect);
 <style lang="scss" scoped>
 .container { min-height: 100vh; background: #f8f8f8; }
 .nav { padding: 20rpx 30rpx; background: #fff; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05); }
-.title { font-size: 32rpx; font-weight: 600; color: #333; }
+.header { position: relative; display: flex; align-items: center; justify-content: center; height: 80rpx; }
+.back { position: absolute; left: 0; font-size: 40rpx; color: #333; padding: 10rpx 20rpx; }
+.title { font-size: 34rpx; font-weight: 700; color: #333; }
 .filter-row { margin-top: 20rpx; display: flex; gap: 16rpx; flex-wrap: wrap; }
 .filter-item { padding: 10rpx 22rpx; border-radius: 9999rpx; border: 1px solid #e5e5e5; color: #666; font-size: 26rpx; }
 .filter-item.active { color: #0066ff; border-color: #0066ff; background: rgba(0,102,255,0.08); }
 .loading, .no-data { text-align: center; color: #888; padding: 60rpx 0; }
 .list { padding: 20rpx 30rpx; display: flex; flex-direction: column; gap: 30rpx; }
-.card { background: #fff; border-radius: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.06); overflow: hidden; }
-.cover { width: 100%; height: 320rpx; object-fit: cover; }
+.card { background: #fff; border-radius: 20rpx; box-shadow: 0 8rpx 18rpx rgba(0,0,0,0.06); overflow: hidden; }
+.cover { width: 100%; height: 340rpx; object-fit: cover; }
 .card-body { padding: 24rpx; }
 .card-title { font-size: 32rpx; font-weight: 700; color: #333; }
 .card-sub { font-size: 24rpx; color: #999; margin-top: 8rpx; }

@@ -1,8 +1,15 @@
 <template>
-    <view class="discover-section discover-gradient">
-      <text class="discover-title">发现精彩旅程</text>
-      <view class="discover-search">
-        <uv-search placeholder="搜索帖子" shape="round" :showAction="false" bgColor="#ffffff"></uv-search>
+    <view class="mini-header" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="mini-header-inner">
+        <text class="mini-title">帖子</text>
+        <view class="mini-actions">
+        </view>
+      </view>
+    </view>
+    <view class="discover-section" :style="heroStyle">
+      <view class="hero-center">
+        <text class="discover-title">探索美丽中国</text>
+        <text class="discover-subtitle">发现令人心动的旅行目的地</text>
       </view>
     </view>
 
@@ -54,8 +61,33 @@
             <text>{{ item.content }}</text>
           </view>
           <view class="postImage" v-if="item.images && item.images.length > 0">
-            <image v-for="(img, imgIndex) in item.images" :key="imgIndex" :src="img.url" mode="aspectFill"
-              :style="getImageStyle(item.images.length, imgIndex)" />
+            <template v-if="item.images.length === 1">
+              <image :src="item.images[0].url" class="single-img" mode="aspectFill" />
+            </template>
+            <template v-else>
+              <view class="image-mosaic">
+                <view class="mosaic-column">
+                  <image
+                    v-for="(img, idx) in item.images.slice(0, getLeftCount(item.images))"
+                    :key="'l-'+idx"
+                    :src="img.url"
+                    class="mosaic-img"
+                    mode="aspectFill"
+                    :style="{ height: getPerHeightRpx(getLeftCount(item.images)) }"
+                  />
+                </view>
+                <view class="mosaic-column">
+                  <image
+                    v-for="(img, idx) in item.images.slice(getLeftCount(item.images))"
+                    :key="'r-'+idx"
+                    :src="img.url"
+                    class="mosaic-img"
+                    mode="aspectFill"
+                    :style="{ height: getPerHeightRpx(getRightCount(item.images)) }"
+                  />
+                </view>
+              </view>
+            </template>
           </view>
           <view class="item-bottom">
           <view class="item-bottom-left">
@@ -134,7 +166,6 @@
         </view>
       </template>
     </view>
-    <view class="fab" @click="goToCreatePost">+</view>
     <view style="height: 50px;"></view>
   <Tabbar />
 </template>
@@ -221,7 +252,15 @@ const filteredPostList = computed(() => {
   return postList.value;
 });
 
-const activeType = ref('like');
+const HERO_URL = 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/pexels-thorsten-technoman-109353-338504.jpg'
+const heroStyle = computed(() => ({
+  backgroundImage: `url(${HERO_URL})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center center',
+  backgroundRepeat: 'no-repeat'
+}))
+
+const activeType = ref('all');
 const scrollIntoViewId = ref('');
 
 const selectType = (typeValue, index) => {
@@ -249,6 +288,12 @@ const getImageStyle = (imageCount, index) => {
     return { width: '32%', height: '120px' }; // 其他情况默认显示三张图片并排
   }
 };
+
+const mosaicBaseHeight = 260;
+const mosaicGap = 12;
+const getLeftCount = (images) => Math.floor(images.length / 2);
+const getRightCount = (images) => images.length - getLeftCount(images);
+const getPerHeightRpx = (count) => `${Math.floor((mosaicBaseHeight - mosaicGap * (count - 1)) / count)}rpx`;
 
 // 去掉 createTime 中的秒
 const formatCreateTime = (time) => {
@@ -837,22 +882,47 @@ const toggleCollect = async (item) => {
 
 .discover-section {
   margin: 0 20rpx 20rpx 20rpx;
-  background: linear-gradient(180deg, #fff 0%, #f4f7ff 60%);
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06);
+  border-radius: 10rpx;
+  padding: 0;
+  height: 300rpx;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.hero-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 .discover-title {
-  font-size: 28rpx;
+  font-size: 34rpx;
   color: #ffffff;
   font-weight: 700;
 }
-.discover-search {
-  margin-top: 16rpx;
+.discover-subtitle {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #e6eaf2;
 }
 
 .discover-gradient {
   background: linear-gradient(90deg, #6b80ff 0%, #8f6bff 50%, #ff8a00 100%);
+}
+
+.discover-mask {
+  width: 100%;
+  height: 100%;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.0) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .postTypeSelect {
@@ -1055,11 +1125,9 @@ const toggleCollect = async (item) => {
   }
 
   .postImage {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
     width: 100%;
     box-sizing: border-box;
+    margin-top: 12rpx;
   }
 
   .postImage image {
@@ -1070,6 +1138,28 @@ const toggleCollect = async (item) => {
     &:active {
       opacity: 0.9;
     }
+  }
+
+  .single-img {
+    width: 100%;
+    height: 260rpx;
+    border-radius: 16rpx;
+  }
+  .image-mosaic {
+    display: flex;
+    gap: 12rpx;
+    width: 100%;
+    height: 260rpx;
+  }
+  .mosaic-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12rpx;
+  }
+  .mosaic-img {
+    width: 100%;
+    border-radius: 16rpx;
   }
 
   .item-bottom {
@@ -1377,4 +1467,26 @@ const toggleCollect = async (item) => {
   font-size: 14px;
   padding: 18px 0 6px 0;
 }
+.mini-header {
+  position: relative;
+  background: #fff;
+}
+.mini-header-inner {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.mini-title {
+  font-size: 14px;
+  color: #060606;
+}
+.mini-actions {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
 </style>
+

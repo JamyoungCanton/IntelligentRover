@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <!-- 头部导航栏 -->
+    <!-- 头部导航栏 (简化版，只保留返回和标题) -->
     <view class="header" :style="{ paddingTop: `${statusBarHeight}px` }">
       <view class="header-content">
         <view class="back-icon" @click="goBack">
@@ -8,28 +8,11 @@
         </view>
         <text class="header-title">餐厅列表</text>
       </view>
-      <view class="search-sort-row">
-        <view class="search-box">
-          <input 
-            type="text" 
-            v-model="searchKeyword" 
-            placeholder="请输入..." 
-            class="search-input" 
-            @confirm="onSearch"
-            confirm-type="search"
-          />
-          <uni-icons type="search" size="24" color="#333" @click="onSearch" />
-        </view>
-        <view class="sort-selector" @click="toggleSortPopup">
-          <text class="sort-text">{{ currentSort.name }}</text>
-          <uni-icons type="down" size="12" color="#999" />
-        </view>
-      </view>
     </view>
 
     <!-- 主内容区域 -->
-    <view class="main">
-      <!-- 顶部图片区域（模仿景点攻略） -->
+    <scroll-view class="main-scroll" scroll-y>
+      <!-- 顶部图片区域 -->
       <view class="hero">
         <image :src="heroImage || (imageUrls[4] || '')" class="hero-img" mode="aspectFill" />
         <view class="hero-dim"></view>
@@ -38,17 +21,40 @@
           <text class="hero-subtitle">发现令人心动的美食之地</text>
         </view>
       </view>
-      <!-- 筛选标签 -->
-      <scroll-view class="filter-scroll" scroll-x>
-        <view class="filter-tags">
-          <view v-for="(tag, index) in filterTags" :key="index" :class="['filter-tag', { active: tag.active }]"
-            @click="selectTag(index)">
-            {{ tag.name }}
-          </view>
-        </view>
-      </scroll-view>
 
-      
+      <!-- 搜索栏 (悬浮重叠) -->
+      <view class="hero-search">
+        <view class="search-wrap">
+          <uni-icons type="search" size="22" color="#9499A0" class="search-icon"></uni-icons>
+          <input 
+            type="text" 
+            v-model="searchKeyword" 
+            placeholder="搜索餐厅名称或关键词" 
+            class="search-input" 
+            @confirm="onSearch"
+            confirm-type="search"
+            placeholder-class="placeholder"
+          />
+        </view>
+      </view>
+
+      <!-- 筛选和排序区域 -->
+      <view class="filter-section">
+        <scroll-view class="filter-scroll" scroll-x>
+            <view class="filter-row">
+                 <!-- 排序按钮 (整合到这里) -->
+                <view class="sort-trigger" @click="toggleSortPopup">
+                    <text>{{ currentSort.name.includes('综合') ? '排序' : currentSort.name }}</text>
+                    <uni-icons type="down" size="12" color="#666" />
+                </view>
+                <!-- 标签 -->
+                <view v-for="(tag, index) in filterTags" :key="index" :class="['filter-tag', { active: tag.active }]"
+                    @click="selectTag(index)">
+                    {{ tag.name }}
+                </view>
+            </view>
+        </scroll-view>
+      </view>
 
       <!-- 排序弹出层 -->
       <view class="sort-popup" v-if="showSortPopup">
@@ -63,44 +69,35 @@
 
       <!-- 餐厅列表 -->
       <view class="restaurant-list">
-        <view v-for="(restaurant, index) in displayedRestaurants" :key="index" class="restaurant-card">
-          <view class="restaurant-image" @click="goToFoodDetails(restaurant)">
-            <image :src="restaurant.imageURL" mode="aspectFill" />
-          </view>
+        <view v-for="(restaurant, index) in displayedRestaurants" :key="index" class="restaurant-card" @click="goToFoodDetails(restaurant)">
+          <image :src="restaurant.imageURL" class="restaurant-thumb" mode="aspectFill" />
           <view class="restaurant-info">
             <!-- 标题 -->
             <view class="name-row">
-              <text class="restaurant-name" @click="goToFoodDetails(restaurant)">{{ restaurant.name }}</text>
+              <text class="restaurant-name">{{ restaurant.name }}</text>
             </view>
-            <!-- 评分 -->
+            <!-- 评分与月售 -->
             <view class="rating-row">
-              <view class="star-rating">
-                <uni-icons v-for="n in 5" :key="n" :type="n <= Math.floor(restaurant.rating) ? 'star-filled' : 'star'" size="14" :color="n <= Math.floor(restaurant.rating) ? '#FFB020' : '#E5E7EB'" />
-              </view>
-              <text class="rating">{{ restaurant.rating }}</text>
+               <text class="rating-score">{{ restaurant.rating }}分</text>
+               <text class="monthly-sale">月售{{ restaurant.monthSale || 0 }}单</text>
             </view>
-            <!-- 价格 + 地址 -->
-            <view class="price-address-row">
-              <text class="price">人均 ¥{{ restaurant.priceaverage }}</text>
-              <view class="addr">
-                <uni-icons type="location" size="16" color="#9CA3AF" />
-                <text class="distance">{{ restaurant.address }}</text>
-              </view>
+            <!-- 地址 -->
+            <view class="address-row">
+              <uni-icons type="location" size="14" color="#9CA3AF" />
+              <text class="address-text">{{ restaurant.address }}</text>
             </view>
-            <!-- 营业时间（绿色点） -->
-            <view class="business-hours-row">
-              <view class="green-dot"></view>
-              <text class="business-hours">营业时间：{{ formatTime(restaurant.starthour) }} - {{ formatTime(restaurant.endhour) }}</text>
-            </view>
-            <!-- 底部：月售 + 立即预订 -->
+            <!-- 底部：时间与价格 -->
             <view class="bottom-row">
-              <text class="monthly-sale">月售 {{ restaurant.monthSale }} 单</text>
-              <view class="book-button" @click.stop="goToFoodDetails(restaurant)">立即预订</view>
+              <text class="business-hours">营业时间：{{ formatTime(restaurant.starthour) }} - {{ formatTime(restaurant.endhour) }}</text>
+              <text class="price">¥{{ restaurant.priceaverage }}/人</text>
             </view>
           </view>
         </view>
       </view>
-    </view>
+      
+      <!-- 底部垫高 -->
+      <view style="height: 40rpx;"></view>
+    </scroll-view>
 
     <!-- 悬浮按钮 -->
     <view class="float-button">
@@ -468,19 +465,25 @@ const getFoodList = () => {
 }
   });
 };
+
+const heroImage = computed(() => {
+  const list = combinedArray.value || [];
+  if (!list.length) return '';
+  const top = list.slice().sort((a,b) => Number(b.rating || 0) - Number(a.rating || 0))[0];
+  return top?.imageURL || '';
+});
 </script>
 
 <style>
-/* 样式部分保持不变 */
 page {
   height: 100%;
+  background-color: #f5f7fa;
 }
 
 .container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #FFFFFF;
 }
 
 .header {
@@ -488,7 +491,7 @@ page {
   width: 100%;
   background: #FFFFFF;
   padding: 0 32rpx;
-  border-bottom: 1px solid #f5f5f5;
+  z-index: 100;
 }
 
 .header-content {
@@ -506,77 +509,244 @@ page {
   z-index: 101;
 }
 
-.search-sort-row { display:flex; gap:16rpx; align-items:center; margin:16rpx 0; }
-.search-box { flex:1; display:flex; align-items:center; background-color:#F5F5F5; border-radius:16rpx; padding:8rpx 16rpx; }
-
-.search-input {
-  flex: 1;
-  height: 60rpx;
-  font-size: 28rpx;
-  background: transparent;
-  margin-right: 8rpx;
-  padding: 0 10rpx;
-}
-
 .header-title {
   font-size: 16px;
   font-weight: 500;
   color: #333333;
-  text-align: center;
 }
 
-.main {
+.main-scroll {
   flex: 1;
-  margin-top: 0;
-  padding: 0 32rpx;
+  height: 0;
+  background-color: #f5f7fa;
 }
 
-/* 顶部图片（模仿景点攻略） */
-.hero { position: relative; height: 320rpx; margin: 0 0 16rpx 0; border-radius: 24rpx; overflow: hidden; }
-.hero-img { width: 100%; height: 100%; }
-.hero-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.20); z-index: 1; }
-.hero-overlay { position: absolute; left: 0; right: 0; bottom: 80rpx; padding: 0 24rpx; z-index: 2; display: flex; flex-direction: column; align-items: center; }
-.hero-title { color: #fff; font-size: 40rpx; font-weight: 800; }
-.hero-subtitle { color: rgba(255,255,255,0.85); font-size: 26rpx; margin-top: 10rpx; }
-.hero-search { position: absolute; left: 24rpx; right: 24rpx; bottom: 10rpx; z-index: 3; }
-.search-wrap { display: flex; align-items: center; background: #fff; border-radius: 40rpx; box-shadow: 0 8rpx 24rpx rgba(15,174,223,0.12); padding: 0 28rpx; height: 72rpx; }
-.search-icon { margin-right: 12rpx; }
-.placeholder { color: #bbb; }
+/* 顶部图片与搜索栏（模仿景点攻略） */
+.hero {
+  position: relative;
+  height: 320rpx;
+  margin: 16rpx 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.hero-img {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-dim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.20);
+  z-index: 1;
+}
+
+.hero-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60rpx;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-title {
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+}
+
+.hero-subtitle {
+  color: rgba(255,255,255,0.9);
+  font-size: 26rpx;
+}
+
+.hero-search {
+  width: 85%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 290rpx; /* 根据header高度和hero位置调整 */
+  z-index: 99;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.08);
+  padding: 0 28rpx;
+  height: 88rpx;
+}
+
+.search-icon {
+  margin-right: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.placeholder {
+  color: #bbb;
+}
+
+/* 筛选区 */
+.filter-section {
+  margin-top: 60rpx; /* 留出搜索栏的空间 */
+  padding: 16rpx 24rpx;
+}
 
 .filter-scroll {
-  margin: 0 -32rpx;
-  padding: 24rpx 32rpx;
+  width: 100%;
   white-space: nowrap;
 }
 
-.filter-tags {
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.sort-trigger {
   display: inline-flex;
-  gap: 24rpx;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  font-size: 14px;
+  color: #333;
+  gap: 8rpx;
+  border: 1px solid transparent;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
 }
 
 .filter-tag {
   display: inline-block;
   padding: 12rpx 24rpx;
   border-radius: 32rpx;
-  border: 1px solid #E5E5E5;
   font-size: 14px;
-  color: #666666;
+  color: #666;
+  background: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
 }
 
 .filter-tag.active {
   color: #0066FF;
-  border-color: #0066FF;
-  background-color: rgba(0, 102, 255, 0.1);
+  background-color: rgba(0, 102, 255, 0.08);
+  font-weight: 500;
 }
 
-.sort-selector { display:flex; align-items:center; padding:16rpx 20rpx; background-color:#F5F5F5; border-radius:16rpx; }
-
-.sort-text {
-  font-size: 14px;
-  color: #666666;
+/* 列表区域 */
+.restaurant-list {
+  padding: 0 24rpx;
 }
 
-/* 排序弹出层样式 */
+.restaurant-card {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.restaurant-thumb {
+  width: 220rpx;
+  height: 220rpx;
+  flex-shrink: 0;
+  background-color: #eee;
+}
+
+.restaurant-info {
+  flex: 1;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.name-row {
+  margin-bottom: 8rpx;
+}
+
+.restaurant-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.rating-score {
+  font-size: 28rpx;
+  color: #FF6B00;
+  font-weight: 600;
+  margin-right: 16rpx;
+}
+
+.monthly-sale {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.address-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 8rpx;
+}
+
+.address-text {
+  font-size: 24rpx;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.business-hours {
+  font-size: 22rpx;
+  color: #666;
+  background: #f5f5f5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.price {
+  font-size: 32rpx;
+  color: #4F46E5;
+  font-weight: bold;
+}
+
+/* 排序弹出层 */
 .sort-popup {
   position: fixed;
   top: 0;
@@ -597,12 +767,14 @@ page {
 
 .sort-popup-content {
   position: absolute;
-  top: 200rpx;
-  left: 32rpx;
-  right: 32rpx;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
   background: #FFFFFF;
   border-radius: 16rpx;
   padding: 24rpx;
+  z-index: 1001;
 }
 
 .sort-option {
@@ -621,107 +793,6 @@ page {
   color: #0066FF;
 }
 
-.restaurant-list { }
-
-.restaurant-card {
-  margin-bottom: 32rpx;
-  border-radius: 16rpx;
-  overflow: hidden;
-  background: #FFFFFF;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
-}
-
-.restaurant-image {
-  position: relative;
-  height: 360rpx;
-}
-
-.restaurant-image image {
-  width: 100%;
-  height: 100%;
-}
-
-.tag {
-  position: absolute;
-  top: 16rpx;
-  left: 16rpx;
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  font-size: 12px;
-  color: #FFFFFF;
-}
-
-.tag.popular {
-  background-color: #FF6B00;
-}
-
-.tag.featured {
-  background-color: #0066FF;
-}
-
-.restaurant-info {
-  padding: 24rpx;
-}
-
-.name-address-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
-
-.restaurant-name {
-  font-size: 16px;
-  font-weight: bold;
-  /* 改为加粗 */
-  color: #333333;
-  flex-shrink: 0;
-  margin-right: 16rpx;
-  cursor: pointer;
-  /* 添加鼠标悬停样式 */
-}
-
-.name-row { margin-bottom: 12rpx; }
-.rating-row { display:flex; align-items:center; gap:12rpx; margin-bottom:12rpx; }
-
-.rating-box {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
-
-.rating {
-  font-size: 14px;
-  color: #333333;
-  margin: 0 16rpx 0 8rpx;
-}
-
-.monthly-sale {
-  font-size: 14px;
-  color: #999999;
-}
-
-.business-hours-row { display: flex; align-items: center; gap: 8rpx; margin: 12rpx 0; }
-.green-dot { width: 12rpx; height: 12rpx; background: #22C55E; border-radius: 50%; }
-
-.business-hours {
-  font-size: 14px;
-  color: #666666;
-}
-
-.price-address-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12rpx; }
-.addr { display: flex; align-items: center; gap: 8rpx; max-width: 60%; }
-
-.price {
-  font-size: 14px;
-  color: #666666;
-}
-
-.distance { font-size: 14px; color: #999999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16rpx; }
-.book-button { background: #FF7A45; color: #FFFFFF; font-size: 28rpx; padding: 10rpx 32rpx; border-radius: 9999rpx; }
-
 .float-button {
   position: fixed;
   right: 32rpx;
@@ -734,11 +805,6 @@ page {
   align-items: center;
   justify-content: center;
   box-shadow: 0 6rpx 20rpx rgba(0, 102, 255, 0.3);
+  z-index: 999;
 }
 </style>
-  const heroImage = computed(() => {
-    const list = combinedArray.value || [];
-    if (!list.length) return '';
-    const top = list.slice().sort((a,b) => Number(b.rating || 0) - Number(a.rating || 0))[0];
-    return top?.imageURL || '';
-  });

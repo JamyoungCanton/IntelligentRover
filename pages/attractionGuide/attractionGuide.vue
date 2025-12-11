@@ -8,16 +8,21 @@
           <text class="hero-itle">探索美丽海岛</text>
           <text class="hero-subtitle">发现令人心动的旅行目的地</text>
         </view>
-        <view class="hero-search">
+      </view>
+      <view class="hero-search">
           <view class="search-wrap">
             <uni-icons type="search" size="22" color="#9499A0" class="search-icon"></uni-icons>
             <input v-model="searchInput" class="search-input" type="text" placeholder="搜索景点名称或关键词" placeholder-class="placeholder" />
           </view>
         </view>
-      </view>
-
       <scroll-view class="category-list" scroll-x show-scrollbar="false">
         <view class="category-scroll">
+          <picker mode="selector" :range="range" range-key="text" :value="filterValue" @change="onFilterChange">
+            <view class="category-item filter-item">
+              {{ range[filterValue].text }}
+              <text class="dropdown-icon">▼</text>
+            </view>
+          </picker>
           <button
             v-for="category in categories"
             :key="category"
@@ -31,28 +36,25 @@
       </scroll-view>
 
       <view class="list">
-        <view
+          <view
           v-for="item in filteredAttractions"
           :key="item.id"
           class="list-item"
+          @click="goAttraction(item.id, item.imageUrl)"
         >
-          <image :src="item.imageUrl" class="item-thumb" mode="aspectFill" />
+          <image :src="item.imageUrl" class="item-thumb" mode="aspectFill" lazy-load="true" />
           <view class="item-body">
             <view class="item-header">
               <text class="item-title">{{ item.name }}</text>
-              <text class="badge">{{ scenicLevel(item.rating) }}</text>
             </view>
-            <text class="item-desc">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
+            <view class="item-meta">
+              <text class="item-rating">{{ formatRating(item.rating) }}</text>
+            </view>
+            <text class="item-intro">{{ shortIntro(item) }}</text>
             <view class="item-footer">
-              <view class="rating-line">
-                <uni-rate :value="item.rating" size="12" readonly></uni-rate>
-                <text class="rating-score">{{ item.rating }}</text>
-              </view>
-              <view class="price-book">
-                <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
-                <text v-else class="price">免费</text>
-                <button class="book-btn" @click.stop="goAttraction(item.id, item.imageUrl)">预约</button>
-              </view>   
+              <text class="item-time">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
+              <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
+              <text v-else class="price">免费</text>
             </view>
           </view>
         </view>
@@ -68,7 +70,7 @@ import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 const attractionGuidelist = ref([]);
 const selectedCategory = ref('全部');
-const categories = ['全部', '热门', '自然景观', '沙滩浴场', '观景台'];
+const categories = ['全部', '自然景观', '沙滩浴场', '观景台'];
 const searchInput = ref('');
 const filterValue = ref(0); // 新增，用于存储当前选中的筛选选项
 const attractionGuidelistOriginal = ref([]); // 排序的原始数据
@@ -144,13 +146,6 @@ const heroImage = computed(() => {
   return list && list.length > 0 ? list[9].imageUrl : '';
 });
 
-const scenicLevel = (rating) => {
-  if (rating >= 4.5) return '5A景区';
-  if (rating >= 3.5) return '4A景区';
-  if (rating >= 2.5) return '3A景区';
-  return '景区';
-};
-
 onMounted(() => {
   hasToken();
   getAttractionList()
@@ -181,6 +176,54 @@ const getAttractionList = () => {
 // 切换分类
 const changeTab = (category) => {
   selectedCategory.value = category;
+};
+
+// 筛选栏排序选择
+const onFilterChange = (e) => {
+  const idx = Number(e?.detail?.value ?? 0);
+  filterValue.value = idx;
+};
+
+
+// 评分样式文本，如 4.6分
+const formatRating = (rating) => {
+  if (rating === undefined || rating === null || rating === '') return '';
+  const n = Number(rating);
+  if (isNaN(n)) return '';
+  return `${n.toFixed(1)}分`;
+};
+
+// 取简介字段并截断到30字
+const pickIntroField = (item) => {
+  return (
+    (item && item.description) ||
+    (item && item.desc) ||
+    (item && item.introduce) ||
+    (item && item.intro) ||
+    (item && item.summary) ||
+    (item && item.content) ||
+    (item && item.remark) ||
+    ''
+  );
+};
+
+const stripHtml = (s) => String(s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+const truncateText = (s, len = 30) => {
+  const str = String(s || '');
+  return str.length > len ? str.slice(0, len) + '...' : str;
+};
+
+const shortIntro = (item) => truncateText(stripHtml(pickIntroField(item)), 15);
+
+const wrapText = (s, limit = 15) => {
+  const str = String(s || '');
+  if (!str) return '';
+  let out = '';
+  for (let i = 0; i < str.length; i += limit) {
+    out += str.slice(i, i + limit) + '\u200B';
+  }
+  return out;
 };
 
 // 跳转到景点详情页
@@ -215,28 +258,31 @@ const getAttrictionDetail = () => {
 .hero-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.20); z-index: 1; }
 .hero-title { color: #fff; font-size: 50rpx; margin-bottom: 190rpx; align-items: center;}
 .hero-subtitle {position: absolute;top:100rpx;left: 51%;transform: translateX(-50%); color: rgba(255, 255, 255, 0.85); font-size: 26rpx; margin-top: 20rpx; align-items: center;}
-.hero-search { position: absolute; left: 24rpx; right: 24rpx; bottom: 10rpx; z-index: 10; }
+.hero-search { width:85%; position: absolute; left: 55rpx; right: 24rpx; top: 270rpx; z-index: 99; }
 .search-wrap { display: flex; align-items: center; background: #fff; border-radius: 40rpx; box-shadow: 0 8rpx 24rpx rgba(15,174,223,0.12); padding: 0 28rpx; height: 72rpx; }
 .search-icon { margin-right: 12rpx; }
 .search-input { flex: 1; border: none; background: transparent; font-size: 30rpx; color: #333; }
 .placeholder { color: #bbb; }
-.category-list { padding: 24rpx 24rpx 16rpx 24rpx; white-space: nowrap; background: #fff; border-top-left-radius: 24rpx; border-top-right-radius: 24rpx; margin: 0 0rpx; margin-top: 5rpx; }
-.category-scroll { display: inline-flex; gap: 16rpx; }
-.category-item { padding: 6rpx 32rpx; background: #f0f2f5; border-radius: 30rpx; color: #333; font-size: 28rpx; border: 3rpx solid rgba(15,174,223,0.08); }
+.category-list { padding: 32rpx 24rpx 16rpx 24rpx; white-space: nowrap; background: #fff; border-top-left-radius: 24rpx; border-top-right-radius: 24rpx; margin: 0 0rpx; margin-top: 5rpx; }
+.category-scroll { display: inline-flex; gap: 16rpx; position: relative; }
+.category-item { padding: 0 32rpx; height: 64rpx; display: inline-flex; align-items: center; background: #e9f3ff; border-radius: 30rpx; color: #333; font-size: 28rpx; border: 3rpx solid rgba(15,174,223,0.08); box-sizing: border-box; }
 .category-item.active { background: #4F46E5; color: #fff; box-shadow: 0 6rpx 16rpx rgba(15,174,223,0.18); }
+.filter-item { background: #e9f3ff; }
+.dropdown-icon { margin-left: 8rpx; font-size: 22rpx; color: #9499A0; }
 .list { padding: 16rpx 24rpx 40rpx 24rpx; }
-.list-item { display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; }
-.item-thumb { width: 240rpx; height: 180rpx; }
+.list-item { display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; width: 100%; box-sizing: border-box; }
+.item-thumb { width: 240rpx; height: 180rpx; flex-shrink: 0; display: block; background-color: #f0f2f5; }
 .item-body { flex: 1; padding: 20rpx; }
 .item-header { display: flex; align-items: center; justify-content: space-between; }
-.item-title { font-size: 30rpx; color: #333; font-weight: 600; flex: 1; margin-right: 16rpx; }
-.badge { padding: 6rpx 16rpx; background: #e8f5ff; color: #0faedf; border-radius: 20rpx; font-size: 24rpx; }
-.item-desc { margin-top: 8rpx; font-size: 24rpx; color: #999; }
+.item-title { font-size: 30rpx; color: #333; font-weight: 600; flex: 1; margin-right: 16rpx; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 42rpx; }
+.item-meta { margin-top: 6rpx; }
+.item-rating { font-size: 26rpx; color: #FF9800; font-weight: 600; }
+.item-intro { margin-top: 8rpx; font-size: 26rpx; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-time { margin-top: 6rpx; font-size: 24rpx; color: #999; }
 .item-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16rpx; }
-.price-book { display: flex; align-items: center; gap: 16rpx; }
 .price { font-size: 32rpx; color: #4F46E5; font-weight: 700; }
-.book-btn { padding: 3rpx 22rpx; background: #4F46E5; color: #fff; border-radius: 15rpx; border: none; font-size: 26rpx; }
-.rating-line { display: flex; align-items: center; gap: 8rpx; }
-.rating-score { font-size: 24rpx; color: #FF9800; }
+.book-btn { display: none; }
+.rating-line { display: none; }
+.rating-score { display: none; }
+.dropdown { display: none; }
 </style>
-
