@@ -194,57 +194,20 @@ const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 
-// 确认支付
+// 确认支付 - 跳转到订单详情页进行支付
 const handleConfirmPayment = () => {
-  if (isPaying.value) return;
+  if (!orderSn.value) {
+    uni.showToast({
+      title: '订单号不存在',
+      icon: 'none'
+    });
+    return;
+  }
   
-  isPaying.value = true;
-
-  const userStore = useUserStore();
-  console.log(userStore.token);
-  const commentStore = useCommentStore();
-  
-  uni.showLoading({
-    title: '支付处理中...'
+  // 跳转到订单详情页进行支付
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${orderSn.value}`
   });
-  
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-    method: 'POST',
-    header:{
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Access-Token': userStore.token,
-    },
-    data: {
-      orderSn: orderSn.value,
-    },
-    success:(res)=>{
-      console.log(res.data);
-      if (res.data.code === 200) {
-        commentStore.setPendingComment('景点', id.value);
-        uni.hideLoading();
-        uni.navigateTo({
-          url: `/pages/pay_success/pay_success?amount=${isFeaturedRoute.value ? price.value : hotelList.value.ticketprice}&orderId=${orderSn.value}&type=${type.value}&productId=${productId.value}`
-        });
-      } else {
-        uni.showToast({
-          title: res.data.message || '支付失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('支付请求失败:', err);
-      uni.showToast({
-        title: '网络错误，请稍后重试',
-        icon: 'none'
-      });
-    },
-    complete: () => {
-      isPaying.value = false;
-      uni.hideLoading();
-    }
-  })
 };
 // 退出
 const handleLogout = () => {

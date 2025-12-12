@@ -358,6 +358,17 @@ const getOrderDetailById2 = (orderSn) => {
   });
 };
 
+// 立即支付：跳转到订单详情页处理支付
+const payOrder = (order) => {
+  if (!order?.orderSn) {
+    uni.showToast({ title: '订单编号无效', icon: 'none' });
+    return;
+  }
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${order.orderSn}`
+  });
+};
+
 // 关闭详情弹窗
 const closeDetailPopup = () => {
   showDetailPopup.value = false;

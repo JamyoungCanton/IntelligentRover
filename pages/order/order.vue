@@ -43,20 +43,35 @@
             <text class="status-badge" :class="statusBadgeClass(group.first)">{{ statusBadgeText(group.first) }}</text>
           </view>
           <view class="order-info">
-            <image class="order-image" :src="group.first.imageUrl" mode="aspectFill"></image>
-            <view class="order-details">
-              <text class="detail-text">订单号：{{ group.first.orderSn || '未知' }}</text>
-              <text class="detail-text">下单时间：{{ group.first.createTime || '未知' }}</text>
-              <text class="detail-text">到达时间：{{ getOrderStartDate(group.first) || '未知' }}</text>
+            <image v-if="!group.isPackage" class="order-image" :src="group.first.imageUrl" mode="aspectFill"></image>
+            <view class="order-details" :class="{ 'with-image': !group.isPackage }">
+              <text class="detail-text">订单编号: {{ group.first.orderSn || '未知' }}</text>
+              <text class="detail-text">创建时间: {{ group.first.createTime || '未知' }}</text>
+              <text class="detail-text">起始时间: {{ getOrderStartDate(group.first) || '未知' }}</text>
             </view>
           </view>
           <view class="order-footer">
+            <!-- 左侧：状态按钮 -->
+            <view class="status-btn-container">
+              <text class="status-btn" :class="statusBadgeClass(group.first)">{{ statusBadgeText(group.first) }}</text>
+            </view>
+            
+            <!-- 中间：收起按钮 -->
+            <view v-if="group.isPackage" class="collapse-btn" @click="toggleGroup(group.key)">
+              <text class="collapse-text">{{ expandedGroups[group.key] ? '收起' : '展开' }}</text>
+              <uni-icons
+                :type="expandedGroups[group.key] ? 'top' : 'bottom'"
+                size="16"
+                color="#999"
+              ></uni-icons>
+            </view>
+            
+            <!-- 右侧：操作按钮 -->
             <view class="button-group">
               <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-default" @click="deleteOrder(group.first)">取消订单</button>
               <button v-if="!group.isPackage && group.first.payStatus === 'UNPAID'" class="btn btn-primary" @click="payOrder(group.first)">立即支付</button>
               <button v-if="group.isPackage && group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="payGroup(group)">立即支付</button>
               <button v-if="!group.orders.some(o => o.payStatus === 'UNPAID')" class="btn btn-primary" @click="goToDetail(group.first.orderSn)">查看详情</button>
-              <button v-if="group.isPackage" class="btn btn-default" @click="toggleGroup(group.key)">{{ expandedGroups[group.key] ? '收起' : '展开' }}</button>
             </view>
           </view>
 
@@ -645,48 +660,15 @@ const handlePay = (orderSn) => {
   });
 };
 
-// 立即支付跳转支付页面或直接支付
+// 立即支付：跳转到订单详情页进行支付
 const payOrder = (order) => {
-	console.log('点击立即支付，order:', order);
-	uni.showLoading({ title: '刷新订单中...' });
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/' + order.orderSn,
-		method: 'GET',
-		header: { 'X-Access-Token': userStore.token },
-		success: (res) => {
-			console.log('订单详情返回:', res.data);
-			if (res.data.success && res.data.result.payStatus === 'UNPAID') {
-				const result = res.data.result;
-				const now = new Date();
-				const startDate = new Date(fixDateStr(result.travelStartDate));
-				const endDate = new Date(fixDateStr(result.travelEndDate));
-				
-				if (
-					isNaN(startDate.getTime()) ||
-					isNaN(endDate.getTime()) ||
-					endDate <= now ||
-					endDate < startDate
-				) {
-					uni.hideLoading();
-					uni.showToast({ title: '旅游开始/结束时间无效，无法支付', icon: 'none' });
-					getOrderList();
-					return;
-				}
-				uni.hideLoading();
-        // 校验通过，调用支付接口
-        handlePay(order.orderSn);
-			} else {
-				uni.hideLoading();
-				uni.showToast({ title: '订单状态已变更，请刷新订单列表', icon: 'none' });
-				getOrderList();
-			}
-		},
-		fail: (err) => {
-			uni.hideLoading();
-			console.log('请求失败:', err);
-			uni.showToast({ title: '网络异常，无法获取订单', icon: 'none' });
-		}
-	});
+  if (!order?.orderSn) {
+    uni.showToast({ title: '订单编号无效', icon: 'none' });
+    return;
+  }
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${order.orderSn}`
+  });
 };
 
 
@@ -706,25 +688,17 @@ function getBeijingTime() {
 const now = getBeijingTime();
 
 function payGroup(group) {
-  const unpaid = (group.orders || []).filter(o => o.payStatus === 'UNPAID');
-  if (unpaid.length === 0) {
+  const orderSns = (group.orders || [])
+    .filter(o => o.payStatus === 'UNPAID' && o.orderSn)
+    .map(o => o.orderSn);
+
+  if (orderSns.length === 0) {
     uni.showToast({ title: '暂无待支付订单', icon: 'none' });
     return;
   }
-  
-  // 使用 group.key 作为主订单号进行支付
-  // 假设 group.key 是 mainOrderSn
-  const orderSn = group.key;
-  
-  uni.showModal({
-    title: '套餐支付',
-    content: `确认支付套餐订单？总金额：¥${group.totalAmount}`,
-    success: (res) => {
-      if (res.confirm) {
-        handlePay(orderSn);
-      }
-    }
-  });
+
+  const url = `/pages/order/detail?orderSns=${encodeURIComponent(JSON.stringify(orderSns))}`;
+  uni.navigateTo({ url });
 }
 </script>
 
@@ -833,21 +807,21 @@ page {
 .card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .order-price {
   color: #333;
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 700;
+  margin-right: 20rpx;
 }
 
 .order-title-row {
   flex: 1;
   display: flex;
   align-items: center;
-  margin: 0 20rpx;
+  margin-right: 12rpx;
 }
 
 .type-tag {
@@ -860,8 +834,9 @@ page {
 }
 
 .type-tag.pkg {
-  background-color: #FEF3C7;
-  color: #D97706;
+  background-color: #FFF7E6;
+  color: #FAAD14;
+  margin-left: 8rpx;
 }
 
 .status-badge {
@@ -935,8 +910,9 @@ page {
 }
 
 .order-title {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 500;
+  color: #333;
 }
 
 .order-status {
@@ -964,26 +940,58 @@ page {
   width: 200rpx;
   height: 140rpx;
   border-radius: 12rpx;
+  flex-shrink: 0;
+  margin-right: 20rpx;
 }
 
 .order-details {
   flex: 1;
-  margin-left: 20rpx;
+  width: 100%;
+}
+
+.order-details.with-image {
+  width: auto;
 }
 
 .detail-text {
   display: block;
   font-size: 24rpx;
-  color: #666;
+  color: #999;
+  margin-bottom: 8rpx;
   margin-bottom: 10rpx;
 }
 
 .order-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding-top: 20rpx;
   border-top: 2rpx solid #f5f5f5;
+}
+
+.status-btn-container {
+  flex: 0 0 auto;
+}
+
+.status-btn {
+  display: inline-block;
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  cursor: pointer;
+}
+
+.collapse-text {
+  font-size: 24rpx;
+  color: #999;
 }
 
 .price { display: none; }
@@ -999,6 +1007,17 @@ page {
   border-radius: 8rpx;
   height: 35px;
   line-height: 23px;
+}
+
+.icon-btn {
+  padding: 4rpx 10rpx;
+  min-width: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .btn-default {

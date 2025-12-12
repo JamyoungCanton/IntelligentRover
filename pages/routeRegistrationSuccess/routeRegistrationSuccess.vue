@@ -101,82 +101,22 @@ const goHome = () => {
   });
 };
 
+// 支付订单 - 跳转到订单详情页进行支付
 const payOrder = () => {
-  const userStore = useUserStore();
-  const token = userStore.token;
+  // 从 orderInfo 中获取订单号
+  const orderSn = orderInfo.value.orderId;
   
-  if (!token) {
+  if (!orderSn) {
     uni.showToast({
-      title: '请先登录',
-      icon: 'none',
-      duration: 2000
+      title: '订单号不存在',
+      icon: 'none'
     });
-    setTimeout(() => {
-      uni.navigateTo({
-        url: '/pages/login/login'
-      });
-    }, 2000);
     return;
   }
-
-  uni.showLoading({
-    title: '正在支付...',
-    mask: true
-  });
-
-  // 修改为正确的请求方式
-  uni.request({
-    url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${this.orderSn}`,
-    method: 'POST',
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': token
-    },
-    success: (res) => {
-      console.log('支付订单响应:', res);
-      uni.hideLoading();
-      
-      if (res.statusCode === 401) {
-        uni.showToast({
-          title: '登录信息过期，请重新登录',
-          icon: 'none',
-          duration: 2000
-        });
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/login/login'
-          });
-        }, 2000);
-        return;
-      }
-
-      if (res.data && res.data.success) {
-        uni.showToast({
-          title: '支付成功',
-          icon: 'success',
-          duration: 1500
-        });
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/orderList/orderList'
-          });
-        }, 1500);
-      } else {
-        console.error('支付失败:', res.data);
-        uni.showToast({
-          title: res.data.message || '支付失败',
-          icon: 'none'
-        });
-      }
-    },
-    fail: (err) => {
-      console.error('支付请求失败:', err);
-      uni.hideLoading();
-      uni.showToast({
-        title: '支付失败，请稍后重试',
-        icon: 'none'
-      });
-    }
+  
+  // 跳转到订单详情页进行支付
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${orderSn}`
   });
 };
 

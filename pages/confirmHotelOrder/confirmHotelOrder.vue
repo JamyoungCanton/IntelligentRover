@@ -167,42 +167,20 @@ const selectPayment = (payment) => {
   selectedPayment.value = payment;
 };
 
-// 确认支付
+// 确认支付 - 跳转到订单详情页进行支付
 const handleConfirmPayment = () => {
-  if (isPaying.value) return;
-  
-  isPaying.value = true;
-  uni.showLoading({
-    title: '支付处理中...'
-  });
-
-  const userStore = useUserStore();
-  console.log(userStore.token);
-  payOrder(orderSn.value, userStore.token)
-    .then(data => {
-      console.log('支付接口返回：', data);
-      uni.hideLoading();
-      uni.showToast({
-        title: '支付成功',
-        icon: 'success'
-      });
-      // 从后端返回的 data.result 里获取 amount 和 orderSn
-      const amount = data.result?.amount || hotelList.value.price;
-      const orderId = data.result?.orderSn || orderSn.value;
-      uni.navigateTo({
-        url: `/pages/pay_success/pay_success?amount=${amount}&orderId=${orderId}&type=住宿&productId=${id.value}`
-      });
-    })
-    .catch(errMsg => {
-      uni.showToast({
-        title: errMsg,
-        icon: 'none'
-      });
-    })
-    .finally(() => {
-      isPaying.value = false;
-      uni.hideLoading();
+  if (!orderSn.value) {
+    uni.showToast({
+      title: '订单号不存在',
+      icon: 'none'
     });
+    return;
+  }
+  
+  // 跳转到订单详情页进行支付
+  uni.navigateTo({
+    url: `/pages/order/detail?orderSn=${orderSn.value}`
+  });
 }
 
 function payOrder(orderSn, token) {

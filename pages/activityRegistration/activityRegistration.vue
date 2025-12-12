@@ -312,11 +312,13 @@ const submitRegistration = () => {
           icon: 'success',
           duration: 1500
         });
-        // 修改跳转页面，直接跳转到支付页面
+        // 跳转到订单详情页进行支付
         const orderSn = res.data.result.orderSn;
-        uni.navigateTo({ 
-          url: `/pages/activityPay/activityPay?orderSn=${orderSn}`
-        });
+        setTimeout(() => {
+          uni.navigateTo({ 
+            url: `/pages/order/detail?orderSn=${orderSn}`
+          });
+        }, 1500);
       } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',

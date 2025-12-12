@@ -327,44 +327,19 @@ const handleConfirmPayment = () => {
       console.log('创建订单返回：', res);
       if (res.statusCode === 200 && res.data.success && res.data.result && res.data.result.orderSn) {
         const orderSn = res.data.result.orderSn;
-        // 2. 创建成功后，调用支付接口
-        uni.request({
-          url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn}`,
-          method: 'POST',
-          header: {
-            'Content-Type': 'application/json',
-            'X-Access-Token': userStore.token
-          },
-          success: (payRes) => {
-            console.log('支付接口返回：', payRes);
-            if (payRes.statusCode === 200 && payRes.data.success) {
-              uni.hideLoading();
-              uni.showToast({
-                title: '支付成功',
-                icon: 'success'
-              });
-              uni.navigateTo({
-                url: `/pages/pay_success/pay_success?price=${selectedCabinPrice.value}&orderId=${orderSn}&payment=${selectedPayment.value}&amount=${selectedCabinPrice.value}`
-              });
-            } else {
-              uni.showToast({
-                title: payRes.data.message || '支付失败',
-                icon: 'none'
-              });
-            }
-          },
-          fail: (err) => {
-            console.log('支付接口失败：', err);
-            uni.showToast({
-              title: '支付请求失败',
-              icon: 'none'
-            });
-          },
-          complete: () => {
-            isPaying.value = false;
-            uni.hideLoading();
-          }
+        // 2. 创建成功后，跳转到订单详情页进行支付
+        uni.hideLoading();
+        isPaying.value = false;
+        uni.showToast({
+          title: '订单创建成功',
+          icon: 'success',
+          duration: 1500
         });
+        setTimeout(() => {
+          uni.navigateTo({
+            url: `/pages/order/detail?orderSn=${orderSn}`
+          });
+        }, 1500);
       } else {
         uni.showToast({
           title: res.data.message || '订单创建失败',

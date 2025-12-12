@@ -215,54 +215,17 @@ const goBack = () => {
 }
 
 const handlePayment = () => {
-	uni.showLoading({ title: '支付处理中...' });
-	uni.request({
-		url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${orderSn.value}`,
-		method: 'POST',
-		data: { payType: paymentMethod.value },
-		header: { 'X-Access-Token': userStore.token },
-		success: (res) => {
-			console.log('支付请求响应结果:', res.data);
-			if (res.data.success) {
-				uni.showToast({ title: '支付成功', icon: 'success' });
-				setTimeout(() => { uni.switchTab({ url: '/pages/order/order' }); }, 1000);
-			} else {
-				uni.showToast({
-					title: res.data.message || '支付失败',
-					icon: 'none'
-				});
-			}
-		},
-		fail: (err) => {
-			console.error('支付请求失败:', err);
-			uni.showToast({ title: '支付请求失败', icon: 'none' });
-		},
-		complete: () => uni.hideLoading()
+	if (!orderSn.value) {
+		uni.showToast({ title: '订单编号无效', icon: 'none' });
+		return;
+	}
+	uni.navigateTo({
+		url: `/pages/order/detail?orderSn=${orderSn.value}`
 	});
 };
 
-const payOrder = (orderSn) => {
-	uni.request({
-		url: 'https://island.zhangshuiyi.com/island/front/order/payOrder',
-		method: 'POST',
-		header: {
-			'Content-Type': 'application/json',
-			'X-Access-Token': userStore.token
-		},
-		data: { orderSn },
-		success: (res) => {
-			if (res.data.success) {
-				uni.showToast({ title: '支付成功', icon: 'success' });
-				// 跳转到支付成功页或订单详情
-			} else {
-				uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });
-			}
-		},
-		fail: (err) => {
-			uni.showToast({ title: '支付请求失败', icon: 'none' });
-		}
-	});
-};
+// 已废弃：payOrder 函数不再使用，统一跳转到订单详情页进行支付
+// const payOrder = (orderSn) => { ... }
 </script>
 
 <style>
