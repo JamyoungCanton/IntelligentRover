@@ -8,10 +8,16 @@
         </swiper-item>
       </swiper>
       <view class="top-card-inner">
-        <text class="hotel-title">{{ hotelData.name || '酒店名称' }}</text>
+        <view class="name-row">
+          <text class="hotel-title">{{ hotelData.name || '酒店名称' }}</text>
+          <view class="collect-btn" :class="{ collected }" @tap="toggleCollect">
+            <uni-icons :type="collected ? 'star-filled' : 'star'" size="20" :color="collected ? '#FFB020' : '#999'" />
+            <text class="collect-text">{{ collected ? '已收藏' : '收藏' }}</text>
+          </view>
+        </view>
         <view class="hotel-sub-row">
           <view class="tag tag-blue">精选</view>
-          <view class="tag tag-border">{{ hotelData.category || '高档型' }}</view>
+          <!-- <view class="tag tag-border">{{ hotelData.category || '高档型' }}</view> -->
         </view>
         <view class="price-inline">
           <text class="price-chip">¥{{ displayPrice }}</text>
@@ -21,9 +27,9 @@
           <view class="score-left">
             <uni-rate :value="hotelData.rating || 4.7" size="18" readonly />
             <text class="score-text">{{ hotelData.rating || 4.7 }}</text>
-            <text class="score-desc">
+            <!-- <text class="score-desc">
               {{ hotelData.commentnum ? `${hotelData.commentnum} 条点评` : '472 条点评' }}
-            </text>
+            </text> -->
           </view>
         </view>
         <view class="hotel-brief">
@@ -93,9 +99,9 @@
           </view>
         </view>
         <view class="review-content">{{ item.comment }}</view>
-        <view v-if="item.images && item.images.length" class="review-images">
+        <view v-if="itemMergedImages(item).length" class="review-images">
           <image
-            v-for="(img, imgIdx) in item.images"
+            v-for="(img, imgIdx) in itemMergedImages(item)"
             :key="imgIdx"
             :src="img"
             class="review-img"
@@ -135,17 +141,113 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user'
 
 const userStore = useUserStore()
 let hotelId = ref('')
 let hotelData = ref({})
 const hotelImages = ref([])
+const collected = ref(false)
+const collecting = ref(false)
 
 const pad = n => n < 10 ? '0' + n : n;
 
 const allowComment = ref(false); // 是否允许评论
+
+// 检查是否收藏
+const extractCollectList = (resp) => {
+  const r = resp?.data?.result;
+  if (Array.isArray(r?.result)) return r.result;
+  if (Array.isArray(r?.records)) return r.records;
+  if (Array.isArray(resp?.data?.result)) return resp.data.result;
+  return [];
+};
+
+const checkCollected = async () => {
+  if (!userStore.token) { collected.value = false; return; }
+  try {
+    const bodyA = { productType: 'Accommodations', pageNo: 1, pageSize: 100 };
+    const resA = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+      data: bodyA
+    });
+    let list = [];
+    if ((resA.statusCode === 200 || resA.statusCode === 0) && (resA.data.success || resA.data.code === 0)) {
+      list = extractCollectList(resA);
+    }
+    if (!list || list.length === 0) {
+      const resB = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/island/productCollect/myProduct',
+        method: 'POST',
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+        data: { pageNo: 1, pageSize: 100 }
+      });
+      if ((resB.statusCode === 200 || resB.statusCode === 0) && (resB.data.success || resB.data.code === 0)) {
+        list = extractCollectList(resB);
+      }
+    }
+    const pid = String(hotelId.value);
+    const matched = (list || []).some((x) => {
+      const xid = String(x.productId ?? x.product_id ?? x.id ?? x.goodsId ?? x.productID ?? '');
+      const xtype = String(x.productType ?? x.type ?? '').toLowerCase();
+      return xid === pid && (xtype === 'accommodations' || !xtype);
+    });
+    collected.value = matched;
+  } catch (e) {
+    collected.value = false;
+    console.log('checkCollected error', e);
+  }
+};
+
+const toggleCollect = async () => {
+  if (!userStore.token) { uni.showToast({ title: '请先登录', icon: 'none' }); return; }
+  if (collecting.value) return;
+  collecting.value = true;
+  try {
+    const desiredOp = collected.value ? 0 : 1;
+    const dto = {
+      productId: String(hotelData.value.id || hotelId.value),
+      productType: 'Accommodations',
+      productImage: (hotelImages.value && hotelImages.value[0]) || hotelData.value.imageUrl || '',
+      productName: hotelData.value.name || '',
+      operation: desiredOp
+    };
+    const res = await uni.request({
+      url: 'https://island.zhangshuiyi.com/island/island/productCollect/collectProduct',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+      data: dto
+    });
+    if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 200 || res.data.code === 0)) {
+      collected.value = desiredOp === 1;
+      uni.showToast({ title: desiredOp === 1 ? '已收藏' : '已取消收藏', icon: 'success' });
+      await checkCollected();
+    } else {
+       const msg = res.data.message || '操作失败';
+        if (desiredOp === 1 && (msg.includes('存在') || msg.toLowerCase().includes('exist'))) {
+          collected.value = true;
+          uni.showToast({ title: '已收藏', icon: 'success' });
+        } else if (desiredOp === 0 && (msg.includes('不存在') || msg.toLowerCase().includes('not exist'))) {
+          collected.value = false;
+          uni.showToast({ title: '已取消收藏', icon: 'success' });
+        } else {
+          uni.showToast({ title: msg, icon: 'none' });
+        }
+        await checkCollected();
+    }
+  } catch (e) {
+    uni.showToast({ title: '网络异常', icon: 'none' });
+  } finally {
+    collecting.value = false;
+  }
+};
+
+onShow(() => {
+  checkCollected();
+});
 
 // 检查是否支付过该商品
 const checkOrderPaid = async () => {
@@ -230,6 +332,7 @@ const getDetailList = () => {
         }
         comments.value = res.data.result.comments || [];
         console.log('评论数据：', comments.value);
+        getHotelComments();
       }
     }
   })
@@ -327,10 +430,9 @@ const toggleComments = () => { showAllComments.value = true; };
 const touristImages = computed(() => {
   const arr = [];
   comments.value.forEach(item => {
-    if (item.images && item.images.length) {
-      arr.push(...item.images);
-  }
-});
+    const imgs = itemMergedImages(item);
+    if (imgs.length) arr.push(...imgs);
+  });
   return arr;
 });
 
@@ -351,14 +453,16 @@ const submitComment = () => {
     return;
   }
   // 假设你有图片上传功能，images为图片url数组
+  const hasPhotos = typeof uploadedPhotos !== 'undefined' && uploadedPhotos && Array.isArray(uploadedPhotos.value);
+  const urlStr = hasPhotos ? uploadedPhotos.value.map(i => i.url).filter(Boolean).join(',') : '';
   const commentData = {
     avatar: userInfo.value.avatar || "",
     comment: newComment.value,
     productId: hotelId.value,
-    type: "酒店", // 这里传"酒店"
+    type: "Accommodations",
     userId: userInfo.value.id,
     username: userInfo.value.realname || userInfo.value.username,
-    images: uploadedPhotos?.value ? uploadedPhotos.value.map(i => i.url) : []
+    url: urlStr
   };
   uni.request({
     url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
@@ -462,6 +566,13 @@ const displayedFacilityGroups = computed(() => {
 const toggleFacilities = () => {
   showAllFacilities.value = !showAllFacilities.value;
 };
+
+function itemMergedImages(item) {
+  const imgs = item.images || item.imageList || item.pics || '';
+  if (Array.isArray(imgs)) return imgs.map(s => String(s).trim()).filter(Boolean);
+  if (typeof imgs === 'string') return imgs.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+}
 </script>
 
 <style scoped>
@@ -489,10 +600,39 @@ const toggleFacilities = () => {
 .top-card-inner {
   padding: 24rpx 24rpx 20rpx;
 }
+.name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
 .hotel-title {
   font-size: 34rpx;
   font-weight: 700;
   color: #111827;
+  flex: 1;
+}
+.collect-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 9999rpx;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.collect-btn.collected {
+  border-color: #FFB020;
+  background: rgba(255,176,32,0.08);
+}
+.collect-text {
+  font-size: 12px;
+  color: #666;
+}
+.collect-btn.collected .collect-text {
+  color: #FFB020;
 }
 .hotel-sub-row {
   margin-top: 8rpx;
@@ -604,6 +744,17 @@ const toggleFacilities = () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   padding: 16px;
   margin: 16px 12px 0 12px;
+}
+.no-comments {
+  width: 100%;
+  margin: 12rpx 0;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  text-align: center;
+  padding: 24rpx 20rpx;
+  color: #999;
+  font-size: 26rpx;
+  box-sizing: border-box;
 }
 .review-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 .review-user {
@@ -824,12 +975,6 @@ const toggleFacilities = () => {
 .submit-btn:disabled {
   background: #e5e7eb;
   color: #aaa;
-}
-.no-comments {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 18rpx;
 }
 .show-more {
   display: flex;

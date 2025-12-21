@@ -17,15 +17,13 @@
     <view v-if="loading" class="loading">加载中...</view>
     <view v-else-if="items.length === 0" class="no-data">暂无收藏</view>
     <view v-else class="list">
-      <view class="card" v-for="it in items" :key="it.productId || it.id">
+      <view class="card" v-for="it in items" :key="it.productId || it.id" @tap="toDetail(it)">
         <image :src="imageOf(it)" class="cover" mode="aspectFill" />
         <view class="card-body">
           <text class="card-title">{{ nameOf(it) }}</text>
-          <text class="card-sub">{{ labelOf(it.productType) }}</text>
-          <text class="card-desc">{{ descOf(it) }}</text>
-          <view class="card-footer">
-            <button class="btn" @tap="toDetail(it)">查看详情</button>
-            <button class="btn primary" @tap="cancelCollect(it)">取消收藏</button>
+          <view class="card-row">
+            <text class="card-desc">{{ descOf(it) }}</text>
+            <button class="btn primary" @tap.stop="cancelCollect(it)">取消收藏</button>
           </view>
         </view>
       </view>
@@ -85,7 +83,8 @@ const nameOf = (it: any) => {
   return it.productName || it.name || it.title || '未知产品';
 };
 const descOf = (it: any) => {
-  return it.subtitle || it.description || '';
+  const d = it.subtitle || it.description || it.intro || it.introduction || '';
+  return d ? d.replace(/<[^>]+>/g, '') : ' ';
 };
 
 function extractCollectList(resp: any): any[] {
@@ -139,6 +138,7 @@ async function enrichItems() {
     let url = '';
     if (type === 'dining') url = 'https://island.zhangshuiyi.com/island/product/ilDining/queryById';
     else if (type === 'attractions') url = 'https://island.zhangshuiyi.com/island/product/ilAttractions/queryById';
+    else if (type === 'accommodations') url = 'https://island.zhangshuiyi.com/island/product/ilAccommodations/queryById';
     else return;
     try {
       const res: any = await uni.request({
@@ -150,8 +150,10 @@ async function enrichItems() {
       const d = res?.data?.result || {};
       const image = d.imageUrl || d.image || (Array.isArray(d.images) ? d.images[0] : '') || '';
       const title = d.name || d.title || '';
+      const desc = d.description || d.intro || d.introduction || d.subtitle || d.brief || '';
       if (image) items.value[idx].imageUrl = image;
       if (title) items.value[idx].productName = title;
+      if (desc) items.value[idx].description = desc;
     } catch {}
   });
   await Promise.allSettled(tasks);
@@ -231,10 +233,9 @@ onMounted(fetchCollect);
 .card { background: #fff; border-radius: 20rpx; box-shadow: 0 8rpx 18rpx rgba(0,0,0,0.06); overflow: hidden; }
 .cover { width: 100%; height: 340rpx; object-fit: cover; }
 .card-body { padding: 24rpx; }
-.card-title { font-size: 32rpx; font-weight: 700; color: #333; }
-.card-sub { font-size: 24rpx; color: #999; margin-top: 8rpx; }
-.card-desc { font-size: 26rpx; color: #666; margin-top: 12rpx; line-height: 1.6; }
-.card-footer { margin-top: 16rpx; display: flex; gap: 16rpx; }
-.btn { background: #e5e7eb; color: #333; border-radius: 12rpx; padding: 12rpx 24rpx; font-size: 26rpx; }
-.btn.primary { background: #0080ff; color: #fff; }
+.card-title { font-size: 32rpx; font-weight: 700; color: #333; margin-bottom: 12rpx; display: block; }
+.card-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20rpx; }
+.card-desc { font-size: 26rpx; color: #666; line-height: 1.6; flex: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.btn { background: #e5e7eb; color: #333; border-radius: 8rpx; padding: 0; width: 160rpx; height: 64rpx; line-height: 64rpx; font-size: 26rpx; flex-shrink: 0; margin: 0; }
+.btn.primary { background: #00bfff; color: #fff; }
 </style>

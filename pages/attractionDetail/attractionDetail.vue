@@ -412,67 +412,47 @@
 
   // 提交评论
   const submitComment = async () => {
-    if (!allowComment.value) {
-      uni.showToast({
-        title: '仅限已支付该景点订单的用户评论',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!newComment.value.trim()) {
-      uni.showToast({
-        title: '评论内容不能为空',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!userStore.token) {
-      uni.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-      return;
-    }
+    if (!allowComment.value) { uni.showToast({ title: '仅限已支付该景点订单的用户评论', icon: 'none' }); return; }
+    if (!newComment.value.trim()) { uni.showToast({ title: '评论内容不能为空', icon: 'none' }); return; }
+    if (!userStore.token) { uni.showToast({ title: '请先登录', icon: 'none' }); return; }
     try {
-      const commentData = {
-        content: newComment.value,
-        postId: id.value, // 景点ID
-        fatherId: '', // 父评论ID，这里为空因为是直接评论景点
-        receiverId: '', // 接收者ID，这里为空因为是直接评论景点
-        repliedCommentId: '', // 回复的评论ID，这里为空因为是直接评论景点
-        score: 10 // 假设评分10分
+      const dto = {
+        avatar: (userStore.userInfo?.avatar || ''),
+        comment: newComment.value,
+        productId: String(id.value),
+        type: 'Attractions',
+        userId: userStore.userInfo?.id || userStore.userInfo?.userId || '',
+        username: userStore.userInfo?.realname || userStore.userInfo?.username || '',
+        url: ''
       };
-      console.log('提交评论数据:', commentData);
       const res = await uni.request({
-        url: 'https://island.zhangshuiyi.com/island/comments/save',
+        url: 'https://island.zhangshuiyi.com/island/il-user-comments/save',
         method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'X-Access-Token': userStore.token
-        },
-        data: commentData
+        header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+        data: dto
       });
-      console.log('评论提交响应:', res.data);
-      if (res.data.success) {
-        uni.showToast({
-          title: '评论成功',
-          icon: 'success'
-        });
-        newComment.value = ''; // 清空输入框
-        getAttrictionDetail(); // 刷新评论列表
+      if ((res.statusCode === 200 || res.statusCode === 0) && (res.data.success || res.data.code === 0 || res.data.code === 200)) {
+        uni.showToast({ title: '评论成功', icon: 'success' });
+        newComment.value = '';
+        await refreshComments();
       } else {
-        uni.showToast({
-          title: res.data.message || '评论失败',
-          icon: 'none'
-        });
+        uni.showToast({ title: res.data?.message || '评论失败', icon: 'none' });
       }
     } catch (error) {
-      console.error('评论提交异常：', error);
-      uni.showToast({
-        title: '评论失败，请稍后重试',
-        icon: 'none'
-      });
+      uni.showToast({ title: '评论失败，请稍后重试', icon: 'none' });
     }
+  };
+
+  const refreshComments = async () => {
+    try {
+      const r = await uni.request({
+        url: 'https://island.zhangshuiyi.com/island/il-user-comments/list',
+        method: 'GET',
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Access-Token': userStore.token },
+        data: { productId: String(id.value), type: 'Attractions' }
+      });
+      if (r.data && r.data.success) { comments.value = Array.isArray(r.data.result) ? r.data.result : (r.data.result?.records || []); }
+    } catch {}
   };
 
   // 添加计算属性来控制显示的评论数量
@@ -736,24 +716,15 @@
   color: #333;
 }
 .no-comments {
-  width: 100vw;
-  max-width: 100vw;
-  margin-left: -20rpx;
-  margin-right: -20rpx;
-  background: none;
-  border-radius: 0;
-  box-sizing: border-box;
-  text-align: center;
-  padding: 40rpx 30rpx;
-  color: #999;
-  font-size: 26rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16rpx;
+  width: 100%;
+  margin: 12rpx 0;
   background-color: #f8f9fa;
   border-radius: 12rpx;
-  margin: 20rpx 0;
+  text-align: center;
+  padding: 24rpx 20rpx;
+  color: #999;
+  font-size: 26rpx;
+  box-sizing: border-box;
 }
 .comment-input-area {
   width: 100vw;

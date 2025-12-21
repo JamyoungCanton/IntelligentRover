@@ -422,11 +422,26 @@
 
 
     <view class="input-wrapper">
-      <uv-textarea v-model="message" placeholder="请输入旅游目的地或旅游问题" :maxlength="1000" autoHeight></uv-textarea>
-      <view class="input-btn-wrapper">
-        <uv-button icon="mic" size="mini" shape="circle" class="send-button"></uv-button>
-        <uv-button icon="arrow-upward" iconColor="#fff" type="primary" size="mini" shape="circle" class="send-button"
-          @click="sendMessage"></uv-button>
+      <view class="input-row">
+        <view class="mic-wrapper" @longpress="startVoiceInput" @touchend="stopVoiceInput" @touchcancel="stopVoiceInput">
+          <uv-button
+            icon="mic"
+            size="mini"
+            shape="circle"
+            class="send-button"
+            :type="isVoiceListening ? 'primary' : 'default'"
+          ></uv-button>
+        </view>
+        <uv-textarea v-model="message" placeholder="请输入旅游目的地或旅游问题" :maxlength="1000" autoHeight></uv-textarea>
+        <uv-button
+          icon="arrow-upward"
+          iconColor="#fff"
+          type="primary"
+          size="mini"
+          shape="circle"
+          class="send-button"
+          @click="sendMessage"
+        ></uv-button>
       </view>
     </view>
 
@@ -517,6 +532,140 @@ const progressList = reactive([
 const message = ref('');
 let chatMessageList = reactive([]);
 const responseData = ref([]);
+const isVoiceListening = ref(false);
+let recognition = null;
+let wxRecManager = null;
+let wechatSI = null;
+let voiceInterim = '';
+let lastVoiceAppend = '';
+
+const startVoiceInput = () => {
+  try {
+    if (isVoiceListening.value === true) {
+      return;
+    }
+    if (typeof wx !== 'undefined') {
+      try {
+        if (!wechatSI && typeof requirePlugin === 'function') {
+          wechatSI = requirePlugin('WechatSI') || null;
+        }
+      } catch (e) {}
+      if (wechatSI && typeof wechatSI.getRecordRecognitionManager === 'function') {
+        try {
+          uni.authorize({ scope: 'scope.record' });
+        } catch (e) {}
+        wxRecManager = wechatSI.getRecordRecognitionManager();
+        isVoiceListening.value = true;
+        if (typeof wxRecManager.onStart === 'function') {
+          wxRecManager.onStart = () => {};
+        }
+        wxRecManager.onRecognize = (res) => {
+          const text = res && res.result ? String(res.result) : '';
+          if (text) {
+            voiceInterim = text;
+          }
+        };
+        wxRecManager.onStop = (res) => {
+          isVoiceListening.value = false;
+          let text = res && res.result ? String(res.result) : '';
+          if (!text && voiceInterim) {
+            text = voiceInterim;
+          }
+          voiceInterim = '';
+          if (text) {
+            const current = String(message.value || '');
+            if (text !== lastVoiceAppend && !current.endsWith(text)) {
+              message.value = current + text;
+              lastVoiceAppend = text;
+            }
+          }
+        };
+        wxRecManager.onError = () => {
+          isVoiceListening.value = false;
+          uni.showToast({ title: '语音识别失败', icon: 'none', duration: 2000 });
+        };
+        wxRecManager.start({
+          lang: 'zh_CN',
+          duration: 30000,
+          vad_eos: 2000
+        });
+        return;
+      }
+    }
+    if (typeof plus !== 'undefined' && plus && plus.speech && typeof plus.speech.startRecognize === 'function') {
+      isVoiceListening.value = true;
+      plus.speech.startRecognize(
+        {
+          lang: 'zh-CN',
+          punctuation: true
+        },
+        (res) => {
+          isVoiceListening.value = false;
+          const text = Array.isArray(res) ? String(res[0] || '') : String(res || '');
+          if (text) {
+            message.value = (message.value || '') + text;
+          }
+        },
+        () => {
+          isVoiceListening.value = false;
+          uni.showToast({ title: '语音识别失败', icon: 'none', duration: 2000 });
+        }
+      );
+      return;
+    }
+    const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+    if (SR) {
+      recognition = new SR();
+      recognition.lang = 'zh-CN';
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      isVoiceListening.value = true;
+      let finalTranscript = '';
+      recognition.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const transcript = e.results[i][0] && e.results[i][0].transcript ? e.results[i][0].transcript : '';
+          if (e.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+      };
+      recognition.onend = () => {
+        isVoiceListening.value = false;
+        if (finalTranscript) {
+          message.value = (message.value || '') + finalTranscript;
+        }
+      };
+      recognition.onerror = () => {
+        isVoiceListening.value = false;
+        uni.showToast({ title: '语音识别失败', icon: 'none', duration: 2000 });
+      };
+      recognition.start();
+      return;
+    }
+    uni.showToast({ title: '当前平台不支持语音输入', icon: 'none', duration: 2000 });
+  } catch (e) {
+    isVoiceListening.value = false;
+    uni.showToast({ title: '语音识别异常', icon: 'none', duration: 2000 });
+  }
+};
+
+const stopVoiceInput = () => {
+  try {
+    if (wxRecManager && typeof wxRecManager.stop === 'function') {
+      wxRecManager.stop();
+      isVoiceListening.value = false;
+      return;
+    }
+    if (recognition && typeof recognition.stop === 'function') {
+      recognition.stop();
+    } else if (typeof plus !== 'undefined' && plus && plus.speech && typeof plus.speech.stopRecognize === 'function') {
+      plus.speech.stopRecognize();
+    }
+    isVoiceListening.value = false;
+  } catch (e) {
+    isVoiceListening.value = false;
+  }
+};
 const globalUpdateKey = ref(0);
 const isTyping = ref(false);
 const dots = ref('');
@@ -2083,6 +2232,13 @@ page {
   margin: 0 auto;
   overflow: hidden;
 
+  .input-row {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 16rpx;
+  }
+
   .uv-textarea {
     width: calc(100% - 20rpx);
     min-height: 1rem;
@@ -2097,6 +2253,11 @@ page {
     textarea {
       text-align: justify;
     }
+  }
+
+  .input-row .uv-textarea {
+    flex: 1;
+    width: auto;
   }
 
   :deep(.uv-border) {

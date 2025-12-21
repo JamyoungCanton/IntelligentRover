@@ -299,5 +299,5 @@ const payOrderRequest = (sn) => {
 .item-price { font-size: 28rpx; color: #1677FF; font-weight: 700; }
 .bottom-bar { display: flex; align-items: center; justify-content: space-between; padding: 24rpx; background: #fff; box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.06); }
 .total { font-size: 32rpx; color: #1677FF; font-weight: 700; }
-.buy-btn { background: #1677FF; color: #fff; border: none; border-radius: 12rpx; height: 80rpx; padding: 0 36rpx; font-size: 30rpx; }
+.buy-btn { background: #1677FF; color: #fff;margin-right:20rpx ; border: none; border-radius: 12rpx; height: 80rpx; padding: 0 36rpx; font-size: 30rpx; }
 </style>
