@@ -102,17 +102,17 @@
                 </text>
                 
                 <view class="author-info">
-                   <uv-avatar :src="item.userAvatar" size="16"></uv-avatar>
-                   <text class="author-name">{{ item.userName || '半糖小草' }}</text>
+                   <uv-avatar :src="item.userVO?.avatar || item.userAvatar" size="16"></uv-avatar>
+                   <text class="author-name">{{ item.userVO?.realname || item.userName || '用户' }}</text>
                 </view>
 
-                <view class="post-actions" style="justify-content: space-between; align-items: center;">
+                <view class="post-actions">
                   <view class="like-count">
                      <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
                      <text>{{ item.likes || 4652 }}</text>
                   </view>
-                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">
-                     <text>{{ item.collected ? '已收藏' : '一键抄作业' }}</text>
+                  <button class="copy-btn" @click.stop="toPage('/pages/ticketDetails/ticketDetails')">
+                     <text>一键抄作业</text>
                   </button>
                 </view>
 
@@ -134,17 +134,17 @@
                 </text>
                 
                 <view class="author-info">
-                   <uv-avatar :src="item.userAvatar" size="16"></uv-avatar>
-                   <text class="author-name">{{ item.userName || '半糖小草' }}</text>
+                   <uv-avatar :src="item.userVO?.avatar || item.userAvatar" size="16"></uv-avatar>
+                   <text class="author-name">{{ item.userVO?.realname || item.userName || '用户' }}</text>
                 </view>
 
-                <view class="post-actions" style="justify-content: space-between; align-items: center;">
+                <view class="post-actions">
                   <view class="like-count">
                      <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
                      <text>{{ item.likes || 4652 }}</text>
                   </view>
-                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">
-                     <text>{{ item.collected ? '已收藏' : '一键抄作业' }}</text>
+                  <button class="copy-btn" @click.stop="toPage('/pages/ticketDetails/ticketDetails')">
+                     <text>一键抄作业</text>
                   </button>
                 </view>
                 
@@ -288,7 +288,7 @@ const fetchPosts = async () => {
         console.log('Posts API list length:', list.length);
         const filtered = list.filter(p => Array.isArray(p.images) && p.images.length > 0);
         const sorted = filtered.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
-        const mapped = sorted.map(post => ({ ...post, liked: !!post.liked, collected: !!post.collected, routeCollected: false }));
+        const mapped = sorted.map(post => ({ ...post, liked: !!post.liked }));
         posts.value = posts.value.concat(mapped);
         // 全局按点赞数降序
         posts.value = posts.value.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
@@ -310,7 +310,7 @@ const fetchPosts = async () => {
               const list2 = (res2.data && res2.data.result && Array.isArray(res2.data.result.list)) ? res2.data.result.list : [];
               const filtered2 = list2.filter(p => Array.isArray(p.images) && p.images.length > 0);
               const sorted2 = filtered2.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
-              const mapped2 = sorted2.map(post => ({ ...post, liked: !!post.liked, collected: !!post.collected, routeCollected: false }));
+              const mapped2 = sorted2.map(post => ({ ...post, liked: !!post.liked }));
               posts.value = posts.value.concat(mapped2);
               posts.value = posts.value.sort((a,b) => Number(b.likes||0) - Number(a.likes||0));
               hasMore.value = sorted2.length >= postPageSize.value;
@@ -344,39 +344,7 @@ const toPostDetail = (id) => {
   uni.navigateTo({ url: `/pages/post/postDetail?id=${id}` });
 };
 
-// 收藏/取消收藏（一键抄作业）
-const collectProduct = async (item) => {
-  const userId = userStore?.userInfo?.userId || userStore?.userInfo?.id;
-  if (!userId) {
-    uni.showToast({ title: '请先登录', icon: 'none' });
-    return;
-  }
-  const dto = {
-    operation: item.collected ? 0 : 1,
-    postsId: String(item.id || ''),
-    userId: String(userId)
-  };
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/posts/collect',
-    method: 'POST',
-    header: {
-      'X-Access-Token': userStore?.token || '',
-      'Content-Type': 'application/json'
-    },
-    data: dto,
-    success: (res) => {
-      if (res.statusCode === 200 && res.data && res.data.success) {
-        item.collected = !item.collected;
-        uni.showToast({ title: item.collected ? '已收藏' : '已取消收藏', icon: 'success' });
-      } else {
-        uni.showToast({ title: res.data?.message || '收藏失败', icon: 'none' });
-      }
-    },
-    fail: () => {
-      uni.showToast({ title: '网络错误', icon: 'none' });
-    }
-  });
-};
+// 移除收藏相关功能
 
 
 const toPage = (path) => {
@@ -635,9 +603,9 @@ const navigateToChat = () => {
 }
 
 /* 瀑布流 */
-.waterfall-wrapper { padding: 0 10rpx; }
-.waterfall-alt { display:flex; gap: 16rpx; padding: 0 10rpx; }
-.column { flex: 1; display: flex; flex-direction: column; gap: 16rpx; }
+.waterfall-wrapper { padding: 0 6rpx; }
+.waterfall-alt { display:flex; gap: 10rpx; padding: 0; }
+.column { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
 
 .post-card { 
   background: #fff; 
@@ -732,7 +700,13 @@ const navigateToChat = () => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
       .like-count {
         display: flex;
         align-items: center;
@@ -740,11 +714,6 @@ const navigateToChat = () => {
         font-size: 22rpx;
         color: #999;
       }
-    }
-
-    .post-actions {
-      display: flex;
-      justify-content: flex-end; /* Align button to right */
       
       .copy-btn {
         width: auto; /* Auto width */
