@@ -1,72 +1,153 @@
 <template>
   <view class="index-container">
+    <!-- 背景图 -->
+    <image class="bg-image" src="https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pixabay-221471.jpg" mode="aspectFill"></image>
+    
     <!-- 顶部导航栏 -->
-    <view class="nav-bar-wrapper" :style="{ paddingTop: `${statusBarHeight}px` }">
-      <!-- 顶部导航栏标题 -->
-      <view class="nav-bar-title" :style="{ paddingTop: safeAreaInsets.top + 'px' }">山海智游侠</view>
-      <!-- AI入口卡片 -->
-      <view class="ai-entry-card" @click="navigateToChat">
-        <view class="ai-title">你好，今天想去哪里？</view>
-        <view class="ai-input">
-          <uv-icon name="search" :size="18" color="#9CA3AF"></uv-icon>
-          <text class="ai-input-placeholder">请输入目的地或关键词...</text>
+    <view class="custom-header" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="header-content">
+        <view class="location-wrapper" @click="showLocationPicker = true">
+           <view class="location-title-row">
+             <text class="location-text-en">ZHUHAI</text>
+             <view class="location-main">
+               <text class="location-text-zh">{{ currentLocation }}</text>
+               <uv-icon name="arrow-down" size="14" color="#fff" style="margin-left: 4rpx;"></uv-icon>
+             </view>
+           </view>
         </view>
-        <view class="ai-tags">
-          <view class="ai-tag">海岛游</view>
-          <view class="ai-tag">亲子游</view>
-          <view class="ai-tag">浮潜行</view>
-          <view class="ai-tag">休闲旅</view>
-        </view>
+        <!-- 右侧留白或功能区 -->
+        <view class="header-right"></view>
       </view>
     </view>
+    
+    <!-- 地区选择器 -->
+    <uv-picker 
+      ref="locationPicker" 
+      :show="showLocationPicker" 
+      :columns="locationColumns"
+      :zIndex="99999"
+      @confirm="onLocationConfirm"
+      @cancel="showLocationPicker = false"
+      @close="showLocationPicker = false"
+    ></uv-picker>
 
-    <!-- 主要内容区 -->
-    <view class="index-main-wrapper">
-     
+    <!-- 搜索横幅 -->
+    <view class="search-banner-area">
+       <view class="search-pill" @click="navigateToChat">
+          <view class="search-left">
+            <uv-icon name="chat" size="20" color="#3c9cff"></uv-icon>
+            <text class="search-text">旅游景点 酒店 美食，AI为您提供攻略推荐</text>
+          </view>
+          <view class="search-arrow-circle">
+            <uv-icon name="arrow-right" size="12" color="#fff"></uv-icon>
+          </view>
+       </view>
+    </view>
+
+    <!-- 主要内容区 (白色圆角背景) -->
+    <view class="main-content">
       <!-- 图标导航 -->
       <view class="icon-nav-wrapper">
         <view v-for="item in navButtonList" :key="item.name" class="icon-item" @click="toPage(item.path)">
-          <view class="icon-btn">
-            <image :src="item.icon"></image>
+          <view class="icon-btn-circle">
+            <image :src="item.icon" class="icon-img"></image>
           </view>
           <text class="icon-text">{{ item.name }}</text>
         </view>
       </view>
 
+      <!-- 分类Tab栏 -->
+      <uv-sticky offset-top="0">
+        <view class="tab-bar-wrapper">
+          <view class="tab-scroll-view">
+             <view class="tab-list">
+                <view 
+                  v-for="(tab, index) in tabList" 
+                  :key="index" 
+                  class="tab-item" 
+                  :class="{ active: currentTab === index }"
+                  @click="changeTab(index)"
+                >
+                  <text class="tab-text">{{ tab }}</text>
+                  <view v-if="currentTab === index" class="active-indicator"></view>
+                </view>
+             </view>
+          </view>
+          <view class="filter-btn">
+            <image src="https://gitee.com/luo-shaominggitee/island_image/raw/main/img/New_version/筛选.png" style="width: 32rpx; height: 32rpx;" mode="aspectFit"></image>
+            <text>筛选</text>
+          </view>
+        </view>
+      </uv-sticky>
 
       <!-- 帖子瀑布流 -->
-      <view class="section-wrapper mb-30">
-        <view class="section-title">发现更多</view>
-      </view>
       <view class="waterfall-wrapper">
         <view v-if="!postLoading" class="waterfall-alt">
           <view class="column">
             <view class="post-card animated" v-for="(item, idx) in leftPosts" :key="'L' + item.id" :style="{ animationDelay: `${idx * 60}ms` }" @click="toPostDetail(item.id)">
-              <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+              <view class="image-wrapper">
+                 <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+                 <view class="duration-badge">2天一夜</view>
+                 <!-- AI Badge Top Left (Randomly show for demo) -->
+                 <view v-if="idx % 3 === 0" class="ai-badge-top">AI推荐</view>
+                 <!-- Play Icon (Randomly show for demo) -->
+                 <view v-if="idx % 4 === 0" class="play-icon">
+                    <uv-icon name="play-right-fill" size="24" color="#fff"></uv-icon>
+                 </view>
+              </view>
               <view class="post-info">
-                <text class="post-title">{{ item.title || '无标题' }}</text>
-                <view class="post-actions">
-                  <view class="action-left">
-                    <uv-icon name="thumb-up" :size="16"></uv-icon>
-                    <text>{{ item.likes || 0 }}</text>
-                  </view>
-                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">一键抄作业</button>
+                <text class="post-title">
+                   <text v-if="idx % 5 === 0" class="ai-badge-inline">精选作品</text>
+                   {{ item.title || '无标题' }}
+                </text>
+                
+                <view class="author-info">
+                   <uv-avatar :src="item.userAvatar" size="16"></uv-avatar>
+                   <text class="author-name">{{ item.userName || '半糖小草' }}</text>
                 </view>
+
+                <view class="post-actions" style="justify-content: space-between; align-items: center;">
+                  <view class="like-count">
+                     <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
+                     <text>{{ item.likes || 4652 }}</text>
+                  </view>
+                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">
+                     <text>{{ item.collected ? '已收藏' : '一键抄作业' }}</text>
+                  </button>
+                </view>
+
               </view>
             </view>
           </view>
           <view class="column">
             <view class="post-card animated" v-for="(item, idx) in rightPosts" :key="'R' + item.id" :style="{ animationDelay: `${idx * 60}ms` }" @click="toPostDetail(item.id)">
-              <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+              <view class="image-wrapper">
+                <image class="post-img" :src="(item.images && item.images[0] && item.images[0].url) ? item.images[0].url : defaultImage" mode="widthFix" />
+                <view class="duration-badge">2天一夜</view>
+                <!-- AI Badge Top Left (Randomly show for demo) -->
+                 <view v-if="idx % 3 === 1" class="ai-badge-top">AI推荐</view>
+              </view>
               <view class="post-info">
-                <text class="post-title">{{ item.title || '无标题' }}</text>
-                <view class="post-actions">
-                  <view class="action-left">
-                    <uv-icon name="thumb-up" :size="16"></uv-icon>
-                    <text>{{ item.likes || 0 }}</text>
-                  </view>
-                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">一键抄作业</button>
+                <text class="post-title">
+                   <text v-if="idx % 5 === 2" class="ai-badge-inline">精选作品</text>
+                   {{ item.title || '无标题' }}
+                </text>
+                
+                <view class="author-info">
+                   <uv-avatar :src="item.userAvatar" size="16"></uv-avatar>
+                   <text class="author-name">{{ item.userName || '半糖小草' }}</text>
                 </view>
+
+                <view class="post-actions" style="justify-content: space-between; align-items: center;">
+                  <view class="like-count">
+                     <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
+                     <text>{{ item.likes || 4652 }}</text>
+                  </view>
+                  <button class="copy-btn" :class="{ active: item.collected }" @click.stop="collectProduct(item)">
+                     <text>{{ item.collected ? '已收藏' : '一键抄作业' }}</text>
+                  </button>
+                </view>
+                
               </view>
             </view>
           </view>
@@ -78,7 +159,7 @@
     </view>
 
     <view class="blank"></view>
-
+    
     <!-- 底部导航 -->
     <Tabbar />
     
@@ -115,11 +196,11 @@ onReachBottom(() => {
 // ---------------- data ----------------
 // 导航按钮列表
 const navButtonList = reactive([{
-  name: '景点攻略',
+  name: '景点查询',
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/beach.png',
   path: '/pages/attractionGuide/attractionGuide'
 }, {
-  name: '我的收藏',
+  name: '收藏中心',
   icon: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/index/more.png',
   path: '/pages/productCollect/productCollect'
 }, {
@@ -142,6 +223,26 @@ const userStore = useUserStore();
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
   const themeColor = ref('#3c9cff'); // 主题颜色
+
+  // 地区选择
+  const showLocationPicker = ref(false);
+  const currentLocation = ref('珠海');
+  const locationColumns = reactive([
+    ['珠海', '广州', '扬州', '上海', '香港', '厦门']
+  ]);
+  const onLocationConfirm = (e) => {
+    currentLocation.value = e.value[0];
+    showLocationPicker.value = false;
+  };
+
+  // Tab列表
+  const tabList = ref(['旅游攻略', '景点安利', '酒店推荐', '美食分享']);
+  const currentTab = ref(0);
+  const changeTab = (index) => {
+    currentTab.value = index;
+    // 这里可以添加筛选逻辑，例如重新加载帖子
+  };
+
   const bannerList = ref([
   'https://gitee.com/luo-shaominggitee/island_image/raw/00aa571dc9a58cf479273927eabcdae59012d58c/img/dayTravel/pexels-jayson-will-768546872-18817260.jpg',
   'https://gitee.com/luo-shaominggitee/island_image/raw/2ade706a602ac493cb52d36999ec5e68f6ca0514/index/pexels-pixabay-221471.jpg'
@@ -302,208 +403,382 @@ const navigateToChat = () => {
 <style lang="scss" scoped>
 .index-container {
   position: relative;
+  min-height: 100vh;
+  background-color: #f5f6f7;
 
-  /* 顶部导航栏 */
-  .nav-bar-wrapper {
-    position: relative;
-    height: 260rpx;
-    background-color: transparent;
-  }
-
-  /* 顶部导航栏标题 */
-  .nav-bar-title {
-    position: fixed;
+  /* 背景图 */
+  .bg-image {
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    z-index: 9999; // 确保在顶部
-    color: #FFFFFF;
-    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    text-align: center;
-    text-shadow: 0 3px 9px #666;
+    width: 100%;
+    height: 750rpx; // 覆盖上半部分
+    z-index: 0;
   }
 
-  /* 轮播图 */
-  .ai-entry-card {
-    width: 92%;
-    margin: 0 auto;
-    margin-top: 80rpx;
-    background: #6CA5FA;
-    border-radius: 24rpx;
-    box-shadow: $app-shadow;
-    padding: 24rpx;
+  /* 自定义头部 */
+  .custom-header {
+    position: relative;
+    z-index: 1000;
+    
+    .header-content {
+      height: auto;
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 0 30rpx;
+    }
+
+    .location-wrapper {
+      margin-top: 10rpx;
+      margin-bottom: 20rpx;
+
+      .location-title-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .location-text-en {
+         font-size: 20rpx;
+         color: rgba(255,255,255,0.8);
+         font-weight: bold;
+         letter-spacing: 2rpx;
+         margin-bottom: 2rpx;
+      }
+
+      .location-main {
+        display: flex;
+        align-items: center;
+      }
+      
+      .location-text-zh {
+        font-size: 40rpx;
+        color: #fff;
+        font-weight: bold;
+        margin-right: 8rpx;
+      }
+    }
   }
-  .ai-title {
-    font-size: 32rpx;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 20rpx;
-  }
-  .ai-input {
-    display: flex;
-    align-items: center;
-    gap: 12rpx;
-    background: #F3F4F6;
-    border-radius: 16rpx;
-    height: 72rpx;
-    padding: 0 20rpx;
-    margin-bottom: 20rpx;
-  }
-  .ai-input-placeholder {
-    font-size: 26rpx;
-    color: #9CA3AF;
-  }
-  .ai-tags {
-    display: flex;
-    gap: 16rpx;
-    flex-wrap: wrap;
-  }
-  .ai-tag {
-    background: #F9FAFB;
-    color: #6B7280;
-    border-radius: 9999rpx;
-    padding: 10rpx 22rpx;
-    font-size: 24rpx;
+
+  /* 搜索横幅区域 */
+  .search-banner-area {
+    position: relative;
+    z-index: 10;
+    padding: 0 30rpx;
+    margin-top: 20rpx;
+    margin-bottom: 40rpx;
+
+    .search-pill {
+      background: #fff;
+      border-radius: 40rpx;
+      padding: 16rpx 20rpx;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+      
+      .search-left {
+        display: flex;
+        align-items: center;
+        gap: 16rpx;
+        flex: 1;
+      }
+
+      .search-text {
+        font-size: 26rpx;
+        color: #333;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .search-arrow-circle {
+        width: 48rpx;
+        height: 48rpx;
+        background: #3c9cff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
   }
 
   /* 主要内容区 */
-  .index-main-wrapper {
-    width: 100%;
+  .main-content {
     position: relative;
-
-    /* 通知栏 */
-    .notice-wrapper {
-      width: 650rpx;
-      position: absolute;
-      top: -50rpx;
-      display: flex;
-      align-items: center;
-      background-color: #00b2b2;
-      color: white;
-      padding: 20rpx;
-      margin: 20rpx;
-      border-radius: 10rpx;
-      box-shadow: $app-shadow;
-      overflow: hidden;
-
-      .notice-tag {
-        font-size: 28rpx;
-        font-weight: bold;
-        background-color: white;
-        color: #00b2b2;
-        padding: 5rpx 10rpx;
-        border-radius: 8rpx;
-        flex-shrink: 0;
-        margin-right: 20rpx;
-      }
-
-      .notice-text-container {
-        flex: 1;
-        overflow: hidden;
-
-        .notice-text {
-          font-size: 28rpx;
-          white-space: nowrap;
-          animation: marquee 15s linear infinite;
-
-          // 滚动动画
-          @keyframes marquee {
-            0% {
-              transform: translateX(100%);
-            }
-
-            100% {
-              transform: translateX(-200%);
-            }
-          }
-        }
-      }
-    }
+    z-index: 20;
+    background: #f5f6f7;
+    border-radius: 40rpx 40rpx 0 0;
+    margin-top: 20rpx; /* Adjusted margin since banner is now part of header flow visually or needs space */
+    padding-bottom: 120rpx; // 底部导航栏高度
+    min-height: 50vh;
+    overflow: hidden;
 
     /* 图标导航 */
     .icon-nav-wrapper {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20rpx;
-      padding: 0 20rpx;
-      padding-top: 40px;
-      margin: 20rpx;
+      background: #fff;
+      padding: 40rpx 20rpx;
+      display: flex;
+      justify-content: space-between;
+      border-radius: 40rpx 40rpx 0 0;
+      margin-bottom: 20rpx;
 
       .icon-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 5px;
+        flex: 1;
       }
 
-      // 按钮大小
-      .icon-btn {
-        width: 60rpx;
-        height: 60rpx;
-
-        // 图标大小
-        image {
-          width: 100%;
-          height: 100%;
+      .icon-btn-circle {
+        width: 100rpx;
+        height: 100rpx;
+        background: #fff; /* Changed to white or light gray as per image description "white rounded square" */
+        border-radius: 24rpx; /* Rounded square */
+        box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05); /* Slight shadow */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16rpx;
+        
+        .icon-img {
+          width: 56rpx;
+          height: 56rpx;
         }
       }
 
       .icon-text {
-        font-size: 24rpx;
-        color: #333;
+        font-size: 26rpx;
+        color: #666;
       }
     }
 
-    
-  }
-}
+    /* Tab栏 */
+    .tab-bar-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20rpx 30rpx;
+      background: #f5f6f7; 
+      
+      .tab-scroll-view {
+         flex: 1;
+         overflow-x: auto;
+         white-space: nowrap;
+         margin-right: 20rpx;
+         
+         /* Hide scrollbar */
+         &::-webkit-scrollbar {
+           display: none;
+         }
+      }
 
-/* 节标题 */
-.section-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 40rpx;
-  margin-bottom: 20rpx;
-  padding: 0 20rpx;
+      .tab-list {
+        display: flex;
+        align-items: center;
+        /* Use fixed spacing instead of space-between to match prototype */
+        gap: 40rpx;
+        justify-content: flex-start;
+      }
 
-  .section-title {
-    @include title;
-  }
+      .tab-item {
+        position: relative;
+        padding-bottom: 10rpx;
+        flex-shrink: 0; 
+        padding: 0 5rpx;
+        
+        .tab-text {
+          font-size: 30rpx; /* Restored size */
+          color: #333; /* Darker gray by default */
+          white-space: nowrap; 
+          transition: all 0.3s;
+          font-weight: 500;
+        }
 
-  .section-more {
-    @include more;
+        &.active {
+          .tab-text {
+            color: #000; /* Black for active */
+            font-weight: bold;
+            font-size: 32rpx; 
+          }
+        }
+
+        .active-indicator {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40rpx;
+          height: 6rpx;
+          background: #3c9cff;
+          border-radius: 3rpx;
+        }
+      }
+
+      .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+        font-size: 28rpx;
+        color: #666;
+        padding-left: 0; /* Remove padding */
+        border-left: none; /* Remove border */
+        flex-shrink: 0;
+        margin-left: auto; /* Push to the right */
+      }
+    }
   }
 }
 
 /* 瀑布流 */
 .waterfall-wrapper { padding: 0 10rpx; }
-.waterfall-alt { display:flex; gap: 20rpx; }
-.column { flex: 1; display: flex; flex-direction: column; gap: 20rpx; }
-.post-card { background: #fff; border-radius: 20rpx; overflow: hidden; box-shadow: $app-shadow; }
-.animated { animation: fadeUp 320ms ease both; }
-.post-img { width: 100%; height: auto; display: block; }
-.post-info { padding: 16rpx; }
-.post-title { font-size: $fs-base; font-weight: bold; color: #111827; line-height: 1.4; }
-.post-actions { margin-top: 10rpx; display:flex; justify-content: space-between; align-items:center; }
-.action-left { display:flex; align-items:center; gap: 8rpx; color:#666; font-size: $fs-small; }
-.copy-btn { background: #e6f0ff; color: #3c78ff; border: none; border-radius: 28rpx; padding: 10rpx 18rpx; font-size: $fs-small; }
-.copy-btn.active { background: #3c78ff; color: #fff; }
+.waterfall-alt { display:flex; gap: 16rpx; padding: 0 10rpx; }
+.column { flex: 1; display: flex; flex-direction: column; gap: 16rpx; }
 
+.post-card { 
+  background: #fff; 
+  border-radius: 20rpx; 
+  overflow: hidden; 
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.03);
+  position: relative;
+  
+  .image-wrapper {
+    position: relative;
+    
+    .post-img { 
+      width: 100%; 
+      height: auto; 
+      display: block; 
+    }
+    
+    .duration-badge {
+      position: absolute;
+      bottom: 12rpx;
+      right: 12rpx;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 20rpx;
+      padding: 4rpx 12rpx;
+      border-radius: 10rpx;
+    }
+
+    /* 播放图标 */
+    .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      padding: 10rpx;
+    }
+    
+    /* AI推荐标签 - 样式1 (右上角标签) */
+    .ai-badge-top {
+      position: absolute;
+      top: 12rpx;
+      left: 12rpx;
+      background: #3c9cff;
+      color: #fff;
+      font-size: 20rpx;
+      padding: 4rpx 12rpx;
+      border-radius: 8rpx;
+      z-index: 2;
+    }
+  }
+
+  .post-info { 
+    padding: 20rpx; 
+    
+    .post-title { 
+      font-size: 28rpx; 
+      font-weight: bold; 
+      color: #111827; 
+      line-height: 1.5;
+      margin-bottom: 16rpx;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+
+    /* AI Badge Inline style */
+    .ai-badge-inline {
+       display: inline-block;
+       background: #3c9cff;
+       color: #fff;
+       font-size: 20rpx;
+       padding: 2rpx 8rpx;
+       border-radius: 6rpx;
+       margin-right: 8rpx;
+       vertical-align: middle;
+    }
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16rpx;
+      
+      .author-name {
+        font-size: 22rpx;
+        color: #999;
+        margin-left: 10rpx;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .like-count {
+        display: flex;
+        align-items: center;
+        gap: 6rpx;
+        font-size: 22rpx;
+        color: #999;
+      }
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: flex-end; /* Align button to right */
+      
+      .copy-btn {
+        width: auto; /* Auto width */
+        min-width: 140rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8rpx;
+        background: #3c9cff; /* Blue background */
+        color: #fff; /* White text */
+        border: none;
+        border-radius: 30rpx;
+        padding: 10rpx 20rpx;
+        font-size: 24rpx;
+        line-height: 1.5;
+        margin: 0;
+        
+        &.active {
+          background: #cccccc; /* Disabled/Active state color */
+          color: #fff;
+        }
+        
+        &::after { border: none; }
+      }
+    }
+  }
+}
+
+.animated { animation: fadeUp 320ms ease both; }
 @keyframes fadeUp {
   0% { opacity: 0; transform: translateY(12rpx); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
-
-.logo {
-  position: absolute;
-  top: 30rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
+.blank { height: 40rpx; }
 </style>
  
