@@ -66,6 +66,11 @@
     <scroll-view class="content" scroll-y>
       <view class="hotel-list">
         <view class="hotel-card" v-for="(hotel, index) in filteredHotels" :key="index" @click="goHotelDetail(hotel)">
+          <!-- 选择模式按钮 -->
+          <view v-if="isSelectionMode" class="select-btn" @click.stop="selectItem(hotel)">
+            <uni-icons type="plusempty" size="24" color="#fff"></uni-icons>
+          </view>
+          
           <image :src="hotel.imageURL" mode="aspectFill" class="hotel-image"></image>
           <view class="hotel-info">
             <view class="hotel-main">
@@ -80,11 +85,12 @@
                 </view>
             </view>
             <view class="hotel-bottom">
-                <view class="price-box">
+                <view v-if="!isSelectionMode" class="price-box">
                     <text class="currency">¥</text>
                     <text class="amount">{{ hotel.price }}</text>
                     <text class="unit">起/晚</text>
                 </view>
+                <view v-else style="flex: 1;"></view>
                 <button class="book-btn-sm" @click.stop="goHotelDetail(hotel)">立即预订</button>
             </view>
           </view>
@@ -96,6 +102,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 import { useRouter } from 'vue-router';
 
@@ -103,6 +110,31 @@ const userStore = useUserStore();
 const router = useRouter();
 const hotelList = ref([]);
 const combinedArray = ref([]);
+
+// 选择模式相关
+const isSelectionMode = ref(false);
+const selectionData = ref({});
+
+onLoad((options) => {
+  if (options.mode === 'select') {
+    isSelectionMode.value = true;
+    selectionData.value = options;
+  }
+});
+
+const selectItem = (hotel) => {
+  uni.$emit('selectProduct', {
+    dayIndex: Number(selectionData.value.dayIndex),
+    type: selectionData.value.type,
+    product: {
+        id: hotel.id,
+        name: hotel.name,
+        price: hotel.price,
+        images: [hotel.imageURL]
+    }
+  });
+  uni.navigateBack();
+};
 
 // 默认日期：今天和后天
 const today = new Date();
@@ -282,19 +314,39 @@ const filteredHotels = computed(() => {
 });
 </script>
 
-<style>
-page {
-  height: 100%;
-  background-color: #F5F7FA;
-}
-
+<style lang="scss" scoped>
 .page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
+  background-color: #f7f8fa;
 }
 
-/* Header Container */
+.selection-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.1);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.add-icon-btn {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 102, 204, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
 .header-container {
   position: relative;
   width: 100%;
@@ -505,6 +557,7 @@ page {
 }
 
 .hotel-card {
+  position: relative;
   background: #FFFFFF;
   border-radius: 16rpx;
   margin-bottom: 24rpx;
@@ -512,6 +565,21 @@ page {
   display: flex;
   flex-direction: row;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.select-btn {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  width: 64rpx;
+  height: 64rpx;
+  background: #007aff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 4rpx 12rpx rgba(0,122,255,0.4);
 }
 
 .hotel-image {

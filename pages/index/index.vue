@@ -111,7 +111,7 @@
                      <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
                      <text>{{ item.likes || 4652 }}</text>
                   </view>
-                  <button class="copy-btn" @click.stop="toPage('/pages/ticketDetails/ticketDetails')">
+                  <button class="copy-btn" @click.stop="toPage('/pages/postDetails/postDetails')">
                      <text>一键抄作业</text>
                   </button>
                 </view>
@@ -143,7 +143,7 @@
                      <uv-icon name="thumb-up" size="14" color="#999"></uv-icon>
                      <text>{{ item.likes || 4652 }}</text>
                   </view>
-                  <button class="copy-btn" @click.stop="toPage('/pages/ticketDetails/ticketDetails')">
+                  <button class="copy-btn" @click.stop="toPage('/pages/postDetails/postDetails')">
                      <text>一键抄作业</text>
                   </button>
                 </view>

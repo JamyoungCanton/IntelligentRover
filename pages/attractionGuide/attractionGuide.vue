@@ -42,6 +42,11 @@
           class="list-item"
           @click="goAttraction(item.id, item.imageUrl)"
         >
+          <!-- 选择模式按钮 -->
+          <view v-if="isSelectionMode" class="select-btn" @click.stop="selectItem(item)">
+            <uni-icons type="plusempty" size="24" color="#fff"></uni-icons>
+          </view>
+
           <image :src="item.imageUrl" class="item-thumb" mode="aspectFill" lazy-load="true" />
           <view class="item-body">
             <view class="item-header">
@@ -53,8 +58,10 @@
             <text class="item-intro">{{ shortIntro(item) }}</text>
             <view class="item-footer">
               <text class="item-time">开放时间：{{ formatTime(item.starttime) }} - {{ formatTime(item.endtime) }}</text>
-              <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
-              <text v-else class="price">免费</text>
+              <template v-if="!isSelectionMode">
+                <text v-if="item.ticketprice !== 0" class="price">¥{{ item.ticketprice }}</text>
+                <text v-else class="price">免费</text>
+              </template>
             </view>
           </view>
         </view>
@@ -65,6 +72,7 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
@@ -74,6 +82,26 @@ const categories = ['全部', '自然景观', '沙滩浴场', '观景台'];
 const searchInput = ref('');
 const filterValue = ref(0); // 新增，用于存储当前选中的筛选选项
 const attractionGuidelistOriginal = ref([]); // 排序的原始数据
+
+// 选择模式相关
+const isSelectionMode = ref(false);
+const selectionData = ref({});
+
+onLoad((options) => {
+  if (options.mode === 'select') {
+    isSelectionMode.value = true;
+    selectionData.value = options;
+  }
+});
+
+const selectItem = (item) => {
+  uni.$emit('selectProduct', {
+    dayIndex: Number(selectionData.value.dayIndex),
+    type: selectionData.value.type,
+    product: item
+  });
+  uni.navigateBack();
+};
 
 
 const range = [
@@ -248,9 +276,43 @@ const getAttrictionDetail = () => {
 }
 </script>
 
-<style>
-.page { display: flex; height: 100vh; background-color: #f5f7fa; }
-.page-scroll { width: 100%; }
+<style lang="scss" scoped>
+.page {
+  height: 100vh;
+  background-color: #F2F4F8;
+  display: flex;
+  flex-direction: column;
+}
+
+.selection-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.1);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.add-icon-btn {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 102, 204, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.page-scroll {
+  flex: 1;
+  height: 0; /* 必须设置，让 scroll-view 占据剩余空间 */
+}
 .hero { position: relative; height: 320rpx; margin: 0 24rpx; border-radius: 24rpx; overflow: hidden; }
 .hero-img { width: 100%; height: 100%; }
 .hero-overlay { width: 100%; height:150rpx;position: absolute; left: 50%; transform: translateX(-50%); right: 0; bottom: 70rpx; padding: 30rpx; background: transparent; z-index: 2; }
@@ -270,7 +332,8 @@ const getAttrictionDetail = () => {
 .filter-item { background: #e9f3ff; }
 .dropdown-icon { margin-left: 8rpx; font-size: 22rpx; color: #9499A0; }
 .list { padding: 16rpx 24rpx 40rpx 24rpx; }
-.list-item { display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; width: 100%; box-sizing: border-box; }
+.list-item { position: relative; display: flex; background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.06); margin-bottom: 20rpx; width: 100%; box-sizing: border-box; }
+.select-btn { position: absolute; right: 24rpx; bottom: 24rpx; width: 64rpx; height: 64rpx; background: #007aff; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 4rpx 12rpx rgba(0,122,255,0.4); }
 .item-thumb { width: 240rpx; height: 180rpx; flex-shrink: 0; display: block; background-color: #f0f2f5; }
 .item-body { flex: 1; padding: 20rpx; }
 .item-header { display: flex; align-items: center; justify-content: space-between; }
