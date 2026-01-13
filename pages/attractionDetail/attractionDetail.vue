@@ -344,8 +344,7 @@
       return;
     }
     
-    // 不再直接创建订单，而是跳转到 multiConfirmPay 页面进行确认和支付
-    // 传递必要的商品信息
+    // 跳转到订单详情页
     const itemsParam = encodeURIComponent(JSON.stringify([{
       id: hotel.id,
       name: hotel.name,
@@ -357,11 +356,8 @@
       imageUrl: hotel.imageUrl || (hotel.images && hotel.images[0]) || ''
     }]));
 
-    // orderSns 为空，表示还未创建订单
-    const orderSnsParam = encodeURIComponent(JSON.stringify([]));
-    
     uni.navigateTo({
-      url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotel.ticketprice || 0))}`,
+      url: `/pages/order/detail?items=${itemsParam}`,
       fail: (err) => {
         console.error('页面跳转失败:', err);
         uni.showToast({

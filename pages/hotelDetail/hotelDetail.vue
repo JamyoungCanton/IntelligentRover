@@ -340,51 +340,18 @@ const getDetailList = () => {
 
 const createOrder = (hotel) => {
   if (!hotel.id) { uni.showToast({ title: '商品ID为空，无法下单', icon: 'none' }); return; }
-  const d = new Date();
-  const todayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
-  const nextStr = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
-  const travelStartDate = `${todayStr} 14:00:00`;
-  const travelEndDate = `${nextStr} 12:00:00`;
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo.realname || '',
-      contractPhone: userStore.userInfo.phone || ''
-    },
-    items: [
-      {
-        bookInfo: {
-          date: todayStr,
-          fullname: userStore.userInfo.realname || '',
-          idCardNo: userStore.userInfo.idCardNo || '',
-          idCardType: 'ID_CARD',
-          schedule: ''
-        },
-        productId: hotel.id,
-        productType: 'Accommodations',
-        quantity: 1
-      }
-    ],
-    travelStartDate,
-    travelEndDate
+  
+  // 构造商品信息传递给订单详情页
+  const item = {
+    id: hotel.id,
+    name: hotel.name,
+    type: 'Accommodations',
+    price: Number(hotel.price || 0),
+    imageUrl: (hotelImages.value && hotelImages.value[0]) || hotel.imageUrl || ''
   };
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
-    data: orderData,
-    success: (res) => {
-      if (res.data.code === 200) {
-        const orderSn = res.data.result.orderSn;
-        const itemsParam = encodeURIComponent(JSON.stringify([{ id: hotelData.value.id, name: hotelData.value.name, type: 'Accommodations', ticketprice: Number(hotelData.value.price || 0), price: Number(hotelData.value.price || 0), starttime: '14:00:00', endtime: '12:00:00' }]))
-        const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn]))
-        uni.navigateTo({ url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${encodeURIComponent(String(hotelData.value.price || 0))}` })
-      } else {
-        uni.showToast({ title: res.data.message || '订单创建失败', icon: 'none' });
-      }
-    },
-    fail: () => { uni.showToast({ title: '创建订单失败，请稍后重试', icon: 'none' }); }
-  });
+
+  const itemsParam = encodeURIComponent(JSON.stringify([item]));
+  uni.navigateTo({ url: `/pages/order/detail?items=${itemsParam}` });
 };
 
 // 原“客房亮点”模块已移除，如需恢复可在此重新配置 roomFeatures

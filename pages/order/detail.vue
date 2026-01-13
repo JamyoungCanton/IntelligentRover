@@ -4,17 +4,23 @@
     <view class="section-card">
       <view class="section-title">商品列表</view>
       <view class="item-row" v-for="(item, index) in orderItems" :key="index">
-        <view class="item-left">
-          <!-- 暂时使用默认图标，实际可根据类型判断 -->
-          <uni-icons type="image" size="24" color="#999"></uni-icons>
+        <view class="item-left" v-if="item.imageUrl || item.image || item.productImage">
+          <image 
+            :src="item.imageUrl || item.image || item.productImage" 
+            mode="aspectFill" 
+            class="product-img"
+          />
         </view>
         <view class="item-center">
-          <text class="item-name">{{ item.goodsName || '未知商品' }}</text>
-          <text class="item-desc">自然景观</text> <!-- 暂无字段，写死或映射 -->
+          <text class="item-name">{{ item.goodsName || item.productName || item.name || '未知商品' }}</text>
+          <view class="item-type-tag" v-if="item.type || item.productType">
+            <text class="type-text">{{ getTypeLabel(item.type || item.productType) }}</text>
+          </view>
+          <text class="item-desc">{{ item.description || '暂无描述' }}</text>
         </view>
         <view class="item-right">
           <text class="item-price">¥ {{ Number(item.price || item.amount || 0).toFixed(0) }}</text>
-          <uni-icons type="close" size="20" color="#3c9cff" class="remove-icon" @click="handleRemoveItem(index)"></uni-icons>
+          <uni-icons type="close" size="20" color="#3c9cff" class="remove-icon" @click="handleRemoveItem(index)" v-if="orderItems.length > 1"></uni-icons>
         </view>
       </view>
     </view>
@@ -49,7 +55,7 @@
           :class="{ active: currentPassengerIndex === index }"
           @click="currentPassengerIndex = index"
         >
-          {{ p.name }}
+          {{ index + 1 }}
         </view>
         <view class="add-tag" @click="openPassengerSelector">
           新增/更换
@@ -58,9 +64,9 @@
       
       <view class="contact-info" v-if="currentPassenger">
         <uni-icons type="person" size="18" color="#3c9cff"></uni-icons>
-        <text class="label">联系人</text>
+        <text class="label">联系人 {{ currentPassengerIndex + 1 }}</text>
         <text class="value">{{ currentPassenger.name }}</text>
-        <text class="label" style="margin-left: 20rpx;">手机号</text>
+        <text class="label" style="margin-left: 20rpx;">手机号 {{ currentPassengerIndex + 1 }}</text>
         <text class="value">{{ maskPhone(currentPassenger.phone) }}</text>
         <uni-icons type="compose" size="18" color="#3c9cff" class="edit-icon" @click="editPassenger(currentPassenger)"></uni-icons>
       </view>
@@ -141,9 +147,32 @@ const totalAmount = computed(() => {
 });
 
 onLoad((options) => {
+  uni.setNavigationBarTitle({
+    title: '订单详情'
+  });
+
   if (options.orderSn) {
     orderSn.value = options.orderSn;
     fetchOrderDetail();
+  } else if (options.orderSns) {
+    try {
+      const sns = JSON.parse(decodeURIComponent(options.orderSns));
+      if (Array.isArray(sns) && sns.length > 0) {
+        fetchMultipleOrders(sns);
+      }
+    } catch (e) {
+      console.error('解析订单号失败', e);
+    }
+  } else if (options.items) {
+    // 兼容直接传 items 的情况 (如 Attraction/Food 跳转)
+    try {
+      const items = JSON.parse(decodeURIComponent(options.items));
+      if (Array.isArray(items) && items.length > 0) {
+        orderItems.value = items;
+      }
+    } catch (e) {
+      console.error('解析商品信息失败', e);
+    }
   }
   generateDates();
 });
@@ -212,9 +241,14 @@ const goToPassengerManage = () => {
   uni.navigateTo({
     url: '/pages/commonInfo/commonInfo'
   });
-  // 保持弹窗开启，或者关闭？
-  // 页面跳转后回来会触发onShow刷新数据，建议关闭弹窗让用户重新点开，或者保持。
-  // 这里选择保持，但要注意数据刷新。onShow会刷新passengers。
+};
+
+const getTypeLabel = (type) => {
+  const t = (type || '').toLowerCase();
+  if (t === 'attractions' || t === 'scenic') return '景点';
+  if (t === 'accommodations' || t === 'hotel') return '酒店';
+  if (t === 'dining' || t === 'food') return '美食';
+  return '商品';
 };
 
 const maskPhone = (phone) => {
@@ -239,8 +273,37 @@ const generateDates = () => {
   dateList.value = list;
 };
 
+const fetchMultipleOrders = async (sns) => {
+  uni.showLoading({ title: '加载中' });
+  try {
+    const promises = sns.map(sn => {
+      return new Promise((resolve) => {
+        uni.request({
+          url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${sn}`,
+          method: 'GET',
+          header: { 'X-Access-Token': userStore.token },
+          success: (res) => {
+            if (res.data.success) {
+              resolve(res.data.result);
+            } else {
+              resolve(null);
+            }
+          },
+          fail: () => resolve(null)
+        });
+      });
+    });
+    
+    const results = await Promise.all(promises);
+    orderItems.value = results.filter(item => item !== null);
+  } catch (e) {
+    uni.showToast({ title: '加载失败', icon: 'none' });
+  } finally {
+    uni.hideLoading();
+  }
+};
+
 const fetchOrderDetail = () => {
-  // 复用之前的获取逻辑，这里简化展示
   uni.request({
     url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${orderSn.value}`,
     method: 'GET',
@@ -262,17 +325,98 @@ const handleSubmit = () => {
     uni.showToast({ title: '请选择商品', icon: 'none' });
     return;
   }
-  if (!currentPassenger.value) {
+  if (selectedPassengers.value.length === 0) {
     uni.showToast({ title: '请选择预定人', icon: 'none' });
     return;
   }
   
-  // 提交逻辑...
-  uni.showLoading({ title: '提交中' });
-  setTimeout(() => {
-    uni.hideLoading();
-    uni.showToast({ title: '提交成功', icon: 'success' });
-  }, 1000);
+  // 如果已经有 orderSn (比如从订单列表进来)，直接去支付
+  if (orderSn.value) {
+    const itemsParam = encodeURIComponent(JSON.stringify(orderItems.value));
+    const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn.value]));
+    const priceParam = encodeURIComponent(totalAmount.value);
+    uni.navigateTo({
+      url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
+    });
+    return;
+  }
+
+  // 创建订单
+  createOrder();
+};
+
+const createOrder = () => {
+  uni.showLoading({ title: '正在提交...' });
+  
+  // 构造订单数据
+  // 假设每个选中的预定人对应一份商品（这里简化处理，如果商品数量逻辑复杂需调整）
+  // 对于每个商品，为每个预定人创建一个 item
+  const allItems = [];
+  const dateStr = dateList.value[selectedDateIndex.value] ? 
+    `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2, '0')}-${String(dateList.value[selectedDateIndex.value].day).padStart(2, '0')}` 
+    : new Date().toISOString().split('T')[0];
+
+  orderItems.value.forEach(product => {
+    selectedPassengers.value.forEach(passenger => {
+      allItems.push({
+        bookInfo: {
+          date: dateStr,
+          fullname: passenger.name,
+          idCardNo: passenger.idCard, // 假设 passenger 对象有 idCard 字段，注意字段名匹配
+          idCardType: "ID_CARD",
+          schedule: product.starttime || "08:00"
+        },
+        productId: product.id,
+        productType: product.type || "Accommodations",
+        quantity: 1,
+        price: Number(product.price || 0),
+        amount: Number(product.price || 0),
+        name: product.name,
+        image: product.imageUrl || product.image || '',
+        specs: ''
+      });
+    });
+  });
+
+  const orderData = {
+    contract: {
+      contractName: selectedPassengers.value[0].name,
+      contractPhone: selectedPassengers.value[0].phone
+    },
+    items: allItems,
+    travelStartDate: `${dateStr} 00:00:00`,
+    travelEndDate: `${dateStr} 23:59:59`, // 简化的时间逻辑
+    remark: remark.value
+  };
+
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
+    method: 'POST',
+    header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
+    data: orderData,
+    success: (res) => {
+      uni.hideLoading();
+      if (res.data.success || res.data.code === 200) {
+        const resultSn = res.data.result.orderSn || res.data.result.id;
+        const sns = resultSn ? [resultSn] : []; // 暂时假设返回一个主订单号或 ID
+        
+        // 跳转到支付确认页
+        const itemsParam = encodeURIComponent(JSON.stringify(orderItems.value)); // 传递原始商品用于展示
+        const orderSnsParam = encodeURIComponent(JSON.stringify(sns));
+        const priceParam = encodeURIComponent(totalAmount.value);
+        
+        uni.navigateTo({
+           url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
+        });
+      } else {
+        uni.showToast({ title: res.data.message || '下单失败', icon: 'none' });
+      }
+    },
+    fail: () => {
+      uni.hideLoading();
+      uni.showToast({ title: '网络请求失败', icon: 'none' });
+    }
+  });
 };
 
 const editPassenger = (p) => {
@@ -319,14 +463,22 @@ const editPassenger = (p) => {
 }
 
 .item-left {
-  width: 80rpx;
-  height: 80rpx;
+  width: 120rpx;
+  height: 120rpx;
   background-color: #f5f5f5;
-  border-radius: 8rpx;
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20rpx;
+  margin-right: 24rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
 }
 
 .item-center {
@@ -337,6 +489,23 @@ const editPassenger = (p) => {
   font-size: 30rpx;
   color: #333;
   display: block;
+  margin-bottom: 8rpx;
+}
+
+.item-type-tag {
+  display: flex;
+  align-items: center;
+  background-color: #f0f2f5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.type-text {
+  font-size: 22rpx;
+  color: #666;
+  margin-left: 6rpx;
 }
 
 .item-desc {
