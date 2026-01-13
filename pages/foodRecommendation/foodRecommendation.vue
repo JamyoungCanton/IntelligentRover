@@ -70,6 +70,12 @@
       <!-- 餐厅列表 -->
       <view class="restaurant-list">
         <view v-for="(restaurant, index) in displayedRestaurants" :key="index" class="restaurant-card" @click="goToFoodDetails(restaurant)">
+          
+          <!-- 选择模式按钮 -->
+          <view v-if="isSelectionMode" class="select-btn" @click.stop="selectItem(restaurant)">
+            <uni-icons type="plusempty" size="24" color="#fff"></uni-icons>
+          </view>
+
           <image :src="restaurant.imageURL" class="restaurant-thumb" mode="aspectFill" />
           <view class="restaurant-info">
             <!-- 标题 -->
@@ -89,7 +95,7 @@
             <!-- 底部：时间与价格 -->
             <view class="bottom-row">
               <text class="business-hours">营业时间：{{ formatTime(restaurant.starthour) }} - {{ formatTime(restaurant.endhour) }}</text>
-              <text class="price">¥{{ restaurant.priceaverage }}/人</text>
+              <text v-if="!isSelectionMode" class="price">¥{{ restaurant.priceaverage }}/人</text>
             </view>
           </view>
         </view>
@@ -109,6 +115,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { onMounted } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
 const safeAreaInsets = ref({});
@@ -137,6 +144,26 @@ const currentSort = computed(() => {
   const combinedArray = ref([]);
 const showSortPopup = ref(false);
 const searchKeyword = ref('');
+
+// 选择模式相关
+const isSelectionMode = ref(false);
+const selectionData = ref({});
+
+onLoad((options) => {
+  if (options.mode === 'select') {
+    isSelectionMode.value = true;
+    selectionData.value = options;
+  }
+});
+
+const selectItem = (item) => {
+  uni.$emit('selectProduct', {
+    dayIndex: Number(selectionData.value.dayIndex),
+    type: selectionData.value.type,
+    product: item
+  });
+  uni.navigateBack();
+};
 
 // 格式化时间函数
 const formatTime = (timeString) => {
@@ -486,6 +513,31 @@ page {
   height: 100%;
 }
 
+.selection-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.1);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.add-icon-btn {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 102, 204, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
 .header {
   position: relative;
   width: 100%;
@@ -653,12 +705,28 @@ page {
 }
 
 .restaurant-card {
+  position: relative;
   display: flex;
   background: #FFFFFF;
   border-radius: 20rpx;
   overflow: hidden;
   margin-bottom: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.select-btn {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  width: 64rpx;
+  height: 64rpx;
+  background: #007aff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 4rpx 12rpx rgba(0,122,255,0.4);
 }
 
 .restaurant-thumb {

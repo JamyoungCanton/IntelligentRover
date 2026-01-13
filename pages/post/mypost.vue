@@ -47,27 +47,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 固定底部tab -->
-
-    <view class="bottom-tab-bar">
-      <view
-        class="tab-btn"
-        :class="{ active: currentTab === 'my' }"
-        @tap="switchTab('my')"
-      >
-        <uni-icons type="compose" size="22" :color="currentTab === 'my' ? '#fff' : '#0080ff'" />
-        <text>我的发布</text>
-      </view>
-      <view
-        class="tab-btn"
-        :class="{ active: currentTab === 'collect' }"
-        @tap="switchTab('collect')"
-      >
-        <uni-icons type="star" size="22" :color="currentTab === 'collect' ? '#fff' : '#0080ff'" />
-        <text>我的收藏</text>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -78,8 +57,6 @@ import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
 const posts = ref<any[]>([]);
 const loading = ref(true);
-const currentTab = ref<'my' | 'collect'>('my');
-
 
 // 原生时间格式化
 const formatTime = (t: string) => t ? new Date(t).toLocaleString() : '';
@@ -303,40 +280,5 @@ onMounted(fetchMyPosts);
 
 .data-detail{
   margin: 0 12px 0 4px;
-}
-
-.bottom-tab-bar {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: rgba(255,255,255,0.98);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-  padding: 12px 0 20px 0;
-  z-index: 99;
-}
-
-.tab-btn {
-  flex: 1;
-  margin: 0 18rpx;
-  background: linear-gradient(135deg, #f8f9fa, #e6f0ff);
-  border-radius: 32rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16rpx 0 10rpx 0;
-  font-size: 26rpx;
-  color: #0080ff;
-  box-shadow: 0 2px 8px rgba(0,128,255,0.08);
-  transition: all 0.2s;
-}
-
-.tab-btn.active {
-  background: linear-gradient(135deg, #0080ff, #0066cc);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(0,128,255,0.18);
 }
 </style>
