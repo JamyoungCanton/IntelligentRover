@@ -338,6 +338,18 @@
 
 			}
 		},
+    {
+      "path": "pages/commonInfo/commonInfo",
+      "style": {
+        "navigationBarTitleText": "常用信息"
+      }
+    },
+    {
+      "path": "pages/commonInfo/addPassenger",
+      "style": {
+        "navigationBarTitleText": "新增旅客"
+      }
+    },
 		{
 			"path": "pages/comfirmticketBookingOrder/comfirmticketBookingOrder",
 			"style": {
