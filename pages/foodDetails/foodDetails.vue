@@ -373,81 +373,21 @@ const bookNow = () => {
     }, 800);
     return;
   }
-  const dateValue = diningDate.value || todayStr;
-  const startTime = (timeRange.value.start || '10:00').length === 5
-    ? timeRange.value.start + ':00'
-    : timeRange.value.start || '10:00:00';
-  const endTime = (timeRange.value.end || '22:00').length === 5
-    ? timeRange.value.end + ':00'
-    : timeRange.value.end || '22:00:00';
 
-  const startDateTime = `${dateValue} ${startTime}`;
-  const endDateTime = `${dateValue} ${endTime}`;
-
-  const orderData = {
-    contract: {
-      contractName: userStore.userInfo?.realname || '游客',
-      contractPhone: userStore.userInfo?.phone || '13800138000'
-    },
-    items: [
-      {
-        bookInfo: {
-          date: dateValue,
-          fullname: userStore.userInfo?.realname || '游客',
-          idCardNo: userStore.userInfo?.idCardNo || '110101199001011234',
-          idCardType: "ID_CARD",
-          schedule: `${startTime}-${endTime}`
-        },
-        productId: foodDetails.value.id,
-        productType: "Dining",
-        quantity: 1,
-        price: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
-        amount: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
-        name: foodDetails.value.name,
-        image: foodDetails.value.imageUrl || foodDetails.value.image,
-        specs: `${startTime}-${endTime}`
-      }
-    ],
-    travelStartDate: startDateTime,
-    travelEndDate: endDateTime
+  // 构造商品信息传递给订单详情页
+  const item = {
+    id: foodDetails.value.id,
+    name: foodDetails.value.name,
+    type: 'Dining',
+    price: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
+    imageUrl: foodDetails.value.imageUrl || foodDetails.value.image || (shopMainImage.value) || '',
+    starttime: formatTime(foodDetails.value.starthour || timeRange.value.start),
+    endtime: formatTime(foodDetails.value.endhour || timeRange.value.end)
   };
 
-  console.log('订单数据(创建前):', orderData);
-
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    data: orderData,
-    header: {
-      'Content-Type': 'application/json',
-      'X-Access-Token': userStore.token || ''
-    },
-    success: (res) => {
-      console.log('创建订单响应:', res.data);
-      if (res.data && (res.data.success || res.data.code === 200) && res.data.result) {
-        const orderSn = res.data.result.orderSn || res.data.result.id || '';
-        const item = {
-          id: foodDetails.value.id,
-          name: foodDetails.value.name,
-          type: foodDetails.value.type,
-          ticketprice: Number(foodDetails.value.price || foodDetails.value.priceaverage || 0),
-          starttime: formatTime(foodDetails.value.starthour || timeRange.value.start),
-          endtime: formatTime(foodDetails.value.endhour || timeRange.value.end)
-        };
-        const itemsParam = encodeURIComponent(JSON.stringify([item]));
-        const orderSnsParam = encodeURIComponent(JSON.stringify(orderSn ? [orderSn] : []));
-        const priceParam = encodeURIComponent(String(item.ticketprice || 0));
-        uni.navigateTo({
-          url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
-        });
-      } else {
-        uni.showToast({ title: res.data.message || '未能创建订单', icon: 'none' });
-      }
-    },
-    fail: (err) => {
-      console.error('创建订单失败:', err);
-      uni.showToast({ title: '网络错误，请重试', icon: 'none' });
-    }
+  const itemsParam = encodeURIComponent(JSON.stringify([item]));
+  uni.navigateTo({
+    url: `/pages/order/detail?items=${itemsParam}`
   });
 };
 

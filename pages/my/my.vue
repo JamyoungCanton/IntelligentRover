@@ -94,14 +94,14 @@ const gridItems = ref([
     onClick: 'goCollectPost'
   },
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E8%AE%A2%E5%8D%95.png',
-    text: '历史订单',
-	onClick: 'gohisorder'
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/img/New_version/常用信息.png',
+    text: '常用信息',
+    onClick: 'goCommonInfo'
   },
   {
-    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E6%94%B6%E8%97%8F%20(3).png',
-    text: '我的收藏',
-    onClick: 'goActivityCollect'
+    img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E8%AE%A2%E5%8D%95.png',
+    text: '历史订单',
+    onClick: 'gohisorder'
   },
   {
     img: 'https://gitee.com/luo-shaominggitee/island_image/raw/main/new/my/%E5%85%B3%E6%B3%A8%E6%88%91%E4%BB%AC.png',
@@ -136,6 +136,12 @@ const handleGridItemClick = (item) => {
   if (item.onClick === 'goActivityCollect') {
     uni.navigateTo({
       url: '/pages/productCollect/productCollect'
+    });
+    return;
+  }
+  if (item.onClick === 'goCommonInfo') {
+    uni.navigateTo({
+      url: '/pages/commonInfo/commonInfo'
     });
     return;
   }

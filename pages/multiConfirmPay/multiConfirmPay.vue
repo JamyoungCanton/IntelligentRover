@@ -71,8 +71,14 @@ const userStore = useUserStore()
 
 const items = ref([]) // [{id, name, type, ticketprice, starttime, endtime}]
 const orderSns = ref([]) // 多个订单号，用于共同支付
+const hasOrderSn = computed(() => orderSns.value && orderSns.value.length > 0)
 const remark = ref('')
 const isPaying = ref(false)
+const selectedPayment = ref('wechat')
+
+const selectPayment = (type) => {
+  selectedPayment.value = type
+}
 
 const form = ref({
   name: '',
@@ -235,13 +241,15 @@ const goBack = () => { uni.navigateBack() }
 
 const handlePay = async () => {
   if (isPaying.value) return
-  if (!form.value.name || !form.value.phone || !form.value.idCardNo) {
-    uni.showToast({ title: '请完善个人信息', icon: 'none' })
-    return
-  }
-  if (!selectedDate.value) {
-    uni.showToast({ title: '请选择日期', icon: 'none' })
-    return
+  if (!hasOrderSn.value) {
+    if (!form.value.name || !form.value.phone || !form.value.idCardNo) {
+      uni.showToast({ title: '请完善个人信息', icon: 'none' })
+      return
+    }
+    if (!selectedDate.value) {
+      uni.showToast({ title: '请选择日期', icon: 'none' })
+      return
+    }
   }
 
   isPaying.value = true
@@ -259,20 +267,21 @@ const handlePay = async () => {
       orderSns.value = newSns
     }
 
-    // 2. 支付订单 (已移除，改为跳转到详情页支付)
-    // for (const sn of orderSns.value) {
-    //   await payOrderRequest(sn)
-    // }
+    // 2. 支付订单
+    for (const sn of orderSns.value) {
+      await payOrderRequest(sn)
+    }
 
     // 3. 成功跳转
     uni.hideLoading()
     isPaying.value = false
     
-    // 跳转到订单详情页
-    const allSns = JSON.stringify(orderSns.value);
-    uni.redirectTo({
-      url: `/pages/order/detail?orderSns=${encodeURIComponent(allSns)}`
-    })
+    uni.showToast({ title: '支付成功', icon: 'success' })
+    setTimeout(() => {
+      uni.redirectTo({
+        url: '/pages/pay_success/pay_success'
+      })
+    }, 1500)
 
   } catch (err) {
     console.error(err)
