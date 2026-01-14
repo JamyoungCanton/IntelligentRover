@@ -149,6 +149,86 @@ onLoad(async (options) => {
   }
 })
 
+const fetchItemDetails = async () => {
+  const promises = items.value.map(async (item) => {
+    let url = '';
+    let type = item.type || 'Attractions';
+    
+    if (type.toLowerCase().includes('dining') || type.toLowerCase().includes('restaurant') || type.toLowerCase() === 'food') {
+        url = `/island/front/product/dining/${item.id}`;
+        type = 'Dining';
+    } else if (type.toLowerCase().includes('hotel') || type.toLowerCase().includes('accommodation')) {
+        url = `/island/front/product/accommodations/${item.id}`;
+        type = 'Accommodations';
+    } else {
+        url = `/island/front/product/attractions/${item.id}`;
+        type = 'Attractions';
+    }
+
+    try {
+        const res = await uni.request({
+            url: 'https://island.zhangshuiyi.com' + url,
+            method: 'GET',
+             header: {
+                'X-Access-Token': userStore.token
+            }
+        });
+        
+        // API response handling
+        let data = res.data;
+        if (data.code === 200 && data.result) {
+            data = data.result;
+        } else if (data.code && data.code !== 200) {
+           // Error or not found, keep existing data or use defaults
+           return; 
+        }
+        // If data is just the object (based on user example, though standard is usually wrapped)
+        // We assume it might be wrapped in result based on other project files.
+        // If result is undefined and it looks like the object, use data.
+        if (!data.result && (data.id || data.name)) {
+           // data is the object
+        } else if (data.result) {
+           data = data.result;
+        }
+
+        if (data) {
+             if (type === 'Dining') {
+                 item.price = data.price || item.price;
+                 item.ticketprice = data.price || item.ticketprice;
+                 item.starttime = data.starthour || item.starttime;
+                 item.endtime = data.endhour || item.endtime;
+                 item.name = data.name || item.name;
+                 item.imageUrl = data.imageUrl || item.imageUrl;
+             } else if (type === 'Accommodations') {
+                 item.price = data.price || item.price;
+                 item.ticketprice = data.price || item.ticketprice;
+                 item.starttime = data.checkinTime || item.starttime;
+                 item.endtime = data.checkoutTime || item.endtime;
+                 item.name = data.name || item.name;
+                 item.imageUrl = data.imageUrl || item.imageUrl;
+             } else { // Attractions
+                 item.price = data.ticketprice || item.price;
+                 item.ticketprice = data.ticketprice || item.ticketprice;
+                 item.starttime = data.starttime || item.starttime;
+                 item.endtime = data.endtime || item.endtime;
+                 item.name = data.name || item.name;
+                 item.imageUrl = data.imageUrl || item.imageUrl;
+             }
+        }
+    } catch (e) {
+        console.error(`Fetch details for item ${item.id} failed`, e);
+    }
+
+    // Default price to 35 if not retrieved or zero
+    if (!item.price || Number(item.price) <= 0) {
+        item.price = 35;
+        item.ticketprice = 35;
+    }
+  });
+  
+  await Promise.all(promises);
+}
+
 const goBack = () => { uni.navigateBack() }
 
 // 已移除更多按钮，默认展开日期

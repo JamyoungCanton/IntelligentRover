@@ -657,7 +657,7 @@ const copyHomework = () => {
        ticketprice: 0, 
        imageUrl: (postDetailList.value.images && postDetailList.value.images.length > 0) ? postDetailList.value.images[0].url : ''
      });
-    }
+  }
 
   uni.navigateTo({
     url: `/pages/multiConfirmPay/multiConfirmPay?items=${encodeURIComponent(JSON.stringify(items))}`

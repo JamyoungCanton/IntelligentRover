@@ -706,7 +706,7 @@ const navigateToChat = () => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      
+
       .like-count {
         display: flex;
         align-items: center;
@@ -714,11 +714,6 @@ const navigateToChat = () => {
         font-size: 22rpx;
         color: #999;
       }
-    }
-
-    .post-actions {
-      display: flex;
-      justify-content: flex-end; /* Align button to right */
       
       .copy-btn {
         width: auto; /* Auto width */
