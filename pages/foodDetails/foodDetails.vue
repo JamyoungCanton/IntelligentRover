@@ -387,7 +387,7 @@ const bookNow = () => {
 
   const itemsParam = encodeURIComponent(JSON.stringify([item]));
   uni.navigateTo({
-    url: `/pages/order/detail?items=${itemsParam}`
+    url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}`
   });
 };
 

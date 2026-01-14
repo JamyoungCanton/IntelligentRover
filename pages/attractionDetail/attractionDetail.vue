@@ -345,7 +345,7 @@
     }
     
     // 跳转到订单详情页
-    const itemsParam = encodeURIComponent(JSON.stringify([{
+    const items = [{
       id: hotel.id,
       name: hotel.name,
       type: 'Attractions', // 明确类型
@@ -354,10 +354,13 @@
       starttime: hotel.starttime || '10:00',
       endtime: hotel.endtime || '22:00',
       imageUrl: hotel.imageUrl || (hotel.images && hotel.images[0]) || ''
-    }]));
+    }];
+    
+    // 使用 Storage 传递数据，避免 URL 长度限制
+    uni.setStorageSync('tempOrderItems', JSON.stringify(items));
 
     uni.navigateTo({
-      url: `/pages/order/detail?items=${itemsParam}`,
+      url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}`,
       fail: (err) => {
         console.error('页面跳转失败:', err);
         uni.showToast({

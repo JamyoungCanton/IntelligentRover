@@ -351,7 +351,7 @@ const createOrder = (hotel) => {
   };
 
   const itemsParam = encodeURIComponent(JSON.stringify([item]));
-  uni.navigateTo({ url: `/pages/order/detail?items=${itemsParam}` });
+  uni.navigateTo({ url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}` });
 };
 
 // 原“客房亮点”模块已移除，如需恢复可在此重新配置 roomFeatures

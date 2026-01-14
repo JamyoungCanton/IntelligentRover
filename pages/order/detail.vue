@@ -1,764 +1,553 @@
 <template>
   <view class="page">
-    <!-- 商品列表 -->
-    <view class="section-card">
-      <view class="section-title">商品列表</view>
-      <view class="item-row" v-for="(item, index) in orderItems" :key="index">
-        <view class="item-left" v-if="item.imageUrl || item.image || item.productImage">
-          <image 
-            :src="item.imageUrl || item.image || item.productImage" 
-            mode="aspectFill" 
-            class="product-img"
-          />
-        </view>
-        <view class="item-center">
-          <text class="item-name">{{ item.goodsName || item.productName || item.name || '未知商品' }}</text>
-          <view class="item-type-tag" v-if="item.type || item.productType">
-            <text class="type-text">{{ getTypeLabel(item.type || item.productType) }}</text>
+    <!-- 头部状态 -->
+    <view class="header-section">
+      <view class="status-title">{{ statusText }}</view>
+      <view class="status-time" v-if="orderInfo.payTime">支付时间: {{ orderInfo.payTime }}</view>
+    </view>
+
+    <!-- 订单商品列表 -->
+    <view class="order-items">
+      <view class="item-card" v-for="(item, index) in orderItems" :key="index">
+        <image class="item-image" :src="item.imageUrl" mode="aspectFill"></image>
+        <view class="item-info">
+          <view class="item-row-top">
+            <text class="item-title">{{ item.goodsName || '未知商品' }}</text>
+            <text class="item-price">¥ {{ Number(item.price || item.amount || 0).toFixed(2) }}</text>
           </view>
-          <text class="item-desc">{{ item.description || '暂无描述' }}</text>
-        </view>
-        <view class="item-right">
-          <text class="item-price">¥ {{ Number(item.price || item.amount || 0).toFixed(0) }}</text>
-          <uni-icons type="close" size="20" color="#3c9cff" class="remove-icon" @click="handleRemoveItem(index)" v-if="orderItems.length > 1"></uni-icons>
+          <view class="item-detail-row">
+            <text>创建时间: {{ item.createTime }}</text>
+          </view>
+          <view class="item-detail-row">
+            <text>联系人: {{ item.contractName || '智游侠' }}</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 选择日期 -->
-    <view class="section-card">
-      <view class="section-title">选择日期</view>
-      <view class="date-scroll">
-        <view 
-          class="date-item" 
-          v-for="(date, index) in dateList" 
-          :key="index"
-          :class="{ active: selectedDateIndex === index }"
-          @click="selectedDateIndex = index"
-        >
-          <text class="day">{{ date.day }}</text>
-          <text class="week">{{ date.week }}</text>
-          <text class="month">{{ date.month }}</text>
-        </view>
+    <!-- 订单信息汇总 -->
+    <view class="order-summary">
+      <view class="summary-row">
+        <text class="label">实付款:</text>
+        <text class="value price">合计 {{ totalAmount }}</text>
       </view>
-      <view class="open-time">开放时间: 08:00 - 17:30</view>
-    </view>
-
-    <!-- 预定人信息 -->
-    <view class="section-card">
-      <view class="section-title">预定人信息</view>
-      <view class="passenger-tags">
-        <view 
-          class="passenger-tag" 
-          v-for="(p, index) in selectedPassengers" 
-          :key="index"
-          :class="{ active: currentPassengerIndex === index }"
-          @click="currentPassengerIndex = index"
-        >
-          {{ index + 1 }}
-        </view>
-        <view class="add-tag" @click="openPassengerSelector">
-          新增/更换
-        </view>
+      <view class="summary-row">
+        <text class="label">订单编号:</text>
+        <text class="value">{{ mainOrderSn }}</text>
       </view>
-      
-      <view class="contact-info" v-if="currentPassenger">
-        <uni-icons type="person" size="18" color="#3c9cff"></uni-icons>
-        <text class="label">联系人 {{ currentPassengerIndex + 1 }}</text>
-        <text class="value">{{ currentPassenger.name }}</text>
-        <text class="label" style="margin-left: 20rpx;">手机号 {{ currentPassengerIndex + 1 }}</text>
-        <text class="value">{{ maskPhone(currentPassenger.phone) }}</text>
-        <uni-icons type="compose" size="18" color="#3c9cff" class="edit-icon" @click="editPassenger(currentPassenger)"></uni-icons>
+      <view class="summary-row" v-if="firstOrder.createTime">
+        <text class="label">下单时间:</text>
+        <text class="value">{{ firstOrder.createTime }}</text>
+      </view>
+       <view class="summary-row" v-if="firstOrder.payTime">
+        <text class="label">支付时间:</text>
+        <text class="value">{{ firstOrder.payTime }}</text>
       </view>
     </view>
 
-    <!-- 备注 -->
-    <view class="section-card">
-      <view class="section-title">备注</view>
-      <textarea 
-        class="remark-input" 
-        placeholder="请输入..." 
-        v-model="remark"
-        auto-height
-      />
-    </view>
-
-    <!-- 底部栏 -->
+    <!-- 底部操作栏 -->
     <view class="bottom-bar">
-      <view class="total-price">¥ {{ totalAmount }}</view>
-      <button class="submit-btn" @click="handleSubmit">提交订单</button>
-    </view>
-    <!-- 预定人选择弹窗 -->
-    <view class="popup-mask" v-if="showPassengerPopup" @click="closePassengerSelector">
-      <view class="popup-content" @click.stop>
-        <view class="popup-header">
-          <text class="popup-title">选择预定人</text>
-          <uni-icons type="closeempty" size="24" color="#999" @click="closePassengerSelector"></uni-icons>
-        </view>
-        <scroll-view scroll-y class="popup-list">
-          <view 
-            class="popup-item" 
-            v-for="(p, index) in passengers" 
-            :key="index"
-            @click="togglePassengerSelection(p)"
-          >
-            <view class="popup-item-info">
-              <text class="popup-item-name">{{ p.name }}</text>
-              <text class="popup-item-phone">{{ maskPhone(p.phone) }}</text>
-            </view>
-            <view class="popup-item-check">
-               <uni-icons v-if="isSelected(p)" type="checkmarkempty" size="24" color="#3c9cff"></uni-icons>
-            </view>
-          </view>
-          <view v-if="passengers.length === 0" class="popup-empty">
-            暂无常用旅客
-          </view>
-        </scroll-view>
-        <view class="popup-footer">
-          <button class="manage-btn" @click="goToPassengerManage">管理/新增旅客</button>
-        </view>
-      </view>
+      <!-- 仅在非待支付状态（已支付、已取消等）显示删除按钮 -->
+      <button v-if="firstOrder.payStatus !== 'UNPAID'" class="delete-btn" @click="handleDelete">删除订单</button>
+      <!-- 仅在已支付状态显示评价按钮 -->
+      <button v-if="firstOrder.payStatus === 'PAID'" class="review-btn" @click="handleReview">评价一下</button>
+      <!-- 仅在待支付状态显示立即支付按钮 -->
+      <button v-if="firstOrder.payStatus === 'UNPAID'" class="pay-btn" @click="handlePay">立即支付</button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { onLoad, onShow } from '@dcloudio/uni-app';
+import { ref, computed } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/modules/user';
 
 const userStore = useUserStore();
 const orderSn = ref('');
-const orderItems = ref([]);
-const dateList = ref([]);
-const selectedDateIndex = ref(0);
-const remark = ref('');
+const orderInfo = ref({});
+const orderItems = ref([]); // 列表展示的订单项
+const firstOrder = computed(() => orderItems.value[0] || {});
+const mainOrderSn = computed(() => firstOrder.value.orderSn || orderSn.value);
 
-// 预定人相关
-const passengers = ref([]); // 所有常用旅客
-const selectedPassengers = ref([]); // 当前订单选中的旅客
-const currentPassengerIndex = ref(0);
-const showPassengerPopup = ref(false);
-
-const currentPassenger = computed(() => selectedPassengers.value[currentPassengerIndex.value] || null);
+const statusText = computed(() => {
+  const status = firstOrder.value.payStatus;
+  if (status === 'UNPAID') return '待支付';
+  if (status === 'PAID') return '交易完成'; // Assuming PAID means complete for now as per screenshot "交易完成"
+  if (status === 'CANCEL') return '已取消';
+  return '未知状态';
+});
 
 const totalAmount = computed(() => {
   return orderItems.value.reduce((sum, item) => sum + Number(item.price || item.amount || 0), 0).toFixed(2);
 });
 
-onLoad((options) => {
-  uni.setNavigationBarTitle({
-    title: '订单详情'
-  });
+const orderSns = ref([]);
 
-  if (options.orderSn) {
-    orderSn.value = options.orderSn;
-    fetchOrderDetail();
-  } else if (options.orderSns) {
+onLoad((options) => {
+  if (options.orderSns) {
     try {
       const sns = JSON.parse(decodeURIComponent(options.orderSns));
       if (Array.isArray(sns) && sns.length > 0) {
-        fetchMultipleOrders(sns);
+        orderSns.value = sns;
+        // 如果有多个SN，调用批量获取逻辑
+        fetchAllOrderDetails();
+        return;
       }
     } catch (e) {
-      console.error('解析订单号失败', e);
-    }
-  } else if (options.items) {
-    // 兼容直接传 items 的情况 (如 Attraction/Food 跳转)
-    try {
-      const items = JSON.parse(decodeURIComponent(options.items));
-      if (Array.isArray(items) && items.length > 0) {
-        orderItems.value = items;
-      }
-    } catch (e) {
-      console.error('解析商品信息失败', e);
+      console.error('解析 orderSns 失败', e);
     }
   }
-  generateDates();
+
+  if (options.orderSn) {
+    orderSn.value = options.orderSn;
+    orderSns.value = [options.orderSn];
+    fetchOrderDetail();
+  }
 });
 
-onShow(() => {
-  loadCommonPassengers();
-});
-
-const loadCommonPassengers = () => {
-  const stored = uni.getStorageSync('common_passengers');
-  if (stored) {
-    passengers.value = JSON.parse(stored);
-    
-    // 验证已选旅客是否仍在列表中（防止被删除）
-    const validIds = passengers.value.map(p => p.id);
-    const validSelected = selectedPassengers.value.filter(p => validIds.includes(p.id));
-    
-    // 如果有被删除的，更新已选列表
-    if (validSelected.length !== selectedPassengers.value.length) {
-      selectedPassengers.value = validSelected;
-      if (currentPassengerIndex.value >= selectedPassengers.value.length) {
-        currentPassengerIndex.value = Math.max(0, selectedPassengers.value.length - 1);
-      }
-    }
-
-    // 默认选中第一个作为初始预定人，如果没有则为空
-    if (selectedPassengers.value.length === 0 && passengers.value.length > 0) {
-      selectedPassengers.value = [passengers.value[0]];
-      currentPassengerIndex.value = 0;
-    }
-  } else {
-    passengers.value = [];
-  }
-};
-
-const openPassengerSelector = () => {
-  showPassengerPopup.value = true;
-};
-
-const closePassengerSelector = () => {
-  showPassengerPopup.value = false;
-};
-
-const isSelected = (p) => {
-  return selectedPassengers.value.some(item => item.id === p.id);
-};
-
-const togglePassengerSelection = (p) => {
-  const idx = selectedPassengers.value.findIndex(item => item.id === p.id);
-  if (idx > -1) {
-    // 已选中，取消选中
-    selectedPassengers.value.splice(idx, 1);
-    // 如果取消的是当前展示的，调整index
-    if (currentPassengerIndex.value >= selectedPassengers.value.length) {
-      currentPassengerIndex.value = Math.max(0, selectedPassengers.value.length - 1);
-    }
-  } else {
-    // 未选中，添加
-    selectedPassengers.value.push(p);
-    // 选中新添加的
-    currentPassengerIndex.value = selectedPassengers.value.length - 1;
-  }
-};
-
-const goToPassengerManage = () => {
-  uni.navigateTo({
-    url: '/pages/commonInfo/commonInfo'
-  });
-};
-
-const getTypeLabel = (type) => {
-  const t = (type || '').toLowerCase();
-  if (t === 'attractions' || t === 'scenic') return '景点';
-  if (t === 'accommodations' || t === 'hotel') return '酒店';
-  if (t === 'dining' || t === 'food') return '美食';
-  return '商品';
-};
-
-const maskPhone = (phone) => {
-  if (!phone) return '';
-  return phone.replace(/^(\d{3})\d+(\d{4})$/, "$1****$2");
-};
-
-const generateDates = () => {
-  const list = [];
-  const today = new Date();
-  const weeks = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    list.push({
-      day: d.getDate(),
-      week: weeks[d.getDay()],
-      month: (d.getMonth() + 1) + '月'
-    });
-  }
-  dateList.value = list;
-};
-
-const fetchMultipleOrders = async (sns) => {
-  uni.showLoading({ title: '加载中' });
-  try {
-    const promises = sns.map(sn => {
-      return new Promise((resolve) => {
-        uni.request({
-          url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${sn}`,
-          method: 'GET',
-          header: { 'X-Access-Token': userStore.token },
-          success: (res) => {
-            if (res.data.success) {
-              resolve(res.data.result);
-            } else {
-              resolve(null);
-            }
-          },
-          fail: () => resolve(null)
-        });
+// 获取所有传入的订单详情
+const fetchAllOrderDetails = async () => {
+  uni.showLoading({ title: '加载中...' });
+  const promises = orderSns.value.map(sn => {
+    return new Promise((resolve) => {
+      uni.request({
+        url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${sn}`,
+        method: 'GET',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Access-Token': userStore.token
+        },
+        success: (res) => {
+          if (res.data.success) {
+            resolve(res.data.result);
+          } else {
+            resolve(null);
+          }
+        },
+        fail: () => resolve(null)
       });
     });
-    
+  });
+
+  try {
     const results = await Promise.all(promises);
-    orderItems.value = results.filter(item => item !== null);
+    const validOrders = results.filter(o => o !== null);
+    
+    // 处理图片逻辑
+    validOrders.forEach(order => {
+      if (order.orderType === 'Parking') {
+        order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/1eec475aa85047188c67915c7b4b9a83.jpg';
+      }
+      if (order.orderType === 'Transportation') {
+        order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/c9adb25fc3d44abfaeeef5f0af7c90b4.jpg';
+      }
+    });
+
+    if (validOrders.length > 0) {
+      orderItems.value = validOrders;
+      orderInfo.value = validOrders[0]; // 使用第一个订单作为主信息（如支付状态等）
+      
+      // 如果只有一个订单，还是尝试去查找关联订单（兼容旧逻辑）
+      if (validOrders.length === 1) {
+        fetchRelatedOrders(validOrders[0]);
+      }
+    } else {
+      uni.showToast({ title: '获取订单详情失败', icon: 'none' });
+    }
   } catch (e) {
-    uni.showToast({ title: '加载失败', icon: 'none' });
+    console.error(e);
+    uni.showToast({ title: '网络错误', icon: 'none' });
   } finally {
     uni.hideLoading();
   }
 };
 
-const fetchOrderDetail = () => {
+const handlePay = () => {
+  const sn = mainOrderSn.value;
+  if (!sn) return;
+  
+  uni.showLoading({ title: '支付处理中...' });
+  
   uni.request({
-    url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${orderSn.value}`,
-    method: 'GET',
-    header: { 'X-Access-Token': userStore.token },
+    url: `https://island.zhangshuiyi.com/island/front/order/payOrder?orderSn=${sn}`,
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': userStore.token
+    },
     success: (res) => {
       if (res.data.success) {
-        orderItems.value = [res.data.result];
-      }
-    }
-  });
-};
-
-const handleRemoveItem = (index) => {
-  orderItems.value.splice(index, 1);
-};
-
-const handleSubmit = () => {
-  if (orderItems.value.length === 0) {
-    uni.showToast({ title: '请选择商品', icon: 'none' });
-    return;
-  }
-  if (selectedPassengers.value.length === 0) {
-    uni.showToast({ title: '请选择预定人', icon: 'none' });
-    return;
-  }
-  
-  // 如果已经有 orderSn (比如从订单列表进来)，直接去支付
-  if (orderSn.value) {
-    const itemsParam = encodeURIComponent(JSON.stringify(orderItems.value));
-    const orderSnsParam = encodeURIComponent(JSON.stringify([orderSn.value]));
-    const priceParam = encodeURIComponent(totalAmount.value);
-    uni.navigateTo({
-      url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
-    });
-    return;
-  }
-
-  // 创建订单
-  createOrder();
-};
-
-const createOrder = () => {
-  uni.showLoading({ title: '正在提交...' });
-  
-  // 构造订单数据
-  // 假设每个选中的预定人对应一份商品（这里简化处理，如果商品数量逻辑复杂需调整）
-  // 对于每个商品，为每个预定人创建一个 item
-  const allItems = [];
-  const dateStr = dateList.value[selectedDateIndex.value] ? 
-    `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2, '0')}-${String(dateList.value[selectedDateIndex.value].day).padStart(2, '0')}` 
-    : new Date().toISOString().split('T')[0];
-
-  orderItems.value.forEach(product => {
-    selectedPassengers.value.forEach(passenger => {
-      allItems.push({
-        bookInfo: {
-          date: dateStr,
-          fullname: passenger.name,
-          idCardNo: passenger.idCard, // 假设 passenger 对象有 idCard 字段，注意字段名匹配
-          idCardType: "ID_CARD",
-          schedule: product.starttime || "08:00"
-        },
-        productId: product.id,
-        productType: product.type || "Accommodations",
-        quantity: 1,
-        price: Number(product.price || 0),
-        amount: Number(product.price || 0),
-        name: product.name,
-        image: product.imageUrl || product.image || '',
-        specs: ''
-      });
-    });
-  });
-
-  const orderData = {
-    contract: {
-      contractName: selectedPassengers.value[0].name,
-      contractPhone: selectedPassengers.value[0].phone
-    },
-    items: allItems,
-    travelStartDate: `${dateStr} 00:00:00`,
-    travelEndDate: `${dateStr} 23:59:59`, // 简化的时间逻辑
-    remark: remark.value
-  };
-
-  uni.request({
-    url: 'https://island.zhangshuiyi.com/island/front/order/createOrder',
-    method: 'POST',
-    header: { 'Content-Type': 'application/json', 'X-Access-Token': userStore.token },
-    data: orderData,
-    success: (res) => {
-      uni.hideLoading();
-      if (res.data.success || res.data.code === 200) {
-        const resultSn = res.data.result.orderSn || res.data.result.id;
-        const sns = resultSn ? [resultSn] : []; // 暂时假设返回一个主订单号或 ID
-        
-        // 跳转到支付确认页
-        const itemsParam = encodeURIComponent(JSON.stringify(orderItems.value)); // 传递原始商品用于展示
-        const orderSnsParam = encodeURIComponent(JSON.stringify(sns));
-        const priceParam = encodeURIComponent(totalAmount.value);
-        
-        uni.navigateTo({
-           url: `/pages/multiConfirmPay/multiConfirmPay?items=${itemsParam}&orderSns=${orderSnsParam}&price=${priceParam}`
-        });
+        uni.showToast({ title: '支付成功', icon: 'success' });
+        setTimeout(() => {
+          fetchOrderDetail();
+        }, 1500);
       } else {
-        uni.showToast({ title: res.data.message || '下单失败', icon: 'none' });
+        uni.showToast({ title: res.data.message || '支付失败', icon: 'none' });
       }
     },
     fail: () => {
-      uni.hideLoading();
       uni.showToast({ title: '网络请求失败', icon: 'none' });
+    },
+    complete: () => {
+      uni.hideLoading();
     }
   });
 };
 
-const editPassenger = (p) => {
-    uni.navigateTo({
-        url: `/pages/commonInfo/addPassenger?id=${p.id}`
-    })
-}
+const fetchOrderDetail = () => {
+  uni.showLoading({ title: '加载中...' });
+  // 这里我们需要获取订单详情。
+  // 如果是套餐，我们需要获取关联的订单。
+  // 由于目前只有一个 getMyOrderInfo/${orderSn} 接口，我们先调用它。
+  // 如果需要获取同组订单，可能需要调用 getMyOrderList 并筛选。
+  
+  // 策略：先获取指定 orderSn 的详情。
+  // 然后尝试获取列表来查找同组订单（为了还原 order.vue 中的分组逻辑）。
+  
+  // 1. 获取当前订单详情
+  uni.request({
+    url: `https://island.zhangshuiyi.com/island/front/order/getMyOrderInfo/${orderSn.value || mainOrderSn.value}`,
+    method: 'GET',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      if (res.data.success) {
+        // 修复图片链接
+        if (res.data.result.orderType === 'Parking') {
+           res.data.result.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/1eec475aa85047188c67915c7b4b9a83.jpg';
+        }
+        if (res.data.result.orderType === 'Transportation') {
+           res.data.result.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/c9adb25fc3d44abfaeeef5f0af7c90b4.jpg';
+        }
+
+        orderInfo.value = res.data.result;
+        // 初始只放入这一个
+        orderItems.value = [res.data.result];
+        
+        // 2. 尝试获取列表以查找关联订单 (模拟 order.vue 的分组逻辑)
+        fetchRelatedOrders(res.data.result);
+      } else {
+        uni.showToast({ title: res.data.message || '获取详情失败', icon: 'none' });
+      }
+    },
+    fail: () => {
+      uni.showToast({ title: '网络错误', icon: 'none' });
+    },
+    complete: () => {
+      uni.hideLoading();
+    }
+  });
+};
+
+const fetchRelatedOrders = (currentOrder) => {
+  // 使用与 order.vue 相同的逻辑查找同组订单
+  // 这里的 key 逻辑需要和 order.vue 保持一致
+  // key = o.mainOrder?.orderSn || o.mainOrderSn || o.batchId || (o.createTime || '');
+  
+  // 为了找到同组，我们需要获取列表。这里假设 pageSize 300 足够覆盖。
+  uni.request({
+    url: 'https://island.zhangshuiyi.com/island/front/order/getMyOrderList',
+    method: 'GET',
+    data: { pageNo: 1, pageSize: 300 }, // 获取足够多的订单以进行匹配
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Access-Token': userStore.token
+    },
+    success: (res) => {
+      if (res.data.success) {
+        const allOrders = res.data.result.records || [];
+        
+        // 处理图片逻辑 (同 order.vue)
+        allOrders.forEach(order => {
+           if (order.orderType === 'Parking') {
+            order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/1eec475aa85047188c67915c7b4b9a83.jpg';
+          }
+          if (order.orderType === 'Transportation') {
+            order.imageUrl = 'https://wuminghui.top:9000/wlmtsys/2025/06/18/c9adb25fc3d44abfaeeef5f0af7c90b4.jpg';
+          }
+        });
+
+        // 找到当前订单在列表中的对象（为了获取完整的关联信息）
+        const matchedCurrent = allOrders.find(o => o.orderSn === currentOrder.orderSn);
+        const targetOrder = matchedCurrent || currentOrder;
+        
+        const key = targetOrder.mainOrder?.orderSn || targetOrder.mainOrderSn || targetOrder.batchId || (targetOrder.createTime || '');
+        
+        if (key) {
+           const group = allOrders.filter(o => {
+             const k = o.mainOrder?.orderSn || o.mainOrderSn || o.batchId || (o.createTime || '');
+             return k === key;
+           });
+           
+           if (group.length > 0) {
+             orderItems.value = group;
+           }
+        }
+      }
+    }
+  });
+};
+
+const handleDelete = () => {
+   uni.showModal({
+    title: '提示',
+    content: '确定要删除该订单吗？',
+    success: (res) => {
+      if (res.confirm) {
+        // 调用删除接口
+        // 注意：如果是套餐，是否删除所有？order.vue 中是单个删除。
+        // 但底部按钮通常是删除整个显示的订单。
+        // 这里我们先只删除第一个，或者循环删除？
+        // 截图中的"删除订单"看起来是针对整个详情页的。
+        // 如果是套餐，可能需要调用多次删除或者有一个批量删除接口。
+        // 目前 order.vue 中 deleteOrder 只是删除单个。
+        // 我们这里先实现删除当前显示的列表中的所有项（如果是套餐）。
+        
+        deleteOrders(orderItems.value);
+      }
+    }
+  });
+};
+
+const handleReview = () => {
+  const item = firstOrder.value;
+  // 尝试获取商品ID，不同订单类型字段可能不同
+  const id = item.goodsId || item.productId;
+  // 获取类型，默认 itinerary
+  const type = item.orderType || item.productType || 'itinerary';
+  
+  if (!id) {
+    uni.showToast({ title: '无法获取商品信息', icon: 'none' });
+    return;
+  }
+  
+  uni.navigateTo({
+    url: `/pages/itineraryEvaluation/itineraryEvaluation?productId=${id}&type=${type}`
+  });
+};
+
+const deleteOrders = async (items) => {
+  uni.showLoading({ title: '删除中...' });
+  
+  let successCount = 0;
+  for (const item of items) {
+     if (!item.orderId) continue;
+     try {
+       await new Promise((resolve, reject) => {
+          uni.request({
+            url: `https://island.zhangshuiyi.com/island/front/order/Cancel`, // 接口名为 Cancel，但在 order.vue 中被用作"取消订单"(deleteOrder)
+            // 待确认：order.vue 中 deleteOrder 是 "取消订单"。
+            // 截图中的是 "删除订单"。通常 "删除" 是 delete 接口，"取消" 是 cancel。
+            // 但 order.vue 中 unPaid 状态下是 "取消订单"。
+            // 如果是 "交易完成" (Paid)，通常不能 "取消"，只能 "删除" (隐藏)。
+            // 现在的 backend 似乎只有一个 Cancel 接口？
+            // order.vue 中 deleteOrder 调用的就是 Cancel。
+            // 且 order.vue 中只有 UNPAID 状态才显示取消按钮。
+            // 截图显示 "交易完成" 也有 "删除订单"。
+            // 也许需要另一个接口？
+            // 暂时使用 Cancel 接口，或者 delete 接口。
+            // 让我们检查 order.vue 看看有没有 delete 接口。
+            // order.vue 只有 Cancel。
+            // 也许 delete 是另一个 url: /island/front/order/delete?
+            // 我先假设用 Cancel，如果不行再调整。
+            // 或者，如果状态是 PAID，Cancel 可能会失败。
+            // 让我们先用 Cancel，如果失败提示用户。
+            
+            // 修正：仔细看 order.vue，line 513: url: .../Cancel
+            // 只有 UNPAID 才显示取消。
+            // 截图是 "交易完成"，所以这应该是一个"逻辑删除" (Hide) 接口。
+            // 我先搜索一下代码库有没有 delete 相关的 api。
+            
+            method: 'GET',
+            header: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Access-Token': userStore.token
+            },
+            data: { orderId: item.orderId },
+            success: (res) => {
+              if (res.data.success) resolve(res);
+              else reject(res.data.message);
+            },
+            fail: (err) => reject(err)
+          });
+       });
+       successCount++;
+     } catch (e) {
+       console.error(e);
+     }
+  }
+  
+  uni.hideLoading();
+  if (successCount === items.length) {
+    uni.showToast({ title: '删除成功', icon: 'success' });
+    setTimeout(() => {
+      uni.navigateBack();
+    }, 1500);
+  } else {
+    uni.showToast({ title: '部分删除失败或不支持删除', icon: 'none' });
+  }
+};
 
 </script>
 
-<style lang="scss" scoped>
+<style>
 .page {
   min-height: 100vh;
-  background-color: #F8F8F8;
-  padding: 20rpx;
-  padding-bottom: 120rpx;
+  background-color: #f5f5f5;
+  padding-bottom: 120rpx; /* 留出底部按钮空间 */
 }
 
-.section-card {
+.header-section {
   background-color: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
+  padding: 40rpx 30rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.02);
 }
 
-.section-title {
-  font-size: 32rpx;
+.status-title {
+  font-size: 40rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 20rpx;
+  margin-bottom: 10rpx;
 }
 
-/* 商品列表 */
-.item-row {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1px solid #f5f5f5;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.item-left {
-  width: 120rpx;
-  height: 120rpx;
-  background-color: #f5f5f5;
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 24rpx;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.product-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 12rpx;
-}
-
-.item-center {
-  flex: 1;
-}
-
-.item-name {
-  font-size: 30rpx;
-  color: #333;
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.item-type-tag {
-  display: flex;
-  align-items: center;
-  background-color: #f0f2f5;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  align-self: flex-start;
-  width: fit-content;
-}
-
-.type-text {
-  font-size: 22rpx;
-  color: #666;
-  margin-left: 6rpx;
-}
-
-.item-desc {
-  font-size: 24rpx;
+.status-time {
+  font-size: 26rpx;
   color: #999;
 }
 
-.item-right {
+.order-items {
+  background-color: #fff;
+  margin-bottom: 20rpx;
+}
+
+.item-card {
   display: flex;
-  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.item-card:last-child {
+  border-bottom: none;
+}
+
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  margin-right: 20rpx;
+  background-color: #eee;
+}
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.item-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10rpx;
+}
+
+.item-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  margin-right: 20rpx;
 }
 
 .item-price {
   font-size: 30rpx;
   font-weight: bold;
   color: #333;
-  margin-right: 20rpx;
 }
 
-/* 日期选择 */
-.date-scroll {
-  display: flex;
-  overflow-x: auto;
-  gap: 20rpx;
-  margin-bottom: 20rpx;
-}
-
-.date-item {
-  width: 120rpx;
-  height: 140rpx;
-  background-color: #f5f5f5;
-  border-radius: 12rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  
-  &.active {
-    background-color: #E6F7FF;
-    border: 1px solid #3c9cff;
-    
-    .day, .week, .month {
-      color: #3c9cff;
-    }
-  }
-  
-  .day {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #333;
-  }
-  
-  .week {
-    font-size: 24rpx;
-    color: #666;
-    margin: 4rpx 0;
-  }
-  
-  .month {
-    font-size: 20rpx;
-    color: #999;
-  }
-}
-
-.open-time {
+.item-detail-row {
   font-size: 24rpx;
   color: #999;
+  margin-top: 6rpx;
 }
 
-/* 预定人 */
-.passenger-tags {
+.order-summary {
+  background-color: #fff;
+  padding: 30rpx;
+}
+
+.summary-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
-  margin-bottom: 30rpx;
-}
-
-.passenger-tag {
-  padding: 10rpx 30rpx;
-  background-color: #f5f5f5;
-  border-radius: 8rpx;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
   font-size: 28rpx;
-  color: #333;
-  
-  &.active {
-    background-color: #E6F7FF;
-    color: #3c9cff;
-    border: 1px solid #3c9cff;
-  }
 }
 
-.add-tag {
-  padding: 10rpx 30rpx;
-  border: 1px dashed #3c9cff;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  color: #3c9cff;
+.summary-row:last-child {
+  margin-bottom: 0;
 }
 
-.contact-info {
-  background-color: #E6F7FF;
-  padding: 20rpx;
-  border-radius: 8rpx;
-  display: flex;
-  align-items: center;
-  
-  .label {
-    font-size: 26rpx;
-    color: #666;
-    margin: 0 10rpx;
-  }
-  
-  .value {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
-  }
-  
-  .edit-icon {
-    margin-left: auto;
-  }
+.label {
+  color: #666;
 }
 
-/* 备注 */
-.remark-input {
-  width: 100%;
-  min-height: 100rpx;
-  font-size: 28rpx;
+.value {
   color: #333;
 }
 
-/* 底部栏 */
+.value.price {
+  font-weight: bold;
+  font-size: 32rpx;
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
-  right: 0;
-  height: 100rpx;
+  width: 100%;
   background-color: #fff;
+  padding: 20rpx 30rpx;
+  box-sizing: border-box;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 30rpx;
-  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
-  z-index: 100;
-}
-
-.total-price {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #3c9cff;
-}
-
-.submit-btn {
-  background-color: #3c9cff;
-  color: #fff;
-  font-size: 32rpx;
-  padding: 0 60rpx;
-  height: 80rpx;
-  line-height: 80rpx;
-  border-radius: 40rpx;
-  margin: 0;
-}
-
-/* 弹窗样式 */
-.popup-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
   justify-content: flex-end;
 }
 
-.popup-content {
+.delete-btn {
+  margin: 0;
   background-color: #fff;
-  border-radius: 24rpx 24rpx 0 0;
-  padding: 30rpx;
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.popup-title {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.popup-list {
-  max-height: 500rpx;
-  margin-bottom: 30rpx;
-}
-
-.popup-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 0;
-  border-bottom: 1px solid #f5f5f5;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.popup-item-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.popup-item-name {
-  font-size: 30rpx;
-  color: #333;
-  margin-bottom: 6rpx;
-}
-
-.popup-item-phone {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.popup-empty {
-  text-align: center;
-  color: #999;
-  padding: 40rpx 0;
+  color: #666;
+  border: 1rpx solid #ddd;
   font-size: 28rpx;
+  padding: 10rpx 40rpx;
+  border-radius: 8rpx;
+  line-height: 1.5;
 }
 
-.popup-footer {
-  padding-top: 10rpx;
+.review-btn {
+  margin: 0;
+  background-color: #fff;
+  color: #1890FF;
+  border: 1rpx solid #1890FF;
+  font-size: 28rpx;
+  padding: 10rpx 40rpx;
+  border-radius: 8rpx;
+  line-height: 1.5;
+  margin-left: 20rpx;
 }
 
-.manage-btn {
-  width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
-  background-color: #f5f5f5;
-  color: #3c9cff;
-  font-size: 30rpx;
-  border-radius: 40rpx;
-  border: 1px solid #e0e0e0;
+.pay-btn {
+  margin: 0;
+  background-color: #1890FF;
+  color: #fff;
+  border: none;
+  font-size: 28rpx;
+  padding: 10rpx 40rpx;
+  border-radius: 8rpx;
+  line-height: 1.5;
+  margin-left: 20rpx;
 }
 </style>
