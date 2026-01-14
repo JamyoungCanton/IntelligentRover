@@ -622,20 +622,46 @@ const likeIcon = computed(() => postDetailList.value.liked ? '/static/activity/h
 const collectIcon = computed(() => postDetailList.value.collected ? '/static/itinerary/star.png' : '/static/itinerary/no-star.png');
 const shareIcon = '/static/hotel-attctive/share.png';
 
-const buildHomeworkText = computed(() => {
-  const title = postDetailList.value.title || '';
-  const content = postDetailList.value.content || '';
-  return `【抄作业】${title}\n${content}`;
-});
 const copyHomework = () => {
-  commentContent.value = `看了这篇：${postDetailList.value.title || ''}，mark一下～`;
-  uni.setClipboardData({
-    data: buildHomeworkText.value,
-    success: () => {
-      uni.showToast({ title: '已复制内容', icon: 'success' });
+  const items = [];
+  try {
+    // 尝试解析 content 提取行程节点
+    const contentData = JSON.parse(postDetailList.value.content || '[]');
+    if (Array.isArray(contentData)) {
+      contentData.forEach(day => {
+        if (day.nodes && Array.isArray(day.nodes)) {
+          day.nodes.forEach(node => {
+             items.push({
+               id: node.id,
+               name: node.name || node.title || '未命名商品',
+               type: node.type || 'Attractions',
+               ticketprice: node.ticketprice || node.price || 0,
+               imageUrl: node.imageUrl || node.url || '',
+               starttime: node.starttime,
+               endtime: node.endtime
+             });
+          });
+        }
+      });
     }
+  } catch (e) {
+    console.log('Content parsing failed:', e);
+  }
+
+  // Fallback: Use post itself as item if parsing failed or no items found
+  if (items.length === 0) {
+     items.push({
+       id: postDetailList.value.id,
+       name: postDetailList.value.title || '行程预约',
+       type: 'Itinerary',
+       ticketprice: 0, 
+       imageUrl: (postDetailList.value.images && postDetailList.value.images.length > 0) ? postDetailList.value.images[0].url : ''
+     });
+    }
+
+  uni.navigateTo({
+    url: `/pages/multiConfirmPay/multiConfirmPay?items=${encodeURIComponent(JSON.stringify(items))}`
   });
-  showEditComment();
 };
 onShareAppMessage(() => {
   const pid = postId.value?.id || ''

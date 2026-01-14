@@ -103,10 +103,10 @@ const addDays = (count) => {
 const pad = n => n < 10 ? '0' + n : n
 
 const openTime = computed(() => {
-  if (!items.value || items.value.length === 0) return '—'
+  if (!items.value || items.value.length === 0) return '09:00 - 23:00'
   const first = items.value[0]
-  const s = (first.starttime || '').slice(0,5) || '--:--'
-  const e = (first.endtime || '').slice(0,5) || '--:--'
+  const s = (first.starttime || '09:00').slice(0,5)
+  const e = (first.endtime || '23:00').slice(0,5)
   return `${s} - ${e}`
 })
 
@@ -114,7 +114,7 @@ const totalPrice = computed(() => {
   return (items.value || []).reduce((sum, it) => sum + Number(it.ticketprice || it.price || 0), 0)
 })
 
-onLoad((options) => {
+onLoad(async (options) => {
   try {
     if (options.items) {
       const arr = JSON.parse(decodeURIComponent(options.items))
@@ -124,6 +124,12 @@ onLoad((options) => {
       const arr = JSON.parse(decodeURIComponent(options.orderSns))
       orderSns.value = Array.isArray(arr) ? arr : []
     }
+    
+    // Fetch latest details for items
+    if (items.value.length > 0) {
+      await fetchItemDetails()
+    }
+
     addDays(5)
     if (options.price) {
       const p = Number(options.price)
@@ -203,8 +209,8 @@ const createOrderRequest = (item) => {
       if (time.length === 5) return time + ':00'
       return time
     }
-    const startTime = getFullTime(item.starttime, '10:00:00')
-    const endTime = getFullTime(item.endtime, '22:00:00')
+    const startTime = getFullTime(item.starttime, '09:00:00')
+    const endTime = getFullTime(item.endtime, '23:00:00')
     const dateStr = selectedDate.value
     const startDateTime = `${dateStr} ${startTime}`
     const endDateTime = `${dateStr} ${endTime}`
