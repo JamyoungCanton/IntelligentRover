@@ -18,8 +18,17 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useUserStore } from '/store/modules/user';
+import { onLoad } from '@dcloudio/uni-app';
+import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
+
+const redirectUrl = ref('');
+
+onLoad((options) => {
+  if (options.redirect) {
+    redirectUrl.value = decodeURIComponent(options.redirect);
+  }
+});
 
 // 微信登录
 const handleWechatLogin = () => {
@@ -28,6 +37,8 @@ const handleWechatLogin = () => {
     success: function (loginRes) {
       console.log('微信code:', loginRes.code);
       if (loginRes.code) {
+        // Mock 登录逻辑 (或者保持原有真实接口)
+        // 为了演示完整流程，这里保留真实接口调用，但在失败时或者作为演示可以增加 Mock 分支
         uni.request({
           url: 'https://island.zhangshuiyi.com/island/sys/wxlogin',
           method: 'POST',
@@ -37,38 +48,13 @@ const handleWechatLogin = () => {
             console.log('微信登录返回数据:', res.data);
             if (res.data.success && res.data.result) {
               const { id, token, username } = res.data.result;
-              // 存储 token
-              if (token) {
-                userStore.setToken(token);
-                uni.setStorageSync('token', token);
-              }
-              // 存储用户信息
-              const userInfo = {
-                id,
-                username,
-                // 其他必要的用户信息字段
-              };
-              userStore.updateUserInfo(userInfo);
-              if (id) {
-                uni.setStorageSync('userId', id);
-              }
-              // 显示登录成功提示
-              uni.showLoading({
-                title: '登录成功',
-                mask: true
-              });
-              setTimeout(() => {
-                uni.hideLoading();
-                uni.showToast({
-                  title: '欢迎回来！',
-                  icon: 'success',
-                  duration: 2000
-                });
-                setTimeout(() => {
-                  uni.reLaunch({ url: '/pages/index/index' });
-                }, 1000);
-              }, 1000);
+              handleLoginSuccess(token, { id, username });
             } else {
+              // 如果真实接口失败，这里演示 Mock 成功的情况 (根据需求描述)
+              // 在实际生产中应该提示错误
+              // console.warn('真实接口失败，使用Mock数据');
+              // handleLoginSuccess('mock-token-123456', { id: 'mock-id', username: 'MockUser' });
+              
               uni.showToast({ 
                 title: res.data.message || '微信登录失败', 
                 icon: 'none',
@@ -78,6 +64,9 @@ const handleWechatLogin = () => {
           },
           fail: (err) => {
             console.error('微信登录请求失败:', err);
+            // 网络失败时 Mock
+            // handleLoginSuccess('mock-token-network-fail', { id: 'mock-id', username: 'MockUser' });
+            
             uni.showToast({ 
               title: '网络连接失败，请检查网络后重试', 
               icon: 'none',
@@ -102,6 +91,48 @@ const handleWechatLogin = () => {
       });
     }
   });
+};
+
+const handleLoginSuccess = (token, userInfo) => {
+  // 存储 token
+  if (token) {
+    userStore.setToken(token);
+    uni.setStorageSync('token', token);
+  }
+  // 存储用户信息
+  userStore.updateUserInfo(userInfo);
+  if (userInfo.id) {
+    uni.setStorageSync('userId', userInfo.id);
+  }
+  
+  // 显示登录成功提示
+  uni.showLoading({
+    title: '登录成功',
+    mask: true
+  });
+  
+  setTimeout(() => {
+    uni.hideLoading();
+    uni.showToast({
+      title: '欢迎回来！',
+      icon: 'success',
+      duration: 2000
+    });
+    
+    setTimeout(() => {
+      if (redirectUrl.value) {
+
+        const isTabbar = ['/pages/index/index', '/pages/user/user'].includes(redirectUrl.value);
+        if (isTabbar) {
+            uni.switchTab({ url: redirectUrl.value });
+        } else {
+            uni.redirectTo({ url: redirectUrl.value });
+        }
+      } else {
+        uni.reLaunch({ url: '/pages/index/index' });
+      }
+    }, 1000);
+  }, 1000);
 };
 </script>
 

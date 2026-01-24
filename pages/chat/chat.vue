@@ -452,11 +452,14 @@
 <script setup>
 import Tabbar from '../Tabbar/Tabbar.vue';
 import { ref, reactive, nextTick, onMounted, watch, triggerRef, computed } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { StreamRequest } from '../../utils/request.js';
 import { marked } from 'marked';
+import { useAuth } from '@/composables/useAuth';
 
 import { useUserStore } from '@/store/modules/user';
 const userStore = useUserStore();
+const { checkAuth } = useAuth();
 
 const safeAreaInsets = ref({});
 const statusBarHeight = ref(0);
@@ -470,23 +473,12 @@ const goBack = () => {
     }
   });
 };
-const hasToken = () => {
-  if (userStore.token === '') {
-    uni.showToast({
-      title: '未登录,请先登录',
-      icon: 'false',
-      duration: 2000
-    })
-    setTimeout(() => {
-      uni.navigateTo({
-        url: '/pages/login/login'
-      });
-    }, 500);
-  }
-}
+
+onShow(async () => {
+  await checkAuth();
+});
 
 onMounted(() => { 
-  hasToken();
   const windowInfo = uni.getWindowInfo();
   const deviceInfo = uni.getDeviceInfo();
   statusBarHeight.value = windowInfo.statusBarHeight || 0;
